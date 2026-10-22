@@ -55,6 +55,7 @@ public sealed class VictorySystem : GameSystem
 
         FrameLimit = options.FrameLimit;
         ScoreMetric = VictoryScoreMetrics.ToSelector(options.ScoreMetric);
+        ConditionRule = VictoryConditionRules.FromKind(options.Condition);
     }
 
     internal void Attach(GameLogic gameLogic)

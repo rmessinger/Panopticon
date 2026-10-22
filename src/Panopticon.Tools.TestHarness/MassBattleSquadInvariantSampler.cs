@@ -25,12 +25,12 @@ internal sealed class MassBattleSquadInvariantSampler
 {
     private sealed class Side
     {
-        public Side(string id, Player player, AIPlayer ai, SquadHierarchy hierarchy)
+        public Side(ArmyAiSide side)
         {
-            Id = id;
-            Player = player;
-            Ai = ai;
-            Hierarchy = hierarchy;
+            Id = side.SideId;
+            Player = side.Player;
+            Ai = side.Ai;
+            Policy = side.Policy;
         }
 
         public string Id { get; }
@@ -39,7 +39,7 @@ internal sealed class MassBattleSquadInvariantSampler
 
         public AIPlayer Ai { get; }
 
-        public SquadHierarchy Hierarchy { get; }
+        public HierarchicalAIDecisionPolicy Policy { get; }
 
         public int GroundSquads { get; set; }
 
@@ -78,23 +78,10 @@ internal sealed class MassBattleSquadInvariantSampler
         _sides = sides;
     }
 
-    public static MassBattleSquadInvariantSampler Create(MassBattleDeploymentProfile profile, Game game)
+    /// <summary>Creates the sampler over resolved army-AI sides (WI-M5-01).</summary>
+    public static MassBattleSquadInvariantSampler Create(IReadOnlyList<ArmyAiSide> sides)
     {
-        var sides = new List<Side>();
-        for (var i = 0; i < profile.Sides.Count; i++)
-        {
-            var side = profile.Sides[i];
-            var player = game.Scene3D.Players[2 + i];
-            var ai = player.AIPlayer
-                ?? throw new InvalidOperationException(
-                    $"Army-AI mode: side player '{side.Id}' has no AI player.");
-            var hierarchy = (ai.DecisionPolicy as HierarchicalAIDecisionPolicy)?.Hierarchy
-                ?? throw new InvalidOperationException(
-                    $"Army-AI mode: side player '{side.Id}' does not run the hierarchical policy.");
-            sides.Add(new Side(side.Id, player, ai, hierarchy));
-        }
-
-        return new MassBattleSquadInvariantSampler(sides);
+        return new MassBattleSquadInvariantSampler(sides.Select(side => new Side(side)).ToList());
     }
 
     public int DecisionTicksObserved { get; private set; }
@@ -116,33 +103,13 @@ internal sealed class MassBattleSquadInvariantSampler
                 continue;
             }
 
-            var unassigned = 0;
-            foreach (var unit in SquadHierarchy.EligibleUnits(side.Player))
-            {
-                if (!unit.IsEffectivelyDead && side.Hierarchy.SquadOf(unit) is null)
-                {
-                    unassigned++;
-                }
-            }
-
-            var members = 0;
-            var commanderless = 0;
-            foreach (var squad in side.Hierarchy.Squads)
-            {
-                members += squad.Members.Count;
-                if (squad.Members.Count > 0
-                    && (squad.CommanderId is null || squad.Members.All(member => member.Id != squad.CommanderId)))
-                {
-                    commanderless++;
-                }
-            }
-
-            side.GroundSquads = side.Hierarchy.Squads.Count;
-            side.GroundMembers = members;
-            side.CurrentUnassigned = unassigned;
-            side.CurrentCommanderless = commanderless;
-            side.MaxUnassigned = Math.Max(side.MaxUnassigned, unassigned);
-            side.MaxCommanderless = Math.Max(side.MaxCommanderless, commanderless);
+            var stats = side.Policy.GetStats(side.Player);
+            side.GroundSquads = stats.GroundSquadCount;
+            side.GroundMembers = stats.GroundMemberCount;
+            side.CurrentUnassigned = stats.UnassignedEligibleGroundCount;
+            side.CurrentCommanderless = stats.CommanderlessSquadCount;
+            side.MaxUnassigned = Math.Max(side.MaxUnassigned, stats.UnassignedEligibleGroundCount);
+            side.MaxCommanderless = Math.Max(side.MaxCommanderless, stats.CommanderlessSquadCount);
 
             SampleStalls(side);
         }

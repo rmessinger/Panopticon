@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units;
 using Panopticon.Data;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
-
 // The Navigation class shares its name with its namespace; alias it to keep call sites readable.
 using NavigationGrid = Panopticon.Navigation.Navigation;
 
@@ -48,6 +49,27 @@ internal static class MassBattlePlacement
         // pre-tick inspection see the object at its spawn point.
         gameObject.UpdateColliders();
         return gameObject;
+    }
+
+    /// <summary>
+    /// Resolves a definition name that may carry a content-source prefix (WI-M5-02): imported
+    /// rows publish as <c>ee2:&lt;RowKey&gt;</c> into the source content store, native names into
+    /// the plain object definitions.
+    /// </summary>
+    public static ObjectDefinition? ResolveDefinition(Game game, string definitionName)
+    {
+        var separator = definitionName.IndexOf(':');
+        if (separator <= 0)
+        {
+            return game.AssetStore.ObjectDefinitions.GetByName(definitionName);
+        }
+
+        var source = definitionName[..separator] == ContentSource.Ee2.Id
+            ? ContentSource.Ee2
+            : null;
+        return source is null
+            ? null
+            : game.AssetStore.GetSourceContent(source).ObjectDefinitions.GetByName(definitionName[(separator + 1)..]);
     }
 
     public static ColorRgb ParseColor(string? hex, int playerIndex)
@@ -108,19 +130,22 @@ internal static class MassBattlePlacement
     /// twice footprint spacing (floored at the profile's minimum pitch), skipping grid slots
     /// that fall on impassable cells, so every unit lands on passable ground with spacing
     /// preserved. <paramref name="expectedGround"/> is the spawn target (the M0 proof passes the
-    /// full UnitsPerSide; a profile with aircraft passes the ground remainder).
+    /// full UnitsPerSide; a profile with aircraft passes the ground remainder). The block list
+    /// is the caller's: capacity blocks for the probe (WI-M1-01), manifest entries for the
+    /// battle (WI-M5-02).
     /// </summary>
     public static GroundSpawnResult SpawnGroundArmy(
         Game game,
         MassBattleDeploymentProfile profile,
         int sideIndex,
+        Player owner,
+        IReadOnlyList<MassBattleUnitBlock> blocks,
         NavigationGrid navigation,
         ITestHarnessReporter reporter,
         int expectedGround)
     {
         var side = profile.Sides[sideIndex];
         var zone = side.Zone;
-        var owner = game.Scene3D.Players[2 + sideIndex];
         var yaw = MathF.PI * side.FacingDegrees / 180f;
         var reasons = new List<string>();
         var units = new List<GameObject>();
@@ -131,9 +156,9 @@ internal static class MassBattlePlacement
         var cursorY = zone.Y;
         var column = 0;
 
-        foreach (var block in profile.Capacity.Blocks)
+        foreach (var block in blocks)
         {
-            var definition = game.AssetStore.ObjectDefinitions.GetByName(block.Definition);
+            var definition = ResolveDefinition(game, block.Definition);
             if (definition == null)
             {
                 reporter.Error($"Unknown object definition '{block.Definition}' in capacity block.");
@@ -207,22 +232,65 @@ internal static class MassBattlePlacement
         return new GroundSpawnResult(units, spawned, impassable, skippedSlots, longestWeaponRange, reasons);
     }
 
+    /// <summary>Pairs placed airfields with their parking behavior; aircraft park into the first free slot.</summary>
+    public static List<(GameObject Airfield, ParkingPlaceBehaviour Parking)> ParkingPlaces(List<GameObject> airfields)
+    {
+        return airfields
+            .Select(airfield => (Airfield: airfield, Parking: airfield.FindBehavior<ParkingPlaceBehaviour>()))
+            .Where(pair => pair.Parking != null)
+            .Select(pair => (pair.Airfield, Parking: pair.Parking!))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Parks one aircraft directly into a free airfield parking slot using the same wiring the
+    /// production exit uses (slot report, taxiing locomotor, base assignment, parked state,
+    /// parking transform), so takeoff runs the real taxi and runway flow. Returns null when no
+    /// slot is free (WI-M1-01; shared with roster spawning, WI-M5-02).
+    /// </summary>
+    public static GameObject? ParkAircraft(
+        Game game,
+        Player owner,
+        ObjectDefinition definition,
+        List<(GameObject Airfield, ParkingPlaceBehaviour Parking)> parking)
+    {
+        var slot = parking.FirstOrDefault(pair => pair.Parking.HasFreeSlots());
+        if (slot == default)
+        {
+            return null;
+        }
+
+        var jet = game.Scene3D.GameObjects.CreateObject(definition, owner);
+
+        // Production marks a slot UnderConstruction when the queue starts; ReportSpawn claims
+        // exactly that slot. Direct spawns compress both steps back to back.
+        slot.Parking.EnqueueObject();
+        slot.Parking.ReportSpawn(jet.Id);
+        jet.AIUpdate.SetLocomotor(LocomotorSetType.Taxiing);
+        var jetAI = (JetAIUpdate)jet.AIUpdate;
+        jetAI.Base = slot.Airfield;
+        jetAI.CurrentJetAIState = JetAIUpdate.JetAIState.Parked;
+        jet.SetTransformMatrix(slot.Parking.GetUnitCreateTransform(producedAtHelipad: false, jet.Id).Matrix * slot.Airfield.TransformMatrix);
+        jet.UpdateColliders();
+        return jet;
+    }
+
     /// <summary>
     /// Places one side's airfields at their anchors. Behind = on the far side of the own zone
     /// from the opposing zone (between the zone and the map edge), never inside the deployment
-    /// rectangle itself. Returns the placed airfield objects (the probe parks aircraft on them).
+    /// rectangle itself. Returns the placed airfield objects (aircraft park on them).
     /// </summary>
     public static (List<GameObject> Airfields, List<string> FailureReasons) PlaceAirfields(
         Game game,
         MassBattleDeploymentProfile profile,
         int sideIndex,
+        Player owner,
         NavigationGrid navigation,
         ITestHarnessReporter reporter)
     {
         var side = profile.Sides[sideIndex];
         var zone = side.Zone;
         var opposing = profile.Sides[1 - sideIndex].Zone;
-        var owner = game.Scene3D.Players[2 + sideIndex];
         var yaw = MathF.PI * side.FacingDegrees / 180f;
         var reasons = new List<string>();
         var airfields = new List<GameObject>();

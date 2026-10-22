@@ -118,13 +118,9 @@ public static class MassBattleCapacityProbeRunner
             }
 
             // Hostile teams: the side index is the team index, so the armies fight on contact.
-            // Army-AI mode (WI-M4-03): both sides run the hierarchical decision policy.
+            // Army-AI mode (WI-M4-03): both sides run the hierarchical decision policy through
+            // the shared ArmyAiSides setup (WI-M5-01).
             var armyAi = config.MassBattleCapacityProbeArmyAi == true;
-            var hierarchicalPolicy = new Panopticon.Logic.AI.AIDecisionPolicyPayload
-            {
-                Type = Panopticon.Logic.AI.AIDecisionPolicyType.Hierarchical,
-            };
-
             var playerSettings = profile.Sides.Select((side, index) => new PlayerSetting(
                 index,
                 side.Side,
@@ -132,27 +128,29 @@ public static class MassBattleCapacityProbeRunner
                 index,
                 PlayerOwner.EasyAi,
                 side.Id)
+            ).ToArray();
+            if (armyAi)
             {
-                AIPolicy = armyAi ? hierarchicalPolicy : null,
-            }).ToArray();
+                ArmyAiSides.ApplyPolicies(playerSettings);
+            }
+
             game.StartSkirmishOrMultiPlayerGame(profile.Map.Path, new EchoConnection(), playerSettings, (int)ProbeSeed, isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
             game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
-            var sidePlayers = new List<Player>();
-            for (var i = 0; i < profile.Sides.Count; i++)
-            {
-                sidePlayers.Add(game.Scene3D.Players[2 + i]);
-            }
+            IReadOnlyList<ArmyAiSide>? armyAiSides = armyAi
+                ? ArmyAiSides.Resolve(game.Scene3D.Players, profile.Sides.Select(side => side.Id).ToArray())
+                : null;
+            var sidePlayers = armyAiSides is { } resolvedSides
+                ? resolvedSides.Select(side => side.Player).ToList()
+                : ArmyAiSides.SidePlayers(game.Scene3D.Players, profile.Sides.Count);
 
-            foreach (var player in game.Scene3D.Players)
+            if (armyAiSides is null)
             {
-                if (armyAi && sidePlayers.Contains(player))
+                foreach (var player in game.Scene3D.Players)
                 {
-                    continue;
+                    player.DisableAI();
                 }
-
-                player.DisableAI();
             }
 
             if (config.Headless)
@@ -173,7 +171,7 @@ public static class MassBattleCapacityProbeRunner
             var armies = new List<SideArmy>();
             for (var i = 0; i < profile.Sides.Count; i++)
             {
-                armies.Add(SpawnSide(game, profile, i, navigation, aircraft, reporter, reasons));
+                armies.Add(SpawnSide(game, profile, i, sidePlayers[i], navigation, aircraft, reporter, reasons));
             }
 
             for (var i = 0; i < SettleFrames; i++)
@@ -186,7 +184,9 @@ public static class MassBattleCapacityProbeRunner
                 IssueGeneralAttack(game, armies);
             }
 
-            var invariantSampler = armyAi ? MassBattleSquadInvariantSampler.Create(profile, game) : null;
+            var invariantSampler = armyAiSides is { } samplerSides
+                ? MassBattleSquadInvariantSampler.Create(samplerSides)
+                : null;
 
             var anchorCadence = config.MassBattleCapacityProbeAsyncAnchorBurstEveryFrames;
             MassBattleAsyncPathAnchor? anchor = anchorCadence is > 0
@@ -208,7 +208,7 @@ public static class MassBattleCapacityProbeRunner
 
             var report = BuildReport(
                 profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath,
-                anchor?.Build(), invariantSampler?.Build(), armyAi ? sidePlayers : null);
+                anchor?.Build(), invariantSampler?.Build(), armyAiSides);
             reporter.Info(MassBattleCapacityProbeReport.WriteText(report));
 
             var reportPath = string.IsNullOrEmpty(config.MassBattleCapacityProbeReportPath)
@@ -318,6 +318,7 @@ public static class MassBattleCapacityProbeRunner
         Game game,
         MassBattleDeploymentProfile profile,
         int sideIndex,
+        Player owner,
         NavigationGrid navigation,
         MassBattleAircraftProfile aircraft,
         ITestHarnessReporter reporter,
@@ -325,13 +326,13 @@ public static class MassBattleCapacityProbeRunner
     {
         var side = profile.Sides[sideIndex];
         var ground = MassBattlePlacement.SpawnGroundArmy(
-            game, profile, sideIndex, navigation, reporter, profile.Capacity.UnitsPerSide - aircraft.Count);
+            game, profile, sideIndex, owner, profile.Capacity.Blocks, navigation, reporter, profile.Capacity.UnitsPerSide - aircraft.Count);
         var (airfields, airfieldReasons) = MassBattlePlacement.PlaceAirfields(
-            game, profile, sideIndex, navigation, reporter);
+            game, profile, sideIndex, owner, navigation, reporter);
         reasons.AddRange(ground.FailureReasons.Select(reason => $"{side.Id}: {reason}"));
         reasons.AddRange(airfieldReasons.Select(reason => $"{side.Id}: {reason}"));
 
-        var jets = ParkAircraft(game, side.Id, sideIndex, aircraft, airfields, reasons);
+        var jets = ParkAircraft(game, side.Id, owner, aircraft, airfields, reasons);
         var opposingCentroid = MassBattlePlacement.GroundPosition(
             game, profile.Sides[1 - sideIndex].Zone.CenterX, profile.Sides[1 - sideIndex].Zone.CenterY);
         return new SideArmy
@@ -348,19 +349,18 @@ public static class MassBattleCapacityProbeRunner
     }
 
     /// <summary>
-    /// Spawns the side's aircraft directly into airfield parking slots using the same wiring the
-    /// production exit uses (slot report, taxiing locomotor, base assignment, parked state,
-    /// parking transform), so takeoff runs the real taxi and runway flow.
+    /// Spawns the side's aircraft directly into airfield parking slots through the shared
+    /// parking core (<see cref="MassBattlePlacement.ParkAircraft"/>), so takeoff runs the real
+    /// taxi and runway flow.
     /// </summary>
     private static List<JetSortie> ParkAircraft(
         Game game,
         string sideId,
-        int sideIndex,
+        Player owner,
         MassBattleAircraftProfile aircraft,
         List<GameObject> airfields,
         List<string> reasons)
     {
-        var owner = game.Scene3D.Players[2 + sideIndex];
         var definition = game.AssetStore.ObjectDefinitions.GetByName(aircraft.Definition);
         var jets = new List<JetSortie>();
         if (definition == null)
@@ -369,33 +369,16 @@ public static class MassBattleCapacityProbeRunner
             return jets;
         }
 
-        var parking = airfields
-            .Select(airfield => (Airfield: airfield, Parking: airfield.FindBehavior<ParkingPlaceBehaviour>()))
-            .Where(pair => pair.Parking != null)
-            .Select(pair => (pair.Airfield, Parking: pair.Parking!))
-            .ToList();
-
+        var parking = MassBattlePlacement.ParkingPlaces(airfields);
         for (var i = 0; i < aircraft.Count; i++)
         {
-            var slot = parking.FirstOrDefault(pair => pair.Parking.HasFreeSlots());
-            if (slot == default)
+            var jet = MassBattlePlacement.ParkAircraft(game, owner, definition, parking);
+            if (jet == null)
             {
                 reasons.Add($"{sideId}: no free parking slot for aircraft {i + 1} of {aircraft.Count}");
                 break;
             }
 
-            var jet = game.Scene3D.GameObjects.CreateObject(definition, owner);
-
-            // Production marks a slot UnderConstruction when the queue starts; ReportSpawn claims
-            // exactly that slot. Direct spawns compress both steps back to back.
-            slot.Parking.EnqueueObject();
-            slot.Parking.ReportSpawn(jet.Id);
-            jet.AIUpdate.SetLocomotor(LocomotorSetType.Taxiing);
-            var jetAI = (JetAIUpdate)jet.AIUpdate;
-            jetAI.Base = slot.Airfield;
-            jetAI.CurrentJetAIState = JetAIUpdate.JetAIState.Parked;
-            jet.SetTransformMatrix(slot.Parking.GetUnitCreateTransform(producedAtHelipad: false, jet.Id).Matrix * slot.Airfield.TransformMatrix);
-            jet.UpdateColliders();
             jets.Add(new JetSortie(sideId, aircraft.Definition, jet)
             {
                 LastState = JetAIUpdate.JetAIState.Parked,
@@ -806,7 +789,7 @@ public static class MassBattleCapacityProbeRunner
         string? screenshotPath,
         MassBattleAsyncPathAnchorReport? asyncPathAnchor = null,
         MassBattleSquadInvariantReport? squadInvariant = null,
-        List<Player>? sideAiPlayers = null)
+        IReadOnlyList<ArmyAiSide>? armyAiSides = null)
     {
         var sides = armies.Select(army => new SideEngagementResult
         {
@@ -825,18 +808,13 @@ public static class MassBattleCapacityProbeRunner
         // policies. Null keeps the scripted M1 report shape unchanged.
         List<AirMissionSideResult>? airMissions = null;
         Dictionary<uint, int>? missionsByJet = null;
-        if (sideAiPlayers is not null)
+        if (armyAiSides is not null)
         {
             airMissions = [];
             missionsByJet = [];
-            for (var i = 0; i < sideAiPlayers.Count && i < armies.Count; i++)
+            for (var i = 0; i < armyAiSides.Count && i < armies.Count; i++)
             {
-                var policy = sideAiPlayers[i].AIPlayer?.DecisionPolicy as HierarchicalAIDecisionPolicy;
-                if (policy is null)
-                {
-                    continue;
-                }
-
+                var policy = armyAiSides[i].Policy;
                 airMissions.Add(new AirMissionSideResult
                 {
                     SideId = armies[i].Id,

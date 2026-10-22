@@ -57,9 +57,9 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 
 | Card | Checklist | Prerequisites | Status |
 |---|---|---|---|
-| [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Ready` |
-| [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Ready` |
-| [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Ready` |
+| [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Done` |
+| [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Done` |
+| [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
 | [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Ready` |
 | [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Ready` |
 | [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Ready` |
@@ -71,3 +71,45 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 `WI-M5-01..03` are independent. After `WI-M5-04`, the batch chain (`05..07`) and the live chain
 (`09..10`) run in parallel. M5-1 closes when `WI-M5-08` adds the replay mode to the scenario
 from `WI-M5-04`.
+
+## Group 1 results
+
+### WI-M5-01: what landed
+
+`ArmyAiSides` owns the side wiring: `ApplyPolicies` before game start, `Resolve` (side id,
+`Player`, `AIPlayer`, policy, plus `DisableAI` on every non-side player) after it, and the
+`SidePlayerBaseIndex = 2` slot offset. `HierarchicalAIDecisionPolicy.GetStats(owner)` exposes
+the read-only ground stats (`HierarchicalAIPolicyStats`) and the air-mission counters went
+public; the probe report, squad-invariant sampler, and M0 deployment runner no longer cast the
+policy or resolve player slots themselves. Validation: install-free `ArmyAiSidesTests` 4/4;
+scaled army-AI and scripted probe reports byte-identical on seed 1 before and after the
+refactor; full non-interactive suite 2383 passed / 8 known failures. Residual:
+`ScenarioCaptureRunner.ResolvePlayerSlot` keeps its own `Players[2 + slotIndex]` (scenario-actor
+slot seam, not army-side resolution).
+
+### WI-M5-02: what landed
+
+Roster-mode deployment profiles: `MassBattleSideProfile.Roster` references a manifest side,
+profile-level `RosterManifestPath` + `ContentImport` carry the manifest and the shared EE2 import
+policy, and `MassBattleRosterSpawner` spawns each side (ground entries through the zone walk in
+manifest order, aircraft parked per entry). `SpawnGroundArmy` takes the caller's block list;
+parking moved to `MassBattlePlacement.ParkingPlaces`/`ParkAircraft`; source-prefixed definition
+names resolve through the ee2 source store (`ResolveDefinition`). `mass-battle-deepdivide-battle.json`
+authors the battle: 25 + 38 airfield anchors (AmericaAirfield parks 4; footprint BOX 224 x 148
+rotated by the side facing; playable area 6000 x 4000 measured) and zones widened symmetrically
+x 2200 -> 3800 after the first full-scale run exhausted side A at 820/900 before the Tomahawk
+block. Full-scale validation on both installs: side A 900/900 ground and 100/100 parked, side B
+850/850 ground and 150/150 parked, no placement reasons. Tests: install-free profile tests 5/5
+(validation, ee2: resolution, partition, committed-profile anchor arithmetic), Interactive scaled
+spawn 1/1, probe/deployment filters 7/7 unchanged.
+
+### WI-M5-03: what landed
+
+`ArmyEliminatedVictoryConditionRule`: a side is defeated when it owns no living non-structure
+object that can attack; airfields never keep a side alive, parked aircraft do. Selected from
+outside Simulation through `VictoryConditionKind` on `VictoryOptions` (`ApplyOptions` maps it to
+the rule, matching the frame-limit seam); `DefaultVictoryConditionRule` and the check cadence
+are untouched. Validation: new install-free tests 5/5 (elimination winner, mutual elimination
+to `SuddenDeath`, airfield-only defeat, parked aircraft survival, options-path frame limit with
+`UnitCount` `ScoreDecision`); existing victory tests 23/23 and the P7 matrix 2/2 unchanged; full
+non-interactive suite 2388 passed / 8 known failures.

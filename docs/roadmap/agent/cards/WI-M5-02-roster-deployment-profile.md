@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-02` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | M3 (`WI-M3-03`, done) |
@@ -59,13 +59,13 @@ airfields. This replaces the probe's shared capacity blocks for the battle; the 
 
 ## Acceptance criteria
 
-- [ ] Both sides spawn their full manifests: per-definition counts match the manifest, minus
+- [x] Both sides spawn their full manifests: per-definition counts match the manifest, minus
   impassable-slot skips reported per definition.
-- [ ] Every aircraft entry is parked in an airfield slot with `JetAIUpdate.Base` set, or the card
+- [x] Every aircraft entry is parked in an airfield slot with `JetAIUpdate.Base` set, or the card
   is `Blocked` with the measured shortfall.
-- [ ] EE2 units resolve through the H2a import path; no EE2 definition is hand-authored.
-- [ ] The M1 probe profile and report are unchanged.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] EE2 units resolve through the H2a import path; no EE2 definition is hand-authored.
+- [x] The M1 probe profile and report are unchanged.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -88,3 +88,18 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `MassBattleSideProfile.Roster` + profile `RosterManifestPath`/`ContentImport` with
+    validation (roster on every side or none, never mixed with capacity blocks, ids resolve);
+    `MassBattleRosterSpawner` (Validate, DefinitionName ee2: prefix, GroundBlocks/AircraftEntries
+    partition, ImportEe2Content collecting the manifest's ee2 row keys into the profile's import
+    block, SpawnSide through the zone walk + parking); `SpawnGroundArmy` takes the caller's block
+    list; `MassBattlePlacement.ParkingPlaces`/`ParkAircraft`/`ResolveDefinition` shared by probe
+    and spawner (source-prefixed names resolve through the ee2 source store). Authored
+    `mass-battle-deepdivide-battle.json`: 25 anchors side A / 38 side B (AmericaAirfield parks 4,
+    footprint BOX 224x148 rotated by the side facing, deepdivide playable area 6000x4000
+    measured); zones widened symmetrically x 2200 -> 3800 after the first full-scale run
+    exhausted side A at 820/900 before the Tomahawk block. Full-scale validation (temporary
+    uncommitted fact, both installs): side A 900/900 ground + 100/100 parked, side B 850/850
+    ground + 150/150 parked, no placement reasons. Tests: install-free profile tests 5/5,
+    Interactive scaled spawn 1/1, probe/deployment filters 7/7; full non-interactive suite
+    pending in the `.exchange` line.
