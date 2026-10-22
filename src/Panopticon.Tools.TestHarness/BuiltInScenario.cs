@@ -24,6 +24,7 @@ public enum BuiltInScenario
     RenderingScaleProbe,
     TerrainZoomProof,
     TerrainTextureBake,
+    RoutingChoke,
 }
 
 /// <summary>WI-M5-07 batch variant: which rosters the batch's sides field.</summary>

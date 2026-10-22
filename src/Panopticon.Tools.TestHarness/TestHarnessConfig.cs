@@ -312,6 +312,32 @@ public sealed class TestHarnessConfig
     [HarnessParameter("MassBattle", "MassBattleScreenshotPath.", nameof(BuiltInScenario.MassBattle))]
     public string? MassBattleScreenshotPath { get; set; } = null;
 
+    /// <summary>Units in the routing-choke group move (default 40).</summary>
+    [HarnessParameter("RoutingChoke", "RoutingChokeUnitCount.", nameof(BuiltInScenario.RoutingChoke))]
+    public int? RoutingChokeUnitCount { get; set; } = null;
+
+    /// <summary>Width of the wall's only opening in world units (default 120).</summary>
+    [HarnessParameter("RoutingChoke", "RoutingChokeGapWidth.", nameof(BuiltInScenario.RoutingChoke))]
+    public int? RoutingChokeGapWidth { get; set; } = null;
+
+    /// <summary>Frame limit before the run reports stuck units (default 9000).</summary>
+    [HarnessParameter("RoutingChoke", "RoutingChokeFrameLimit.", nameof(BuiltInScenario.RoutingChoke))]
+    public int? RoutingChokeFrameLimit { get; set; } = null;
+
+    [HarnessParameter("RoutingChoke", "RoutingChokeReportPath.", nameof(BuiltInScenario.RoutingChoke))]
+    public string? RoutingChokeReportPath { get; set; } = null;
+
+    /// <summary>Directory for the PNG sequence; empty captures nothing.</summary>
+    [HarnessParameter("RoutingChoke", "RoutingChokeCaptureDirectory.", nameof(BuiltInScenario.RoutingChoke))]
+    public string? RoutingChokeCaptureDirectory { get; set; } = null;
+
+    /// <summary>One PNG every N logic frames (default 15).</summary>
+    [HarnessParameter("RoutingChoke", "RoutingChokeCaptureStride.", nameof(BuiltInScenario.RoutingChoke))]
+    public int? RoutingChokeCaptureStride { get; set; } = null;
+
+    [HarnessParameter("RoutingChoke", "RoutingChokeMapPath.", nameof(BuiltInScenario.RoutingChoke))]
+    public string? RoutingChokeMapPath { get; set; } = null;
+
     /// <summary>First seed of a batch (WI-M5-06); the batch runs consecutive seeds from here.</summary>
     [HarnessParameter("MassBattle", "MassBattleBatchSeedStart.", nameof(BuiltInScenario.MassBattleBatch))]
     public int? MassBattleBatchSeedStart { get; set; } = null;
