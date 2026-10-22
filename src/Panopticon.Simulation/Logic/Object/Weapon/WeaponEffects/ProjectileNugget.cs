@@ -51,6 +51,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         {
             warheadTemplate = new WeaponTemplate();
             warheadTemplate.ProjectileCollidesWith = ParentWeaponTemplate.ProjectileCollidesWith;
+            warheadTemplate.RadiusDamageAffects = ParentWeaponTemplate.RadiusDamageAffects;
             warheadTemplate.Nuggets.AddRange(ParentWeaponTemplate.Nuggets.OfType<DamageNugget>());
         }
         else

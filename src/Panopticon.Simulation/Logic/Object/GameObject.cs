@@ -1381,6 +1381,15 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
         }
 
+        AIUpdate?.Stop();
+        Speed = 0;
+        ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+        foreach (var weapon in ActiveWeaponSet.Weapons)
+        {
+            weapon?.SetTarget(null);
+        }
+
+        ModelConditionFlags.Set(ModelConditionFlag.Attacking, false);
         IsSelectable = false;
         Owner.DeselectUnit(this);
         // A dying object must leave no dangling ownership references: drop it from the owner's

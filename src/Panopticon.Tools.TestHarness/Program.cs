@@ -373,6 +373,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.RoutingChoke)
+        {
+            Environment.ExitCode = RoutingChokeRunner.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.RenderingScaleProbe)
         {
             Environment.ExitCode = RenderingScaleProbeRunner.Run(installation, config, reporter);

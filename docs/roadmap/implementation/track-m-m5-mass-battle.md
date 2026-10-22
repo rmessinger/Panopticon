@@ -222,3 +222,29 @@ dotnet run -c Release --project src/Panopticon.Tools.TestHarness -- \
 Record the median against the 30 fps milestone with the attributed spans in a `Live frame rate`
 section here; on a miss, cut follow-up cards in B2 (allocation), B3 (parallel logic), or B5
 (rendering) with the measured span as baseline.
+
+## Re-benchmark after the main rebase
+
+After main gained #276 (TestHarness and attack-move fixes) and the X5 render-culling dispatch,
+the M5 branches were rebased (group 1 at `d957db976`, groups 2-4 at `9d18ec9b8`) and the
+full-size headless benchmark reran on 2026-10-20 (`--mass-battle-seed 1`, deepdivide profile,
+frame limit 54000, same identity as the pre-rebase baseline):
+
+| Field | Pre-rebase baseline | Rebase re-run |
+| --- | --- | --- |
+| Wall time | 148.7 min | 14.0 min |
+| ms/frame | 165.3 | 15.5 |
+| Frames run | 53970 | 53970 |
+| Outcome | Decided / ScoreDecision | Decided / ScoreDecision |
+| Winner | sideB | sideA |
+| sideA alive | 20 (900 ground lost) | 983 |
+| sideB alive | 518 | 924 |
+| kills / losses | not tracked | 93 / 93 |
+| allPassed | true | true |
+
+The winner flip and the ~10x speedup are treated as a suspected deviation, not a regression:
+kill rows are almost entirely aircraft (Raptors 17, EE2 Fighters 45, Bombers 15) and ~1750
+ground units produced ~16 ground kills, so both ground armies stayed idle until the frame-limit
+score decision. Prime suspect is the #276 attack-move behavior change (mass battle AI advances
+via attack-move); no bisect was started pending review. Artifacts live in `~/log/m5-rebenchmark/`
+(log, report, benchmark JSON, stdout, config, wrapper script).

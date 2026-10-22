@@ -86,6 +86,9 @@ manifest's gameplay-derived `RadiusPixels`; increase `--padding` to retain compl
 effects. The X1 duel uses `--health --labels --padding 260` and captures every logic frame.
 Health panels are not proof of target-impact rendering.
 
+`ScenarioCapture` currently ignores actor `MaxHealth` overrides. Health proofs must use the
+manifest's observed `Health` and `MaxHealth` values.
+
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.
 
 `MassBattleDeploymentScreenshotPath` captures the armies after deployment in either mode.
@@ -140,6 +143,9 @@ RADV cannot present under Xvfb either (no DRI3), the OpenGL backend dies in the 
 GLSL bug, and the real X server rejects agent-shell auth. Use the offscreen recipe below instead.
 
 ## Recipe: overlay / tooltip screenshots (headless, reliable)
+
+Unit hover tooltips are enabled by default wherever `HarnessOverlay` is used, including the
+windowed mass-battle capacity probe. Tooltips do not require `FullHud` or validation controls.
 
 The validation-ground ImGui overlay can be rendered offscreen into the same framebuffer as the
 scene, so tooltips and the status window are capturable without any display. This is the
@@ -241,6 +247,34 @@ profiles: `capture-projectile-orientation-shell.json`,
 
 Verify content before sharing: the manifest's target `Health` should fall across the sequence
 and a non-trivial number of frames should list a projectile.
+
+### Routing diagnostics
+
+`RoutingChoke` captures live partition memberships, unit collision circles, and remaining
+`AIUpdate.TargetPoints` alongside each PNG. Existing captures require a rerun for this metadata.
+The scenario hides the particle render layer, including building smoke, without changing
+particle updates or simulation RNG consumption. Other scenarios retain particle rendering.
+The capture camera looks straight down with north (`+Y`) at the top of the image.
+Runs stop when all units arrive, paths are exhausted, or no unit moves at least one world
+unit for `RoutingChokeProgressTimeoutFrames` (default 90, three seconds). Retained waypoints
+alone do not prevent deadlock termination. The terminal frame is captured even off stride.
+`RoutingChokeHasTimedGate` suppresses early termination for scenarios with a gate or moving
+barrier that can reopen. The current static wall has no such gate. The report records
+`terminationReason`; the frame limit remains the fallback.
+
+```sh
+python3 scripts/annotate_capture_gif.py <fresh-capture-dir> routing.gif --navigation \
+  --annotated-dir <new-annotated-frame-dir>
+```
+
+Grid numbers count actual broadphase object memberships, including scenery and structures.
+An object can overlap several cells. These are not navigation reservations or terrain
+passability values. Orange cells contain objects; red cells include structures. Cyan outlines
+use `Geometry.BoundingCircleRadius`, the movement collision footprint. Colored lines connect
+each unit's current position to its remaining planned waypoints; dots mark waypoints.
+The grid covers the routing corridor, projected onto the terrain. The header records the
+logic frame and cell size. Per-pair movement clearance also adds 2.5 world units beyond the
+combined radii; that extra clearance is not part of the cyan outlines.
 
 ## Recipe: physics seam test scene (headless)
 

@@ -433,6 +433,35 @@ range, `MassBattleBatchReportPath` redirects the aggregate, and the single-run k
 as a failure and the batch continues. Exit codes: 0 every run decided; 1 setup error; 5 any
 run failed or did not reach an outcome.
 
+## Routing Choke
+
+Multi-unit routing through a constrained space: 40 Crusaders spawn as a block south of a
+power-plant wall with one gap, then a single selection + move order (the same order path a
+player drag-move or the army AI's advance uses) drives them through it. The run exercises
+`OrderProcessor.MoveUnits` and the swept-footprint gate end to end. Spawned units have no
+squads, so shared squad paths do not engage. The report records per-unit arrival frames,
+stuck unit indexes, the blocked-follower delta, and the path-request count.
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+ dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+   --headless --built-in-scenario RoutingChoke
+```
+
+Knobs (all optional): `RoutingChokeUnitCount` (default 40), `RoutingChokeGapWidth` (default
+120 world units), `RoutingChokeFrameLimit` (default 9000), `RoutingChokeMapPath` (default
+alpine assault), `RoutingChokeReportPath` (default `artifacts/routing-choke/routing-choke.json`),
+`RoutingChokeCaptureDirectory` + `RoutingChokeCaptureStride` (default 15) for a PNG sequence
+plus a `manifest.json` compatible with `scripts/annotate_capture_gif.py` (the manifest carries
+per-frame unit screen positions; actors and projectile lists are minimal, so `--labels` and
+`--health` are not supported for it). Navigation overlays: see
+[`docs/screenshots.md`](../../docs/screenshots.md#routing-diagnostics).
+Exit codes: 0 every unit arrived; 1 setup error; 5 some
+units remained unarrived at termination. Early-stop and timed-gate settings are documented in
+the linked routing diagnostics recipe. Reference behavior at the default gap on current
+main: the crowd funnels and jams at the opening with only a few units through, which is the
+constrained-space failure mode this scenario exists to measure.
+
 ## Unit Validation Ground (P9)
 
 A non-skirmish sandbox that stands up the whole unit roster side by side on a real map, orders
