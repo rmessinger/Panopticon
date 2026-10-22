@@ -544,6 +544,15 @@ Source of truth: [deep-dives/w6-long-run-campaign.md](../deep-dives/w6-long-run-
 |---|---|---|
 | [track-w-w6-long-run-campaign.md](track-w-w6-long-run-campaign.md) | W6-1…W6-8 | Long-run campaign (WI-W6-01..08) |
 
+## Track N · N0-N5 : Multi-unit pathfinding performance
+
+Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-unit-pathfinding.md) :
+[Architecture diagrams §8](../deep-dives/n-multi-unit-pathfinding.md#8-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-n-pathfinding-performance.md](track-n-pathfinding-performance.md) | N0-1…N5-1 | Path cost baseline, search core, group requests, goal field gate, async order paths, verification (WI-N0-01..WI-N5-01) |
+
 ## Track X · X1: Imported-unit hit feedback
 
 Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), including grounded [architecture diagrams](../deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams).

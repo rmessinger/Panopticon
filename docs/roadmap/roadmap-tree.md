@@ -344,6 +344,24 @@ mindmap
       M3 Mixed roster normalization ⮕
       M4 Army-scale AI ⮕
       M5 1000 vs 1000 battle ⮕
+    N. Multi-unit pathfinding performance
+      N0 Path cost baseline ⮕
+        N0-1 Path span and counters
+        N0-2 Pathfinding load scenario
+      N1 Search core efficiency ⮕
+        N1-1 Allocation-free search
+        N1-2 Region labels
+        N1-3 Passability snapshot
+      N2 Shared group requests ⮕
+        N2-1 Follower landing
+        N2-2 Group selection moves
+      N3 Shared-destination fields ⮕
+        N3-1 Goal field gate
+      N4 Off-thread order paths ⮕
+        N4-1 Pending path handles
+        N4-2 Async order paths
+      N5 Scale verification ⮕
+        N5-1 Budget verification
 ```
 
 ---
@@ -352,7 +370,7 @@ mindmap
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
 Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal,
-F = red, G = violet, H = olive, W = slate, M = rust). Track G is the one track not gated by Stage P: it changes
+F = red, G = violet, H = olive, W = slate, M = rust, N = slate teal). Track G is the one track not gated by Stage P: it changes
 presentation only.
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
@@ -372,6 +390,7 @@ flowchart LR
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
   classDef trackW fill:#eef0f3,stroke:#5a6a7a,color:#122;
   classDef trackM fill:#fbefe6,stroke:#a0583a,color:#311;
+  classDef trackN fill:#eef7f7,stroke:#3a7a80,color:#123;
 
   subgraph SP["Stage P · Playable baseline (prerequisite)"]
     direction TB
@@ -495,6 +514,7 @@ flowchart LR
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
     W2["W2 Fidelity promotion & reconciliation"]
+    N0["N0 Path cost baseline"]
   end
 
   subgraph S6["Stage 6 · Terrain/destruction tooling & theater experiments"]
@@ -508,6 +528,7 @@ flowchart LR
     W4["W4 Command & logistics experiment"]
     W5["W5 Distributed regional simulation"]
     H2A["H2a Unit-content import layer"]
+    N1["N1 Search core efficiency"]
   end
 
   subgraph S7["Stage 7 · Somme sector & unit-content consumers"]
@@ -518,6 +539,8 @@ flowchart LR
     X1["X1 Imported-unit hit feedback"]
     H4["H4 New object/unit-definition storage format"]
     H2B["H2b Metric core units"]
+    N2["N2 Shared group requests"]
+    N4["N4 Off-thread order paths"]
   end
 
   subgraph S8["Stage 8 · Long-run campaign & mixed rosters"]
@@ -525,12 +548,14 @@ flowchart LR
     W6["W6 Long-run campaign experiment"]
     M3["M3 Mixed roster normalization"]
     H5["H5 Legacy migration & compatibility tooling"]
+    N3["N3 Shared-destination fields"]
   end
 
   subgraph S9["Stage 9 · Unit-content authoring & mass battle"]
     direction TB
     H6["H6 Authoring & pipeline integration"]
     M5["M5 1000 vs 1000 battle"]
+    N5["N5 Scale verification"]
   end
 
   subgraph S10["Stage 10 · Storage round-trip regression"]
@@ -764,6 +789,16 @@ flowchart LR
   B4 --> M5
   B5 --> M5
   A5 --> M5
+  B1 --> N0
+  B4 --> N0
+  M4 --> N0
+  N0 --> N1
+  N1 --> N2
+  N1 --> N4
+  N2 --> N3
+  N2 --> N5
+  N3 --> N5
+  N4 --> N5
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
@@ -776,6 +811,7 @@ flowchart LR
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class M0,M1,M2,M3,M4,M5 trackM;
+  class N0,N1,N2,N3,N4,N5 trackN;
   class A4S seam;
 ```
 

@@ -754,3 +754,9 @@
   Generals `BuildCost` and EE2 `dbtechtreenode.csv` resource costs convert to one points scale
   through authored per-resource rates; both 1000-unit manifests total equal points within a recorded
   tolerance. Unit stats are not tuned for balance. Affects [M3, M5](track-m-mass-battle.md).
+- Multi-unit pathfinding ownership. Decision (2026-10-22): the cost of multi-unit path requests is
+  its own track, [Track N](track-n-pathfinding-performance.md), not a B4 reopening. B4 closed on
+  request rate; M4 showed per-order cost (912 full searches on one decision tick, 664 from blocked
+  followers). Track N builds no hierarchical layer; its only new structure, a shared-destination
+  goal field, is gated on measurement after request sharing. Behavior-changing options default off
+  until N5 evidence and an operator decision.
