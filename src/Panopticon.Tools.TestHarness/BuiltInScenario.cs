@@ -25,6 +25,7 @@ public enum BuiltInScenario
     TerrainZoomProof,
     TerrainTextureBake,
     RoutingChoke,
+    PathfindingLoad,
 }
 
 

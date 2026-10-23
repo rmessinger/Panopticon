@@ -141,6 +141,26 @@ public static class Program
             config.RenderingScaleProbeLegacyShadows = true;
         }
 
+        // N0-2 pathfinding-load scenario overrides (see PathfindingLoadRunner).
+        ParseOptionalString(args, "--n0-profile", value => config.PathfindingLoadProfilePath = value);
+        ParseOptionalString(args, "--n0-report", value => config.PathfindingLoadReportPath = value);
+        ParseOptionalInt(args, "--n0-seed", value => config.PathfindingLoadSeed = value);
+        var n0Sizes = GetArgValue(args, "--n0-sizes");
+        if (!string.IsNullOrEmpty(n0Sizes))
+        {
+            var parsedSizes = n0Sizes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            config.PathfindingLoadSelectionSizes = new int[parsedSizes.Length];
+            for (var i = 0; i < parsedSizes.Length; i++)
+            {
+                if (!int.TryParse(parsedSizes[i], out var size) || size < 1)
+                {
+                    throw new InvalidOperationException($"'--n0-sizes' expects positive integers, got '{n0Sizes}'.");
+                }
+
+                config.PathfindingLoadSelectionSizes[i] = size;
+            }
+        }
+
         Run(config, reporter);
     }
 
@@ -376,6 +396,12 @@ public static class Program
         if (config.Scenario == BuiltInScenario.RoutingChoke)
         {
             Environment.ExitCode = RoutingChokeRunner.Run(installation, config, reporter);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.PathfindingLoad)
+        {
+            Environment.ExitCode = PathfindingLoadRunner.Run(installation, config, reporter);
             return;
         }
 

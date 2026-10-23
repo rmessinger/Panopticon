@@ -18,6 +18,13 @@ public class Graph
     private readonly FastPriorityQueue<Node> _unexpandedNodes;
     private readonly List<(Node, int)> _adjacentNodes;
     private readonly HashSet<Node> _visited;
+    private long _searchNodesExpanded;
+
+    /// <summary>Total nodes dequeued (expanded) by <see cref="Search"/> on this graph instance
+    /// (WI-N0-01). Per-instance lifetime counter; Navigation reads before/after deltas around a
+    /// search. Each graph is searched by one thread only (live graph on the logic thread,
+    /// snapshot clones on the async worker), so plain increments suffice.</summary>
+    public long SearchNodesExpanded => _searchNodesExpanded;
 
     public Node GetNode(int x, int y)
     {
@@ -100,6 +107,7 @@ public class Graph
             var current = _unexpandedNodes.Dequeue();
             _visited.Add(current);
             _unexpandedNodes.ResetNode(current);
+            _searchNodesExpanded++;
 
             if (current == end)
             {

@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N0-01` |
 | Roadmap phase | [N0](../../track-n-pathfinding-performance.md): Path cost baseline |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `S` |
 | Prerequisites | B1, B4, M4 (all Done) |

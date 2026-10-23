@@ -157,7 +157,7 @@ public abstract class MockedGameTest : IDisposable
         }
 
 #pragma warning disable CS8618, CS8625 // Non-nullable properties not initialized in constructor; nulls passed to mock AssetStore (intentional mock)
-        public TestGame(SageGame game)
+        public TestGame(SageGame game, Panopticon.Navigation.Navigation navigation = null)
         {
             SageGame = game;
             Definition = GameDefinition.FromGame(game);
@@ -178,7 +178,7 @@ public abstract class MockedGameTest : IDisposable
             // (modules resolve audio through IGameEngine.AudioSystem, not IGame.Audio).
             Configuration = new Configuration { NoAudio = true };
             Audio = new AudioSystem(this);
-            GameEngine = new GameEngine(AssetStore.LoadContext, Audio, null, null, null, null, null, null, Scene3D, this);
+            GameEngine = new GameEngine(AssetStore.LoadContext, Audio, null, null, null, navigation, null, null, Scene3D, this);
             var stubAudioRef = new LazyAssetReference<BaseAudioEventInfo>(new AudioEvent());
             var miscAudio = AssetStore.MiscAudio.Current;
             typeof(MiscAudio)
