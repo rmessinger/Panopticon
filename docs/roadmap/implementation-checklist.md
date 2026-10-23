@@ -1856,7 +1856,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 [plan](implementation/track-n-pathfinding-performance.md).
 
 ### N0: Path cost baseline
-- [ ] N0-1 `path` span and request counters by origin. (`WI-N0-01`)
+- [x] N0-1 `path` span and request counters by origin. (`WI-N0-01`)
   - AC: B1 records carry the `path` span, per-origin request counts, nodes expanded, and failed
     searches; synchronous per-origin counts sum to `PathRequestCount`; waypoints unchanged.
 - [ ] N0-2 `PathfindingLoad` scenario and baseline report. (`WI-N0-02`)

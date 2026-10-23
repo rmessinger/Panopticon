@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N0-02` |
 | Roadmap phase | [N0](../../track-n-pathfinding-performance.md): Path cost baseline |
-| Status | `Blocked` (on `WI-N0-01`) |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-N0-01` |

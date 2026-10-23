@@ -54,12 +54,13 @@ public class BenchmarkMetricRecorderTests : MockedGameTest
         });
 
         // GameLogic is always present on the mocked game; network is optional (null in the
-        // mock), so the span set is gameLogic/ai/scene3d/partition at minimum. WI-M4-02:
-        // "ai" is the nested decision-time span LogicStepper emits after gameLogic.
+        // mock), so the span set is gameLogic/ai/path/scene3d/partition at minimum. WI-M4-02:
+        // "ai" is the nested decision-time span LogicStepper emits after gameLogic. WI-N0-01:
+        // "path" is the logic-thread path-search span emitted after ai.
         var systems = recorder.SystemSamples.Select(s => s.System).ToHashSet();
         Assert.Contains("gameLogic", systems);
         Assert.Subset(
-            new System.Collections.Generic.HashSet<string> { "gameLogic", "ai", "network", "scene3d", "partition" },
+            new System.Collections.Generic.HashSet<string> { "gameLogic", "ai", "path", "network", "scene3d", "partition" },
             systems);
     }
 

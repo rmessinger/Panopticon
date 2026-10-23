@@ -73,7 +73,7 @@ public static class GroupMovement
             }
         }
 
-        var path = navigation.CalculatePath(leader.Translation, destination, out var endIsPassable);
+        var path = navigation.CalculatePath(leader.Translation, destination, out var endIsPassable, PathRequestOrigin.SquadLeader);
         if (path.Count == 0)
         {
             return;
@@ -102,7 +102,7 @@ public static class GroupMovement
             {
                 // Blocked follower: retrace is impossible, so this member pays for its own path.
                 BlockedFollowerCount++;
-                var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable);
+                var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
                 if (fallback.Count > 0)
                 {
                     AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
