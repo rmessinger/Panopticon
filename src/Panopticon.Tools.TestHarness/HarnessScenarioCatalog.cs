@@ -43,14 +43,15 @@ internal static class HarnessScenarioCatalog
     {
         var id = scenario.ToString();
         var category = id.StartsWith("Alpine", StringComparison.Ordinal) ? HarnessScenarioCategory.Replay
-            : id.StartsWith("MassBattle", StringComparison.Ordinal) || id == nameof(BuiltInScenario.RenderingScaleProbe) ? HarnessScenarioCategory.MassBattle
+            : id.StartsWith("MassBattle", StringComparison.Ordinal) || id == nameof(BuiltInScenario.RenderingScaleProbe) || id == nameof(BuiltInScenario.PathfindingLoad) ? HarnessScenarioCategory.MassBattle
             : id == nameof(BuiltInScenario.UnitValidationGround) ? HarnessScenarioCategory.ValidationGround
             : id is nameof(BuiltInScenario.EngagementCapture) or nameof(BuiltInScenario.ScenarioCapture) ? HarnessScenarioCategory.Capture
             : id == nameof(BuiltInScenario.PhysicsStack) ? HarnessScenarioCategory.Physics : HarnessScenarioCategory.Proof;
         var headlessOnly = scenario is BuiltInScenario.EngagementCapture or BuiltInScenario.ScenarioCapture or BuiltInScenario.VisualRegression or BuiltInScenario.PhysicsStack
             or BuiltInScenario.PbrMaterialProof or BuiltInScenario.GltfRuntimeProof or BuiltInScenario.Ee2NifProof
             or BuiltInScenario.Ee2PropertyProof or BuiltInScenario.Ee2ScaleProof or BuiltInScenario.Ee2MorphProof
-            or BuiltInScenario.Ee2ParticleProof or BuiltInScenario.Ee2LegacyKfProof or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake;
+            or BuiltInScenario.Ee2ParticleProof or BuiltInScenario.Ee2LegacyKfProof or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake
+            or BuiltInScenario.PathfindingLoad;
         var profiles = scenario == BuiltInScenario.ScenarioCapture ? CaptureProfileLoader.EmbeddedCaptureProfileNames().ToArray()
             : scenario is BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake ? new[] { "vr-terrain-grazing.json", "vr-terrain-default.json" } : [];
         var input = scenario is BuiltInScenario.ScenarioCapture or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake ? HarnessProfileInput.FileOrEmbedded
@@ -78,6 +79,7 @@ internal static class HarnessScenarioCatalog
             BuiltInScenario.TerrainTextureBake => "Build offline-prefiltered terrain mip data without a GPU.",
             BuiltInScenario.PhysicsStack => "Verify physics settling and scatter bounds.",
             BuiltInScenario.RenderingScaleProbe => "Measure rendering cost for a repeated-model field.",
+            BuiltInScenario.PathfindingLoad => "Measure multi-unit order pathfinding cost by case.",
             _ => $"Capture and validate {id.Replace("Proof", string.Empty, StringComparison.Ordinal)} rendering features.",
         };
         return new HarnessScenarioDescriptor(id, category, summary, headlessOnly ? HarnessRunModes.Headless : HarnessRunModes.Headless | HarnessRunModes.Windowed, input, profiles, codes, index);

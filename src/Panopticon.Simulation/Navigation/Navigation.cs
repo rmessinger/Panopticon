@@ -113,6 +113,12 @@ public class Navigation
     /// <summary>Point-in-time snapshot of the navigation statistics (WI-N0-01).</summary>
     public PathStatistics Statistics => _statistics.Snapshot();
 
+    /// <summary>Search-grid width in cells; reported by pathfinding-load scenarios.</summary>
+    public int GridWidth => _graph.Width;
+
+    /// <summary>Search-grid height in cells; reported by pathfinding-load scenarios.</summary>
+    public int GridHeight => _graph.Height;
+
     // Shared search core (WI-B4-05): the synchronous CalculatePath and the async path worker
     // both run this against a graph. Workers pass a submission-time snapshot because
     // UpdateAreaPassability mutates the live graph on the logic thread.
