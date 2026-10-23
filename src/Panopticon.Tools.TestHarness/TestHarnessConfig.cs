@@ -362,4 +362,19 @@ public sealed class TestHarnessConfig
     /// </summary>
     [HarnessParameter("MassBattle", "MassBattleBatchVariant.", nameof(BuiltInScenario.MassBattleBatch))]
     public string? MassBattleBatchVariant { get; set; } = null;
+
+    /// <summary>Deployment profile to run against; empty uses the capacity-probe profile.</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadProfilePath.", nameof(BuiltInScenario.PathfindingLoad))]
+    public string? PathfindingLoadProfilePath { get; set; } = null;
+
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadReportPath.", nameof(BuiltInScenario.PathfindingLoad))]
+    public string? PathfindingLoadReportPath { get; set; } = null;
+
+    /// <summary>Seed for the run (default 1).</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadSeed.", nameof(BuiltInScenario.PathfindingLoad))]
+    public int PathfindingLoadSeed { get; set; } = 1;
+
+    /// <summary>Selection sizes measured per mode, largest last (default 1, 10, 100, 1000).</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadSelectionSizes.", nameof(BuiltInScenario.PathfindingLoad))]
+    public int[]? PathfindingLoadSelectionSizes { get; set; } = null;
 }

@@ -1859,7 +1859,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 - [x] N0-1 `path` span and request counters by origin. (`WI-N0-01`)
   - AC: B1 records carry the `path` span, per-origin request counts, nodes expanded, and failed
     searches; synchronous per-origin counts sum to `PathRequestCount`; waypoints unchanged.
-- [ ] N0-2 `PathfindingLoad` scenario and baseline report. (`WI-N0-02`)
+- [x] N0-2 `PathfindingLoad` scenario and baseline report. (`WI-N0-02`)
   - AC: selections of 1 to 1000 units (squad-less and squads), an unreachable case, and the M4
     army-AI probe are recorded; the report names the dominant origin and a verdict per budget.
 
