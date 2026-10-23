@@ -35,6 +35,101 @@ public class MassBattleCapacityProbeScenarioTests
     }
 
     [GameFact(SageGame.CncGenerals)]
+    public void AttackMove_StaggersRepeatSearchesButAcquiresImmediatelyOnNewOrders()
+    {
+        Platform.Start();
+        try
+        {
+            using var game = new Game(
+                InstalledFilesTestData.GetInstallation(SageGame.CncGenerals), null,
+                new Configuration { NoAudio = true, SkipStartingBuildings = true }, null);
+            PlayerSetting[] players =
+            [
+                new(0, "FactionAmerica", new ColorRgb(255, 0, 0), 0, PlayerOwner.EasyAi, "Red"),
+                new(1, "FactionAmerica", new ColorRgb(0, 0, 255), 1, PlayerOwner.EasyAi, "Blue"),
+            ];
+            game.StartSkirmishOrMultiPlayerGame(
+                "maps/alpine assault/alpine assault.map", new EchoConnection(), players, 1, isMultiPlayer: false);
+            game.StartRun();
+            game.EnableFixedLogicTimestep();
+            game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
+            foreach (var player in game.Scene3D.Players)
+            {
+                player.DisableAI();
+            }
+
+            var scene = game.Scene3D;
+            var definition = game.AssetStore.ObjectDefinitions.GetByName("AmericaInfantryRanger");
+            var units = Enumerable.Range(0, 2).Select(index =>
+            {
+                var unit = scene.GameObjects.CreateObject(definition, scene.Players[2]);
+                unit.UpdateTransform(new Vector3(600, 600 + index * 20, 0), null);
+                unit.UpdateColliders();
+                return unit;
+            }).ToArray();
+            var frame = game.GameEngine.GameLogic.CurrentFrame.Value;
+            var interval = AIUpdate.AttackMoveSearchIntervalFrames;
+            var dueFrames = units.Select(unit => frame + interval - (frame + interval - unit.Id.Index % interval) % interval).ToArray();
+            Assert.NotEqual(dueFrames[0], dueFrames[1]);
+            foreach (var unit in units)
+            {
+                unit.AIUpdate!.SetTargetPoint(unit.Translation + new Vector3(400, 0, 0));
+                unit.AIUpdate!.ConfigureAttackMove(true);
+                unit.AIUpdate.Update();
+                Assert.Null(unit.CurrentWeapon!.CurrentTarget);
+            }
+
+            var enemy = scene.GameObjects.CreateObject(definition, scene.Players[3]);
+            enemy.UpdateTransform(new Vector3(650, 600, 0), null);
+            enemy.UpdateColliders();
+            enemy.BodyModule.SetMaxHealth(10000f, MaxHealthChangeType.FullyHeal);
+            foreach (var unit in units)
+            {
+                unit.AIUpdate!.Update();
+                Assert.Null(unit.CurrentWeapon!.CurrentTarget);
+            }
+
+            for (var tick = 0; tick < interval; tick++)
+            {
+                game.Update([]);
+                for (var index = 0; index < units.Length; index++)
+                {
+                    var unit = units[index];
+                    unit.AIUpdate!.Update();
+                    var due = game.GameEngine.GameLogic.CurrentFrame.Value >= dueFrames[index];
+                    Assert.Equal(due, unit.CurrentWeapon!.HasValidTarget);
+                    if (due)
+                    {
+                        Assert.Equal(enemy.Id, unit.CurrentWeapon.CurrentTarget.TargetObjectId);
+                    }
+                }
+            }
+
+            enemy.Kill();
+            Assert.True(enemy.IsEffectivelyDead);
+            foreach (var unit in units)
+            {
+                unit.AIUpdate!.Update();
+                Assert.Null(unit.CurrentWeapon!.CurrentTarget);
+            }
+
+            var replacement = scene.GameObjects.CreateObject(definition, scene.Players[3]);
+            replacement.UpdateTransform(new Vector3(650, 600, 0), null);
+            replacement.UpdateColliders();
+            foreach (var unit in units)
+            {
+                unit.AIUpdate!.ConfigureAttackMove(true);
+                unit.AIUpdate.Update();
+                Assert.Equal(replacement.Id, unit.CurrentWeapon.CurrentTarget.TargetObjectId);
+            }
+        }
+        finally
+        {
+            Platform.Stop();
+        }
+    }
+
+    [GameFact(SageGame.CncGenerals)]
     public void AttackMove_HoldsInRangeAndResumesForBothSides_WhileMoveToKeepsAdvancing()
     {
         Platform.Start();

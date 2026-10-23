@@ -16,7 +16,16 @@ public class QuadtreeTests
         public readonly int Id;
         public Collider? Collider { get; set; }
 
-        public Collider RoughCollider { get; }
+        private readonly Collider _roughCollider;
+        public int RoughColliderReads { get; set; }
+        public Collider RoughCollider
+        {
+            get
+            {
+                RoughColliderReads++;
+                return _roughCollider;
+            }
+        }
 
         public List<Collider> Colliders { get; }
 
@@ -26,7 +35,7 @@ public class QuadtreeTests
         {
             Id = id;
             var collider = new BoxCollider(bounds);
-            RoughCollider = collider;
+            _roughCollider = collider;
             Colliders = new List<Collider> { collider };
         }
 
@@ -56,6 +65,31 @@ public class QuadtreeTests
 
             return false;
         }
+    }
+
+    [Fact]
+    public void FilteredNearby_RejectsCandidatesBeforeGeometryAcrossChildNodes()
+    {
+        var tree = new Quadtree<MockQuadtreeItem>(new RectangleF(0, 0, 100, 100));
+        var items = Enumerable.Range(0, 40)
+            .Select(index => new MockQuadtreeItem(index, new RectangleF(10 + index, 10, 1, 1)))
+            .ToArray();
+        foreach (var item in items)
+        {
+            tree.Insert(item);
+        }
+
+        var transform = new Transform(new Vector3(30, 10, 0), Quaternion.Identity);
+        var expected = tree.FindNearby(items[0], transform, 25).Where(item => item.Id % 2 == 0).ToArray();
+        foreach (var item in items)
+        {
+            item.RoughColliderReads = 0;
+        }
+
+        var actual = tree.FindNearby(items[0], transform, 25, item => item.Id % 2 == 0).ToArray();
+
+        Assert.Equal(expected, actual);
+        Assert.All(items.Where(item => item.Id % 2 != 0), item => Assert.Equal(0, item.RoughColliderReads));
     }
 
     [Fact]

@@ -35,7 +35,8 @@ public sealed class PartitionCellManager : IPersistableObject
     // counter and generation stamp implement pair-once delivery (see Update).
     private readonly List<(PartitionObject First, PartitionObject Second)> _collisionPairs = new();
     private readonly List<PartitionCell> _cellScratch = new();
-    private readonly List<PartitionCell> _groundFootprintCells = new();
+    private readonly GroundFootprintIndex _groundFootprints;
+    private readonly List<PartitionObject> _groundFootprintCandidates = new();
     // WI-B4-02 bookkeeping. Pass and generation counters start at one so freshly constructed
     // objects (whose long fields default to zero) never match a current pass or generation.
     private long _generation = 1;
@@ -49,6 +50,8 @@ public sealed class PartitionCellManager : IPersistableObject
 
     public float PartitionCellSize => _partitionCellSize;
 
+    internal int LastGroundFootprintCandidateCount => _groundFootprintCandidates.Count;
+
     public int NumCellsX => _numCellsX;
 
     public int NumCellsY => _numCellsY;
@@ -59,6 +62,7 @@ public sealed class PartitionCellManager : IPersistableObject
     {
         _game = game;
         _partitionCellSize = game.AssetStore.GameData.Current.PartitionCellSize;
+        _groundFootprints = new GroundFootprintIndex(_partitionCellSize);
     }
 
     // Game-free construction for install-free tests and headless benchmarks: the same cell grid
@@ -66,6 +70,7 @@ public sealed class PartitionCellManager : IPersistableObject
     internal PartitionCellManager(float partitionCellSize, int numCellsX, int numCellsY)
     {
         _partitionCellSize = partitionCellSize;
+        _groundFootprints = new GroundFootprintIndex(_partitionCellSize);
         _numCellsX = numCellsX;
         _numCellsY = numCellsY;
         _terrainBoundary = Rectangle.FromCorners(new Point2D(0, 0), new Point2D(0, 0));
@@ -119,6 +124,7 @@ public sealed class PartitionCellManager : IPersistableObject
 
         _objects.Add(partitionObject);
         _dirtyObjects.Add(partitionObject);
+        _groundFootprints.Add(partitionObject);
         partitionObject.SequenceNumber = _nextObjectSequence++;
 
         gameObject.PartitionObject = partitionObject;
@@ -128,11 +134,13 @@ public sealed class PartitionCellManager : IPersistableObject
     {
         _objects.Remove(partitionObject);
         _dirtyObjects.Remove(partitionObject);
+        _groundFootprints.Remove(partitionObject);
     }
 
     internal void SetDirty(PartitionObject partitionObject)
     {
         _dirtyObjects.Add(partitionObject);
+        _groundFootprints.Update(partitionObject);
     }
 
     public void Update()
@@ -234,6 +242,7 @@ public sealed class PartitionCellManager : IPersistableObject
 
     internal bool GroundFootprintFits(GameObject obj, Vector2 destination)
     {
+        _groundFootprintCandidates.Clear();
         var start = obj.Translation.Vector2XY();
         if (Vector2.DistanceSquared(start, destination) < 0.000001f)
         {
@@ -241,21 +250,8 @@ public sealed class PartitionCellManager : IPersistableObject
         }
 
         var radius = obj.Geometry.BoundingCircleRadius;
-        var midpoint = (start + destination) * 0.5f;
-        CollectCells(midpoint, radius + 2.5f + Vector2.Distance(start, destination) * 0.5f, _groundFootprintCells);
-        foreach (var cell in _groundFootprintCells)
-        {
-            foreach (var candidate in cell.Objects)
-            {
-                if (BlocksGroundAdvance(candidate.GameObject))
-                {
-                    return false;
-                }
-            }
-        }
-
-        // Transforms change before partition membership is rebuilt, including new spawns.
-        foreach (var candidate in _dirtyObjects)
+        _groundFootprints.Collect(start, destination, radius + 2.5f, _groundFootprintCandidates);
+        foreach (var candidate in _groundFootprintCandidates)
         {
             if (BlocksGroundAdvance(candidate.GameObject))
             {
@@ -275,13 +271,13 @@ public sealed class PartitionCellManager : IPersistableObject
             }
 
             var position = other.Translation;
-            if (position.Z - other.GameEngine.Game.TerrainLogic.GetLayerHeight(position.X, position.Y, other.Layer) > 0.1f)
+            if (!GroundFootprint.BlocksAdvance(start, destination, position.Vector2XY(),
+                radius + other.Geometry.BoundingCircleRadius + 2.5f))
             {
                 return false;
             }
 
-            return GroundFootprint.BlocksAdvance(start, destination, other.Translation.Vector2XY(),
-                radius + other.Geometry.BoundingCircleRadius + 2.5f);
+            return position.Z - other.GameEngine.Game.TerrainLogic.GetLayerHeight(position.X, position.Y, other.Layer) <= 0.1f;
         }
     }
 

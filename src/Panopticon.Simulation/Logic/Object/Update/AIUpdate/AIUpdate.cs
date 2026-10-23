@@ -37,6 +37,9 @@ public class AIUpdate : UpdateModule
 
     private Vector3? _targetDirection;
     private bool _ignoreWeaponTargetForMovement;
+    internal const uint AttackMoveSearchIntervalFrames = 10;
+    private readonly Predicate<GameObject> _attackMoveCandidateFilter;
+    private uint _nextAttackMoveSearchFrame;
 
     private uint _priorWaypointId;
     private uint _currentWaypointId;
@@ -127,6 +130,7 @@ public class AIUpdate : UpdateModule
     internal AIUpdate(GameObject gameObject, IGameEngine gameEngine, AIUpdateModuleData moduleData)
         : base(gameObject, gameEngine)
     {
+        _attackMoveCandidateFilter = IsAttackMoveCandidate;
         ModuleData = moduleData;
 
         TargetPoints = new List<Vector3>();
@@ -285,6 +289,7 @@ public class AIUpdate : UpdateModule
     {
         // Aircraft retain their specialized taxi, takeoff, and attack movement.
         _isAttackPath = enabled && this is not JetAIUpdate;
+        _nextAttackMoveSearchFrame = 0;
         _ignoreWeaponTargetForMovement = !enabled;
     }
 
@@ -303,7 +308,7 @@ public class AIUpdate : UpdateModule
         }
 
         if (weapon.CurrentTarget?.TargetType == WeaponTargetType.Object
-            && weapon.CurrentTarget.GetTargetObject()?.IsEffectivelyDead == true)
+            && (weapon.CurrentTarget.IsDestroyed || weapon.CurrentTarget.GetTargetObject()?.IsEffectivelyDead == true))
         {
             weapon.SetTarget(null);
         }
@@ -313,6 +318,17 @@ public class AIUpdate : UpdateModule
             return;
         }
 
+        var frame = GameEngine.GameLogic.CurrentFrame.Value;
+        if (frame < _nextAttackMoveSearchFrame)
+        {
+            return;
+        }
+
+        // Align repeat scans to a stable per-object phase instead of synchronizing the army.
+        var phase = GameObject.Id.Index % AttackMoveSearchIntervalFrames;
+        _nextAttackMoveSearchFrame = frame + AttackMoveSearchIntervalFrames
+            - (frame + AttackMoveSearchIntervalFrames - phase) % AttackMoveSearchIntervalFrames;
+
         GameObject nearest = null;
         var nearestDistance = float.MaxValue;
         var enemies = GameObject.Owner?.Enemies;
@@ -321,16 +337,9 @@ public class AIUpdate : UpdateModule
             return;
         }
 
-        var antiMask = weapon.Template.AntiMask;
         var translation = GameObject.Translation;
-        foreach (var candidate in GameEngine.Quadtree.FindNearby(GameObject, GameObject.Transform, weapon.Template.AttackRange))
+        foreach (var candidate in GameEngine.Quadtree.FindNearby(GameObject, GameObject.Transform, weapon.Template.AttackRange, _attackMoveCandidateFilter))
         {
-            if (candidate.IsEffectivelyDead || candidate.Owner == null || !enemies.Contains(candidate.Owner)
-                || !antiMask.CanAttackObject(candidate))
-            {
-                continue;
-            }
-
             var distance = Vector3.DistanceSquared(translation, candidate.Translation);
             if (distance < nearestDistance && weapon.IsObjectInRange(candidate))
             {
@@ -344,6 +353,11 @@ public class AIUpdate : UpdateModule
             weapon.SetTarget(new WeaponTarget(GameEngine.Scene3D.GameObjects, nearest.Id));
         }
     }
+
+    private bool IsAttackMoveCandidate(GameObject candidate) => !candidate.IsEffectivelyDead
+        && candidate.Owner != null
+        && GameObject.Owner?.Enemies.Contains(candidate.Owner) == true
+        && GameObject.CurrentWeapon.Template.AntiMask.CanAttackObject(candidate);
 
     internal void FollowWaypoints(IEnumerable<Vector3> waypoints)
     {

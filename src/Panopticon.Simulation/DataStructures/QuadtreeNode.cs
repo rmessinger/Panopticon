@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Logic.Object;
@@ -32,7 +33,7 @@ public class QuadtreeNode<T> where T : class, ICollidable
         _data = new HashSet<T>(maxItemsPerNode);
     }
 
-    public IEnumerable<T> Find(Collider collider, T? searcher, bool twoDimensional, bool hasToCollideWithSearcher)
+    public IEnumerable<T> Find(Collider collider, T? searcher, bool twoDimensional, bool hasToCollideWithSearcher, Predicate<T>? candidateFilter = null)
     {
         if (_hasChildren)
         {
@@ -45,7 +46,7 @@ public class QuadtreeNode<T> where T : class, ICollidable
 
                 // Child results already passed the identical CollidesPrecise predicate at their
                 // owning node; re-testing here would repeat the precise test once per level.
-                foreach (var subChild in child.Find(collider, searcher, twoDimensional, hasToCollideWithSearcher))
+                foreach (var subChild in child.Find(collider, searcher, twoDimensional, hasToCollideWithSearcher, candidateFilter))
                 {
                     yield return subChild;
                 }
@@ -54,6 +55,11 @@ public class QuadtreeNode<T> where T : class, ICollidable
 
         foreach (var data in _data)
         {
+            if (candidateFilter != null && !candidateFilter(data))
+            {
+                continue;
+            }
+
             if (!collider.Intersects(data.RoughCollider.AxisAlignedBoundingArea))
             {
                 continue;
