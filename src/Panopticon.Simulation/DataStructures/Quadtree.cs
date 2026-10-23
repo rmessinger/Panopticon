@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -21,6 +22,12 @@ public sealed class Quadtree<T> : IQuadtree<T> where T : class, ICollidable
     }
 
     public IEnumerable<T> FindNearby(T obj, Transform transform, float radius) => Find(new SphereCollider(transform, radius), obj, true, false);
+
+    public IEnumerable<T> FindNearby(T obj, Transform transform, float radius, Predicate<T> candidateFilter)
+    {
+        var collider = new SphereCollider(transform, radius);
+        return !collider.Intersects(Bounds) ? [] : _rootNode.Find(collider, obj, true, false, candidateFilter);
+    }
 
     public IEnumerable<T> FindIntersecting(in RectangleF bounds) => FindIntersecting(new BoxCollider(bounds));
 
