@@ -47,4 +47,29 @@ public class GraphTest
         var result = graph.Search(start, end);
         Assert.Null(result);
     }
+
+    // WI-N0-01: Search reports how many nodes it expanded so Navigation can attribute search
+    // volume; a disconnected goal still floods its region, which is exactly the cost the
+    // counter must make visible.
+    [Fact]
+    public void Search_CountsExpandedNodes()
+    {
+        var graph = new Graph(100, 100);
+        Assert.Equal(0, graph.SearchNodesExpanded);
+
+        var start = graph.GetNode(10, 10);
+        var end = graph.GetNode(90, 90);
+
+        graph.Search(start, end);
+        var expandedAfterReachable = graph.SearchNodesExpanded;
+        Assert.True(expandedAfterReachable > 0);
+
+        for (int i = 0; i < 100; i++)
+        {
+            graph.GetNode(50, i).Passability = Passability.Impassable;
+        }
+
+        Assert.Null(graph.Search(start, end));
+        Assert.True(graph.SearchNodesExpanded > expandedAfterReachable);
+    }
 }
