@@ -9,8 +9,8 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 |---|---|---|---|---|
 | [`WI-N0-01`](../agent/cards/WI-N0-01-path-span-and-counters.md) | N0 | `path` span and request counters by origin | N0-1 | Done |
 | [`WI-N0-02`](../agent/cards/WI-N0-02-pathfinding-load-scenario.md) | N0 | `PathfindingLoad` scenario and baseline report | N0-2 | Done |
-| [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Ready |
-| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Blocked |
+| [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
+| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Ready |
 | [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Blocked |
 | [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Blocked |
 | [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Blocked |
@@ -85,7 +85,23 @@ those ticks, so per-tick request counter medians are 0 by construction and span 
 
 ## WI-N1 results
 
-Pending.
+WI-N1-01, allocation-free search scratch, measured by the `PathCorpusSearch` benchmark: one
+invocation = one pass over the 31-case path-equality corpus (deepdivide grid 656x460).
+Per-search values divide by 31.
+
+| Version | Corpus pass | Per search | Allocated per pass |
+|---|---|---|---|
+| Before (HashSet visited, per-call route) | 284.9 ms | 9.19 ms | 91.93 KB (2.97 KB per search) |
+| After (generation stamp, scratch route) | 180.3 ms | 5.82 ms | 0 |
+
+Time drops 37%, steady-state managed allocation per search is zero apart from the returned
+waypoint list (the queue copies it once per async request under the lock). The corpus waypoint
+lists are byte-identical before and after; the corpus lives at
+`test/Panopticon.Simulation.Tests/Navigation/PathEqualityCorpus.json` with an Interactive
+regeneration check (`RegeneratedCorpus_MatchesTheCommittedFixture`, deliberate regeneration via
+`PANOPTICON_PATH_CORPUS_OUTPUT`). Deepdivide's passable region is a single connected component,
+so the unreachable and diagonal-gap corpus categories are empty by construction; those shapes
+are covered by the synthetic wall cases in `GraphTest`.
 
 ## WI-N2 results
 

@@ -38,6 +38,10 @@ public sealed class PathRequestQueue
 
     private readonly Navigation _navigation;
     private readonly int _maxCompletionFrames;
+
+    // Worker-thread search scratch (WI-N1-01): reused across requests; Waypoints copies out
+    // under the lock, which stays the single per-request allocation.
+    private readonly List<Vector3> _waypointBuffer = new();
     private readonly object _gate = new();
     private readonly List<PathRequest> _requests = [];
     private readonly Queue<PathRequest> _work = [];
@@ -296,12 +300,12 @@ public sealed class PathRequestQueue
             }
 
             var searchStart = System.Diagnostics.Stopwatch.GetTimestamp();
-            var waypoints = _navigation.ComputePath(request.Snapshot, request.Start, request.End, out var endIsPassable);
+            _navigation.ComputePath(request.Snapshot, request.Start, request.End, out var endIsPassable, _waypointBuffer);
             _navigation.AddAsyncSearchMeasurement(System.Diagnostics.Stopwatch.GetTimestamp() - searchStart);
 
             lock (_gate)
             {
-                request.Waypoints = [.. waypoints];
+                request.Waypoints = [.. _waypointBuffer];
                 request.EndIsPassable = endIsPassable;
                 request.State = PathRequestState.Completed;
                 _completedCount++;
