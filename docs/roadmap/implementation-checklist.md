@@ -1870,7 +1870,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 - [x] N1-2 Connected-region labels. (`WI-N1-02`)
   - AC: corpus identical including diagonal-only gaps; unreachable requests expand 0 nodes;
     labels update after passability changes; relabel time recorded.
-- [ ] N1-3 Versioned passability snapshot. (`WI-N1-03`)
+- [x] N1-3 Versioned passability snapshot. (`WI-N1-03`)
   - AC: no `Node` allocation on submit in steady state; async equals synchronous on the corpus;
     B4 anchor before/after recorded.
 

@@ -232,6 +232,31 @@ public class Navigation
 
         // WI-N1-02: region labels must not outlive the passability change they describe.
         _graph.MarkRegionsDirty();
+
+        // WI-N1-03: async submissions reuse their snapshot until the version changes, so every
+        // passability mutation must bump it.
+        _passabilityVersion++;
+    }
+
+    // WI-N1-03: monotonic passability version; async path submissions snapshot cells together
+    // with this number and the worker only re-applies bytes when it changes.
+    private int _passabilityVersion = 1;
+
+    internal int PassabilityVersion => _passabilityVersion;
+
+    internal PassabilitySnapshot BuildPassabilitySnapshot()
+    {
+        var cells = new byte[_graph.Width * _graph.Height];
+
+        for (var x = 0; x < _graph.Width; x++)
+        {
+            for (var y = 0; y < _graph.Height; y++)
+            {
+                cells[x + (y * _graph.Width)] = (byte)(_graph.GetNode(x, y).IsPassable ? 1 : 0);
+            }
+        }
+
+        return new PassabilitySnapshot(_passabilityVersion, cells);
     }
 
     private PathRequestQueue _pathRequestQueue;

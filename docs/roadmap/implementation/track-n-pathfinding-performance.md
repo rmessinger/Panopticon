@@ -11,11 +11,11 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N0-02`](../agent/cards/WI-N0-02-pathfinding-load-scenario.md) | N0 | `PathfindingLoad` scenario and baseline report | N0-2 | Done |
 | [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
 | [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
-| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Ready |
-| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Blocked |
+| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
+| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Ready |
 | [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Blocked |
 | [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Blocked |
-| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Blocked |
+| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Ready |
 | [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Blocked |
 | [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Blocked |
 
@@ -126,6 +126,30 @@ endpoint resolution before the region check; its span stays at noise level (base
 rerun 0.25 ms, both 0 nodes). Reachable cases carry only the WI-N1-01 improvement:
 squadless-1000 1376.4 to 1164.9 ms, squadless-100 247.7 to 191.0 ms, armyai-squads-1000
 147.7 to 125.5 ms.
+
+WI-N1-03, versioned passability snapshots, measured by the WI-B4-06 async anchor (same knobs:
+capacity probe, deepdivide, 1000-request bursts every 300 frames, 14 bursts, bound 30, seed 1;
+the anchor now records per-burst submit allocation because bursts land between B1 tick
+windows). Before/after runs on consecutive commits of this branch:
+
+| Measurement | Before (per-tick graph clone) | After (versioned snapshot) |
+|---|---|---|
+| Burst submit allocation (median / max) | 24.42 MB / 24.55 MB | 0.28 MB / 0.63 MB |
+| Submit-to-apply wall (median / p99 / max) | 1093.3 / 2095.9 / 2166.5 ms | 1029.8 / 2007.6 / 2154.9 ms |
+| Frames waited (median / max) | 20 / 43 | 18 / 42 |
+| Deadline misses (of 14000) | 2171 | 1581 |
+
+Steady-state submits allocate no graph: the only per-version cost is the 301,760-byte cell
+array (combat mutates passability between most bursts, so a burst usually does pay one
+rebuild). The first burst also bootstraps the worker graph once (0.63 MB). Submit-to-apply
+waits are dominated by drain cadence during the contact phase, so they improve modestly while
+the submit tick's 24 MB clone and its GC pressure disappear. Semantics: requests submitted
+before a passability change compute against the old cells (`RequestsComputeAgainstSubmissionTimePassability`),
+steady-state submits allocate under 1 MB on the 656x460 grid
+(`SteadyStateSubmitsAllocateNoGraph`), and async results equal synchronous results across all
+33 corpus cases served from one shared snapshot (`PathEqualityCorpusAsyncTests`). Anchor
+artifacts: `/tmp/opencode/n1-03/` (before, before-instrumented, after reports and B1 records),
+logs under `~/log/n1-03/`.
 
 ## WI-N2 results
 
