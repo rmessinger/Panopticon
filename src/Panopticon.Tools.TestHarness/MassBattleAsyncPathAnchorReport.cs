@@ -42,6 +42,13 @@ public sealed record MassBattleAsyncPathAnchorReport
     /// <summary>Largest not-yet-terminal backlog observed right after a step.</summary>
     public long MaxOutstanding { get; init; }
 
+    /// <summary>WI-N1-03: logic-thread bytes allocated by each burst's submit calls, median
+    /// and max across bursts. Before the versioned snapshot this carried the per-burst graph
+    /// clone; after it, only request bookkeeping.</summary>
+    public double MedianBurstSubmitAllocBytes { get; init; }
+
+    public double MaxBurstSubmitAllocBytes { get; init; }
+
     public List<AsyncPathBurstSample> Bursts { get; init; } = new();
 
     public List<AsyncPathRequestSample> Samples { get; init; } = new();
@@ -63,6 +70,11 @@ public sealed record MassBattleAsyncPathAnchorReport
             report.MedianFramesWaited,
             report.MaxFramesWaited,
             report.MaxOutstanding));
+        b.AppendLine(string.Format(
+            culture,
+            "burst submit alloc: median {0:F1} MB, max {1:F1} MB",
+            report.MedianBurstSubmitAllocBytes / 1048576.0,
+            report.MaxBurstSubmitAllocBytes / 1048576.0));
         return b.ToString();
     }
 }
@@ -79,6 +91,9 @@ public sealed record AsyncPathBurstSample
     public int AppliedCount { get; init; }
 
     public long MaxOutstanding { get; init; }
+
+    /// <summary>WI-N1-03: logic-thread bytes allocated by this burst's submit calls.</summary>
+    public long SubmitAllocBytes { get; init; }
 }
 
 /// <summary>One anchor request: submit and application frames, wall latency, and result shape.</summary>

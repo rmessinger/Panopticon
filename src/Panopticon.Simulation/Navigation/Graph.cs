@@ -85,6 +85,19 @@ public class Graph
         return clone;
     }
 
+    // WI-N1-03: replaces whole-graph clones for the async worker. Cells layout matches
+    // Navigation.BuildPassabilitySnapshot (index = x + y * width, non-zero = passable).
+    internal void ApplyPassability(byte[] cells)
+    {
+        for (var x = 0; x < Width; x++)
+        {
+            for (var y = 0; y < Height; y++)
+            {
+                GetNode(x, y).Passability = cells[x + (y * Width)] != 0 ? Passability.Passable : Passability.Impassable;
+            }
+        }
+    }
+
     // Fills the reusable route scratch (WI-N1-01): the returned list is shared per graph and
     // stays valid only until the next Search on the same graph.
     private List<Node> GetPath(Node start, Node end)
