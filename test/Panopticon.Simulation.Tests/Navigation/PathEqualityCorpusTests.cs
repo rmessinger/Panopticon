@@ -35,19 +35,37 @@ public class PathEqualityCorpusTests
         {
             foreach (var pathCase in fixture.Cases)
             {
-                var route = graph.Search(
-                    graph.GetNode(pathCase.StartX, pathCase.StartY),
-                    graph.GetNode(pathCase.EndX, pathCase.EndY));
+                var startNode = graph.GetNode(pathCase.StartX, pathCase.StartY);
+                var endNode = graph.GetNode(pathCase.EndX, pathCase.EndY);
+                var route = graph.Search(startNode, endNode);
 
                 if (!pathCase.Reachable)
                 {
                     Assert.Null(route);
+
+                    if (startNode.IsPassable && endNode.IsPassable)
+                    {
+                        Assert.False(
+                            graph.Regions.SameRegion(startNode, endNode),
+                            $"{pathCase.Name}: unreachable case must not share a region.");
+                    }
+
                     continue;
                 }
 
                 Assert.NotNull(route);
                 PathOptimizer.RemoveRedundantNodes(route);
                 PathOptimizer.SmoothPath(route, graph);
+
+                // WI-N1-02: for passable endpoints the region labels must agree with the
+                // search outcome exactly; a disagreement is the deep-dive's top risk.
+                // Impassable endpoints are skipped: ComputePath adjusts them before the check.
+                if (startNode.IsPassable && endNode.IsPassable)
+                {
+                    Assert.True(
+                        graph.Regions.SameRegion(startNode, endNode),
+                        $"{pathCase.Name}: reachable case must share a region.");
+                }
 
                 Assert.True(
                     route.Count == pathCase.Waypoints.Count,
@@ -79,10 +97,14 @@ public class PathEqualityCorpusTests
         Assert.True(
             fixture.CategoryCounts.GetValueOrDefault(PathEqualityCorpus.ImpassableCategory) >= 10,
             "Corpus must contain at least 10 impassable-endpoint cases.");
+        Assert.True(
+            fixture.CategoryCounts.GetValueOrDefault(PathEqualityCorpus.UnreachableCategory) >= 1,
+            "Corpus must contain at least one unreachable case.");
 
-        // Deepdivide's passable region is one connected component, so the unreachable and
-        // diagonal-gap categories are empty by construction. Those behaviors are covered by
-        // the synthetic wall cases in GraphTest (null route, diagonal-only gap).
+        // Deepdivide's passable region is one connected component, so the corpus generator
+        // splits it with synthetic structure walls (WI-N1-02); the map alone yields no
+        // unreachable pairs. Diagonal-gap pairs remain map-dependent and stay covered by the
+        // synthetic wall cases in GraphTest.
 
         var counted = 0;
         foreach (var count in fixture.CategoryCounts.Values)

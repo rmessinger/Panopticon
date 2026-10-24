@@ -27,6 +27,15 @@ public class Graph
     /// snapshot clones on the async worker), so plain increments suffice.</summary>
     public long SearchNodesExpanded => _searchNodesExpanded;
 
+    // WI-N1-02: per-graph region labels. Snapshot clones label their own frozen passability,
+    // so worker searches never consult stale live-graph labels. Lazy: mutations before the
+    // first query never pay for a relabel.
+    private NavigationRegions _regions;
+
+    internal NavigationRegions Regions => _regions ??= new NavigationRegions(this);
+
+    internal void MarkRegionsDirty() => _regions?.MarkDirty();
+
     public Node GetNode(int x, int y)
     {
         return _nodes[x, y];

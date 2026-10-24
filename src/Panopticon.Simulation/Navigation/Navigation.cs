@@ -161,6 +161,15 @@ public class Navigation
             return;
         }
 
+        // WI-N1-02: different connected regions can never yield a route; reject without the
+        // grid-flooding search. Snapshot graphs carry their own labels, frozen at clone time.
+        if (!graph.Regions.SameRegion(startNode, endNode))
+        {
+            Logger.Warn(() => $"Graph search failed to find a path between {start} and {end}.");
+            _statistics.AddFailedSearch();
+            return;
+        }
+
         var nodesExpandedBefore = graph.SearchNodesExpanded;
         var route = graph.Search(startNode, endNode);
         _statistics.AddNodesExpanded(graph.SearchNodesExpanded - nodesExpandedBefore);
@@ -220,6 +229,9 @@ public class Navigation
                 }
             }
         }
+
+        // WI-N1-02: region labels must not outlive the passability change they describe.
+        _graph.MarkRegionsDirty();
     }
 
     private PathRequestQueue _pathRequestQueue;
