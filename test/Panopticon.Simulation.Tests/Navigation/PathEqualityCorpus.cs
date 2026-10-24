@@ -88,7 +88,10 @@ public static class PathEqualityCorpus
     }
 
     /// <summary>Builds the corpus from the given grid, mirroring the Navigation constructor's
-    /// passability mapping. Sampling is fully deterministic for a fixed grid and seed.</summary>
+    /// passability mapping. Sampling is fully deterministic for a fixed grid and seed. Since
+    /// WI-N1-02 the grid is first split by two synthetic structure walls (see
+    /// <see cref="PlaceStructureWalls"/>), encoded into the fixture bits like any other
+    /// structure, so the corpus contains real unreachable pairs.</summary>
     public static PathEqualityCorpusFixture Generate(Graph graph, string map, int seed)
     {
         var previousSmoothing = PathOptimizer.EnablePathSmoothing;
@@ -96,11 +99,32 @@ public static class PathEqualityCorpus
 
         try
         {
+            PlaceStructureWalls(graph);
             return GenerateCases(graph, map, seed);
         }
         finally
         {
             PathOptimizer.EnablePathSmoothing = previousSmoothing;
+        }
+    }
+
+    // WI-N1-02: deepdivide's passable region is one connected component, so the map alone
+    // cannot produce unreachable pairs. Two full-height walls split it into three regions;
+    // placement is fixed (seed independent) so regeneration stays deterministic.
+    private static void PlaceStructureWalls(Graph graph)
+    {
+        PlaceWall(graph, graph.Width / 3, wallThickness: 3);
+        PlaceWall(graph, 2 * graph.Width / 3, wallThickness: 3);
+    }
+
+    private static void PlaceWall(Graph graph, int x, int wallThickness)
+    {
+        for (var dx = 0; dx < wallThickness; dx++)
+        {
+            for (var y = 0; y < graph.Height; y++)
+            {
+                graph.GetNode(x + dx, y).Passability = Passability.Impassable;
+            }
         }
     }
 

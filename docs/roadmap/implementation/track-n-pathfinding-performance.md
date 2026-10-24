@@ -10,8 +10,8 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N0-01`](../agent/cards/WI-N0-01-path-span-and-counters.md) | N0 | `path` span and request counters by origin | N0-1 | Done |
 | [`WI-N0-02`](../agent/cards/WI-N0-02-pathfinding-load-scenario.md) | N0 | `PathfindingLoad` scenario and baseline report | N0-2 | Done |
 | [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
-| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Ready |
-| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Blocked |
+| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
+| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Ready |
 | [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Blocked |
 | [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Blocked |
 | [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Blocked |
@@ -99,9 +99,33 @@ waypoint list (the queue copies it once per async request under the lock). The c
 lists are byte-identical before and after; the corpus lives at
 `test/Panopticon.Simulation.Tests/Navigation/PathEqualityCorpus.json` with an Interactive
 regeneration check (`RegeneratedCorpus_MatchesTheCommittedFixture`, deliberate regeneration via
-`PANOPTICON_PATH_CORPUS_OUTPUT`). Deepdivide's passable region is a single connected component,
-so the unreachable and diagonal-gap corpus categories are empty by construction; those shapes
-are covered by the synthetic wall cases in `GraphTest`.
+`PANOPTICON_PATH_CORPUS_OUTPUT`). Diagonal-gap shapes stay covered by the synthetic wall cases
+in `GraphTest`; WI-N1-02 later regenerated the fixture with two generator walls (33 cases
+including 2 unreachable pairs) and re-verified equality.
+
+WI-N1-02, connected-region labels, measured by the `RegionRelabel` benchmark on the same M0
+grid (656x460, three regions after the corpus walls):
+
+| Benchmark | Mean | Median | Allocated |
+|---|---|---|---|
+| Relabel (MarkDirty + next SameRegion) | 11.96 ms | 11.87 ms | 0 B |
+| ColdRelabel (construct + first SameRegion) | 11.49 ms | 11.44 ms | 1.25 MB |
+| UnreachableSearchFlood (cross-region Graph.Search) | 11.65 ms | 9.20 ms | 0 B |
+
+One relabel costs about one avoided unreachable flood, so a single rejected request per dirty
+period breaks even and additional rejections are pure savings. Labeling is lazy: relabeling
+runs only on the first request after an `UpdateAreaPassability` mutation, never per request,
+and the label array is the only allocation (cold, once). Guardrail verdict: relabeling does
+not cost more than the floods it avoids. Corpus unreachable pairs (unreachable-01/02) now
+return the same empty result with zero nodes expanded; `NavigationRegionsTests` verifies the
+reject on a carved single-cell pocket (empty path, nodes expanded delta 0, failed search +1).
+
+PathfindingLoad rerun (seed 1, deepdivide): the map is single-region so the region check never
+rejects in-scenario and the unreachable case uses the off-map fallback, which aborts at
+endpoint resolution before the region check; its span stays at noise level (baseline 0.12 ms,
+rerun 0.25 ms, both 0 nodes). Reachable cases carry only the WI-N1-01 improvement:
+squadless-1000 1376.4 to 1164.9 ms, squadless-100 247.7 to 191.0 ms, armyai-squads-1000
+147.7 to 125.5 ms.
 
 ## WI-N2 results
 
