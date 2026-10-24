@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N1-01` |
 | Roadmap phase | [N1](../../track-n-pathfinding-performance.md): Search core efficiency |
-| Status | `Blocked` (on `WI-N0-02`) |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-N0-02` |

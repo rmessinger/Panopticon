@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N2-01` |
 | Roadmap phase | [N2](../../track-n-pathfinding-performance.md): Shared group requests |
-| Status | `Blocked` (on `WI-N1-03`) |
+| Status | `Ready` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-N1-02`, `WI-N1-03` |

@@ -3,7 +3,9 @@
 // endIsPassable), that completions apply in submission order, that cancelled and dead-requester
 // requests never apply, that identical submissions reproduce byte-identical completions, and
 // that the frame bound accounts deadline misses. Async submissions
-// never increment the synchronous PathRequestCount.
+// never increment the synchronous PathRequestCount. Since WI-N1-03 also pins that requests
+// compute against submission-time passability versions and that steady-state submits allocate
+// no graph.
 //
 // Run with: dotnet test src --filter "FullyQualifiedName~AsyncPathRequestTests"
 
@@ -17,6 +19,7 @@ using System.Threading;
 using Panopticon.Data.Map;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
+using Panopticon.Mathematics;
 using Panopticon.Navigation;
 using Panopticon.Terrain;
 using Xunit;
@@ -220,6 +223,154 @@ public class AsyncPathRequestTests : MockedGameTest
 
         Assert.Equal(0, defaultBound.AsyncPathDeadlineMisses);
     }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void RequestsComputeAgainstSubmissionTimePassability()
+    {
+        var (navigation, heightMap, start, _) = CreateNavigation();
+        var target = FindInteriorOpenTile(navigation, heightMap);
+        var targetPosition = heightMap.GetPosition(target.X, target.Y);
+
+        // Twin computed while the target tile is still passable.
+        var twin = navigation.CalculatePath(start, targetPosition, out var twinEndIsPassable);
+        Assert.True(twinEndIsPassable);
+        Assert.NotEmpty(twin);
+
+        var versionBefore = navigation.PassabilityVersion;
+        var beforeChange = navigation.SubmitPathRequest(start, targetPosition);
+
+        BlockTile(navigation, heightMap, target.X, target.Y);
+        Assert.False(navigation.IsPassable(targetPosition));
+        Assert.True(navigation.PassabilityVersion > versionBefore);
+
+        var afterChange = navigation.SubmitPathRequest(start, targetPosition);
+
+        WaitForTerminalState(beforeChange, afterChange);
+        navigation.DrainPathCompletions();
+
+        // The pre-change request still routes onto the now-blocked tile exactly like its twin.
+        Assert.True(beforeChange.TryGetResult(out var beforeWaypoints, out var beforeEndIsPassable));
+        Assert.True(beforeEndIsPassable);
+        Assert.Equal(twin.Count, beforeWaypoints.Count);
+
+        for (var i = 0; i < twin.Count; i++)
+        {
+            Assert.Equal(twin[i], beforeWaypoints[i]);
+        }
+
+        // The post-change request sees the block: nudged end, impassable flag, no arrival.
+        Assert.True(afterChange.TryGetResult(out var afterWaypoints, out var afterEndIsPassable));
+        Assert.False(afterEndIsPassable);
+        Assert.NotEmpty(afterWaypoints);
+        Assert.NotEqual((targetPosition.X, targetPosition.Y), (afterWaypoints[^1].X, afterWaypoints[^1].Y));
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SteadyStateSubmitsAllocateNoGraph()
+    {
+        var navigation = BuildCorpusNavigation();
+        var fixture = PathEqualityCorpus.Load(CorpusFixturePath);
+        var first = fixture.Cases[0];
+        var start = NodeWorld(first.StartX, first.StartY);
+        var end = NodeWorld(first.EndX, first.EndY);
+
+        // Warm the shared snapshot and the worker graph.
+        var warmup = navigation.SubmitPathRequest(start, end);
+        WaitForTerminalState(warmup);
+        navigation.DrainPathCompletions();
+
+        GC.Collect();
+        var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+
+        var handles = new List<PathRequestHandle>();
+
+        for (var i = 0; i < 50; i++)
+        {
+            handles.Add(navigation.SubmitPathRequest(start, end));
+        }
+
+        // The old implementation re-cloned the whole node graph after every drain.
+        navigation.DrainPathCompletions();
+        handles.Add(navigation.SubmitPathRequest(start, end));
+
+        WaitForCompletion(handles);
+        navigation.DrainPathCompletions();
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+
+        // A 656x460 graph clone allocates well over 20 MB; request bookkeeping is a few KB.
+        // The 1 MB bound leaves room for list growth while failing on any graph allocation.
+        Assert.True(allocated < 1_000_000, $"steady-state submits allocated {allocated} bytes");
+    }
+
+    private static (int X, int Y) FindInteriorOpenTile(NavigationClass navigation, HeightMap heightMap)
+    {
+        // The fixture map's interior is small and pocked with impassable cells, so a full
+        // 3x3 open block does not exist; a passable center with passable cardinal neighbours
+        // is enough for the block-mark and the deterministic nudge.
+        (int, int)[] cardinals = [(0, -1), (0, 1), (-1, 0), (1, 0)];
+
+        for (var y = 4; y <= heightMap.Height - 3; y++)
+        {
+            for (var x = 4; x <= heightMap.Width - 3; x++)
+            {
+                if (!navigation.IsPassable(heightMap.GetPosition(x, y)))
+                {
+                    continue;
+                }
+
+                var open = true;
+
+                foreach (var (dx, dy) in cardinals)
+                {
+                    open &= navigation.IsPassable(heightMap.GetPosition(x + dx, y + dy));
+                }
+
+                if (open)
+                {
+                    return (x, y);
+                }
+            }
+        }
+
+        Assert.Fail("No interior tile with passable cardinal neighbours on the fixture map.");
+        return default;
+    }
+
+    private static void BlockTile(NavigationClass navigation, HeightMap heightMap, int x, int y)
+    {
+        // Same collider geometry as NavigationRegionsTests: the marking loop's top-right
+        // bound is exclusive, so the rect reaches one tile past the last intended center.
+        var corner = heightMap.GetPosition(x - 1, y - 1);
+        const float tile = 10f;
+        var width = 2 * tile + 1.01f * tile;
+        var collider = new BoxCollider(new RectangleF(corner.X, corner.Y, width, width), 1000f);
+        navigation.UpdateAreaPassability(collider, false);
+    }
+
+    private static string CorpusFixturePath =>
+        Path.Combine(System.Environment.CurrentDirectory, "Navigation", "PathEqualityCorpus.json");
+
+    internal static NavigationClass BuildCorpusNavigation()
+    {
+        var fixture = PathEqualityCorpus.Load(CorpusFixturePath);
+        var tileData = BlendTileData.Create((uint)fixture.Width, (uint)fixture.Height);
+        var bits = Convert.FromBase64String(fixture.PassabilityBits);
+
+        for (var y = 0; y < fixture.Height; y++)
+        {
+            for (var x = 0; x < fixture.Width; x++)
+            {
+                var index = y * fixture.Width + x;
+                tileData.Impassability[x, y] = (bits[index / 8] & (1 << (index % 8))) != 0;
+            }
+        }
+
+        var heightMap = new HeightMap(HeightMapData.Create(0, new ushort[fixture.Width, fixture.Height]));
+        return new NavigationClass(tileData, heightMap);
+    }
+
+    internal static Vector3 NodeWorld(int x, int y) => new(x * 10f, y * 10f, 0f);
 
     private static void WaitForCompletion(IReadOnlyList<PathRequestHandle> handles)
     {

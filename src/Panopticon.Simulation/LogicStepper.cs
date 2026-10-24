@@ -128,6 +128,10 @@ public sealed class LogicStepper
             // as a nested span so per-tick totals stay attributable.
             spanSink("ai", _game.ConsumeAiDecisionSpan());
 
+            // WI-N0-01: logic-thread path searches run inside gameLogic; worker searches report
+            // through Navigation.Statistics instead of this span.
+            spanSink("path", _game.GameEngine.Navigation?.ConsumePathSpan() ?? TimeSpan.Zero);
+
             start = Stopwatch.GetTimestamp();
             _game.NetworkMessageBuffer?.Tick();
             spanSink("network", Stopwatch.GetElapsedTime(start));
@@ -147,6 +151,9 @@ public sealed class LogicStepper
 
         // WI-M4-02: keep the ai accumulator from leaking across ticks on the unmeasured path.
         _ = _game.ConsumeAiDecisionSpan();
+
+        // WI-N0-01: same for the logic-thread path accumulator.
+        _ = _game.GameEngine.Navigation?.ConsumePathSpan();
 
         _game.NetworkMessageBuffer?.Tick();
 

@@ -15,6 +15,8 @@ public class Navigation
 {
     private readonly Graph _graph;
     private readonly HeightMap _heightMap;
+    private readonly PathStatisticsAccumulator _statistics = new();
+    private long _pathSearchTicks;
 
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -87,18 +89,45 @@ public class Navigation
         return maxSteps > 0 ? currentNode : null;
     }
 
-    public IList<Vector3> CalculatePath(Vector3 start, Vector3 end, out bool endIsPassable)
+    public IList<Vector3> CalculatePath(Vector3 start, Vector3 end, out bool endIsPassable, PathRequestOrigin origin = PathRequestOrigin.Unit)
     {
         Interlocked.Increment(ref TotalPathRequests);
-        return ComputePath(_graph, start, end, out endIsPassable);
+        _statistics.AddRequest(origin);
+        var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+        // The returned list is the single per-search allocation (WI-N1-01).
+        var result = new List<Vector3>();
+        ComputePath(_graph, start, end, out endIsPassable, result);
+        _pathSearchTicks += System.Diagnostics.Stopwatch.GetTimestamp() - startTimestamp;
+        return result;
     }
+
+    /// <summary>
+    /// Logic-thread ComputePath time accumulated since the last consume (WI-N0-01), emitted by
+    /// the stepper as the nested path span. Async worker search time is excluded: it accumulates
+    /// into <see cref="PathStatistics.WorkerSearchMs"/> instead.
+    /// </summary>
+    public TimeSpan ConsumePathSpan()
+    {
+        var ticks = Interlocked.Exchange(ref _pathSearchTicks, 0);
+        return TimeSpan.FromSeconds(ticks / (double)System.Diagnostics.Stopwatch.Frequency);
+    }
+
+    /// <summary>Point-in-time snapshot of the navigation statistics (WI-N0-01).</summary>
+    public PathStatistics Statistics => _statistics.Snapshot();
+
+    /// <summary>Search-grid width in cells; reported by pathfinding-load scenarios.</summary>
+    public int GridWidth => _graph.Width;
+
+    /// <summary>Search-grid height in cells; reported by pathfinding-load scenarios.</summary>
+    public int GridHeight => _graph.Height;
 
     // Shared search core (WI-B4-05): the synchronous CalculatePath and the async path worker
     // both run this against a graph. Workers pass a submission-time snapshot because
-    // UpdateAreaPassability mutates the live graph on the logic thread.
-    internal IList<Vector3> ComputePath(Graph graph, Vector3 start, Vector3 end, out bool endIsPassable)
+    // UpdateAreaPassability mutates the live graph on the logic thread. WI-N1-01: callers
+    // supply the waypoint buffer; the core itself is allocation-free.
+    internal void ComputePath(Graph graph, Vector3 start, Vector3 end, out bool endIsPassable, List<Vector3> result)
     {
-        var result = new List<Vector3>();
+        result.Clear();
         endIsPassable = true;
         var startNode = GetClosestNode(graph, start);
         var endNode = GetClosestNode(graph, end);
@@ -107,33 +136,49 @@ public class Navigation
         // path; callers already treat an empty path as no route.
         if (startNode == null || endNode == null)
         {
-            Logger.Info("Aborting pathfinding because start and/or end are outside the graph");
-            return result;
+            Logger.Info(() => "Aborting pathfinding because start and/or end are outside the graph");
+            _statistics.AddFailedSearch();
+            return;
         }
 
         if (!startNode.IsPassable)
         {
+            _statistics.AddEndpointAdjustment();
             startNode = GetNextPassablePosition(graph, start, end);
         }
 
         if (!endNode.IsPassable)
         {
+            _statistics.AddEndpointAdjustment();
             endNode = GetNextPassablePosition(graph, end, start);
             endIsPassable = false;
         }
 
         if (startNode == null || endNode == null)
         {
-            Logger.Info("Aborting pathfinding because start and/or end are null");
-            return result;
+            Logger.Info(() => "Aborting pathfinding because start and/or end are null");
+            _statistics.AddFailedSearch();
+            return;
         }
 
+        // WI-N1-02: different connected regions can never yield a route; reject without the
+        // grid-flooding search. Snapshot graphs carry their own labels, frozen at clone time.
+        if (!graph.Regions.SameRegion(startNode, endNode))
+        {
+            Logger.Warn(() => $"Graph search failed to find a path between {start} and {end}.");
+            _statistics.AddFailedSearch();
+            return;
+        }
+
+        var nodesExpandedBefore = graph.SearchNodesExpanded;
         var route = graph.Search(startNode, endNode);
+        _statistics.AddNodesExpanded(graph.SearchNodesExpanded - nodesExpandedBefore);
 
         if (route == null)
         {
-            Logger.Warn($"Graph search failed to find a path between {start} and {end}.");
-            return result;
+            Logger.Warn(() => $"Graph search failed to find a path between {start} and {end}.");
+            _statistics.AddFailedSearch();
+            return;
         }
 
         PathOptimizer.RemoveRedundantNodes(route);
@@ -144,8 +189,6 @@ public class Navigation
             var pos = GetNodePosition(node);
             result.Add(new Vector3(pos.X, pos.Y, _heightMap.GetHeight(pos.X, pos.Y)));
         }
-
-        return result;
     }
 
     public void UpdateAreaPassability(GameObject gameObject, bool passable)
@@ -186,6 +229,34 @@ public class Navigation
                 }
             }
         }
+
+        // WI-N1-02: region labels must not outlive the passability change they describe.
+        _graph.MarkRegionsDirty();
+
+        // WI-N1-03: async submissions reuse their snapshot until the version changes, so every
+        // passability mutation must bump it.
+        _passabilityVersion++;
+    }
+
+    // WI-N1-03: monotonic passability version; async path submissions snapshot cells together
+    // with this number and the worker only re-applies bytes when it changes.
+    private int _passabilityVersion = 1;
+
+    internal int PassabilityVersion => _passabilityVersion;
+
+    internal PassabilitySnapshot BuildPassabilitySnapshot()
+    {
+        var cells = new byte[_graph.Width * _graph.Height];
+
+        for (var x = 0; x < _graph.Width; x++)
+        {
+            for (var y = 0; y < _graph.Height; y++)
+            {
+                cells[x + (y * _graph.Width)] = (byte)(_graph.GetNode(x, y).IsPassable ? 1 : 0);
+            }
+        }
+
+        return new PassabilitySnapshot(_passabilityVersion, cells);
     }
 
     private PathRequestQueue _pathRequestQueue;
@@ -222,6 +293,14 @@ public class Navigation
     public long AsyncPathOutstanding => _pathRequestQueue?.Outstanding ?? 0;
 
     internal Graph CloneGraphForWorker() => _graph.ClonePassability();
+
+    // WI-N0-01: the async worker reports its search volume and time; the logic-thread span
+    // (ConsumePathSpan) excludes worker time by design.
+    internal void AddAsyncSearchMeasurement(long stopwatchTicks)
+    {
+        _statistics.AddRequest(PathRequestOrigin.Async);
+        _statistics.AddWorkerSearchTicks(stopwatchTicks);
+    }
 
     public void DebugDraw(DrawingContext2D context, Camera camera)
     {

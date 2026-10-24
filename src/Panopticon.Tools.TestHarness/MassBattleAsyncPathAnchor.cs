@@ -19,7 +19,7 @@ internal sealed class MassBattleAsyncPathAnchor
 {
     private readonly NavigationGrid _navigation;
     private readonly List<Request> _requests = new();
-    private readonly List<(int Frame, long Backlog)> _bursts = new();
+    private readonly List<(int Frame, long Backlog, long SubmitAllocBytes)> _bursts = new();
     private long _maxOutstanding;
 
     public MassBattleAsyncPathAnchor(NavigationGrid navigation, int burstEveryFrames, int requestsPerBurst)
@@ -59,6 +59,10 @@ internal sealed class MassBattleAsyncPathAnchor
     {
         var burstBacklog = 0L;
 
+        // WI-N1-03: the submit path's own allocation is the before/after metric; the anchor
+        // submits between recorder tick windows, so the B1 tick samples never see it.
+        var submitAllocBefore = GC.GetAllocatedBytesForCurrentThread();
+
         foreach (var (requester, start, end) in requests)
         {
             var request = new Request
@@ -84,7 +88,7 @@ internal sealed class MassBattleAsyncPathAnchor
             burstBacklog = _navigation.AsyncPathOutstanding;
         }
 
-        _bursts.Add((frame, burstBacklog));
+        _bursts.Add((frame, burstBacklog, GC.GetAllocatedBytesForCurrentThread() - submitAllocBefore));
     }
 
     public void AfterStep()
@@ -111,8 +115,11 @@ internal sealed class MassBattleAsyncPathAnchor
                 LastAppliedFrame = _requests.Where(r => r.SubmitFrame == burst.Frame && r.AppliedFrame >= 0).Select(r => r.AppliedFrame).DefaultIfEmpty(-1).Max(),
                 AppliedCount = _requests.Count(r => r.SubmitFrame == burst.Frame && r.AppliedFrame >= 0),
                 MaxOutstanding = burst.Backlog,
+                SubmitAllocBytes = burst.SubmitAllocBytes,
             })
             .ToList();
+
+        var burstAllocs = _bursts.Select(burst => (double)burst.SubmitAllocBytes).OrderBy(v => v).ToList();
 
         return new MassBattleAsyncPathAnchorReport
         {
@@ -129,6 +136,8 @@ internal sealed class MassBattleAsyncPathAnchor
             MedianFramesWaited = Percentile(framesWaited.Select(f => (double)f).ToList(), 0.5),
             MaxFramesWaited = framesWaited.Count > 0 ? framesWaited[^1] : 0,
             MaxOutstanding = _maxOutstanding,
+            MedianBurstSubmitAllocBytes = Percentile(burstAllocs, 0.5),
+            MaxBurstSubmitAllocBytes = burstAllocs.Count > 0 ? burstAllocs[^1] : 0,
             Bursts = bursts,
             Samples = _requests
                 .Select(r => new AsyncPathRequestSample
