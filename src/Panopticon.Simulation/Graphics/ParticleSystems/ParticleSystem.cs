@@ -234,12 +234,14 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
 
     private int CalculateMaxParticles()
     {
-        // TODO: Is this right?
-        // How about IsOneShot?
         var maxLifetime = Template.SystemLifetime > 0
             ? Math.Min(Template.Lifetime.High, Template.SystemLifetime)
             : Template.Lifetime.High;
-        return (int)Template.BurstCount.High + (int)MathF.Ceiling((maxLifetime / (Template.BurstDelay.Low + 1)) * Template.BurstCount.High);
+        // Emission delays are truncated to whole ticks, and particles remain alive
+        // through their lifetime tick. Reserve complete bursts for that overlap.
+        var burstCount = (int)MathF.Ceiling(Template.BurstCount.High);
+        var burstInterval = Math.Max((int)Template.BurstDelay.Low + 1, 1);
+        return burstCount * (1 + (int)MathF.Ceiling((maxLifetime + 1) / burstInterval));
     }
 
     internal bool Update(in TimeInterval gameTime)

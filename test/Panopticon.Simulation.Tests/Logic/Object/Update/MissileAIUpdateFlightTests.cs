@@ -150,6 +150,63 @@ public class MissileAIUpdateFlightTests : IDisposable
     }
 
     [GameFact(SageGame.CncGenerals)]
+    public void TomahawkMissile_TargetRemovedBeforeDive_StillImpacts()
+    {
+        AssertTomahawkImpactsAfterTargetRemoval(removeDuringDive: false);
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void TomahawkMissile_TargetRemovedDuringDive_StillImpacts()
+    {
+        AssertTomahawkImpactsAfterTargetRemoval(removeDuringDive: true);
+    }
+
+    private void AssertTomahawkImpactsAfterTargetRemoval(bool removeDuringDive)
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600, 600, 0), scene.Players[2]);
+        var target = Spawn("AmericaInfantryRanger", new Vector3(900, 600, 0), scene.Players[3]);
+        Step(30);
+        launcher.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, target.Id));
+
+        GameObject? missile = null;
+        for (var frame = 0; frame < 300; frame++)
+        {
+            Step(1);
+            missile = scene.GameObjects.Objects.FirstOrDefault(
+                obj => obj.IsProjectile && obj.CreatedByObjectID == launcher.Id && !obj.IsEffectivelyDead);
+            if (missile == null)
+            {
+                continue;
+            }
+
+            var distance = (target.Translation - missile.Translation).Vector2XY().Length();
+            if (missile.Translation.Z > target.Translation.Z + 30
+                && (removeDuringDive ? distance < 80 : distance > 150))
+            {
+                break;
+            }
+
+            missile = null;
+        }
+
+        Assert.NotNull(missile);
+        target.Destroy();
+        launcher.CurrentWeapon.SetTarget(null);
+        Step(1);
+        Assert.True(missile!.CurrentWeapon!.CurrentTarget!.IsDestroyed);
+
+        for (var frame = 0; frame < 180 && !missile.IsDestroyed && !missile.IsEffectivelyDead; frame++)
+        {
+            Step(1);
+        }
+
+        Assert.True(missile.IsDestroyed || missile.IsEffectivelyDead,
+            $"Tomahawk kept circling after target removal at {missile.Translation}");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
     public void MissileWithoutFuel_FacesBallisticTravelDirection()
     {
         using var game = _game = CreateGame();
