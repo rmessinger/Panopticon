@@ -12,8 +12,8 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
 | [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
 | [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
-| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Ready |
-| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Blocked |
+| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Done |
+| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Ready |
 | [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Blocked |
 | [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Ready |
 | [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Blocked |
@@ -153,7 +153,63 @@ logs under `~/log/n1-03/`.
 
 ## WI-N2 results
 
-Pending.
+WI-N2-01 (follower landing). Recorded 2026-10-24, seed 1, Release builds, on the post-main-merge
+tree. All earlier N0/N1 scenario numbers in this document were Debug-build runs; the Release
+re-baseline below supersedes them for comparisons. Artifacts: `/tmp/opencode/n2-01/`, logs under
+`~/log/n2-01/`.
+
+`NavigationOptions.MaxLandingRadiusCells` default 16. Landing-ring distribution over the whole
+M4 army-AI probe (6471 landings): ring 1 4968, ring 2 1369, ring 3 7, ring 4 105, ring 5 22,
+ring 6 and beyond 0. Every observed landing sits within ring 5; the 16-cell default covers the
+distribution with headroom, and the measured default equals the shipped one.
+
+PathfindingLoad (before = base without landing, after = landing on; spans are order-tick path
+span):
+
+| Case | Before span (ms) | After span (ms) | Before requests | After requests |
+|---|---|---|---|---|
+| squadless-1 | 1.50 | 1.52 | 1 unit | 1 unit |
+| squadless-10 | 11.74 | 12.08 | 10 unit | 10 unit |
+| squadless-100 | 89.63 | 90.85 | 100 unit | 100 unit |
+| squadless-1000 | 511.44 | 573.79 | 1000 unit | 1000 unit |
+| armyai-squads-1 | 0.83 | 0.84 | 1 unit | 1 unit |
+| armyai-squads-10 | 1.45 | 1.47 | 2 leader | 2 leader |
+| armyai-squads-100 | 4.13 | 4.20 | 13 leader | 13 leader |
+| armyai-squads-1000 | 40.56 | 41.68 | 125 leader + 1 blocked follower | 125 leader + 1 landed, 0 fallback |
+| squadless-10-impassable | 0.22 | 0.22 | 10 failed | 10 failed |
+
+Squad-less cases are untouched by this card; their spread is run noise on identical request and
+node counts (squadless-1000 expands 4128233 nodes both runs). The scenario's single blocked
+follower (armyai-squads-1000) converts from a fallback search to a landing; nodes expand 434796
+to 429519. Impassable offset-retrace points (recorded, fix is a follow-up per deep dive section
+6): armyai-squads-100 2, armyai-squads-1000 130.
+
+M4 army-AI probe (4500 frames, before = post-merge base, after = landing on):
+
+| Metric | Before | After |
+|---|---|---|
+| Worst-tick path requests | 912 (248 squads + 664 blocked followers) | 253 (248 squads + 5 fallback, 662 landed) |
+| Path span, nonzero ticks, mean / median (ms) | 85.9 / 69.5 | 58.2 / 52.1 |
+| Path span, nonzero ticks, p99 / max (ms) | 242.8 / 466.6 | 167.2 / 181.1 |
+| Path span, amortized over all ticks (ms) | 1.432 | 0.970 |
+
+Budget verdicts:
+
+| Budget | Value | Before | After | Verdict |
+|---|---|---|---|---|
+| `system.path.spanMs` amortized, M4 army-AI | at or under 1.7 ms | 1.432 ms | 0.970 ms | met at Release after the change |
+| p99 on order ticks, M4 army-AI | at or under 16.7 ms | 242.8 ms | 167.2 ms | still unmet, about 10x over |
+| Full searches per squad order | at or under squads plus fallback | 912 at the worst tick | 253 = 248 squads + 5 fallback | met exactly at the worst tick |
+
+Invariants: unassigned 0 and commanderless 0 in both runs. The idle-stall check fails on the
+post-merge base itself (sideA 2 units, max idle 2404 frames) and reads differently with landing
+on (sideA 6 units, max idle 1110 frames); the base failure is attributed to merged mainline
+content, since the pre-merge N1 head passes all checks on the same probe, and both base repeats
+compare identical (the probe is deterministic per build). The landing shift changes squad
+movement and therefore combat dynamics; the recorded impassable retrace points above are the
+candidate mechanism and have a scheduled follow-up card.
+
+WI-N2-02 (group selection moves) has not started; its numbers land here when it ships.
 
 ## WI-N3-01 gate decision
 

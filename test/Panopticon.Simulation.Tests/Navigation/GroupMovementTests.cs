@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Panopticon.Data.Map;
 using Panopticon.IO;
@@ -78,6 +79,9 @@ public class GroupMovementTests : MockedGameTest
     public void SquadMove_BlockedFollowerFallsBackToItsOwnRequest()
     {
         var (navigation, heightMap, start, _) = CreateNavigation();
+        // WI-N2-01: disable the ring landing so the full-search fallback is exercised in
+        // isolation; the landing path has its own test.
+        navigation.Options.MaxLandingRadiusCells = 0;
         // Cluster the squad so the leader (nearer the map middle) is unambiguous once a
         // destination is found below.
         var leader = NewUnit(start + new Vector3(1, 1, 0));
@@ -122,10 +126,81 @@ public class GroupMovementTests : MockedGameTest
         Assert.Equal(1, stats.SquadLeaderRequests - statsBefore.SquadLeaderRequests);
         Assert.Equal(1, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
 
+        // WI-N2-01: the blocked-follower split records the fallback.
+        Assert.Equal(0, stats.LandedFollowers - statsBefore.LandedFollowers);
+        Assert.Equal(1, stats.FallbackFollowers - statsBefore.FallbackFollowers);
+
         // The blocked follower paths to the destination itself, not to its formation slot.
         var ai = follower.AIUpdate;
         Assert.True(ai.TargetPoints.Count > 0);
         Assert.Equal(destination, ai.TargetPoints[^1]);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SquadMove_BlockedFollowerLandsOnTheNearestPassableCell()
+    {
+        var (navigation, heightMap, start, _) = CreateNavigation();
+
+        // A one-tile diagonal formation offset: the follower sits exactly one tile diagonally
+        // from the leader, so its landing slot is the tile diagonally adjacent to the
+        // destination. The offset points away from the map's passable interior so the follower
+        // stays farther from matching destinations than the leader, keeping the leader
+        // unambiguous. The scan finds a destination whose slot is impassable while the
+        // destination itself stays passable.
+        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var follower = NewUnit(leader.Translation + new Vector3(-10, -10, 0));
+        var offset2D = new Vector3(-10, -10, 0);
+
+        Vector3? blockedLanding = null;
+        var destination = Vector3.Zero;
+        for (var y = 2; blockedLanding is null && y < heightMap.Height - 1; y++)
+        {
+            for (var x = 2; blockedLanding is null && x < heightMap.Width - 1; x++)
+            {
+                var candidate = heightMap.GetPosition(x, y);
+                var landing = candidate + offset2D;
+                if (!navigation.IsPassable(candidate) || navigation.IsPassable(landing))
+                {
+                    continue;
+                }
+
+                var leaderDelta = leader.Translation - candidate;
+                var followerDelta = follower.Translation - candidate;
+                var leaderDistance = leaderDelta.X * leaderDelta.X + leaderDelta.Y * leaderDelta.Y;
+                var followerDistance = followerDelta.X * followerDelta.X + followerDelta.Y * followerDelta.Y;
+                if (followerDistance > leaderDistance)
+                {
+                    blockedLanding = landing;
+                    destination = candidate;
+                }
+            }
+        }
+
+        Assert.NotNull(blockedLanding);
+
+        var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
+        FollowerLanding.ResetLandingRings();
+
+        GroupMovement.MoveSquad(navigation, new List<GameObject> { leader, follower }, destination);
+
+        // The landed follower issues no search: the leader's request is the only one.
+        Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+
+        var stats = navigation.Statistics;
+        Assert.Equal(1, stats.LandedFollowers - statsBefore.LandedFollowers);
+        Assert.Equal(0, stats.FallbackFollowers - statsBefore.FallbackFollowers);
+        Assert.Equal(0, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
+
+        // One landing recorded in the ring histogram.
+        Assert.Equal(1L, FollowerLanding.LandingRingHistogram.Sum());
+
+        // The follower retraces the leader's path length and ends on a passable cell that is
+        // not its blocked formation slot.
+        var ai = follower.AIUpdate;
+        Assert.Equal(leader.AIUpdate.TargetPoints.Count, ai.TargetPoints.Count);
+        Assert.True(navigation.IsPassable(ai.TargetPoints[^1]));
+        Assert.NotEqual(blockedLanding.Value, ai.TargetPoints[^1]);
     }
 
     [Fact, Trait("Category", "Roadmap")]

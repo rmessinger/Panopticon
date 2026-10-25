@@ -378,7 +378,31 @@ public static class PathfindingLoadRunner
 
         var statsBefore = navigation.Statistics;
         _ = navigation.ConsumePathSpan();
+
+        // WI-N2-01: attribute this order's landings and their ring distances cleanly.
+        FollowerLanding.ResetLandingRings();
         OrderProcessor.MoveUnits(navigation, sideA.Player, units, destination);
+        var landingRings = (long[])FollowerLanding.LandingRingHistogram.Clone();
+
+        // WI-N2-01: offset-shifted retrace waypoints on impassable cells, counted at order time
+        // (existing retrace behavior, reported, not fixed here).
+        var impassableRetracePoints = 0;
+        foreach (var unit in units)
+        {
+            var ai = unit.AIUpdate;
+            if (ai == null)
+            {
+                continue;
+            }
+
+            foreach (var point in ai.TargetPoints)
+            {
+                if (!navigation.IsPassable(point))
+                {
+                    impassableRetracePoints++;
+                }
+            }
+        }
 
         // First window tick emits the span of the inline order searches; the stats delta over
         // the same tick attributes the requests by origin. The order runs between ticks, so
@@ -437,6 +461,10 @@ public static class PathfindingLoadRunner
             NodesExpanded = after.NodesExpanded - statsBefore.NodesExpanded,
             FailedSearches = after.FailedSearches - statsBefore.FailedSearches,
             EndpointAdjustments = after.EndpointAdjustments - statsBefore.EndpointAdjustments,
+            LandedFollowers = after.LandedFollowers - statsBefore.LandedFollowers,
+            FallbackFollowers = after.FallbackFollowers - statsBefore.FallbackFollowers,
+            ImpassableRetracePoints = impassableRetracePoints,
+            LandingRings = landingRings,
             MeanSearchMs = windowSyncRequests > 0 ? windowSpanMs / windowSyncRequests : 0,
             P99SearchMs = perTickEstimates.Count > 0
                 ? BootstrapStatistics.Percentile([.. perTickEstimates.Order()], 0.99)
@@ -514,6 +542,9 @@ public static class PathfindingLoadRunner
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.failedSearches", [c.FailedSearches], seed));
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.meanSearchMs", [c.MeanSearchMs], seed));
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.p99SearchMs", [c.P99SearchMs], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.landedFollowers", [c.LandedFollowers], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.fallbackFollowers", [c.FallbackFollowers], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.impassableRetracePoints", [c.ImpassableRetracePoints], seed));
     }
 
     private static string? ResolveProfilePath(TestHarnessConfig config, ITestHarnessReporter reporter)

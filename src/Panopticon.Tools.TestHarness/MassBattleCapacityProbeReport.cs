@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 
@@ -134,6 +135,18 @@ public sealed record MassBattleCapacityProbeReport
                 invariant.MaxBlockedFollowersPerDecisionTick));
             b.AppendLine(string.Format(
                 culture,
+                "Blocked-follower split (WI-N2-01): max landed {0}, max fallback {1} per decision tick.",
+                invariant.MaxLandedFollowersPerDecisionTick,
+                invariant.MaxFallbackFollowersPerDecisionTick));
+            var rings = string.Join(
+                ", ",
+                invariant.LandingRingHistogram
+                    .Select((count, ring) => (ring, count))
+                    .Where(entry => entry.count > 0)
+                    .Select(entry => $"r{entry.ring} {entry.count}"));
+            b.AppendLine($"Landing rings (WI-N2-01): {(rings.Length > 0 ? rings : "none")}.");
+            b.AppendLine(string.Format(
+                culture,
                 "Idle stalls (WI-M4-06): threshold {0} frames; parked jets excluded.",
                 invariant.StallThresholdFrames));
             foreach (var side in invariant.Sides)
@@ -257,6 +270,14 @@ public sealed record MassBattleSquadInvariantReport
     public int MembersAtWorstDecisionTick { get; init; }
 
     public long MaxBlockedFollowersPerDecisionTick { get; init; }
+
+    public long MaxLandedFollowersPerDecisionTick { get; init; }
+
+    public long MaxFallbackFollowersPerDecisionTick { get; init; }
+
+    /// <summary>Landing counts by ring distance from the blocked offset destination (WI-N2-01),
+    /// the distribution behind the MaxLandingRadiusCells default.</summary>
+    public long[] LandingRingHistogram { get; init; } = [];
 
     public int StallThresholdFrames { get; init; }
 }

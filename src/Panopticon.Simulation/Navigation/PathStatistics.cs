@@ -34,6 +34,14 @@ public sealed class PathStatistics
     public long FailedSearches { get; }
     public long EndpointAdjustments { get; }
 
+    /// <summary>Blocked followers that landed through the bounded ring search and issued no
+    /// search (WI-N2-01).</summary>
+    public long LandedFollowers { get; }
+
+    /// <summary>Blocked followers whose landing failed (other region or ring bound) and paid
+    /// for their own full search (WI-N2-01); equals the BlockedFollowerRequests delta.</summary>
+    public long FallbackFollowers { get; }
+
     /// <summary>Worker-thread ComputePath time in milliseconds; logic-thread time is reported
     /// as the stepper's nested path span instead.</summary>
     public double WorkerSearchMs { get; }
@@ -47,6 +55,8 @@ public sealed class PathStatistics
         long nodesExpanded,
         long failedSearches,
         long endpointAdjustments,
+        long landedFollowers,
+        long fallbackFollowers,
         double workerSearchMs)
     {
         UnitRequests = unitRequests;
@@ -57,6 +67,8 @@ public sealed class PathStatistics
         NodesExpanded = nodesExpanded;
         FailedSearches = failedSearches;
         EndpointAdjustments = endpointAdjustments;
+        LandedFollowers = landedFollowers;
+        FallbackFollowers = fallbackFollowers;
         WorkerSearchMs = workerSearchMs;
     }
 
@@ -88,6 +100,8 @@ internal sealed class PathStatisticsAccumulator
     private long _nodesExpanded;
     private long _failedSearches;
     private long _endpointAdjustments;
+    private long _landedFollowers;
+    private long _fallbackFollowers;
     private long _workerSearchTicks;
 
     public void AddRequest(PathRequestOrigin origin)
@@ -120,6 +134,10 @@ internal sealed class PathStatisticsAccumulator
 
     public void AddEndpointAdjustment() => Interlocked.Increment(ref _endpointAdjustments);
 
+    public void AddLandedFollower() => Interlocked.Increment(ref _landedFollowers);
+
+    public void AddFallbackFollower() => Interlocked.Increment(ref _fallbackFollowers);
+
     public void AddWorkerSearchTicks(long stopwatchTicks) => Interlocked.Add(ref _workerSearchTicks, stopwatchTicks);
 
     public PathStatistics Snapshot() => new(
@@ -131,5 +149,7 @@ internal sealed class PathStatisticsAccumulator
         Interlocked.Read(ref _nodesExpanded),
         Interlocked.Read(ref _failedSearches),
         Interlocked.Read(ref _endpointAdjustments),
+        Interlocked.Read(ref _landedFollowers),
+        Interlocked.Read(ref _fallbackFollowers),
         Interlocked.Read(ref _workerSearchTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
 }

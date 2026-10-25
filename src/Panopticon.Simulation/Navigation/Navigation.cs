@@ -44,6 +44,21 @@ public class Navigation
         _heightMap = heightMap;
     }
 
+    /// <summary>Behavior knobs consulted by group movement (WI-N2-01).</summary>
+    public NavigationOptions Options { get; } = new();
+
+    internal Graph Graph => _graph;
+
+    // WI-N2-01: landing searches need graph-level access (closest cell, region labels) without
+    // going through a full path request.
+    internal Node GetNodeAt(Vector3 position) => GetClosestNode(_graph, position);
+
+    internal Vector3 GetNodeWorldPosition(Node node)
+    {
+        var pos = GetNodePosition(node);
+        return new Vector3(pos.X, pos.Y, _heightMap.GetHeight(pos.X, pos.Y));
+    }
+
     public Vector2 GetNodePosition(Node node)
     {
         var xyz = _heightMap.GetPosition(node.X, node.Y);
@@ -301,6 +316,12 @@ public class Navigation
         _statistics.AddRequest(PathRequestOrigin.Async);
         _statistics.AddWorkerSearchTicks(stopwatchTicks);
     }
+
+    // WI-N2-01: follower-landing outcomes land in the statistics snapshot beside the request
+    // counts they replace.
+    internal void AddLandedFollower() => _statistics.AddLandedFollower();
+
+    internal void AddFallbackFollower() => _statistics.AddFallbackFollower();
 
     public void DebugDraw(DrawingContext2D context, Camera camera)
     {

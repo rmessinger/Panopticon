@@ -57,6 +57,22 @@ public sealed record PathfindingLoadCaseResult
 
     public long EndpointAdjustments { get; init; }
 
+    /// <summary>Blocked followers served by the bounded ring landing; no search issued
+    /// (WI-N2-01).</summary>
+    public long LandedFollowers { get; init; }
+
+    /// <summary>Blocked followers whose landing failed and paid for their own search
+    /// (WI-N2-01).</summary>
+    public long FallbackFollowers { get; init; }
+
+    /// <summary>Offset-shifted retrace waypoints across the order that sit on impassable cells
+    /// (WI-N2-01: existing retrace behavior, recorded, not fixed here).</summary>
+    public int ImpassableRetracePoints { get; init; }
+
+    /// <summary>Landing counts by ring distance from the blocked offset destination, indexed by
+    /// ring (WI-N2-01 distribution).</summary>
+    public long[] LandingRings { get; init; } = [];
+
     public double MeanSearchMs { get; init; }
 
     public double P99SearchMs { get; init; }
@@ -108,12 +124,12 @@ public sealed record PathfindingLoadReport
         b.AppendLine($"seed {report.Seed}, grid {report.GridWidth}x{report.GridHeight}");
         b.AppendLine();
         b.AppendLine(string.Format(
-            culture, "{0,-30} {1,7} {2,6} {3,10} {4,7} {5,8} {6,10} {7,11} {8,10} {9,10}",
-            "Case", "Spawned", "Squads", "SpanMs", "Unit", "SquadL.", "BlockedF.", "Nodes", "Failed", "MeanMs"));
+            culture, "{0,-30} {1,7} {2,6} {3,10} {4,7} {5,8} {6,10} {7,7} {8,8} {9,11} {10,10} {11,8} {12,10}",
+            "Case", "Spawned", "Squads", "SpanMs", "Unit", "SquadL.", "BlockedF.", "Landed", "Fallback", "Nodes", "Failed", "ImpassTP", "MeanMs"));
         foreach (var c in report.Cases)
         {
             b.AppendLine(string.Format(
-                culture, "{0,-30} {1,7} {2,6} {3,10:0.000} {4,7} {5,8} {6,10} {7,11} {8,10} {9,10:0.000}",
+                culture, "{0,-30} {1,7} {2,6} {3,10:0.000} {4,7} {5,8} {6,10} {7,7} {8,8} {9,11} {10,10} {11,8} {12,10:0.000}",
                 c.Name,
                 c.SpawnedSize,
                 c.SquadsAtOrder,
@@ -121,8 +137,11 @@ public sealed record PathfindingLoadReport
                 c.Requests.Unit,
                 c.Requests.SquadLeader,
                 c.Requests.BlockedFollower,
+                c.LandedFollowers,
+                c.FallbackFollowers,
                 c.NodesExpanded,
                 c.FailedSearches,
+                c.ImpassableRetracePoints,
                 c.MeanSearchMs));
         }
 

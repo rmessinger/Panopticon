@@ -68,6 +68,8 @@ internal sealed class MassBattleSquadInvariantSampler
     // their own request (WI-B4-04), so the per-tick bound is squads plus blocked followers.
     private long _lastPathRequestCount;
     private long _lastBlockedFollowerCount;
+    private long _lastLandedFollowerCount;
+    private long _lastFallbackFollowerCount;
     private int _lastDecisionTicks;
     private bool _burstWindowOpen;
     private int _burstSquads;
@@ -93,6 +95,12 @@ internal sealed class MassBattleSquadInvariantSampler
     public int MembersAtWorstDecisionTick { get; private set; }
 
     public long MaxBlockedFollowersPerDecisionTick { get; private set; }
+
+    // WI-N2-01: the blocked-follower split. Landed followers issued no search; fallback
+    // followers paid for their own request.
+    public long MaxLandedFollowersPerDecisionTick { get; private set; }
+
+    public long MaxFallbackFollowersPerDecisionTick { get; private set; }
 
     public void Sample()
     {
@@ -179,6 +187,8 @@ internal sealed class MassBattleSquadInvariantSampler
     {
         var pathRequestCount = NavigationGrid.PathRequestCount;
         var blockedFollowerCount = GroupMovement.BlockedFollowerCount;
+        var landedFollowerCount = GroupMovement.LandedFollowerCount;
+        var fallbackFollowerCount = GroupMovement.FallbackFollowerCount;
 
         var decisionTicks = 0;
         foreach (var side in _sides)
@@ -208,12 +218,22 @@ internal sealed class MassBattleSquadInvariantSampler
                 MaxBlockedFollowersPerDecisionTick,
                 blockedFollowerCount - _lastBlockedFollowerCount);
 
+            MaxLandedFollowersPerDecisionTick = Math.Max(
+                MaxLandedFollowersPerDecisionTick,
+                landedFollowerCount - _lastLandedFollowerCount);
+
+            MaxFallbackFollowersPerDecisionTick = Math.Max(
+                MaxFallbackFollowersPerDecisionTick,
+                fallbackFollowerCount - _lastFallbackFollowerCount);
+
             _burstWindowOpen = false;
         }
 
         _lastDecisionTicks = decisionTicks;
         _lastPathRequestCount = pathRequestCount;
         _lastBlockedFollowerCount = blockedFollowerCount;
+        _lastLandedFollowerCount = landedFollowerCount;
+        _lastFallbackFollowerCount = fallbackFollowerCount;
     }
 
     public MassBattleSquadInvariantReport Build()
@@ -242,6 +262,9 @@ internal sealed class MassBattleSquadInvariantSampler
             SquadsAtWorstDecisionTick = SquadsAtWorstDecisionTick,
             MembersAtWorstDecisionTick = MembersAtWorstDecisionTick,
             MaxBlockedFollowersPerDecisionTick = MaxBlockedFollowersPerDecisionTick,
+            MaxLandedFollowersPerDecisionTick = MaxLandedFollowersPerDecisionTick,
+            MaxFallbackFollowersPerDecisionTick = MaxFallbackFollowersPerDecisionTick,
+            LandingRingHistogram = [.. FollowerLanding.LandingRingHistogram],
             StallThresholdFrames = StallThresholdFrames,
         };
     }

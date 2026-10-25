@@ -703,6 +703,8 @@ public static class MassBattleCapacityProbeRunner
         private readonly List<double> _nodesExpanded;
         private readonly List<double> _failedSearches;
         private readonly List<double> _endpointAdjustments;
+        private readonly List<double> _landedFollowers;
+        private readonly List<double> _fallbackFollowers;
         private readonly List<double> _workerSearchMs;
 
         public PathStatisticsDeltas(int capacity)
@@ -715,6 +717,8 @@ public static class MassBattleCapacityProbeRunner
             _nodesExpanded = new List<double>(capacity);
             _failedSearches = new List<double>(capacity);
             _endpointAdjustments = new List<double>(capacity);
+            _landedFollowers = new List<double>(capacity);
+            _fallbackFollowers = new List<double>(capacity);
             _workerSearchMs = new List<double>(capacity);
         }
 
@@ -728,6 +732,8 @@ public static class MassBattleCapacityProbeRunner
             _nodesExpanded.Add(after.NodesExpanded - before.NodesExpanded);
             _failedSearches.Add(after.FailedSearches - before.FailedSearches);
             _endpointAdjustments.Add(after.EndpointAdjustments - before.EndpointAdjustments);
+            _landedFollowers.Add(after.LandedFollowers - before.LandedFollowers);
+            _fallbackFollowers.Add(after.FallbackFollowers - before.FallbackFollowers);
             _workerSearchMs.Add(after.WorkerSearchMs - before.WorkerSearchMs);
         }
 
@@ -741,6 +747,8 @@ public static class MassBattleCapacityProbeRunner
             AddPerTickAndPerSecondStatistics(record, "path.nodesExpanded", _nodesExpanded, game);
             AddPerTickAndPerSecondStatistics(record, "path.failedSearches", _failedSearches, game);
             AddPerTickAndPerSecondStatistics(record, "path.endpointAdjustments", _endpointAdjustments, game);
+            AddPerTickAndPerSecondStatistics(record, "path.landedFollowers", _landedFollowers, game);
+            AddPerTickAndPerSecondStatistics(record, "path.fallbackFollowers", _fallbackFollowers, game);
             AddPerTickAndPerSecondStatistics(record, "path.workerSearchMs", _workerSearchMs, game);
         }
     }
