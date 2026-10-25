@@ -419,7 +419,7 @@ public sealed class OrderProcessor
                             {
                                 if (targetObject != null)
                                 {
-                                    unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
+                                    unit.AIUpdate?.SetTargetPoint(targetObject.Translation, asyncEligible: true);
                                     unit.CurrentWeapon?.SetTarget(
                                         new WeaponTarget(GameObjects, targetObject.Id));
                                 }
@@ -427,7 +427,7 @@ public sealed class OrderProcessor
                                 {
                                     // Move toward the target so the unit enters weapon range,
                                     // then the AI will auto-engage once in range.
-                                    unit.AIUpdate?.SetTargetPoint(targetPosition);
+                                    unit.AIUpdate?.SetTargetPoint(targetPosition, asyncEligible: true);
                                     unit.CurrentWeapon?.SetTarget(new WeaponTarget(targetPosition));
                                 }
                             }
@@ -729,7 +729,7 @@ public sealed class OrderProcessor
 
         foreach (var unit in remainder)
         {
-            unit.AIUpdate?.SetTargetPoint(targetPosition);
+            unit.AIUpdate?.SetTargetPoint(targetPosition, asyncEligible: true);
         }
     }
 
@@ -781,7 +781,7 @@ public sealed class OrderProcessor
 
         foreach (var unit in singles)
         {
-            unit.AIUpdate?.SetTargetPoint(targetPosition);
+            unit.AIUpdate?.SetTargetPoint(targetPosition, asyncEligible: true);
         }
     }
 

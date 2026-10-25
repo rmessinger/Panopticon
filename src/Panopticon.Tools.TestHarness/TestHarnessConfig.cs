@@ -385,4 +385,12 @@ public sealed class TestHarnessConfig
     /// <summary>WI-N2-02: position-cluster cell size in world units (default 100).</summary>
     [HarnessParameter("PathfindingLoad", "PathfindingLoadClusterCells.", nameof(BuiltInScenario.PathfindingLoad))]
     public int PathfindingLoadClusterCells { get; set; } = 100;
+
+    /// <summary>WI-N4-02: order-driven paths submit to the async worker queue (default false).</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadAsyncOrderPaths.", nameof(BuiltInScenario.PathfindingLoad))]
+    public bool PathfindingLoadAsyncOrderPaths { get; set; } = false;
+
+    /// <summary>WI-N4-02: order-driven paths submit to the async worker queue (default false).</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeAsyncOrderPaths.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
+    public bool MassBattleCapacityProbeAsyncOrderPaths { get; set; } = false;
 }

@@ -43,7 +43,7 @@ public class HackInternetAIUpdate : AIUpdate
         StateMachine.SetState(HackInternetStateIds.Unpacking);
     }
 
-    internal override void SetTargetPoint(Vector3 targetPoint)
+    internal override void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         Stop();
 
@@ -54,9 +54,12 @@ public class HackInternetAIUpdate : AIUpdate
         }
         else
         {
-            base.SetTargetPoint(targetPoint);
+            base.SetTargetPoint(targetPoint, asyncEligible);
         }
     }
+
+    // WI-N4-02: hacker workflow movement keeps synchronous paths.
+    internal override bool SupportsAsyncOrderPaths => false;
 
     internal override void Stop()
     {

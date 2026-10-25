@@ -55,6 +55,7 @@ public sealed class PathRequestQueue
     private long _cancelledCount;
     private long _appliedTotal;
     private long _deadlineMisses;
+    private readonly List<int> _waitFrameSamples = new();
 
     internal PathRequestQueue(Navigation navigation, int maxCompletionFrames)
     {
@@ -126,6 +127,16 @@ public sealed class PathRequestQueue
             {
                 return _submittedCount - _completedCount - _cancelledCount;
             }
+        }
+    }
+
+    /// <summary>WI-N4-02: waited-frames sample per applied request, in apply order. Callers
+    /// derive run-level median/p99/max wait statistics.</summary>
+    public int[] CopyWaitFrameSamples()
+    {
+        lock (_gate)
+        {
+            return [.. _waitFrameSamples];
         }
     }
 
@@ -217,6 +228,7 @@ public sealed class PathRequestQueue
                 if (request.State == PathRequestState.Completed)
                 {
                     request.State = PathRequestState.Applied;
+                    _waitFrameSamples.Add(request.WaitedFrames);
 
                     if (request.WaitedFrames > _maxCompletionFrames)
                     {

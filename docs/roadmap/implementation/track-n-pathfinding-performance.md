@@ -16,7 +16,7 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Done |
 | [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Ready |
 | [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Done |
-| [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Ready |
+| [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Done |
 | [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Blocked |
 
 Delivery: phase staging branch `staging/track-n`, numbered group PRs per the repository
@@ -238,7 +238,54 @@ Pending.
 
 ## WI-N4 results
 
-Pending.
+WI-N4-02 (async order paths). Recorded 2026-10-25, seed 1, Release builds. Off = `AsyncOrderPaths`
+false (the shipped default), on = true. Artifacts: `/tmp/opencode/n4-02/`, logs under `~/log/n4-02/`.
+
+PathfindingLoad (spans are order-tick path span; requests columns show the request mix):
+
+| Case | Off span (ms) | On span (ms) | Off requests | On async submitted |
+|---|---|---|---|---|
+| squadless-1 | 1.52 | 0.00 | 1 unit | 1 |
+| squadless-10 | 12.23 | 0.00 | 10 unit | 10 |
+| squadless-100 | 90.31 | 0.00 | 100 unit | 100 |
+| squadless-1000 | 566.43 | 0.00 | 1000 unit | 1000 |
+| armyai-squads-1 | 0.78 | 0.00 | 1 unit | 1 |
+| armyai-squads-10 | 1.41 | 0.00 | 2 leader | 2 |
+| armyai-squads-100 | 4.08 | 0.00 | 13 leader | 13 |
+| armyai-squads-1000 | 40.01 | 0.00 | 125 leader | 125 |
+| squadless-10-impassable | 0.22 | 0.00 | 10 failed | 10 |
+
+With the option on every case reports a zero logic-thread `path` span and zero synchronous requests;
+the whole run submitted 1402 async requests, applied 1317, and recorded zero deadline misses against
+the 30-frame bound, with wait frames median 12, p99 29, max 29. Worker-thread search time totalled
+974.78 ms across the run and is reported separately (`WorkerSearchMs`), not inside the logic span.
+Failed searches still surface: the impassable case reports its 10 failed searches through the async
+path. Per-case async counts above are the requests drained within the first window tick.
+
+M4 army-AI probe (4500 frames, off = same tree with the option off):
+
+| Metric | Off | On |
+|---|---|---|
+| Logic `path` span, all ticks | mean 0.980 ms, p99 52.3, max 177.3 | 0.000 ms on every tick |
+| Worst-tick synchronous path requests | 253 (248 squads + 5 fallback) | 0 |
+| Async submitted / applied / cancelled | 0 / 0 / 0 | 18689 / 18687 / 2 |
+| Wait frames, median / p99 / max | n/a | 1 / 6 / 8 |
+| Deadline misses vs 30-frame bound | n/a | 0 |
+| Idle-stall check | fail (sideA 6 units idle over 600 frames) | pass |
+
+About 18700 async submissions over 75 decision ticks match the off-run's synchronous request volume;
+the 2 cancellations are superseded orders. With the option on, the B1 per-tick async counters read
+zero because worker threads finish searches between the probe's tick snapshots; the lifetime queue
+totals above are the authoritative counts. Worker search time is not part of the M4 record (the
+probe samples per-tick only).
+
+Verdict: the WI-N4 goal is met. With `AsyncOrderPaths` on, order-tick logic-thread path span drops
+to submission cost (measured zero across every scenario and probe tick), completions land inside the
+frame bound with deadline misses 0, and the M4 stall and squad invariants hold in the on-run. The
+off-run stall failure is the same pre-existing base issue recorded under WI-N2 results:
+option-off movement still includes the N2 landing change, which shifts which units the idle check
+flags, while the on-run passes the check outright. Aircraft, dozer, supply, worker, and script
+movement stay synchronous per the guardrails; option-off behaviour is unchanged.
 
 ## WI-N5-01 verification
 

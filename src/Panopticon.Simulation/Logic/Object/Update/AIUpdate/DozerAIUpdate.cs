@@ -52,11 +52,14 @@ public sealed class DozerAIUpdate : AIUpdate, IBuilderAIUpdate
         _state.SetRepairTarget(gameObject, GameEngine.GameLogic.CurrentFrame.Value);
     }
 
-    internal override void SetTargetPoint(Vector3 targetPoint)
+    internal override void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         _state.ClearDozerTasks();
-        base.SetTargetPoint(targetPoint);
+        base.SetTargetPoint(targetPoint, asyncEligible);
     }
+
+    // WI-N4-02: dozer workflow movement keeps synchronous paths.
+    internal override bool SupportsAsyncOrderPaths => false;
 
     protected override void ArrivedAtDestination()
     {

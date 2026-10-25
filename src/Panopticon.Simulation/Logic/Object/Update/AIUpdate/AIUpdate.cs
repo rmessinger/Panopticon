@@ -201,7 +201,7 @@ public class AIUpdate : UpdateModule
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
     }
 
-    internal void AppendPathToTargetPoint(in Vector3 targetPoint, PathRequestOrigin origin = PathRequestOrigin.Unit)
+    internal void AppendPathToTargetPoint(in Vector3 targetPoint, PathRequestOrigin origin = PathRequestOrigin.Unit, bool asyncEligible = false)
     {
         if (GameObject.Definition.KindOf == null)
         {
@@ -213,6 +213,14 @@ public class AIUpdate : UpdateModule
             if (GameEngine.Navigation == null)
             {
                 AddTargetPoint(targetPoint);
+                return;
+            }
+
+            // WI-N4-02: order-driven paths may compute on the async queue; workflow movement
+            // (scripts, dozer, supply, aircraft) passes asyncEligible false or opts out below.
+            if (asyncEligible && SupportsAsyncOrderPaths && GameEngine.Navigation.Options.AsyncOrderPaths)
+            {
+                RequestPathAsync(targetPoint);
                 return;
             }
 
@@ -248,7 +256,8 @@ public class AIUpdate : UpdateModule
     /// first; the drain applies the completion on the logic thread with the same post-processing
     /// as <see cref="AppendPathToTargetPoint"/> (drop the start point, land exactly on a passable
     /// target, set the moving condition). Aircraft, degenerate, and no-navigation cases fall back
-    /// to the synchronous <see cref="AddTargetPoint"/>. No gameplay caller uses this yet.
+    /// to the synchronous <see cref="AddTargetPoint"/>. Order-eligible callers reach this via
+    /// <see cref="NavigationOptions.AsyncOrderPaths"/> (WI-N4-02).
     /// </summary>
     internal void RequestPathAsync(Vector3 targetPoint)
     {
@@ -327,7 +336,14 @@ public class AIUpdate : UpdateModule
             buildingCenter.Z);
     }
 
-    internal virtual void SetTargetPoint(Vector3 targetPoint)
+    /// <summary>
+    /// Whether order-driven movement may use the async path queue (WI-N4-02). Workflow
+    /// subclasses that drive their own movement state machines opt out to keep synchronous
+    /// paths: dozer, supply, hacker, and jet updates.
+    /// </summary>
+    internal virtual bool SupportsAsyncOrderPaths => true;
+
+    internal virtual void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         ResetMovementIntent();
         if (GameObject.ParentHorde != null)
@@ -341,7 +357,7 @@ public class AIUpdate : UpdateModule
         }
 
         TargetPoints.Clear();
-        AppendPathToTargetPoint(targetPoint);
+        AppendPathToTargetPoint(targetPoint, asyncEligible: asyncEligible);
     }
 
     internal void ConfigureAttackMove(bool enabled)

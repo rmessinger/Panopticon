@@ -169,6 +169,18 @@ public static class Program
 
         ParseOptionalInt(args, "--n0-cluster-cells", value => config.PathfindingLoadClusterCells = value);
 
+        var n0AsyncOrderPaths = GetArgValue(args, "--n0-async-order-paths");
+        if (!string.IsNullOrEmpty(n0AsyncOrderPaths))
+        {
+            config.PathfindingLoadAsyncOrderPaths = bool.Parse(n0AsyncOrderPaths);
+        }
+
+        var probeAsyncOrderPaths = GetArgValue(args, "--probe-async-order-paths");
+        if (!string.IsNullOrEmpty(probeAsyncOrderPaths))
+        {
+            config.MassBattleCapacityProbeAsyncOrderPaths = bool.Parse(probeAsyncOrderPaths);
+        }
+
         Run(config, reporter);
     }
 

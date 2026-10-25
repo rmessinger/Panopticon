@@ -30,9 +30,11 @@ public static class GroupMovement
 
     /// <summary>
     /// Orders every member toward <paramref name="destination"/>, issuing exactly one
-    /// <see cref="Navigation.CalculatePath"/> per squad plus one per blocked follower. Aircraft
-    /// members fly directly (no path request, mirroring single-unit orders). Members without an
-    /// AI update module are skipped.
+    /// <see cref="Navigation.CalculatePath"/> per squad plus one per blocked follower. With
+    /// <see cref="NavigationOptions.AsyncOrderPaths"/> the leader path (and blocked-follower
+    /// fallbacks) run on the async worker queue and assignment happens in the drain callback.
+    /// Aircraft members fly directly (no path request, mirroring single-unit orders). Members
+    /// without an AI update module are skipped.
     /// </summary>
     public static void MoveSquad(Navigation navigation, IReadOnlyList<GameObject> members, Vector3 destination)
     {
@@ -81,15 +83,52 @@ public static class GroupMovement
             }
         }
 
+        if (navigation.Options.AsyncOrderPaths)
+        {
+            // WI-N4-02: the leader search runs on the worker queue; leader and followers are
+            // assigned in the drain callback on the logic thread. Members hold position until
+            // then. A destroyed leader cancels the request in the drain without a callback.
+            navigation.SubmitPathRequest(
+                leader.Translation,
+                destination,
+                leader,
+                handle =>
+                {
+                    if (handle.TryGetResult(out var asyncPath, out var asyncEndIsPassable)
+                        && asyncPath.Count > 0)
+                    {
+                        AssignSquadMembers(
+                            navigation, ground, leader, asyncPath, asyncEndIsPassable, destination, asyncFallbacks: true);
+                    }
+                });
+            return;
+        }
+
         var path = navigation.CalculatePath(leader.Translation, destination, out var endIsPassable, PathRequestOrigin.SquadLeader);
         if (path.Count == 0)
         {
             return;
         }
 
+        AssignSquadMembers(navigation, ground, leader, path, endIsPassable, destination, asyncFallbacks: false);
+    }
+
+    private static void AssignSquadMembers(
+        Navigation navigation,
+        List<GameObject> ground,
+        GameObject leader,
+        IList<Vector3> path,
+        bool endIsPassable,
+        Vector3 destination,
+        bool asyncFallbacks)
+    {
         foreach (var member in ground)
         {
-            var ai = member.AIUpdate;
+            if (member.IsDestroyed)
+            {
+                continue;
+            }
+
             if (member == leader)
             {
                 AssignPath(member, path, Vector2.Zero, endIsPassable, destination);
@@ -136,10 +175,30 @@ public static class GroupMovement
                 {
                     FallbackFollowerCount++;
                     navigation.AddFallbackFollower();
-                    var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
-                    if (fallback.Count > 0)
+
+                    if (asyncFallbacks)
                     {
-                        AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
+                        // WI-N4-02: the fallback search also runs on the worker queue.
+                        navigation.SubmitPathRequest(
+                            member.Translation,
+                            destination,
+                            member,
+                            fallbackHandle =>
+                            {
+                                if (fallbackHandle.TryGetResult(out var fallbackPath, out var fallbackEndIsPassable)
+                                    && fallbackPath.Count > 0)
+                                {
+                                    AssignPath(member, fallbackPath, Vector2.Zero, fallbackEndIsPassable, destination);
+                                }
+                            });
+                    }
+                    else
+                    {
+                        var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
+                        if (fallback.Count > 0)
+                        {
+                            AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
+                        }
                     }
                 }
             }

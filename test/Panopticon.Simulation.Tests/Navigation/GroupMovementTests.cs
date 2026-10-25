@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using Panopticon.Data.Map;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
@@ -304,6 +305,134 @@ public class GroupMovementTests : MockedGameTest
         Assert.Equal(nearLeader.AIUpdate.TargetPoints.Count, nearFollower.AIUpdate.TargetPoints.Count);
         Assert.Equal(farLeader.AIUpdate.TargetPoints.Count, farFollower.AIUpdate.TargetPoints.Count);
         Assert.Equal(end, jet.AIUpdate.TargetPoints[^1]);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SquadMove_AsyncOrderPathsSubmitsAndAssignsOnDrain()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var followers = new List<GameObject>
+        {
+            NewUnit(start),
+            NewUnit(start + new Vector3(0, -1, 0)),
+        };
+
+        var before = NavigationClass.PathRequestCount;
+
+        GroupMovement.MoveSquad(navigation, [leader, .. followers], end);
+
+        // WI-N4-02: the leader search runs on the worker queue; no synchronous search happens.
+        Assert.Equal(before, NavigationClass.PathRequestCount);
+        Assert.Equal(1, navigation.AsyncPathSubmitted);
+        // The worker may already have completed the search; only the drain applies it, so the
+        // outstanding count is 0 or 1 here and the points stay empty either way.
+        Assert.InRange(navigation.AsyncPathOutstanding, 0, 1);
+        Assert.True(leader.AIUpdate.TargetPoints.Count == 0);
+
+        DrainAsync(navigation);
+
+        // Leader and followers are assigned in the drain callback; followers retrace.
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+        Assert.Equal(1, navigation.AsyncPathApplied);
+        Assert.True(leader.AIUpdate.TargetPoints.Count > 0);
+        foreach (var follower in followers)
+        {
+            Assert.Equal(leader.AIUpdate.TargetPoints.Count, follower.AIUpdate.TargetPoints.Count);
+        }
+
+        // Applied within the frame bound.
+        var waitSamples = navigation.CopyAsyncPathWaitFrameSamples();
+        Assert.Single(waitSamples);
+        Assert.True(waitSamples[0] <= navigation.AsyncPathFrameBound, $"waited {waitSamples[0]} frames");
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SquadMove_AsyncOrderPathsBlockedFallbackSubmits()
+    {
+        var (navigation, heightMap, start, _) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        // The ring landing is disabled so the fallback search is exercised in isolation.
+        navigation.Options.MaxLandingRadiusCells = 0;
+        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var follower = NewUnit(start);
+
+        // Same scan as the synchronous blocked-follower test: a passable destination whose
+        // offset landing sits on an impassable tile.
+        var offset = follower.Translation - leader.Translation;
+        var offset2D = new Vector3(offset.X, offset.Y, 0);
+        var destination = Vector3.Zero;
+        var found = false;
+        for (var y = 2; !found && y < heightMap.Height - 1; y++)
+        {
+            for (var x = 2; !found && x < heightMap.Width - 1; x++)
+            {
+                var candidate = heightMap.GetPosition(x, y);
+                var landing = candidate + offset2D;
+                if (!navigation.IsPassable(candidate) || navigation.IsPassable(landing))
+                {
+                    continue;
+                }
+
+                destination = candidate;
+                found = true;
+            }
+        }
+
+        Assert.True(found);
+
+        var statsBefore = navigation.Statistics;
+        GroupMovement.MoveSquad(navigation, new List<GameObject> { leader, follower }, destination);
+
+        // Only the leader path is submitted up front; the blocked follower's fallback is
+        // submitted from the leader's drain callback, once its slot is known impassable.
+        Assert.Equal(1, navigation.AsyncPathSubmitted);
+        Assert.True(follower.AIUpdate.TargetPoints.Count == 0);
+
+        DrainAsync(navigation);
+
+        Assert.True(leader.AIUpdate.TargetPoints.Count > 0, "leader path applied");
+        Assert.Equal(2, navigation.AsyncPathSubmitted);
+        Assert.Equal(2, navigation.AsyncPathApplied);
+        var stats = navigation.Statistics;
+        Assert.Equal(1, stats.FallbackFollowers - statsBefore.FallbackFollowers);
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+        // The blocked follower paths to the destination itself, not to its formation slot.
+        var ai = follower.AIUpdate;
+        Assert.True(ai.TargetPoints.Count > 0);
+        Assert.Equal(destination, ai.TargetPoints[^1]);
+    }
+
+    /// <summary>Pumps the async queue until every submitted request is terminal. Uses a real
+    /// wall-clock deadline: the Stopwatch-tick deadlines of the shared helpers miscompute on
+    /// hosts where Stopwatch.Frequency differs from TimeSpan ticks per second.</summary>
+    private static void DrainAsync(NavigationClass navigation)
+    {
+        // Loops until a drain applies nothing new and nothing is outstanding: a drain callback
+        // may itself submit (the WI-N4-02 blocked-follower fallback), so "outstanding == 0"
+        // alone is not a fixed point.
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (true)
+        {
+            var resolvedBefore = navigation.AsyncPathApplied + navigation.AsyncPathCancelled;
+            navigation.DrainPathCompletions();
+            var resolvedAfter = navigation.AsyncPathApplied + navigation.AsyncPathCancelled;
+            if (navigation.AsyncPathOutstanding == 0 && resolvedBefore == resolvedAfter)
+            {
+                return;
+            }
+
+            if (navigation.AsyncPathOutstanding > 0)
+            {
+                Thread.Sleep(10);
+            }
+
+            if (DateTime.UtcNow > deadline)
+            {
+                throw new TimeoutException($"async path drain timed out; outstanding {navigation.AsyncPathOutstanding}");
+            }
+        }
     }
 
     private (NavigationClass Navigation, HeightMap HeightMap, Vector3 Start, Vector3 End) CreateNavigation()

@@ -11,7 +11,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -372,6 +371,48 @@ public class AsyncPathRequestTests : MockedGameTest
         Assert.Empty(unit.AIUpdate.TargetPoints);
     }
 
+    [Fact, Trait("Category", "Roadmap")]
+    public void SetTargetPoint_AsyncOrderPathsSubmitsOrderEligibleCalls()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+
+        var before = NavigationClass.PathRequestCount;
+        unit.AIUpdate.SetTargetPoint(end, asyncEligible: true);
+
+        // WI-N4-02: the order path submits; no synchronous search runs and the unit holds.
+        Assert.Equal(before, NavigationClass.PathRequestCount);
+        Assert.Equal(1, navigation.AsyncPathSubmitted);
+        Assert.Empty(unit.AIUpdate.TargetPoints);
+
+        DrainUntil(navigation, () => unit.AIUpdate.TargetPoints.Count > 0);
+
+        var points = unit.AIUpdate.TargetPoints;
+        Assert.True(points.Count > 1);
+        Assert.Equal(end, points[^1]);
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SetTargetPoint_AsyncOrderPathsKeepsScriptCallsSynchronous()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+
+        var before = NavigationClass.PathRequestCount;
+        unit.AIUpdate.SetTargetPoint(end);
+
+        // Default eligibility is false (scripts, workflow callers): the path stays synchronous.
+        Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+        Assert.Equal(0, navigation.AsyncPathSubmitted);
+        Assert.True(unit.AIUpdate.TargetPoints.Count > 0);
+        Assert.Equal(end, unit.AIUpdate.TargetPoints[^1]);
+    }
+
     /// <summary>Drains in a loop until <paramref name="done"/> holds; the queue applies
     /// completions only inside <see cref="NavigationClass.DrainPathCompletions"/>.</summary>
     private static void DrainUntil(NavigationClass navigation, Func<bool> done)
@@ -461,9 +502,9 @@ public class AsyncPathRequestTests : MockedGameTest
 
     private static void WaitForCompletion(IReadOnlyList<PathRequestHandle> handles)
     {
-        var deadline = Stopwatch.GetTimestamp() + TimeSpan.FromSeconds(30).Ticks;
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
 
-        while (Stopwatch.GetTimestamp() < deadline)
+        while (DateTime.UtcNow < deadline)
         {
             var allDone = true;
 
@@ -490,9 +531,9 @@ public class AsyncPathRequestTests : MockedGameTest
 
     private static void WaitForTerminalState(params PathRequestHandle[] handles)
     {
-        var deadline = Stopwatch.GetTimestamp() + TimeSpan.FromSeconds(30).Ticks;
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
 
-        while (Stopwatch.GetTimestamp() < deadline)
+        while (DateTime.UtcNow < deadline)
         {
             var allDone = true;
 

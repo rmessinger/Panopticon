@@ -307,6 +307,18 @@ public class Navigation
     /// <summary>Async path requests submitted but not yet terminal; zero before the first submission.</summary>
     public long AsyncPathOutstanding => _pathRequestQueue?.Outstanding ?? 0;
 
+    /// <summary>WI-N4-02 run report: total async submissions; zero before the first submission.</summary>
+    public long AsyncPathSubmitted => _pathRequestQueue?.SubmittedCount ?? 0;
+
+    /// <summary>WI-N4-02 run report: completions applied at drain; zero before the first submission.</summary>
+    public long AsyncPathApplied => _pathRequestQueue?.AppliedCount ?? 0;
+
+    /// <summary>WI-N4-02 run report: submissions cancelled before applying; zero before the first submission.</summary>
+    public long AsyncPathCancelled => _pathRequestQueue?.CancelledCount ?? 0;
+
+    /// <summary>WI-N4-02 run report: waited-frames sample per applied request, in apply order.</summary>
+    public int[] CopyAsyncPathWaitFrameSamples() => _pathRequestQueue?.CopyWaitFrameSamples() ?? [];
+
     internal Graph CloneGraphForWorker() => _graph.ClonePassability();
 
     // WI-N0-01: the async worker reports its search volume and time; the logic-thread span

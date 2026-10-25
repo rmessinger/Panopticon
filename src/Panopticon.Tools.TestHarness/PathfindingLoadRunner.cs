@@ -120,6 +120,8 @@ public static class PathfindingLoadRunner
             // WI-N2-02 knobs: cluster-based group moves for squad-less selections.
             navigation.Options.GroupSelectionMoves = config.PathfindingLoadGroupMoves;
             navigation.Options.SelectionClusterCells = config.PathfindingLoadClusterCells;
+            // WI-N4-02 knob: order-driven paths submit to the async worker queue.
+            navigation.Options.AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths;
             var zoneB = profile.Sides[1].Zone;
             var crossMapDestination = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
 
@@ -237,6 +239,22 @@ public static class PathfindingLoadRunner
             totalStopwatch.Stop();
 
             var allPassed = reasons.Count == 0;
+
+            // WI-N4-02: whole-run async order path stats; wait-frame percentiles over applied
+            // requests only.
+            var waitSamples = navigation.CopyAsyncPathWaitFrameSamples();
+            double waitMedian = 0;
+            double waitP99 = 0;
+            var waitMax = 0;
+            if (waitSamples.Length > 0)
+            {
+                var waitDoubles = waitSamples.Select(sample => (double)sample).ToArray();
+                Array.Sort(waitDoubles);
+                waitMedian = BootstrapStatistics.Percentile(waitDoubles, 0.5);
+                waitP99 = BootstrapStatistics.Percentile(waitDoubles, 0.99);
+                waitMax = waitSamples.Max();
+            }
+
             var report = new PathfindingLoadReport
             {
                 Map = profile.Map.Path,
@@ -244,6 +262,16 @@ public static class PathfindingLoadRunner
                 Seed = seed,
                 GroupMoves = config.PathfindingLoadGroupMoves,
                 ClusterCells = config.PathfindingLoadClusterCells,
+                AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths,
+                WorkerSearchMs = navigation.Statistics.WorkerSearchMs,
+                AsyncSubmitted = navigation.AsyncPathSubmitted,
+                AsyncApplied = navigation.AsyncPathApplied,
+                AsyncCancelled = navigation.AsyncPathCancelled,
+                AsyncDeadlineMisses = navigation.AsyncPathDeadlineMisses,
+                AsyncFrameBound = navigation.AsyncPathFrameBound,
+                AsyncWaitFramesMedian = waitMedian,
+                AsyncWaitFramesP99 = waitP99,
+                AsyncWaitFramesMax = waitMax,
                 GridWidth = navigation.GridWidth,
                 GridHeight = navigation.GridHeight,
                 Derivation = "meanSearchMs = window path span sum / window sync request sum; " +
@@ -382,6 +410,7 @@ public static class PathfindingLoadRunner
         var destination = impassable ? impassableDestination : crossMapDestination;
 
         var statsBefore = navigation.Statistics;
+        var asyncSubmittedBefore = navigation.AsyncPathSubmitted;
         _ = navigation.ConsumePathSpan();
 
         // WI-N2-01: attribute this order's landings and their ring distances cleanly.
@@ -440,6 +469,7 @@ public static class PathfindingLoadRunner
         }
 
         var after = statsAfterOrderTick ?? statsBefore;
+        var asyncSubmitted = navigation.AsyncPathSubmitted - asyncSubmittedBefore;
         var result = new PathfindingLoadCaseResult
         {
             Name = plan.Name,
@@ -481,7 +511,7 @@ public static class PathfindingLoadRunner
             reasons.Add($"{plan.Name}: unreachable destination produced no failed searches.");
         }
 
-        if (result.SyncRequests == 0)
+        if (result.SyncRequests == 0 && asyncSubmitted == 0)
         {
             reasons.Add($"{plan.Name}: move order issued no path requests.");
         }

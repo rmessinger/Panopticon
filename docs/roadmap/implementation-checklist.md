@@ -1890,7 +1890,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 ### N4: Off-thread order paths
 - [x] N4-1 Pending path handles on `AIUpdate`. (`WI-N4-01`)
   - AC: assign, replace, reset, and destroyed-requester cases tested; no caller changes.
-- [ ] N4-2 Async order paths behind `AsyncOrderPaths`. (`WI-N4-02`)
+- [x] N4-2 Async order paths behind `AsyncOrderPaths`. (`WI-N4-02`)
   - AC: option off changes nothing; option on reduces the order-tick logic-thread `path` span to
     submission cost with waits inside the frame bound; M4 invariants hold.
 

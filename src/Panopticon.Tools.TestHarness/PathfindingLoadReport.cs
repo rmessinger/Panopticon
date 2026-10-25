@@ -99,6 +99,36 @@ public sealed record PathfindingLoadReport
     /// <summary>WI-N2-02: position-cluster cell size in world units.</summary>
     public int ClusterCells { get; init; }
 
+    /// <summary>WI-N4-02: whether order-driven paths submitted to the async worker queue.</summary>
+    public bool AsyncOrderPaths { get; init; }
+
+    /// <summary>WI-N4-02: total worker-thread search time, separate from the logic-thread span.</summary>
+    public double WorkerSearchMs { get; init; }
+
+    /// <summary>WI-N4-02: async submissions over the whole run.</summary>
+    public long AsyncSubmitted { get; init; }
+
+    /// <summary>WI-N4-02: completions applied at drain over the whole run.</summary>
+    public long AsyncApplied { get; init; }
+
+    /// <summary>WI-N4-02: submissions cancelled before applying over the whole run.</summary>
+    public long AsyncCancelled { get; init; }
+
+    /// <summary>WI-N4-02: applied requests that waited past the frame bound.</summary>
+    public long AsyncDeadlineMisses { get; init; }
+
+    /// <summary>WI-N4-02: frame bound for the deadline-miss counter.</summary>
+    public int AsyncFrameBound { get; init; }
+
+    /// <summary>WI-N4-02: median waited frames per applied request.</summary>
+    public double AsyncWaitFramesMedian { get; init; }
+
+    /// <summary>WI-N4-02: p99 waited frames per applied request.</summary>
+    public double AsyncWaitFramesP99 { get; init; }
+
+    /// <summary>WI-N4-02: maximum waited frames per applied request.</summary>
+    public int AsyncWaitFramesMax { get; init; }
+
     public int GridWidth { get; init; }
 
     public int GridHeight { get; init; }

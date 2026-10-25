@@ -32,4 +32,14 @@ public sealed class NavigationOptions
     /// whose positions fall in the same cell share one leader search.
     /// </summary>
     public int SelectionClusterCells { get; set; } = DefaultSelectionClusterCells;
+
+    /// <summary>
+    /// When true, order-driven ground paths compute on the async worker queue (WI-N4-02): unit
+    /// order paths, squad leader paths, and blocked-follower fallbacks submit instead of
+    /// searching inline, and the logic-thread path span on order ticks drops to submission
+    /// cost. Aircraft, dozer, supply, and script-specific movement keep synchronous paths.
+    /// Default false; completion frames vary between runs, so it stays off for
+    /// determinism-enforcing baselines.
+    /// </summary>
+    public bool AsyncOrderPaths { get; set; }
 }

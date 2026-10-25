@@ -50,6 +50,30 @@ public sealed record MassBattleCapacityProbeReport
     /// <summary>WI-M4-05: army-AI mode air mission totals per side; null in the scripted M1 mode.</summary>
     public List<AirMissionSideResult>? AirMissions { get; init; }
 
+    /// <summary>WI-N4-02: whether order-driven paths submitted to the async worker queue.</summary>
+    public bool AsyncOrderPaths { get; init; }
+
+    /// <summary>WI-N4-02: async submissions over the whole run.</summary>
+    public long AsyncSubmitted { get; init; }
+
+    /// <summary>WI-N4-02: completions applied at drain over the whole run.</summary>
+    public long AsyncApplied { get; init; }
+
+    /// <summary>WI-N4-02: submissions cancelled before applying over the whole run.</summary>
+    public long AsyncCancelled { get; init; }
+
+    /// <summary>WI-N4-02: applied requests that waited past the frame bound.</summary>
+    public long AsyncDeadlineMisses { get; init; }
+
+    /// <summary>WI-N4-02: median waited frames per applied request.</summary>
+    public double AsyncWaitFramesMedian { get; init; }
+
+    /// <summary>WI-N4-02: p99 waited frames per applied request.</summary>
+    public double AsyncWaitFramesP99 { get; init; }
+
+    /// <summary>WI-N4-02: maximum waited frames per applied request.</summary>
+    public int AsyncWaitFramesMax { get; init; }
+
     public static void WriteJson(MassBattleCapacityProbeReport report, string path)
     {
         var options = new JsonSerializerOptions
@@ -157,6 +181,24 @@ public sealed record MassBattleCapacityProbeReport
                     side.MaxIdleFrames,
                     side.StalledUnitsAtEnd));
             }
+        }
+
+        if (report.AsyncOrderPaths)
+        {
+            b.AppendLine();
+            b.AppendLine(string.Format(
+                culture,
+                "Async order paths (WI-N4-02): submitted {0}, applied {1}, cancelled {2}, deadline misses {3}.",
+                report.AsyncSubmitted,
+                report.AsyncApplied,
+                report.AsyncCancelled,
+                report.AsyncDeadlineMisses));
+            b.AppendLine(string.Format(
+                culture,
+                "Async wait frames (WI-N4-02): median {0:0.0}, p99 {1:0.0}, max {2}.",
+                report.AsyncWaitFramesMedian,
+                report.AsyncWaitFramesP99,
+                report.AsyncWaitFramesMax));
         }
 
         if (report.AirMissions is { Count: > 0 })
