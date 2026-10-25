@@ -1878,7 +1878,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 - [x] N2-1 Bounded landing for blocked followers. (`WI-N2-01`)
   - AC: full searches per squad order at or under squads plus fallback followers in the N0
     scenario and the M4 probe; M4 invariants hold.
-- [ ] N2-2 Group moves for squad-less selections behind `GroupSelectionMoves`. (`WI-N2-02`)
+- [x] N2-2 Group moves for squad-less selections behind `GroupSelectionMoves`. (`WI-N2-02`)
   - AC: option off changes nothing; option on bounds searches by clusters plus fallbacks; the
     1000-unit order-tick span is recorded against 33.3 ms.
 

@@ -13,8 +13,8 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
 | [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
 | [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Done |
-| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Ready |
-| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Blocked |
+| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Done |
+| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Ready |
 | [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Ready |
 | [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Blocked |
 | [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Blocked |
@@ -209,7 +209,28 @@ compare identical (the probe is deterministic per build). The landing shift chan
 movement and therefore combat dynamics; the recorded impassable retrace points above are the
 candidate mechanism and have a scheduled follow-up card.
 
-WI-N2-02 (group selection moves) has not started; its numbers land here when it ships.
+WI-N2-02, group selection moves (Release, seed 1, PathfindingLoad, cluster cells 100; off = the
+N2-01 state):
+
+| Case | Off: span / requests | On: span / requests | Nodes off / on |
+|---|---|---|---|
+| squadless-10 | 11.71 ms / 10 unit | 4.12 ms / 3 leader + 1 unit | 63022 / 22084 |
+| squadless-100 | 89.53 ms / 100 unit | 26.10 ms / 29 leader + 1 unit | 459909 / 132384 |
+| squadless-1000 | 602.71 ms / 1000 unit | 80.54 ms / 108 leader + 1 unit | 4128233 / 427094 |
+| squadless-10-impassable | 0.22 ms / 10 failed | 0.13 ms / 4 failed | 0 / 0 |
+
+Army-AI squad cases are unchanged (hierarchy squads bucket before the cluster path). No blocked
+followers occur in the squadless cases (open-field formation offsets stay passable), so landing
+and fallback counters stay zero. Searches per squadless order at or under clusters plus one
+loner: met (109 searches for 108 clusters + 1 single in the 1000-unit case).
+
+The 1000-unit order-tick span moves from 602.71 ms (18x over the 33.3 ms one-frame budget) to
+80.54 ms (2.4x over) at the default cluster size; the budget question moves to the N3 gate.
+
+Cluster-size sensitivity, same scenario, `SelectionClusterCells` 200: squadless-1000 falls to
+33.90 ms over 36 leader searches (146,956 nodes), 1.02x the 33.3 ms budget; squadless-100 is
+16.31 ms. This is gate evidence: N2 at a wider cluster cell reaches the one-frame budget on the
+N0 case without shared-destination fields.
 
 ## WI-N3-01 gate decision
 

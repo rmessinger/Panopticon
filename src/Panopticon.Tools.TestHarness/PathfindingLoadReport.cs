@@ -93,6 +93,12 @@ public sealed record PathfindingLoadReport
 
     public int Seed { get; init; }
 
+    /// <summary>WI-N2-02: whether squad-less selections moved as position clusters.</summary>
+    public bool GroupMoves { get; init; }
+
+    /// <summary>WI-N2-02: position-cluster cell size in world units.</summary>
+    public int ClusterCells { get; init; }
+
     public int GridWidth { get; init; }
 
     public int GridHeight { get; init; }

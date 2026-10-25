@@ -377,4 +377,12 @@ public sealed class TestHarnessConfig
     /// <summary>Selection sizes measured per mode, largest last (default 1, 10, 100, 1000).</summary>
     [HarnessParameter("PathfindingLoad", "PathfindingLoadSelectionSizes.", nameof(BuiltInScenario.PathfindingLoad))]
     public int[]? PathfindingLoadSelectionSizes { get; set; } = null;
+
+    /// <summary>WI-N2-02: move squad-less selections as position clusters instead of per-unit paths.</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadGroupMoves.", nameof(BuiltInScenario.PathfindingLoad))]
+    public bool PathfindingLoadGroupMoves { get; set; } = false;
+
+    /// <summary>WI-N2-02: position-cluster cell size in world units (default 100).</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadClusterCells.", nameof(BuiltInScenario.PathfindingLoad))]
+    public int PathfindingLoadClusterCells { get; set; } = 100;
 }

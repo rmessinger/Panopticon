@@ -13,6 +13,7 @@ using System.Numerics;
 using Panopticon.Data.Map;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
+using Panopticon.Logic.Orders;
 using Panopticon.Navigation;
 using Panopticon.Terrain;
 using Xunit;
@@ -234,6 +235,77 @@ public class GroupMovementTests : MockedGameTest
         Assert.Equal(end, Assert.Single(jet.AIUpdate.TargetPoints));
     }
 
+    [Fact, Trait("Category", "Roadmap")]
+    public void MoveUnits_GroupMovesOffKeepsPerUnitRequests()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var player = NewPlayer();
+        var units = new List<GameObject>
+        {
+            NewUnit(start, game: game),
+            NewUnit(start + new Vector3(3, 0, 0), game: game),
+            NewUnit(start + new Vector3(0, 3, 0), game: game),
+        };
+
+        var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
+
+        OrderProcessor.MoveUnits(navigation, player, units, end);
+
+        // WI-N2-02: option off keeps the pre-existing per-unit behavior exactly.
+        var stats = navigation.Statistics;
+        Assert.Equal(before + 3, NavigationClass.PathRequestCount);
+        Assert.Equal(3, stats.UnitRequests - statsBefore.UnitRequests);
+        Assert.Equal(0, stats.SquadLeaderRequests - statsBefore.SquadLeaderRequests);
+        foreach (var unit in units)
+        {
+            Assert.True(unit.AIUpdate.TargetPoints.Count > 0);
+        }
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void MoveUnits_GroupMovesOnSharesOneSearchPerCluster()
+    {
+        var (navigation, heightMap, start, end) = CreateNavigation();
+        navigation.Options.GroupSelectionMoves = true;
+        navigation.Options.SelectionClusterCells = 20;
+
+        // Cell size 20 splits the fixture into distinct buckets; leader placed nearer the
+        // destination so each cluster's leader choice is unique.
+        var nearCluster = start;
+        var farCluster = heightMap.GetPosition(5, 5);
+        var loner = heightMap.GetPosition(9, 9);
+
+        var player = NewPlayer();
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var nearLeader = NewUnit(nearCluster + new Vector3(1, 1, 0), game: game);
+        var nearFollower = NewUnit(nearCluster, game: game);
+        var farLeader = NewUnit(farCluster + new Vector3(1, 1, 0), game: game);
+        var farFollower = NewUnit(farCluster, game: game);
+        var singleton = NewUnit(loner, game: game);
+        var jet = NewUnit(nearCluster + new Vector3(2, 2, 0), ObjectKinds.Aircraft, game: game);
+        var units = new List<GameObject> { nearLeader, nearFollower, farLeader, farFollower, singleton, jet };
+
+        var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
+
+        OrderProcessor.MoveUnits(navigation, player, units, end);
+
+        // Two clusters pay one leader search each; the loner keeps its own request and the
+        // aircraft flies directly without a search.
+        var stats = navigation.Statistics;
+        Assert.Equal(before + 3, NavigationClass.PathRequestCount);
+        Assert.Equal(2, stats.SquadLeaderRequests - statsBefore.SquadLeaderRequests);
+        Assert.Equal(1, stats.UnitRequests - statsBefore.UnitRequests);
+        Assert.Equal(0, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
+
+        // Followers retrace their cluster's shared path.
+        Assert.Equal(nearLeader.AIUpdate.TargetPoints.Count, nearFollower.AIUpdate.TargetPoints.Count);
+        Assert.Equal(farLeader.AIUpdate.TargetPoints.Count, farFollower.AIUpdate.TargetPoints.Count);
+        Assert.Equal(end, jet.AIUpdate.TargetPoints[^1]);
+    }
+
     private (NavigationClass Navigation, HeightMap HeightMap, Vector3 Start, Vector3 End) CreateNavigation()
     {
         using var fileSystem = new DiskFileSystem(
@@ -251,8 +323,9 @@ public class GroupMovementTests : MockedGameTest
         return (navigation, heightMap, start, end);
     }
 
-    private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry)
+    private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry, TestGame? game = null)
     {
+        var host = game ?? Generals;
         var definition = new ObjectDefinition($"GroupMovement_{kind}_{_nextObjectId}");
         definition.KindOf.Set(kind, true);
         definition.Behaviors.Add("ModuleTag_Body",
@@ -263,7 +336,7 @@ public class GroupMovementTests : MockedGameTest
             new ModuleDataContainer("ModuleTag_AI",
                 new AIUpdateModuleData(),
                 ModuleInheritanceMode.Default, inherited: false));
-        var gameObject = new GameObject(definition, Generals.GameEngine, NewPlayer())
+        var gameObject = new GameObject(definition, host.GameEngine, NewPlayer())
         {
             Id = new ObjectId(_nextObjectId++),
         };

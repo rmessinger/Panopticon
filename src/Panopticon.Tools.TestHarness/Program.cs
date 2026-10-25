@@ -161,6 +161,14 @@ public static class Program
             }
         }
 
+        var n0GroupMoves = GetArgValue(args, "--n0-group-moves");
+        if (!string.IsNullOrEmpty(n0GroupMoves))
+        {
+            config.PathfindingLoadGroupMoves = bool.Parse(n0GroupMoves);
+        }
+
+        ParseOptionalInt(args, "--n0-cluster-cells", value => config.PathfindingLoadClusterCells = value);
+
         Run(config, reporter);
     }
 

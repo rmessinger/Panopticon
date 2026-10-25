@@ -117,6 +117,9 @@ public static class PathfindingLoadRunner
                 new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud },
                 null);
             var (sideA, navigation) = BootProfileGame(game, profile, seed);
+            // WI-N2-02 knobs: cluster-based group moves for squad-less selections.
+            navigation.Options.GroupSelectionMoves = config.PathfindingLoadGroupMoves;
+            navigation.Options.SelectionClusterCells = config.PathfindingLoadClusterCells;
             var zoneB = profile.Sides[1].Zone;
             var crossMapDestination = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
 
@@ -239,6 +242,8 @@ public static class PathfindingLoadRunner
                 Map = profile.Map.Path,
                 ProfilePath = profilePath,
                 Seed = seed,
+                GroupMoves = config.PathfindingLoadGroupMoves,
+                ClusterCells = config.PathfindingLoadClusterCells,
                 GridWidth = navigation.GridWidth,
                 GridHeight = navigation.GridHeight,
                 Derivation = "meanSearchMs = window path span sum / window sync request sum; " +

@@ -720,7 +720,66 @@ public sealed class OrderProcessor
             }
         }
 
-        foreach (var unit in squads == null ? selectedUnits : unaccompanied!)
+        var remainder = squads == null ? selectedUnits : unaccompanied!;
+        if (navigation != null && navigation.Options.GroupSelectionMoves && remainder.Count > 1)
+        {
+            MoveUnitsByPositionCluster(navigation, remainder, targetPosition);
+            return;
+        }
+
+        foreach (var unit in remainder)
+        {
+            unit.AIUpdate?.SetTargetPoint(targetPosition);
+        }
+    }
+
+    /// <summary>
+    /// Card WI-N2-02: squad-less ground units move as position clusters, one shared leader path
+    /// per cell bucket (cell size <see cref="NavigationOptions.SelectionClusterCells"/), members
+    /// visited in object id order for determinism. Aircraft and single-unit buckets keep per-unit
+    /// <see cref="AIUpdate.SetTargetPoint"/>.
+    /// </summary>
+    private static void MoveUnitsByPositionCluster(
+        NavigationClass navigation,
+        IReadOnlyCollection<GameObject> units,
+        Vector3 targetPosition)
+    {
+        var cellSize = navigation.Options.SelectionClusterCells;
+        var buckets = new Dictionary<(int CellX, int CellY), List<GameObject>>();
+        var singles = new List<GameObject>();
+        foreach (var unit in units.OrderBy(unit => unit.Id.Index))
+        {
+            if (unit.AIUpdate == null || unit.Definition.KindOf?.Get(ObjectKinds.Aircraft) == true)
+            {
+                singles.Add(unit);
+                continue;
+            }
+
+            var position = unit.Translation;
+            var key = ((int)Math.Floor(position.X / cellSize), (int)Math.Floor(position.Y / cellSize));
+            if (buckets.TryGetValue(key, out var bucket))
+            {
+                bucket.Add(unit);
+            }
+            else
+            {
+                buckets[key] = [unit];
+            }
+        }
+
+        foreach (var bucket in buckets.Values)
+        {
+            if (bucket.Count > 1)
+            {
+                GroupMovement.MoveSquad(navigation, bucket, targetPosition);
+            }
+            else
+            {
+                singles.Add(bucket[0]);
+            }
+        }
+
+        foreach (var unit in singles)
         {
             unit.AIUpdate?.SetTargetPoint(targetPosition);
         }
