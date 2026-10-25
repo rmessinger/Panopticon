@@ -493,10 +493,10 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N0 - Path cost baseline | `██████████` | 2 / 2 |
 | N1 - Search core efficiency | `██████████` | 3 / 3 |
 | N2 - Shared group requests | `██████████` | 2 / 2 |
-| N3 - Shared-destination fields | `░░░░░░░░░░` | 0 / 1 |
+| N3 - Shared-destination fields | `██████████` | 1 / 1 |
 | N4 - Off-thread order paths | `██████████` | 2 / 2 |
 | N5 - Scale verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `█████████░` | 9 / 11 |
+| Track N total | `█████████░` | 10 / 11 |
 
 ---
 

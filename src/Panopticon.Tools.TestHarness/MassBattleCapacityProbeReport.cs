@@ -74,6 +74,10 @@ public sealed record MassBattleCapacityProbeReport
     /// <summary>WI-N4-02: maximum waited frames per applied request.</summary>
     public int AsyncWaitFramesMax { get; init; }
 
+    /// <summary>WI-N3-01: largest single-tick bucket of full searches sharing one goal
+    /// neighbourhood (8-cell squares) over the run.</summary>
+    public long MaxGoalNeighbourhoodRequestsPerTick { get; init; }
+
     public static void WriteJson(MassBattleCapacityProbeReport report, string path)
     {
         var options = new JsonSerializerOptions
@@ -200,6 +204,12 @@ public sealed record MassBattleCapacityProbeReport
                 report.AsyncWaitFramesP99,
                 report.AsyncWaitFramesMax));
         }
+
+        b.AppendLine();
+        b.AppendLine(string.Format(
+            culture,
+            "Goal neighbourhood sharing (WI-N3-01): max {0} full searches in one 8-cell goal neighbourhood on a single tick.",
+            report.MaxGoalNeighbourhoodRequestsPerTick));
 
         if (report.AirMissions is { Count: > 0 })
         {

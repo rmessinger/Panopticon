@@ -73,6 +73,14 @@ public sealed record PathfindingLoadCaseResult
     /// ring (WI-N2-01 distribution).</summary>
     public long[] LandingRings { get; init; } = [];
 
+    /// <summary>Largest number of full searches sharing one goal neighbourhood on a single
+    /// window tick (WI-N3-01; neighbourhood = PathStatistics.GoalNeighbourhoodCells).</summary>
+    public long MaxGoalNeighbourhoodRequests { get; init; }
+
+    /// <summary>Full searches whose goal histogram landed in the order-tick window
+    /// (WI-N3-01); includes the inline order searches.</summary>
+    public long OrderTickFullSearches { get; init; }
+
     public double MeanSearchMs { get; init; }
 
     public double P99SearchMs { get; init; }
@@ -160,12 +168,12 @@ public sealed record PathfindingLoadReport
         b.AppendLine($"seed {report.Seed}, grid {report.GridWidth}x{report.GridHeight}");
         b.AppendLine();
         b.AppendLine(string.Format(
-            culture, "{0,-30} {1,7} {2,6} {3,10} {4,7} {5,8} {6,10} {7,7} {8,8} {9,11} {10,10} {11,8} {12,10}",
-            "Case", "Spawned", "Squads", "SpanMs", "Unit", "SquadL.", "BlockedF.", "Landed", "Fallback", "Nodes", "Failed", "ImpassTP", "MeanMs"));
+            culture, "{0,-30} {1,7} {2,6} {3,10} {4,7} {5,8} {6,10} {7,7} {8,8} {9,11} {10,10} {11,8} {12,10} {13,10} {14,10}",
+            "Case", "Spawned", "Squads", "SpanMs", "Unit", "SquadL.", "BlockedF.", "Landed", "Fallback", "Nodes", "Failed", "ImpassTP", "GoalMax", "FullSrch", "MeanMs"));
         foreach (var c in report.Cases)
         {
             b.AppendLine(string.Format(
-                culture, "{0,-30} {1,7} {2,6} {3,10:0.000} {4,7} {5,8} {6,10} {7,7} {8,8} {9,11} {10,10} {11,8} {12,10:0.000}",
+                culture, "{0,-30} {1,7} {2,6} {3,10:0.000} {4,7} {5,8} {6,10} {7,7} {8,8} {9,11} {10,10} {11,8} {12,10} {13,10} {14,10:0.000}",
                 c.Name,
                 c.SpawnedSize,
                 c.SquadsAtOrder,
@@ -178,6 +186,8 @@ public sealed record PathfindingLoadReport
                 c.NodesExpanded,
                 c.FailedSearches,
                 c.ImpassableRetracePoints,
+                c.MaxGoalNeighbourhoodRequests,
+                c.OrderTickFullSearches,
                 c.MeanSearchMs));
         }
 

@@ -130,6 +130,10 @@ public class Navigation
     /// <summary>Point-in-time snapshot of the navigation statistics (WI-N0-01).</summary>
     public PathStatistics Statistics => _statistics.Snapshot();
 
+    /// <summary>Clears the goal-histogram window (WI-N3-01). Call at tick boundaries so
+    /// <see cref="PathStatistics.GoalHistogramMaxBucket"/> reads as a per-tick gauge.</summary>
+    public void ResetGoalHistogram() => _statistics.ResetGoalHistogram();
+
     /// <summary>Search-grid width in cells; reported by pathfinding-load scenarios.</summary>
     public int GridWidth => _graph.Width;
 
@@ -186,6 +190,11 @@ public class Navigation
         }
 
         var nodesExpandedBefore = graph.SearchNodesExpanded;
+        // WI-N3-01: every search that reaches this point is a full search; bucket its goal cell
+        // so the harness can measure same-destination sharing per tick.
+        var goalBucketKey = (long)(endNode.X / PathStatistics.GoalNeighbourhoodCells) << 32
+            | (uint)(endNode.Y / PathStatistics.GoalNeighbourhoodCells);
+        _statistics.RecordFullSearchGoal(goalBucketKey);
         var route = graph.Search(startNode, endNode);
         _statistics.AddNodesExpanded(graph.SearchNodesExpanded - nodesExpandedBefore);
 

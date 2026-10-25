@@ -14,10 +14,10 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
 | [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Done |
 | [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Done |
-| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Ready |
+| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Done |
 | [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Done |
 | [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Done |
-| [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Blocked |
+| [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Ready |
 
 Delivery: phase staging branch `staging/track-n`, numbered group PRs per the repository
 development model. Suggested groups: 1 = N0, 2 = N1, 3 = N2 and N4, 4 = N3 and N5.
@@ -234,7 +234,51 @@ N0 case without shared-destination fields.
 
 ## WI-N3-01 gate decision
 
-Pending.
+Recorded 2026-10-25, seed 1, Release builds, deepdivide 656x460. Goal histogram added to
+`PathStatistics` (WI-N3-01): every `ComputePath` that reaches `Graph.Search` buckets its goal
+cell into 8-cell neighbourhood squares; the harness reads the window as a per-tick gauge.
+Threshold: `GoalFieldMinRequests` 32 full searches sharing one neighbourhood on a single tick,
+combined with an order-tick span budget miss. Artifacts: `/tmp/opencode/n3-01/`, logs under
+`~/log/n3-01/`.
+
+PathfindingLoad, group moves on (cluster 100), async off; goal max is the largest bucket on the
+order tick:
+
+| Case | Order-tick span (ms) | Goal max | Full searches | Budget |
+|---|---|---|---|---|
+| squadless-100 | 31.99 | 30 | 30 | under 33.3 ms |
+| squadless-1000 | 81.76 | 109 | 109 | 2.5x over 33.3 ms |
+| armyai-squads-1000 | 39.71 | 125 | 125 | 1.2x over 33.3 ms |
+| squadless-10-impassable | 0.14 | 0 | 0 | rejected before search |
+
+M4 army-AI probe (army AI on, 4500 frames, async off): worst decision tick 253 requests (248
+squads + 5 fallback), of which 128 share one goal neighbourhood; path span nonzero ticks (75)
+mean 57.7 / median 51.9 / p99 156.9 / max 172.7 ms; amortized 0.961 ms. The run fails the known
+idle-stall check documented under WI-N2 results (pre-existing base issue, unrelated to this
+card).
+
+Gate legs after N2 with async off:
+
+| Leg | Threshold | Measured | Holds |
+|---|---|---|---|
+| Sharing on one tick | at least 32 in one goal neighbourhood | 128 (M4 worst tick), 109 (squadless-1000 order tick) | yes |
+| Order-tick span budget | miss | squadless-1000 81.76 ms vs 33.3; M4 p99 156.9 ms vs 16.7 | yes (miss) |
+
+The authored gate opens on its own terms: after N2, same-goal full searches concentrate far past
+the threshold and the order-tick spans miss every budget. The remedy it anticipated is already
+shipped: N4 moves exactly these searches off the logic thread. PathfindingLoad with group moves
+and async order paths both on measures 0.00 ms order-tick span on every case (429 submissions,
+0 deadline misses, wait frames median 2 / max 11 against the bound 30; worker search time 225.8
+ms total, off the logic thread). The M4 probe with the option on passes all checks with a 0.000
+ms path span on all 4500 ticks (WI-N4 results). All authored `system.path.spanMs` budgets are
+met with N2 plus N4 enabled; the shared-goal work remains as worker time with no budget over it.
+
+Verdict: gate closed, no goal field is built. The shared-destination concentration is real and
+measured (109 searches toward one destination in the 1000-unit selection; 128 on the M4 worst
+decision tick), but a `GoalFieldCache` would only reduce worker-thread work that misses no
+budget. Revisit if a consumer requires synchronous order paths, or if sustained same-goal
+bursts push async wait frames past the 30-frame bound. N3 is Done, gate closed; no `WI-N3-02`
+card is authored.
 
 ## WI-N4 results
 

@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N3-01` |
 | Roadmap phase | [N3](../../track-n-pathfinding-performance.md): Shared-destination fields |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-N2-02` |

@@ -1883,7 +1883,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
     1000-unit order-tick span is recorded against 33.3 ms.
 
 ### N3: Shared-destination fields
-- [ ] N3-1 Goal field gate. (`WI-N3-01`)
+- [x] N3-1 Goal field gate. (`WI-N3-01`)
   - AC: the gate decision records the threshold, measured maximum shared-goal searches, and the
     budget verdict; a `Ready` implementation card exists only if the gate opened.
 
