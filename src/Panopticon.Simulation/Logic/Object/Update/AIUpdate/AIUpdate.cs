@@ -238,6 +238,64 @@ public class AIUpdate : UpdateModule
         }
     }
 
+    // WI-N4-01: pending async path request. Not persisted in save files; a load drops it, so a
+    // loaded unit re-issues movement through its next order.
+    private PathRequestHandle _pendingPathHandle;
+    private Vector3 _pendingPathTarget;
+
+    /// <summary>
+    /// Card WI-N4-01: submits this unit's path onto the async queue. Cancels any pending request
+    /// first; the drain applies the completion on the logic thread with the same post-processing
+    /// as <see cref="AppendPathToTargetPoint"/> (drop the start point, land exactly on a passable
+    /// target, set the moving condition). Aircraft, degenerate, and no-navigation cases fall back
+    /// to the synchronous <see cref="AddTargetPoint"/>. No gameplay caller uses this yet.
+    /// </summary>
+    internal void RequestPathAsync(Vector3 targetPoint)
+    {
+        CancelPendingPath();
+
+        if (GameObject.Definition.KindOf == null
+            || GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft)
+            || targetPoint == GameObject.Translation
+            || GameEngine.Navigation == null)
+        {
+            AddTargetPoint(targetPoint);
+            return;
+        }
+
+        _pendingPathTarget = targetPoint;
+        _pendingPathHandle = GameEngine.Navigation.SubmitPathRequest(
+            GameObject.Translation, targetPoint, GameObject, OnPendingPathCompleted);
+    }
+
+    private void OnPendingPathCompleted(PathRequestHandle handle)
+    {
+        _pendingPathHandle = null;
+        if (!handle.TryGetResult(out var waypoints, out var endIsPassable))
+        {
+            return;
+        }
+
+        TargetPoints.Clear();
+        for (var i = 1; i < waypoints.Count; i++)
+        {
+            TargetPoints.Add(waypoints[i]);
+        }
+
+        if (TargetPoints.Count > 0 && endIsPassable)
+        {
+            TargetPoints[^1] = _pendingPathTarget;
+        }
+
+        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+    }
+
+    private void CancelPendingPath()
+    {
+        _pendingPathHandle?.Cancel();
+        _pendingPathHandle = null;
+    }
+
     /// <summary>
     /// Computes an approach point on the perimeter of <paramref name="buildTarget"/>'s bounding sphere,
     /// in the direction from the building toward this unit. The returned point is reachable once the
@@ -296,6 +354,8 @@ public class AIUpdate : UpdateModule
 
     internal void ResetMovementIntent()
     {
+        // WI-N4-01: a new movement intent invalidates any pending async path.
+        CancelPendingPath();
         _isAttackPath = false;
         _ignoreWeaponTargetForMovement = false;
     }
