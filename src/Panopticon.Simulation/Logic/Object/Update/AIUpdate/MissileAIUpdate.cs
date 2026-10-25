@@ -15,6 +15,7 @@ public sealed class MissileAIUpdate : AIUpdate
     private MissileState _state;
     private LogicFrame _nextStateChangeTime;
     private LogicFrame _fuelExhaustionFrame;
+    private bool _diving;
 
     private Vector3 _unknownPosition;
     private uint _stateMaybe;
@@ -202,7 +203,6 @@ public sealed class MissileAIUpdate : AIUpdate
 
                 UpdateExhaustMatrix();
                 SteerTowardTargetPoints(currentFrame);
-                // TODO: DistanceToTargetBeforeDiving
                 BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, groundHitFX: null, _launcherObjectId);
                 if (GameObject.IsEffectivelyDead)
                 {
@@ -245,20 +245,21 @@ public sealed class MissileAIUpdate : AIUpdate
         // target counts as there" (TomahawkMissile INI). A 3D check could never trigger for a
         // missile cruising above the dive radius (Tomahawk: altitude 120 vs radius 100), so it
         // would overfly the target and cruise on.
-        var liveTarget = GameObject.CurrentWeapon?.CurrentTarget;
-        var diving = !parabolic
+        // The queued endpoint survives target removal. Losing an infantry target must not
+        // disable the dive or restore cruise altitude after the missile has committed.
+        if (!parabolic
             && ModuleData.DistanceToTargetBeforeDiving > 0
-            && liveTarget != null
-            && !liveTarget.IsDestroyed
-            && (liveTarget.TargetPosition - GameObject.Translation).Vector2XY().Length()
-                < ModuleData.DistanceToTargetBeforeDiving;
-        if (diving)
+            && TargetPoints.Count > 0
+            && (_diving || (TargetPoints[^1] - GameObject.Translation).Vector2XY().Length()
+                < ModuleData.DistanceToTargetBeforeDiving))
         {
+            _diving = true;
+            var impactPoint = TargetPoints[^1];
             TargetPoints.Clear();
-            AddTargetPoint(liveTarget.TargetPosition);
+            AddTargetPoint(impactPoint);
         }
 
-        CurrentLocomotor?.SetPreciseZPosition(diving || parabolic);
+        CurrentLocomotor?.SetPreciseZPosition(_diving || parabolic);
 
         // Out of fuel: thrust stops and gravity takes over, unless configured to detonate.
         if (currentFrame >= _fuelExhaustionFrame)

@@ -71,6 +71,43 @@ public class JetAIUpdateAttackTests : IDisposable
     }
 
     [GameFact(SageGame.CncGenerals)]
+    public void KilledAirborneAurora_StopsCombatAndIsRemoved()
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var aurora = Spawn("AmericaJetAurora", new Vector3(600, 600, 150), scene.Players[2]);
+        var target = Spawn("ChinaTankBattleMaster", new Vector3(1400, 600, 0), scene.Players[0]);
+        aurora.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, target.Id));
+        aurora.AIUpdate!.SetTargetPoint(target.Translation);
+        Step(30);
+
+        var deathPosition = aurora.Translation;
+        aurora.Kill();
+
+        Assert.Equal(0, aurora.BodyModule.Health);
+        Assert.True(aurora.IsEffectivelyDead);
+        Assert.Null(aurora.CurrentWeapon.CurrentTarget);
+        Assert.IsType<JetSlowDeathBehavior>(aurora.FindBehavior<JetSlowDeathBehavior>());
+        Step(15);
+        Assert.True(aurora.Translation.Z < deathPosition.Z, "Dead Aurora did not descend");
+        Step(300);
+        Assert.True(aurora.IsDestroyed, $"Dead Aurora remains at {aurora.Translation}");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void KilledGroundedAurora_IsRemoved()
+    {
+        using var game = _game = CreateGame();
+        var position = new Vector3(600, 600, game.GameEngine.Terrain.HeightMap.GetHeight(600f, 600f));
+        var aurora = Spawn("AmericaJetAurora", position, game.Scene3D.Players[2]);
+
+        aurora.Kill();
+        Step(1);
+
+        Assert.True(aurora.IsDestroyed);
+    }
+
+    [GameFact(SageGame.CncGenerals)]
     public void JetAttacksOutOfRangeTarget_ViaAttackObjectOrder()
     {
         using var game = _game = CreateGame();

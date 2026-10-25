@@ -52,7 +52,7 @@ public class SlowDeathBehavior : UpdateModule, IDieModule
         return Math.Max(_moduleData.ProbabilityModifier + overkillModifier, 1);
     }
 
-    void IDieModule.OnDie(in DamageInfoInput damageInput)
+    public virtual void OnDie(in DamageInfoInput damageInput)
     {
         if (!_moduleData.DieData.IsDieApplicable(damageInput, GameObject))
         {
