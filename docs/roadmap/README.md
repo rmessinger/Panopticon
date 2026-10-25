@@ -495,8 +495,8 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N2 - Shared group requests | `██████████` | 2 / 2 |
 | N3 - Shared-destination fields | `██████████` | 1 / 1 |
 | N4 - Off-thread order paths | `██████████` | 2 / 2 |
-| N5 - Scale verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `█████████░` | 10 / 11 |
+| N5 - Scale verification | `██████████` | 1 / 1 |
+| Track N total | `██████████` | 11 / 11 |
 
 ---
 

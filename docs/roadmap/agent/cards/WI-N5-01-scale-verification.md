@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N5-01` |
 | Roadmap phase | [N5](../../track-n-pathfinding-performance.md): Scale verification |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-N2-02`, `WI-N3-01` (and `WI-N3-02` if the gate opened), `WI-N4-02` |

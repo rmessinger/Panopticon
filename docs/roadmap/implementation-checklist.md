@@ -1895,7 +1895,7 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
     submission cost with waits inside the frame bound; M4 invariants hold.
 
 ### N5: Scale verification
-- [ ] N5-1 Verify every Track N budget at scale. (`WI-N5-01`)
+- [x] N5-1 Verify every Track N budget at scale. (`WI-N5-01`)
   - AC: each budget in the deep dive has a Met or Missed verdict with numbers; M4 invariants and
     engagement checks pass; the default-flip recommendation is recorded.
 

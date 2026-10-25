@@ -17,7 +17,7 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Done |
 | [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Done |
 | [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Done |
-| [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Ready |
+| [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Done |
 
 Delivery: phase staging branch `staging/track-n`, numbered group PRs per the repository
 development model. Suggested groups: 1 = N0, 2 = N1, 3 = N2 and N4, 4 = N3 and N5.
@@ -333,4 +333,54 @@ movement stay synchronous per the guardrails; option-off behaviour is unchanged.
 
 ## WI-N5-01 verification
 
-Pending.
+Recorded 2026-10-25, seed 1, Release builds, same host as every Track N run, deepdivide 656x460.
+Both options on: `GroupSelectionMoves` (cluster 100) and `AsyncOrderPaths`. The M4 army-AI probe
+has no group-moves knob and army AI routes through hierarchy squads before clustering, so the M4
+on-runs carry `AsyncOrderPaths` only. Artifacts: `/tmp/opencode/n5-01/` (on-runs; the off A/B run
+is `/tmp/opencode/n3-01/m4-report.json` at the same commit), logs under `~/log/n5-01/`.
+
+PathfindingLoad with both options on: every case reports a 0.00 ms order-tick `path` span and
+zero synchronous requests; 429 submissions applied 429 with 0 cancellations, 0 deadline misses,
+wait frames median 2 / p99 8 / max 11 against the bound 30; worker search time 225.8 ms total,
+off the logic thread. `tick.wallMs` is unchanged (median 1.82 off and on; bootstrap CIs overlap
+at [1.71, 1.84] versus [1.71, 1.90]), so submission cost is invisible at scenario scale. The
+1000-unit selection issues 109 submissions (108 cluster leaders plus 1 unclustered single, 0
+fallback searches); the army-AI 1000 case issues 125 leader submissions with 5 followers served
+by landing. The impassable case still reports its 10 failed searches through the async path.
+
+M4 army-AI probe, 4500 frames, off versus on at the same commit (on-run 1 / on-run 2):
+
+| Metric | Off | On |
+|---|---|---|
+| Logic `path` span | nonzero on 75 ticks: mean 57.7, median 51.9, p99 156.9, max 172.7 ms; amortized 0.961 ms | 0.000 ms on every tick, both runs |
+| Worst-tick synchronous requests | 253 (248 squads + 5 fallback) | 0 |
+| Async submitted / applied / cancelled | 0 | 18780 / 18780 / 0 and 18762 / 18761 / 1 |
+| Async deadline misses, wait frames median / max | n/a | 0 both runs; 1 / 8 and 1 / 9 |
+| `tick.wallMs` mean / median / p99 / max | 19.50 / 17.78 / 70.22 / 204.39 ms | 17.84 / 17.18 / 27.11 / 42.63 ms |
+| Squad invariants (unassigned, commanderless) | 0, 0 | 0, 0 both runs |
+| Idle-stall check | fail: sideA 6 units, max idle 1110 | fail: sideB 2 units (max idle 2900) and sideB 3 units (max idle 2584) |
+
+Budget verdicts (deep dive section 3, measured with options on):
+
+| Budget | Value | Measured | Verdict |
+|---|---|---|---|
+| `system.path.spanMs` amortized median, M4 | at or under 1.7 ms | 0.000 ms | Met |
+| `system.path.spanMs` p99 on order ticks, M4 | at or under 16.7 ms | 0.000 ms | Met |
+| `path` span on a 1000-unit selection move tick | at or under 33.3 ms | 0.00 ms (109 async submissions) | Met |
+| Full searches per multi-unit order | at most groups plus region-crossing followers | 109 = 108 clusters + 1 single, 0 fallback; 125 leaders + 5 landed | Met |
+
+Engagement checks: armies engage and trade (60 and 59 units destroyed across the on-runs), async
+completions stay inside the frame bound with zero misses, and squad invariants hold. The
+idle-stall check fails at this commit in both modes (off: sideA 6 units; on: sideB 2 to 3 units
+across two runs, after the N4-02 on-run passed it); max-idle values 1110 to 2900 sit in the band
+of the pre-existing base failure documented under WI-N2 results (base max idle 2404, landing-on
+1110), which the pre-merge N1 head does not reproduce. Per the card, this failure is reported and
+stops further verification: it is the scheduled base-stall follow-up, not an N-options
+regression, and every pathfinding budget above is measured Met regardless.
+
+Default-flip recommendation (operator decides): keep both defaults off. `AsyncOrderPaths` meets
+every budget and smooths decision ticks (`tick.wallMs` p99 70.2 to 27.1 ms), but it introduces
+the accepted run-to-run nondeterminism and the base-stall follow-up should land first so the
+on-mode invariant can hold run over run. `GroupSelectionMoves` additionally changes
+player-visible movement (cluster followers retrace leader paths), so it stays opt-in until the
+order UX is reviewed against per-unit paths.
