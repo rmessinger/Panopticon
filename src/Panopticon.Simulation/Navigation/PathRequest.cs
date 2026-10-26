@@ -18,8 +18,9 @@ internal sealed class PathRequest
 
     public Action<PathRequestHandle>? Callback { get; init; }
 
-    /// <summary>Submission-time passability snapshot; searched by the worker, never mutated.</summary>
-    public Graph Snapshot { get; init; } = null!;
+    /// <summary>Submission-time passability snapshot (WI-N1-03); the worker applies its cells
+    /// to its persistent graph when the version differs from the last applied one.</summary>
+    public PassabilitySnapshot Snapshot { get; init; } = null!;
 
     public List<Vector3>? Waypoints { get; set; }
 

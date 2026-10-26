@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N4-01` |
 | Roadmap phase | [N4](../../track-n-pathfinding-performance.md): Off-thread order paths |
-| Status | `Blocked` (on `WI-N1-03`) |
+| Status | `Ready` |
 | Type | `source-edit` |
 | Effort | `S` |
 | Prerequisites | `WI-N1-03` |

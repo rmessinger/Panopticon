@@ -1864,13 +1864,13 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
     army-AI probe are recorded; the report names the dominant origin and a verdict per budget.
 
 ### N1: Search core efficiency
-- [ ] N1-1 Allocation-free search scratch. (`WI-N1-01`)
+- [x] N1-1 Allocation-free search scratch. (`WI-N1-01`)
   - AC: the seeded path corpus returns identical waypoints; zero steady-state allocation per
     internal search; before/after per-search time recorded.
-- [ ] N1-2 Connected-region labels. (`WI-N1-02`)
+- [x] N1-2 Connected-region labels. (`WI-N1-02`)
   - AC: corpus identical including diagonal-only gaps; unreachable requests expand 0 nodes;
     labels update after passability changes; relabel time recorded.
-- [ ] N1-3 Versioned passability snapshot. (`WI-N1-03`)
+- [x] N1-3 Versioned passability snapshot. (`WI-N1-03`)
   - AC: no `Node` allocation on submit in steady state; async equals synchronous on the corpus;
     B4 anchor before/after recorded.
 

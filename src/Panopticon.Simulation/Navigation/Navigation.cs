@@ -94,7 +94,9 @@ public class Navigation
         Interlocked.Increment(ref TotalPathRequests);
         _statistics.AddRequest(origin);
         var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
-        var result = ComputePath(_graph, start, end, out endIsPassable);
+        // The returned list is the single per-search allocation (WI-N1-01).
+        var result = new List<Vector3>();
+        ComputePath(_graph, start, end, out endIsPassable, result);
         _pathSearchTicks += System.Diagnostics.Stopwatch.GetTimestamp() - startTimestamp;
         return result;
     }
@@ -121,10 +123,11 @@ public class Navigation
 
     // Shared search core (WI-B4-05): the synchronous CalculatePath and the async path worker
     // both run this against a graph. Workers pass a submission-time snapshot because
-    // UpdateAreaPassability mutates the live graph on the logic thread.
-    internal IList<Vector3> ComputePath(Graph graph, Vector3 start, Vector3 end, out bool endIsPassable)
+    // UpdateAreaPassability mutates the live graph on the logic thread. WI-N1-01: callers
+    // supply the waypoint buffer; the core itself is allocation-free.
+    internal void ComputePath(Graph graph, Vector3 start, Vector3 end, out bool endIsPassable, List<Vector3> result)
     {
-        var result = new List<Vector3>();
+        result.Clear();
         endIsPassable = true;
         var startNode = GetClosestNode(graph, start);
         var endNode = GetClosestNode(graph, end);
@@ -133,9 +136,9 @@ public class Navigation
         // path; callers already treat an empty path as no route.
         if (startNode == null || endNode == null)
         {
-            Logger.Info("Aborting pathfinding because start and/or end are outside the graph");
+            Logger.Info(() => "Aborting pathfinding because start and/or end are outside the graph");
             _statistics.AddFailedSearch();
-            return result;
+            return;
         }
 
         if (!startNode.IsPassable)
@@ -153,9 +156,18 @@ public class Navigation
 
         if (startNode == null || endNode == null)
         {
-            Logger.Info("Aborting pathfinding because start and/or end are null");
+            Logger.Info(() => "Aborting pathfinding because start and/or end are null");
             _statistics.AddFailedSearch();
-            return result;
+            return;
+        }
+
+        // WI-N1-02: different connected regions can never yield a route; reject without the
+        // grid-flooding search. Snapshot graphs carry their own labels, frozen at clone time.
+        if (!graph.Regions.SameRegion(startNode, endNode))
+        {
+            Logger.Warn(() => $"Graph search failed to find a path between {start} and {end}.");
+            _statistics.AddFailedSearch();
+            return;
         }
 
         var nodesExpandedBefore = graph.SearchNodesExpanded;
@@ -164,9 +176,9 @@ public class Navigation
 
         if (route == null)
         {
-            Logger.Warn($"Graph search failed to find a path between {start} and {end}.");
+            Logger.Warn(() => $"Graph search failed to find a path between {start} and {end}.");
             _statistics.AddFailedSearch();
-            return result;
+            return;
         }
 
         PathOptimizer.RemoveRedundantNodes(route);
@@ -177,8 +189,6 @@ public class Navigation
             var pos = GetNodePosition(node);
             result.Add(new Vector3(pos.X, pos.Y, _heightMap.GetHeight(pos.X, pos.Y)));
         }
-
-        return result;
     }
 
     public void UpdateAreaPassability(GameObject gameObject, bool passable)
@@ -219,6 +229,34 @@ public class Navigation
                 }
             }
         }
+
+        // WI-N1-02: region labels must not outlive the passability change they describe.
+        _graph.MarkRegionsDirty();
+
+        // WI-N1-03: async submissions reuse their snapshot until the version changes, so every
+        // passability mutation must bump it.
+        _passabilityVersion++;
+    }
+
+    // WI-N1-03: monotonic passability version; async path submissions snapshot cells together
+    // with this number and the worker only re-applies bytes when it changes.
+    private int _passabilityVersion = 1;
+
+    internal int PassabilityVersion => _passabilityVersion;
+
+    internal PassabilitySnapshot BuildPassabilitySnapshot()
+    {
+        var cells = new byte[_graph.Width * _graph.Height];
+
+        for (var x = 0; x < _graph.Width; x++)
+        {
+            for (var y = 0; y < _graph.Height; y++)
+            {
+                cells[x + (y * _graph.Width)] = (byte)(_graph.GetNode(x, y).IsPassable ? 1 : 0);
+            }
+        }
+
+        return new PassabilitySnapshot(_passabilityVersion, cells);
     }
 
     private PathRequestQueue _pathRequestQueue;

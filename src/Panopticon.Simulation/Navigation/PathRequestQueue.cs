@@ -38,11 +38,15 @@ public sealed class PathRequestQueue
 
     private readonly Navigation _navigation;
     private readonly int _maxCompletionFrames;
+
+    // Worker-thread search scratch (WI-N1-01): reused across requests; Waypoints copies out
+    // under the lock, which stays the single per-request allocation.
+    private readonly List<Vector3> _waypointBuffer = new();
     private readonly object _gate = new();
     private readonly List<PathRequest> _requests = [];
     private readonly Queue<PathRequest> _work = [];
     private readonly List<(PathRequestHandle Handle, Action<PathRequestHandle> Callback)> _drainCallbacks = [];
-    private Graph? _currentTickSnapshot;
+    private PassabilitySnapshot _currentSnapshot;
     private Thread? _worker;
     private bool _disposed;
     private int _prefixIndex;
@@ -134,9 +138,14 @@ public sealed class PathRequestQueue
                 throw new ObjectDisposedException(nameof(PathRequestQueue));
             }
 
-            // Same-tick submissions share one snapshot; Drain rotates it so the next tick
-            // clones the graph with any passability changes applied since.
-            _currentTickSnapshot ??= _navigation.CloneGraphForWorker();
+            // WI-N1-03: submissions share the snapshot until the passability version changes;
+            // a stable grid pays zero snapshot cost instead of a per-tick graph clone.
+            var version = _navigation.PassabilityVersion;
+
+            if (_currentSnapshot is null || _currentSnapshot.Version != version)
+            {
+                _currentSnapshot = _navigation.BuildPassabilitySnapshot();
+            }
 
             var request = new PathRequest
             {
@@ -144,7 +153,7 @@ public sealed class PathRequestQueue
                 End = end,
                 Requester = requester,
                 Callback = onCompleted,
-                Snapshot = _currentTickSnapshot,
+                Snapshot = _currentSnapshot,
             };
 
             var handle = new PathRequestHandle(request, _gate);
@@ -184,8 +193,6 @@ public sealed class PathRequestQueue
             {
                 return;
             }
-
-            _currentTickSnapshot = null;
 
             while (_prefixIndex < _requests.Count)
             {
@@ -279,6 +286,12 @@ public sealed class PathRequestQueue
         }
     }
 
+    // Worker-thread-only state (WI-N1-03): one persistent search graph whose passability is
+    // re-applied only when a request carries a version newer than the last applied one. Only
+    // WorkerLoop/Compute touch these, so no lock is needed.
+    private Graph _workerGraph;
+    private int _appliedVersion;
+
     private void Compute(PathRequest request)
     {
         try
@@ -295,13 +308,21 @@ public sealed class PathRequestQueue
                 return;
             }
 
+            if (request.Snapshot.Version != _appliedVersion)
+            {
+                _workerGraph ??= _navigation.CloneGraphForWorker();
+                _workerGraph.ApplyPassability(request.Snapshot.Cells);
+                _workerGraph.MarkRegionsDirty();
+                _appliedVersion = request.Snapshot.Version;
+            }
+
             var searchStart = System.Diagnostics.Stopwatch.GetTimestamp();
-            var waypoints = _navigation.ComputePath(request.Snapshot, request.Start, request.End, out var endIsPassable);
+            _navigation.ComputePath(_workerGraph, request.Start, request.End, out var endIsPassable, _waypointBuffer);
             _navigation.AddAsyncSearchMeasurement(System.Diagnostics.Stopwatch.GetTimestamp() - searchStart);
 
             lock (_gate)
             {
-                request.Waypoints = [.. waypoints];
+                request.Waypoints = [.. _waypointBuffer];
                 request.EndIsPassable = endIsPassable;
                 request.State = PathRequestState.Completed;
                 _completedCount++;

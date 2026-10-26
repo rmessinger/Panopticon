@@ -9,13 +9,13 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 |---|---|---|---|---|
 | [`WI-N0-01`](../agent/cards/WI-N0-01-path-span-and-counters.md) | N0 | `path` span and request counters by origin | N0-1 | Done |
 | [`WI-N0-02`](../agent/cards/WI-N0-02-pathfinding-load-scenario.md) | N0 | `PathfindingLoad` scenario and baseline report | N0-2 | Done |
-| [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Ready |
-| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Blocked |
-| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Blocked |
-| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Blocked |
+| [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
+| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
+| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
+| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Ready |
 | [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Blocked |
 | [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Blocked |
-| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Blocked |
+| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Ready |
 | [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Blocked |
 | [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Blocked |
 
@@ -85,7 +85,71 @@ those ticks, so per-tick request counter medians are 0 by construction and span 
 
 ## WI-N1 results
 
-Pending.
+WI-N1-01, allocation-free search scratch, measured by the `PathCorpusSearch` benchmark: one
+invocation = one pass over the 31-case path-equality corpus (deepdivide grid 656x460).
+Per-search values divide by 31.
+
+| Version | Corpus pass | Per search | Allocated per pass |
+|---|---|---|---|
+| Before (HashSet visited, per-call route) | 284.9 ms | 9.19 ms | 91.93 KB (2.97 KB per search) |
+| After (generation stamp, scratch route) | 180.3 ms | 5.82 ms | 0 |
+
+Time drops 37%, steady-state managed allocation per search is zero apart from the returned
+waypoint list (the queue copies it once per async request under the lock). The corpus waypoint
+lists are byte-identical before and after; the corpus lives at
+`test/Panopticon.Simulation.Tests/Navigation/PathEqualityCorpus.json` with an Interactive
+regeneration check (`RegeneratedCorpus_MatchesTheCommittedFixture`, deliberate regeneration via
+`PANOPTICON_PATH_CORPUS_OUTPUT`). Diagonal-gap shapes stay covered by the synthetic wall cases
+in `GraphTest`; WI-N1-02 later regenerated the fixture with two generator walls (33 cases
+including 2 unreachable pairs) and re-verified equality.
+
+WI-N1-02, connected-region labels, measured by the `RegionRelabel` benchmark on the same M0
+grid (656x460, three regions after the corpus walls):
+
+| Benchmark | Mean | Median | Allocated |
+|---|---|---|---|
+| Relabel (MarkDirty + next SameRegion) | 11.96 ms | 11.87 ms | 0 B |
+| ColdRelabel (construct + first SameRegion) | 11.49 ms | 11.44 ms | 1.25 MB |
+| UnreachableSearchFlood (cross-region Graph.Search) | 11.65 ms | 9.20 ms | 0 B |
+
+One relabel costs about one avoided unreachable flood, so a single rejected request per dirty
+period breaks even and additional rejections are pure savings. Labeling is lazy: relabeling
+runs only on the first request after an `UpdateAreaPassability` mutation, never per request,
+and the label array is the only allocation (cold, once). Guardrail verdict: relabeling does
+not cost more than the floods it avoids. Corpus unreachable pairs (unreachable-01/02) now
+return the same empty result with zero nodes expanded; `NavigationRegionsTests` verifies the
+reject on a carved single-cell pocket (empty path, nodes expanded delta 0, failed search +1).
+
+PathfindingLoad rerun (seed 1, deepdivide): the map is single-region so the region check never
+rejects in-scenario and the unreachable case uses the off-map fallback, which aborts at
+endpoint resolution before the region check; its span stays at noise level (baseline 0.12 ms,
+rerun 0.25 ms, both 0 nodes). Reachable cases carry only the WI-N1-01 improvement:
+squadless-1000 1376.4 to 1164.9 ms, squadless-100 247.7 to 191.0 ms, armyai-squads-1000
+147.7 to 125.5 ms.
+
+WI-N1-03, versioned passability snapshots, measured by the WI-B4-06 async anchor (same knobs:
+capacity probe, deepdivide, 1000-request bursts every 300 frames, 14 bursts, bound 30, seed 1;
+the anchor now records per-burst submit allocation because bursts land between B1 tick
+windows). Before/after runs on consecutive commits of this branch:
+
+| Measurement | Before (per-tick graph clone) | After (versioned snapshot) |
+|---|---|---|
+| Burst submit allocation (median / max) | 24.42 MB / 24.55 MB | 0.28 MB / 0.63 MB |
+| Submit-to-apply wall (median / p99 / max) | 1093.3 / 2095.9 / 2166.5 ms | 1029.8 / 2007.6 / 2154.9 ms |
+| Frames waited (median / max) | 20 / 43 | 18 / 42 |
+| Deadline misses (of 14000) | 2171 | 1581 |
+
+Steady-state submits allocate no graph: the only per-version cost is the 301,760-byte cell
+array (combat mutates passability between most bursts, so a burst usually does pay one
+rebuild). The first burst also bootstraps the worker graph once (0.63 MB). Submit-to-apply
+waits are dominated by drain cadence during the contact phase, so they improve modestly while
+the submit tick's 24 MB clone and its GC pressure disappear. Semantics: requests submitted
+before a passability change compute against the old cells (`RequestsComputeAgainstSubmissionTimePassability`),
+steady-state submits allocate under 1 MB on the 656x460 grid
+(`SteadyStateSubmitsAllocateNoGraph`), and async results equal synchronous results across all
+33 corpus cases served from one shared snapshot (`PathEqualityCorpusAsyncTests`). Anchor
+artifacts: `/tmp/opencode/n1-03/` (before, before-instrumented, after reports and B1 records),
+logs under `~/log/n1-03/`.
 
 ## WI-N2 results
 

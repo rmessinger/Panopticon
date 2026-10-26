@@ -27,6 +27,10 @@ public class Node : FastPriorityQueueNode
     public int ShortestKnownDistance;
     public Node CameFrom;
 
+    // WI-N1-01: set to the owning graph's current search generation when the node is expanded;
+    // replaces the per-search visited HashSet.
+    internal long SearchGeneration;
+
     internal Node(Graph graph, int x, int y)
     {
         X = x;

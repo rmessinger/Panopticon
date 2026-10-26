@@ -17,7 +17,8 @@ public class Graph
 
     private readonly FastPriorityQueue<Node> _unexpandedNodes;
     private readonly List<(Node, int)> _adjacentNodes;
-    private readonly HashSet<Node> _visited;
+    private readonly List<Node> _route = new();
+    private long _searchGeneration;
     private long _searchNodesExpanded;
 
     /// <summary>Total nodes dequeued (expanded) by <see cref="Search"/> on this graph instance
@@ -25,6 +26,15 @@ public class Graph
     /// search. Each graph is searched by one thread only (live graph on the logic thread,
     /// snapshot clones on the async worker), so plain increments suffice.</summary>
     public long SearchNodesExpanded => _searchNodesExpanded;
+
+    // WI-N1-02: per-graph region labels. Snapshot clones label their own frozen passability,
+    // so worker searches never consult stale live-graph labels. Lazy: mutations before the
+    // first query never pay for a relabel.
+    private NavigationRegions _regions;
+
+    internal NavigationRegions Regions => _regions ??= new NavigationRegions(this);
+
+    internal void MarkRegionsDirty() => _regions?.MarkDirty();
 
     public Node GetNode(int x, int y)
     {
@@ -56,7 +66,6 @@ public class Graph
 
         _unexpandedNodes = new FastPriorityQueue<Node>(w * h);
         _adjacentNodes = new List<(Node, int)>(8);
-        _visited = new HashSet<Node>();
     }
 
     // Submission-time snapshot for async path workers (WI-B4-05): copies passability only.
@@ -76,27 +85,44 @@ public class Graph
         return clone;
     }
 
+    // WI-N1-03: replaces whole-graph clones for the async worker. Cells layout matches
+    // Navigation.BuildPassabilitySnapshot (index = x + y * width, non-zero = passable).
+    internal void ApplyPassability(byte[] cells)
+    {
+        for (var x = 0; x < Width; x++)
+        {
+            for (var y = 0; y < Height; y++)
+            {
+                GetNode(x, y).Passability = cells[x + (y * Width)] != 0 ? Passability.Passable : Passability.Impassable;
+            }
+        }
+    }
+
+    // Fills the reusable route scratch (WI-N1-01): the returned list is shared per graph and
+    // stays valid only until the next Search on the same graph.
     private List<Node> GetPath(Node start, Node end)
     {
-        var result = new List<Node> { end };
+        _route.Clear();
+        _route.Add(end);
         var iter = end.CameFrom;
 
         while (iter != start)
         {
-            result.Add(iter);
+            _route.Add(iter);
             iter = iter.CameFrom;
         }
 
-        result.Reverse();
+        _route.Reverse();
 
-        return result;
+        return _route;
     }
 
-    // A* pathfinding
+    // A* pathfinding. Returns the graph's shared route list; callers must consume it before
+    // issuing the next Search (WI-N1-01).
     public List<Node> Search(Node start, Node end)
     {
         _unexpandedNodes.Clear();
-        _visited.Clear();
+        _searchGeneration++;
 
         start.CameFrom = start;
         start.ShortestKnownDistance = 0;
@@ -105,7 +131,7 @@ public class Graph
         while (_unexpandedNodes.Count > 0)
         {
             var current = _unexpandedNodes.Dequeue();
-            _visited.Add(current);
+            current.SearchGeneration = _searchGeneration;
             _unexpandedNodes.ResetNode(current);
             _searchNodesExpanded++;
 
@@ -121,7 +147,7 @@ public class Graph
 
             foreach (var (next, cost) in _adjacentNodes)
             {
-                if (_visited.Contains(next))
+                if (next.SearchGeneration == _searchGeneration)
                 {
                     continue;
                 }
