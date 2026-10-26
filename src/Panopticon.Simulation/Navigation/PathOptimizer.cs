@@ -54,7 +54,8 @@ public static class PathOptimizer
         }
     }
 
-    private static bool IsDirectLinePassable(Node start, Node end, Graph graph)
+    // WI-N7-02: shared with OffsetRouteValidator for offset retrace validation.
+    internal static bool IsDirectLinePassable(Node start, Node end, Graph graph)
     {
         // Use the Bresenham algorithm for line rasterization to
         // determine which tiles we need to check:

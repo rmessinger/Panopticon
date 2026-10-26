@@ -408,4 +408,16 @@ public sealed class TestHarnessConfig
     /// <summary>WI-N4-02: order-driven paths submit to the async worker queue (default false).</summary>
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeAsyncOrderPaths.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public bool MassBattleCapacityProbeAsyncOrderPaths { get; set; } = false;
+
+    /// <summary>WI-N7-02: validate squad offset retrace routes (default false).</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadValidateOffsetRoutes.", nameof(BuiltInScenario.PathfindingLoad))]
+    public bool PathfindingLoadValidateOffsetRoutes { get; set; } = false;
+
+    /// <summary>WI-N7-02: validate squad offset retrace routes (default false).</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeValidateOffsetRoutes.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
+    public bool MassBattleCapacityProbeValidateOffsetRoutes { get; set; } = false;
+
+    /// <summary>WI-N7-02: validate squad offset retrace routes (default false).</summary>
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockValidateOffsetRoutes.", nameof(BuiltInScenario.NavigationDeadlock))]
+    public bool NavigationDeadlockValidateOffsetRoutes { get; set; } = false;
 }

@@ -87,6 +87,7 @@ public static class NavigationDeadlockRunner
             mapPath,
             seed,
             frameBudget,
+            config.NavigationDeadlockValidateOffsetRoutes,
             results);
         report.WriteJson(reportPath);
         report.WriteText(Path.ChangeExtension(reportPath, ".txt"));
@@ -188,6 +189,7 @@ public static class NavigationDeadlockRunner
         }
 
         navigation.Options.AsyncOrderPaths = setup.AsyncOrderPaths;
+        navigation.Options.ValidateOffsetRoutes = config.NavigationDeadlockValidateOffsetRoutes;
 
         // Structures mark their grid cells over the first ticks; orders are deferred until the
         // furniture settles so paths and region labels see the walls.
@@ -203,6 +205,7 @@ public static class NavigationDeadlockRunner
         var asyncSubmittedBefore = navigation.AsyncPathSubmitted;
         var asyncAppliedBefore = navigation.AsyncPathApplied;
         var asyncCancelledBefore = navigation.AsyncPathCancelled;
+        var statsBefore = navigation.Statistics;
 
         setup.IssueOrders();
 
@@ -292,7 +295,8 @@ public static class NavigationDeadlockRunner
 
         var records = sampler.Records;
         var cycles = sampler.WaitForCycles;
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls);
+        var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -309,6 +313,7 @@ public static class NavigationDeadlockRunner
             navigation.AsyncPathApplied - asyncAppliedBefore,
             navigation.AsyncPathCancelled - asyncCancelledBefore,
             maxImpassableRetracePoints,
+            reroutedFollowers,
             confirmed,
             note,
             [.. records],
@@ -566,7 +571,9 @@ public static class NavigationDeadlockRunner
         IReadOnlyList<NavigationWaitForCycle> cycles,
         int settledUnits,
         int impassableRetracePoints,
-        IReadOnlyList<NavigationStallRecord> currentStalls)
+        IReadOnlyList<NavigationStallRecord> currentStalls,
+        int reroutedFollowers,
+        bool validateOffsetRoutes)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -613,6 +620,15 @@ public static class NavigationDeadlockRunner
 
             case NavigationDeadlockCasePlanner.SquadOffsetRetrace:
                 {
+                    // WI-N7-02: with offset validation on the mechanism is remediated instead
+                    // of reproduced: followers reroute onto the leader route and no retrace
+                    // point lands on an impassable cell.
+                    if (validateOffsetRoutes)
+                    {
+                        return (reroutedFollowers > 0 && impassableRetracePoints == 0,
+                            $"{reroutedFollowers} followers rerouted onto the leader route, {impassableRetracePoints} impassable retrace points (WI-N7-02), {settledUnits}/{setup.OrderedUnits.Count} settled.");
+                    }
+
                     return (impassableRetracePoints > 0,
                         $"{impassableRetracePoints} impassable retrace points observed, {settledUnits}/{setup.OrderedUnits.Count} settled.");
                 }

@@ -147,28 +147,34 @@ public static class GroupMovement
             var delta = member.Translation - leader.Translation;
             var offset = new Vector2(delta.X, delta.Y);
             var offsetDestination = destination + new Vector3(offset.X, offset.Y, 0);
+            var offsetDestinationPassable = navigation.IsPassable(offsetDestination);
 
-            if (navigation.IsPassable(offsetDestination))
+            // WI-N7-02: the slot may be passable while the offset retrace crosses impassable
+            // cells. With validation on, such a follower lands on the leader route near the
+            // destination, or falls back to its own search when no landing exists.
+            var crossesOffsetRoute = offsetDestinationPassable
+                && navigation.Options.ValidateOffsetRoutes
+                && OffsetRouteValidator.Crosses(navigation, path, offset);
+
+            if (offsetDestinationPassable && !crossesOffsetRoute)
             {
                 AssignPath(member, path, offset, endIsPassable, destination);
+                continue;
             }
-            else
+
+            if (crossesOffsetRoute)
             {
-                // Blocked follower (WI-B4-04): the formation slot is impassable. WI-N2-01: a
-                // follower starting in the leader's region first tries a bounded ring landing
-                // in the destination's region; only failed landings and other-region followers
-                // pay for their own full search.
-                var destinationNode = navigation.GetNodeAt(path[^1]);
-                var leaderStartNode = navigation.GetNodeAt(path[0]);
-                var followerStartNode = navigation.GetNodeAt(member.Translation);
-                if (leaderStartNode != null
-                    && followerStartNode != null
-                    && destinationNode != null
-                    && navigation.Graph.Regions.SameRegion(followerStartNode, leaderStartNode)
+                navigation.AddReroutedFollower();
+                var leaderDestinationNode = navigation.GetNodeAt(path[^1]);
+
+                // A zero landing radius disables landing here too (WI-N2-01 semantics), even
+                // though the destination itself is passable at ring 0.
+                if (navigation.Options.MaxLandingRadiusCells > 0
+                    && leaderDestinationNode != null
                     && FollowerLanding.TryLand(
                         navigation,
-                        offsetDestination,
-                        destinationNode,
+                        destination,
+                        leaderDestinationNode,
                         navigation.Options.MaxLandingRadiusCells,
                         out var landingPosition,
                         out var ringDistance))
@@ -176,49 +182,86 @@ public static class GroupMovement
                     LandedFollowerCount++;
                     navigation.AddLandedFollower();
                     FollowerLanding.RecordLanding(ringDistance);
-                    AssignPath(member, path, offset, endIsPassable, destination, landingPosition);
+                    AssignPath(member, path, Vector2.Zero, endIsPassable, destination, landingPosition);
+                    continue;
                 }
-                else
-                {
-                    FallbackFollowerCount++;
-                    navigation.AddFallbackFollower();
 
-                    if (asyncFallbacks)
-                    {
-                        // WI-N4-02: the fallback search also runs on the worker queue.
-                        navigation.SubmitPathRequest(
-                            member.Translation,
-                            destination,
-                            member,
-                            fallbackHandle =>
-                            {
-                                if (fallbackHandle.TryGetResult(out var fallbackPath, out var fallbackEndIsPassable)
-                                    && fallbackPath.Count > 0)
-                                {
-                                    AssignPath(member, fallbackPath, Vector2.Zero, fallbackEndIsPassable, destination);
-                                }
-                                else if (!member.IsDestroyed)
-                                {
-                                    // WI-N7-01: failed or empty fallback settles the follower.
-                                    member.AIUpdate!.SettleNoRoute();
-                                }
-                            });
-                    }
-                    else
-                    {
-                        var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
-                        if (fallback.Count > 0)
-                        {
-                            AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
-                        }
-                        else
-                        {
-                            // WI-N7-01: failed fallback settles the follower.
-                            member.AIUpdate!.SettleNoRoute();
-                        }
-                    }
-                }
+                // Failed landing: pay for an own search like a blocked follower.
+                FallbackFollowerCount++;
+                navigation.AddFallbackFollower();
+                IssueFallbackSearch(navigation, member, destination, asyncFallbacks);
+                continue;
             }
+
+            // Blocked follower (WI-B4-04): the formation slot is impassable. WI-N2-01: a
+            // follower starting in the leader's region first tries a bounded ring landing
+            // in the destination's region; only failed landings and other-region followers
+            // pay for their own full search.
+            var destinationNode = navigation.GetNodeAt(path[^1]);
+            var leaderStartNode = navigation.GetNodeAt(path[0]);
+            var followerStartNode = navigation.GetNodeAt(member.Translation);
+            if (leaderStartNode != null
+                && followerStartNode != null
+                && destinationNode != null
+                && navigation.Graph.Regions.SameRegion(followerStartNode, leaderStartNode)
+                && FollowerLanding.TryLand(
+                    navigation,
+                    offsetDestination,
+                    destinationNode,
+                    navigation.Options.MaxLandingRadiusCells,
+                    out var blockedLandingPosition,
+                    out var blockedRingDistance))
+            {
+                LandedFollowerCount++;
+                navigation.AddLandedFollower();
+                FollowerLanding.RecordLanding(blockedRingDistance);
+                AssignPath(member, path, offset, endIsPassable, destination, blockedLandingPosition);
+                continue;
+            }
+
+            FallbackFollowerCount++;
+            navigation.AddFallbackFollower();
+            IssueFallbackSearch(navigation, member, destination, asyncFallbacks);
+        }
+    }
+
+    private static void IssueFallbackSearch(
+        Navigation navigation,
+        GameObject member,
+        Vector3 destination,
+        bool asyncFallbacks)
+    {
+        // WI-N4-02: with async order paths the fallback search also runs on the worker queue.
+        // WI-N7-01: a failed or empty fallback settles the follower.
+        if (asyncFallbacks)
+        {
+            navigation.SubmitPathRequest(
+                member.Translation,
+                destination,
+                member,
+                fallbackHandle =>
+                {
+                    if (fallbackHandle.TryGetResult(out var fallbackPath, out var fallbackEndIsPassable)
+                        && fallbackPath.Count > 0)
+                    {
+                        AssignPath(member, fallbackPath, Vector2.Zero, fallbackEndIsPassable, destination);
+                    }
+                    else if (!member.IsDestroyed)
+                    {
+                        member.AIUpdate!.SettleNoRoute();
+                    }
+                });
+            return;
+        }
+
+        var fallback = navigation.CalculatePath(member.Translation, destination, out var syncFallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
+        if (fallback.Count > 0)
+        {
+            AssignPath(member, fallback, Vector2.Zero, syncFallbackEndIsPassable, destination);
+        }
+        else
+        {
+            member.AIUpdate!.SettleNoRoute();
         }
     }
 

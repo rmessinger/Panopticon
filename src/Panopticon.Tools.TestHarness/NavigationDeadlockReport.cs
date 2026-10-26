@@ -23,6 +23,7 @@ public sealed record NavigationDeadlockCaseResult(
     long AsyncApplied,
     long AsyncCancelled,
     int ImpassableRetracePoints,
+    long ReroutedFollowers,
     bool MechanismConfirmed,
     string MechanismNote,
     IReadOnlyList<NavigationStallRecord> StallRecords,
@@ -34,6 +35,7 @@ public sealed record NavigationDeadlockReport(
     string Map,
     int Seed,
     int FrameBudget,
+    bool ValidateOffsetRoutes,
     IReadOnlyList<NavigationDeadlockCaseResult> Cases)
 {
     public const int CurrentSchemaVersion = 1;

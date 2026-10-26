@@ -47,6 +47,11 @@ public sealed class PathStatistics
     /// for their own full search (WI-N2-01); equals the BlockedFollowerRequests delta.</summary>
     public long FallbackFollowers { get; }
 
+    /// <summary>Followers whose formation-offset retrace crossed impassable cells and were
+    /// rerouted with <see cref="NavigationOptions.ValidateOffsetRoutes"/> on: landed on the
+    /// leader route or handed their own search (WI-N7-02).</summary>
+    public long ReroutedFollowers { get; }
+
     /// <summary>Worker-thread ComputePath time in milliseconds; logic-thread time is reported
     /// as the stepper's nested path span instead.</summary>
     public double WorkerSearchMs { get; }
@@ -70,6 +75,7 @@ public sealed class PathStatistics
         long endpointAdjustments,
         long landedFollowers,
         long fallbackFollowers,
+        long reroutedFollowers,
         double workerSearchMs,
         long goalHistogramSearches,
         long goalHistogramMaxBucket)
@@ -84,6 +90,7 @@ public sealed class PathStatistics
         EndpointAdjustments = endpointAdjustments;
         LandedFollowers = landedFollowers;
         FallbackFollowers = fallbackFollowers;
+        ReroutedFollowers = reroutedFollowers;
         WorkerSearchMs = workerSearchMs;
         GoalHistogramSearches = goalHistogramSearches;
         GoalHistogramMaxBucket = goalHistogramMaxBucket;
@@ -119,6 +126,7 @@ internal sealed class PathStatisticsAccumulator
     private long _endpointAdjustments;
     private long _landedFollowers;
     private long _fallbackFollowers;
+    private long _reroutedFollowers;
     private long _workerSearchTicks;
 
     // WI-N3-01: goal histogram window. Buckets key goal cells into GoalNeighbourhoodCells
@@ -162,6 +170,8 @@ internal sealed class PathStatisticsAccumulator
 
     public void AddFallbackFollower() => Interlocked.Increment(ref _fallbackFollowers);
 
+    public void AddReroutedFollower() => Interlocked.Increment(ref _reroutedFollowers);
+
     public void AddWorkerSearchTicks(long stopwatchTicks) => Interlocked.Add(ref _workerSearchTicks, stopwatchTicks);
 
     public void RecordFullSearchGoal(long bucketKey)
@@ -201,6 +211,7 @@ internal sealed class PathStatisticsAccumulator
         Interlocked.Read(ref _endpointAdjustments),
         Interlocked.Read(ref _landedFollowers),
         Interlocked.Read(ref _fallbackFollowers),
+        Interlocked.Read(ref _reroutedFollowers),
         Interlocked.Read(ref _workerSearchTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency,
         Interlocked.Read(ref _goalHistogramSearches),
         Interlocked.Read(ref _goalHistogramMaxBucket));

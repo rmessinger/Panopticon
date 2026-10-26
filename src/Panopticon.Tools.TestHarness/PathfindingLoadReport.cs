@@ -65,6 +65,10 @@ public sealed record PathfindingLoadCaseResult
     /// (WI-N2-01).</summary>
     public long FallbackFollowers { get; init; }
 
+    /// <summary>WI-N7-02: followers whose offset retrace crossed impassable cells and were
+    /// rerouted onto the leader route or their own search.</summary>
+    public long ReroutedFollowers { get; init; }
+
     /// <summary>Offset-shifted retrace waypoints across the order that sit on impassable cells
     /// (WI-N2-01: existing retrace behavior, recorded, not fixed here).</summary>
     public int ImpassableRetracePoints { get; init; }
@@ -109,6 +113,10 @@ public sealed record PathfindingLoadReport
 
     /// <summary>WI-N4-02: whether order-driven paths submitted to the async worker queue.</summary>
     public bool AsyncOrderPaths { get; init; }
+
+    /// <summary>WI-N7-02: whether squad offset retrace routes were validated against
+    /// impassable cells.</summary>
+    public bool ValidateOffsetRoutes { get; init; }
 
     /// <summary>WI-N4-02: total worker-thread search time, separate from the logic-thread span.</summary>
     public double WorkerSearchMs { get; init; }

@@ -366,6 +366,8 @@ public class Navigation
 
     internal void AddFallbackFollower() => _statistics.AddFallbackFollower();
 
+    internal void AddReroutedFollower() => _statistics.AddReroutedFollower();
+
     public void DebugDraw(DrawingContext2D context, Camera camera)
     {
         _graph.DebugDraw(context, camera, GetNodePosition, _heightMap.GetHeight);
