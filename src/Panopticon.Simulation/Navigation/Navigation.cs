@@ -316,6 +316,18 @@ public class Navigation
         _pathRequestQueue.ForceNextWorkerFailure();
     }
 
+    // WI-N7-01: watchdog test seams; BlockWorker parks the worker before its next Compute.
+    internal void BlockAsyncWorker()
+    {
+        _pathRequestQueue ??= new PathRequestQueue(this, AsyncPathFrameBound);
+        _pathRequestQueue.BlockWorker();
+    }
+
+    internal void ReleaseAsyncWorker()
+    {
+        _pathRequestQueue?.ReleaseWorker();
+    }
+
     /// <summary>
     /// Deadline misses across async path requests (WI-B4-05): completions that applied with a
     /// wait longer than <see cref="AsyncPathFrameBound"/> frames. Zero before the first

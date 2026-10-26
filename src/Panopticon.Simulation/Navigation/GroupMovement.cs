@@ -100,6 +100,11 @@ public static class GroupMovement
                         AssignSquadMembers(
                             navigation, ground, leader, asyncPath, asyncEndIsPassable, destination, asyncFallbacks: true);
                     }
+                    else
+                    {
+                        // WI-N7-01: a failed or empty leader completion settles every member.
+                        SettleSquadNoRoute(ground);
+                    }
                 });
             return;
         }
@@ -107,6 +112,8 @@ public static class GroupMovement
         var path = navigation.CalculatePath(leader.Translation, destination, out var endIsPassable, PathRequestOrigin.SquadLeader);
         if (path.Count == 0)
         {
+            // WI-N7-01: the leader search produced no route; nobody holds a stale route.
+            SettleSquadNoRoute(ground);
             return;
         }
 
@@ -190,6 +197,11 @@ public static class GroupMovement
                                 {
                                     AssignPath(member, fallbackPath, Vector2.Zero, fallbackEndIsPassable, destination);
                                 }
+                                else if (!member.IsDestroyed)
+                                {
+                                    // WI-N7-01: failed or empty fallback settles the follower.
+                                    member.AIUpdate!.SettleNoRoute();
+                                }
                             });
                     }
                     else
@@ -199,8 +211,25 @@ public static class GroupMovement
                         {
                             AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
                         }
+                        else
+                        {
+                            // WI-N7-01: failed fallback settles the follower.
+                            member.AIUpdate!.SettleNoRoute();
+                        }
                     }
                 }
+            }
+        }
+    }
+
+    private static void SettleSquadNoRoute(List<GameObject> ground)
+    {
+        // WI-N7-01: a failed or empty leader result settles every member as NoRoute.
+        foreach (var member in ground)
+        {
+            if (!member.IsDestroyed && member.AIUpdate != null)
+            {
+                member.AIUpdate.SettleNoRoute();
             }
         }
     }

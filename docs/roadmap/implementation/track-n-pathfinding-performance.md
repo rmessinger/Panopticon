@@ -394,8 +394,8 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 |---|---|---|---|---|
 | [`WI-N6-01`](../agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md) | N6 | Movement progress and stall attribution | N6-1 | Done |
 | [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Done |
-| [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Ready |
-| [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Blocked |
+| [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Done |
+| [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Ready |
 | [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Ready |
 | [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Blocked |
 | [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Ready |
@@ -480,6 +480,29 @@ in crowd-goal-100, amortized below 0.01 ms). These targets stand as the acceptan
 for N7 to N9.
 
 Artifacts: `/tmp/opencode/n6-02/navigation-deadlock-report.json`, logs `~/log/n6-02/`.
+
+### WI-N7-01 results (2026-10-27, Release, seed 1)
+
+Failure-path liveness: a worker exception now completes the request as Failed (the drain
+applies it and the requester callback runs), the queue head advances past it, and every
+failure path settles the affected units to NoRoute instead of stranding them.
+
+- NavigationDeadlock async-no-route case (alpine assault, budget 3600): 6 of 6 settled at
+  frame 92 (pre-N7-01: 5 of 6, victim AwaitingPath 3511 frames). Async 6 submitted, 6
+  applied, 0 cancelled; 6 NoRoute records, 0 units still awaiting at end. The worker
+  failure at frame 90 settles the victim through the Failed callback within one drain.
+- M4 army-AI probe, AsyncOrderPaths on, deepdivide, 4500 frames: async 18707 submitted,
+  18707 applied, 0 cancelled, 0 deadline misses, wait frames median 1 / p99 6 / max 9,
+  worst-tick sync requests 0. Stall records: 1906 BlockedByUnit + 91 reason None,
+  0 AwaitingPath. Idle-stall check still fails (sideA 968, sideB 961 stalled at end,
+  max 4434 frames without progress): the remaining stalls are unit-unit blocking (N8/N9
+  scope), not path liveness.
+- Guardrail confirmation: no watchdog fallback fired in the M4 run (0 cancelled, no extra
+  sync requests), so the PendingPathTimeoutFrames path only costs anything after a real
+  stall, and successful-path behavior is unchanged (wait frames and totals match the
+  N6-01 on-run).
+
+Artifacts: `/tmp/opencode/n7-01/`, logs `~/log/n7-01/`.
 
 ## Confined passage queueing (N11-N14)
 

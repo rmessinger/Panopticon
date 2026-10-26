@@ -117,8 +117,9 @@ public static class NavigationDeadlockRunner
         public Action? AfterSettle { get; set; }
 
         // WI-N6-02: async-no-route injects its worker failure only after the pocket rejects
-        // have applied, because a failed request at the queue head also blocks every request
-        // behind it (observed: all followers strand awaiting). Frame counts from IssueOrders.
+        // have applied, keeping the pocket requests' completions attributable (pre-N7 a
+        // failed request at the queue head also blocked every request behind it; failures
+        // now complete as Failed and advance the queue). Frame counts from IssueOrders.
         public int? LateInjectFrame { get; set; }
 
         public Action? LateInject { get; set; }
@@ -291,7 +292,7 @@ public static class NavigationDeadlockRunner
 
         var records = sampler.Records;
         var cycles = sampler.WaitForCycles;
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints);
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -564,7 +565,8 @@ public static class NavigationDeadlockRunner
         IReadOnlyList<NavigationStallRecord> records,
         IReadOnlyList<NavigationWaitForCycle> cycles,
         int settledUnits,
-        int impassableRetracePoints)
+        int impassableRetracePoints,
+        IReadOnlyList<NavigationStallRecord> currentStalls)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -602,9 +604,11 @@ public static class NavigationDeadlockRunner
             case NavigationDeadlockCasePlanner.AsyncNoRoute:
                 {
                     var noRoute = records.Count(record => record.Reason == nameof(NavigationStallReason.NoRoute));
-                    var awaiting = records.Count(record => record.Reason == nameof(NavigationStallReason.AwaitingPath));
-                    return (noRoute > 0 && awaiting > 0,
-                        $"{noRoute} NoRoute records, {awaiting} awaiting records from the injected failure, {settledUnits}/{setup.OrderedUnits.Count} settled. {setup.SetupNote}");
+                    var stillAwaiting = currentStalls.Count(record => record.Reason == nameof(NavigationStallReason.AwaitingPath));
+                    // WI-N7-01: worker failures complete as Failed and settle the requester, so
+                    // liveness holds when the pocket settled NoRoute and nothing still awaits.
+                    return (noRoute > 0 && stillAwaiting == 0,
+                        $"{noRoute} NoRoute records, {stillAwaiting} units still awaiting at end (WI-N7-01 expects 0; pre-N7 the victim awaited the whole budget), {settledUnits}/{setup.OrderedUnits.Count} settled. {setup.SetupNote}");
                 }
 
             case NavigationDeadlockCasePlanner.SquadOffsetRetrace:

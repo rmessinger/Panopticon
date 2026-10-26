@@ -26,6 +26,10 @@ internal sealed class PathRequest
 
     public bool EndIsPassable { get; set; }
 
+    /// <summary>WI-N7-01: the worker died computing this request; it completes empty with a
+    /// Failed outcome so the drain applies it and the callback can settle the requester.</summary>
+    public bool Failed { get; set; }
+
     public PathRequestState State { get; set; } = PathRequestState.Queued;
 
     public bool CancelRequested { get; set; }

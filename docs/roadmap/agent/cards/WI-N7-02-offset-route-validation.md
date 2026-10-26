@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N7-02` |
 | Roadmap phase | [N7](../../track-n-pathfinding-performance.md): Path liveness |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `source-edit` |
 | Effort | `S` |
 | Prerequisites | `WI-N7-01` |

@@ -42,4 +42,15 @@ public sealed class NavigationOptions
     /// determinism-enforcing baselines.
     /// </summary>
     public bool AsyncOrderPaths { get; set; }
+
+    /// <summary>Measured default for <see cref="PendingPathTimeoutFrames"/> (WI-N7-01): twice
+    /// the async frame bound.</summary>
+    public const int DefaultPendingPathTimeoutFrames = 60;
+
+    /// <summary>
+    /// WI-N7-01: a pending async order path older than this many frames cancels and falls back
+    /// to one synchronous search, so no unit holds forever on a stalled request. Only relevant
+    /// with <see cref="AsyncOrderPaths"/> on.
+    /// </summary>
+    public int PendingPathTimeoutFrames { get; set; } = DefaultPendingPathTimeoutFrames;
 }
