@@ -10,6 +10,7 @@ using Panopticon.Logic;
 using Panopticon.Logic.AI.Hierarchy;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
+using Panopticon.Navigation;
 using Panopticon.Network;
 
 // The Navigation class shares its name with its namespace; alias it to keep call sites readable.
@@ -461,6 +462,7 @@ public static class MassBattleCapacityProbeRunner
         MassBattleSquadInvariantSampler? invariantSampler = null,
         bool scriptedOrders = true)
     {
+        var navigation = game.Scene3D.Navigation;
         var allJets = armies.SelectMany(army => army.Jets).ToList();
         var framesRun = frameBudget;
         var stopPredicateTriggered = false;
@@ -468,6 +470,7 @@ public static class MassBattleCapacityProbeRunner
         using var recorder = new BenchmarkMetricRecorder();
         game.LogicStepper.SystemSpan += recorder.RecordSystemSpan;
         var pathDeltas = new List<double>(frameBudget);
+        var pathStatisticsDeltas = new PathStatisticsDeltas(frameBudget);
         var partitionDirtyDeltas = new List<double>(frameBudget);
         var partitionCandidateDeltas = new List<double>(frameBudget);
         var partitionHitDeltas = new List<double>(frameBudget);
@@ -522,6 +525,7 @@ public static class MassBattleCapacityProbeRunner
                 }
 
                 var pathRequestsBefore = NavigationGrid.PathRequestCount;
+                var pathStatsBefore = navigation.Statistics;
                 var dirtyBefore = PartitionCellManager.DirtyObjectsProcessed;
                 var candidatesBefore = PartitionCellManager.CandidatePairs;
                 var hitsBefore = PartitionCellManager.ExactHits;
@@ -534,6 +538,7 @@ public static class MassBattleCapacityProbeRunner
                 step();
                 recorder.EndTick((uint)frame + 1);
                 pathDeltas.Add(NavigationGrid.PathRequestCount - pathRequestsBefore);
+                pathStatisticsDeltas.AddTick(pathStatsBefore, navigation.Statistics);
                 partitionDirtyDeltas.Add(PartitionCellManager.DirtyObjectsProcessed - dirtyBefore);
                 partitionCandidateDeltas.Add(PartitionCellManager.CandidatePairs - candidatesBefore);
                 partitionHitDeltas.Add(PartitionCellManager.ExactHits - hitsBefore);
@@ -568,7 +573,7 @@ public static class MassBattleCapacityProbeRunner
             game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
         }
 
-        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
+        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, pathStatisticsDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
     }
 
     /// <summary>
@@ -613,6 +618,7 @@ public static class MassBattleCapacityProbeRunner
         Game game,
         BenchmarkMetricRecorder recorder,
         List<double> pathDeltas,
+        PathStatisticsDeltas pathStatisticsDeltas,
         List<double> partitionDirtyDeltas,
         List<double> partitionCandidateDeltas,
         List<double> partitionHitDeltas,
@@ -658,6 +664,7 @@ public static class MassBattleCapacityProbeRunner
             "path.requestsPerSecond",
             [.. pathDeltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
             ProbeSeed));
+        pathStatisticsDeltas.AddToRecord(record, game);
         AddPerTickAndPerSecondStatistics(record, "partition.dirtyObjects", partitionDirtyDeltas, game);
         AddPerTickAndPerSecondStatistics(record, "partition.candidatePairs", partitionCandidateDeltas, game);
         AddPerTickAndPerSecondStatistics(record, "partition.exactHits", partitionHitDeltas, game);
@@ -678,6 +685,64 @@ public static class MassBattleCapacityProbeRunner
             $"{metricBaseName}PerSecond",
             [.. deltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
             ProbeSeed));
+    }
+
+    /// <summary>
+    /// Per-tick deltas of the Navigation statistics (WI-N0-01), captured as before/after
+    /// snapshots around each step like the path-request counter. Per-origin counts attribute
+    /// request load to its gameplay source; worker search time is the async worker's
+    /// off-logic-thread cost.
+    /// </summary>
+    private sealed class PathStatisticsDeltas
+    {
+        private readonly List<double> _unitRequests;
+        private readonly List<double> _squadLeaderRequests;
+        private readonly List<double> _blockedFollowerRequests;
+        private readonly List<double> _hordeRequests;
+        private readonly List<double> _asyncRequests;
+        private readonly List<double> _nodesExpanded;
+        private readonly List<double> _failedSearches;
+        private readonly List<double> _endpointAdjustments;
+        private readonly List<double> _workerSearchMs;
+
+        public PathStatisticsDeltas(int capacity)
+        {
+            _unitRequests = new List<double>(capacity);
+            _squadLeaderRequests = new List<double>(capacity);
+            _blockedFollowerRequests = new List<double>(capacity);
+            _hordeRequests = new List<double>(capacity);
+            _asyncRequests = new List<double>(capacity);
+            _nodesExpanded = new List<double>(capacity);
+            _failedSearches = new List<double>(capacity);
+            _endpointAdjustments = new List<double>(capacity);
+            _workerSearchMs = new List<double>(capacity);
+        }
+
+        public void AddTick(PathStatistics before, PathStatistics after)
+        {
+            _unitRequests.Add(after.UnitRequests - before.UnitRequests);
+            _squadLeaderRequests.Add(after.SquadLeaderRequests - before.SquadLeaderRequests);
+            _blockedFollowerRequests.Add(after.BlockedFollowerRequests - before.BlockedFollowerRequests);
+            _hordeRequests.Add(after.HordeRequests - before.HordeRequests);
+            _asyncRequests.Add(after.AsyncRequests - before.AsyncRequests);
+            _nodesExpanded.Add(after.NodesExpanded - before.NodesExpanded);
+            _failedSearches.Add(after.FailedSearches - before.FailedSearches);
+            _endpointAdjustments.Add(after.EndpointAdjustments - before.EndpointAdjustments);
+            _workerSearchMs.Add(after.WorkerSearchMs - before.WorkerSearchMs);
+        }
+
+        public void AddToRecord(BenchmarkRunRecord record, Game game)
+        {
+            AddPerTickAndPerSecondStatistics(record, "path.unitRequests", _unitRequests, game);
+            AddPerTickAndPerSecondStatistics(record, "path.squadLeaderRequests", _squadLeaderRequests, game);
+            AddPerTickAndPerSecondStatistics(record, "path.blockedFollowerRequests", _blockedFollowerRequests, game);
+            AddPerTickAndPerSecondStatistics(record, "path.hordeRequests", _hordeRequests, game);
+            AddPerTickAndPerSecondStatistics(record, "path.asyncRequests", _asyncRequests, game);
+            AddPerTickAndPerSecondStatistics(record, "path.nodesExpanded", _nodesExpanded, game);
+            AddPerTickAndPerSecondStatistics(record, "path.failedSearches", _failedSearches, game);
+            AddPerTickAndPerSecondStatistics(record, "path.endpointAdjustments", _endpointAdjustments, game);
+            AddPerTickAndPerSecondStatistics(record, "path.workerSearchMs", _workerSearchMs, game);
+        }
     }
 
     private static void TrackJetTransitions(List<JetSortie> jets, int frame)

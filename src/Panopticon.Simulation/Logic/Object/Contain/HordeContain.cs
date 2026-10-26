@@ -3,6 +3,7 @@ using System.Numerics;
 using Panopticon.Content;
 using Panopticon.Data.Ini;
 using Panopticon.Mathematics;
+using Panopticon.Navigation;
 
 namespace Panopticon.Logic.Object;
 
@@ -90,7 +91,7 @@ public sealed class HordeContainBehavior : UpdateModule
                 var offset = Vector3.Transform(position.Position, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, targetYaw));
 
                 position.Object?.AIUpdate?.TargetPoints.Clear();
-                position.Object?.AIUpdate?.AppendPathToTargetPoint(targetPosition + offset);
+                position.Object?.AIUpdate?.AppendPathToTargetPoint(targetPosition + offset, PathRequestOrigin.Horde);
                 position.Object?.AIUpdate?.SetTargetDirection(targetDirection);
             }
         }

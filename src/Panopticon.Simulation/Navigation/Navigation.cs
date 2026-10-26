@@ -15,6 +15,8 @@ public class Navigation
 {
     private readonly Graph _graph;
     private readonly HeightMap _heightMap;
+    private readonly PathStatisticsAccumulator _statistics = new();
+    private long _pathSearchTicks;
 
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -87,11 +89,35 @@ public class Navigation
         return maxSteps > 0 ? currentNode : null;
     }
 
-    public IList<Vector3> CalculatePath(Vector3 start, Vector3 end, out bool endIsPassable)
+    public IList<Vector3> CalculatePath(Vector3 start, Vector3 end, out bool endIsPassable, PathRequestOrigin origin = PathRequestOrigin.Unit)
     {
         Interlocked.Increment(ref TotalPathRequests);
-        return ComputePath(_graph, start, end, out endIsPassable);
+        _statistics.AddRequest(origin);
+        var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+        var result = ComputePath(_graph, start, end, out endIsPassable);
+        _pathSearchTicks += System.Diagnostics.Stopwatch.GetTimestamp() - startTimestamp;
+        return result;
     }
+
+    /// <summary>
+    /// Logic-thread ComputePath time accumulated since the last consume (WI-N0-01), emitted by
+    /// the stepper as the nested path span. Async worker search time is excluded: it accumulates
+    /// into <see cref="PathStatistics.WorkerSearchMs"/> instead.
+    /// </summary>
+    public TimeSpan ConsumePathSpan()
+    {
+        var ticks = Interlocked.Exchange(ref _pathSearchTicks, 0);
+        return TimeSpan.FromSeconds(ticks / (double)System.Diagnostics.Stopwatch.Frequency);
+    }
+
+    /// <summary>Point-in-time snapshot of the navigation statistics (WI-N0-01).</summary>
+    public PathStatistics Statistics => _statistics.Snapshot();
+
+    /// <summary>Search-grid width in cells; reported by pathfinding-load scenarios.</summary>
+    public int GridWidth => _graph.Width;
+
+    /// <summary>Search-grid height in cells; reported by pathfinding-load scenarios.</summary>
+    public int GridHeight => _graph.Height;
 
     // Shared search core (WI-B4-05): the synchronous CalculatePath and the async path worker
     // both run this against a graph. Workers pass a submission-time snapshot because
@@ -108,16 +134,19 @@ public class Navigation
         if (startNode == null || endNode == null)
         {
             Logger.Info("Aborting pathfinding because start and/or end are outside the graph");
+            _statistics.AddFailedSearch();
             return result;
         }
 
         if (!startNode.IsPassable)
         {
+            _statistics.AddEndpointAdjustment();
             startNode = GetNextPassablePosition(graph, start, end);
         }
 
         if (!endNode.IsPassable)
         {
+            _statistics.AddEndpointAdjustment();
             endNode = GetNextPassablePosition(graph, end, start);
             endIsPassable = false;
         }
@@ -125,14 +154,18 @@ public class Navigation
         if (startNode == null || endNode == null)
         {
             Logger.Info("Aborting pathfinding because start and/or end are null");
+            _statistics.AddFailedSearch();
             return result;
         }
 
+        var nodesExpandedBefore = graph.SearchNodesExpanded;
         var route = graph.Search(startNode, endNode);
+        _statistics.AddNodesExpanded(graph.SearchNodesExpanded - nodesExpandedBefore);
 
         if (route == null)
         {
             Logger.Warn($"Graph search failed to find a path between {start} and {end}.");
+            _statistics.AddFailedSearch();
             return result;
         }
 
@@ -222,6 +255,14 @@ public class Navigation
     public long AsyncPathOutstanding => _pathRequestQueue?.Outstanding ?? 0;
 
     internal Graph CloneGraphForWorker() => _graph.ClonePassability();
+
+    // WI-N0-01: the async worker reports its search volume and time; the logic-thread span
+    // (ConsumePathSpan) excludes worker time by design.
+    internal void AddAsyncSearchMeasurement(long stopwatchTicks)
+    {
+        _statistics.AddRequest(PathRequestOrigin.Async);
+        _statistics.AddWorkerSearchTicks(stopwatchTicks);
+    }
 
     public void DebugDraw(DrawingContext2D context, Camera camera)
     {

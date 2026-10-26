@@ -42,10 +42,16 @@ public class GroupMovementTests : MockedGameTest
         members.AddRange(followers);
 
         var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
 
         GroupMovement.MoveSquad(navigation, members, end);
 
         Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+
+        // WI-N0-01: the squad's single request is attributed to its leader.
+        var stats = navigation.Statistics;
+        Assert.Equal(1, stats.SquadLeaderRequests - statsBefore.SquadLeaderRequests);
+        Assert.Equal(0, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
 
         // The leader retraces the shared path exactly; each follower walks it at its formation
         // offset and lands on the offset destination.
@@ -104,11 +110,17 @@ public class GroupMovementTests : MockedGameTest
         Assert.NotNull(blockedLanding);
 
         var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
 
         GroupMovement.MoveSquad(navigation, new List<GameObject> { leader, follower }, destination);
 
         // Leader path plus exactly one fallback request for the blocked follower.
         Assert.Equal(before + 2, NavigationClass.PathRequestCount);
+
+        // WI-N0-01: the leader request and the blocked follower fallback land in their own buckets.
+        var stats = navigation.Statistics;
+        Assert.Equal(1, stats.SquadLeaderRequests - statsBefore.SquadLeaderRequests);
+        Assert.Equal(1, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
 
         // The blocked follower paths to the destination itself, not to its formation slot.
         var ai = follower.AIUpdate;

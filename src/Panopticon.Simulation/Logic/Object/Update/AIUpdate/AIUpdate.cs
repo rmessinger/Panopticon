@@ -6,6 +6,7 @@ using Panopticon.Data.Ini;
 using Panopticon.Logic.AI;
 using Panopticon.Logic.Map;
 using Panopticon.Mathematics;
+using Panopticon.Navigation;
 using Panopticon.Scripting;
 
 namespace Panopticon.Logic.Object;
@@ -200,7 +201,7 @@ public class AIUpdate : UpdateModule
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
     }
 
-    internal void AppendPathToTargetPoint(in Vector3 targetPoint)
+    internal void AppendPathToTargetPoint(in Vector3 targetPoint, PathRequestOrigin origin = PathRequestOrigin.Unit)
     {
         if (GameObject.Definition.KindOf == null)
         {
@@ -216,7 +217,7 @@ public class AIUpdate : UpdateModule
             }
 
             var start = GameObject.Translation;
-            var path = GameEngine.Navigation.CalculatePath(start, targetPoint, out var endIsPassable);
+            var path = GameEngine.Navigation.CalculatePath(start, targetPoint, out var endIsPassable, origin);
             if (path.Count > 0)
             {
                 path.RemoveAt(0);

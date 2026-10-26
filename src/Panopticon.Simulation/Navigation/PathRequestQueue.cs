@@ -295,7 +295,9 @@ public sealed class PathRequestQueue
                 return;
             }
 
+            var searchStart = System.Diagnostics.Stopwatch.GetTimestamp();
             var waypoints = _navigation.ComputePath(request.Snapshot, request.Start, request.End, out var endIsPassable);
+            _navigation.AddAsyncSearchMeasurement(System.Diagnostics.Stopwatch.GetTimestamp() - searchStart);
 
             lock (_gate)
             {
