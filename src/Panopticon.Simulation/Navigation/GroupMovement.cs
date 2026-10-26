@@ -15,16 +15,26 @@ namespace Panopticon.Navigation;
 /// </summary>
 public static class GroupMovement
 {
-    /// <summary>WI-M4-04 diagnostics: total followers whose formation landing was impassable and
-    /// therefore paid for their own path request. Read as a delta alongside
-    /// <see cref="Navigation.PathRequestCount"/>.</summary>
-    public static long BlockedFollowerCount { get; private set; }
+    /// <summary>WI-M4-04 diagnostics: total followers whose formation landing was impassable,
+    /// the sum of <see cref="LandedFollowerCount"/> and <see cref="FallbackFollowerCount"/>.
+    /// Read as a delta alongside <see cref="Navigation.PathRequestCount"/>.</summary>
+    public static long BlockedFollowerCount => LandedFollowerCount + FallbackFollowerCount;
+
+    /// <summary>WI-N2-01 diagnostics: blocked followers served by the bounded ring landing, no
+    /// search issued.</summary>
+    public static long LandedFollowerCount { get; private set; }
+
+    /// <summary>WI-N2-01 diagnostics: blocked followers whose landing failed (other region or
+    /// ring bound) and paid for their own path request.</summary>
+    public static long FallbackFollowerCount { get; private set; }
 
     /// <summary>
     /// Orders every member toward <paramref name="destination"/>, issuing exactly one
-    /// <see cref="Navigation.CalculatePath"/> per squad plus one per blocked follower. Aircraft
-    /// members fly directly (no path request, mirroring single-unit orders). Members without an
-    /// AI update module are skipped.
+    /// <see cref="Navigation.CalculatePath"/> per squad plus one per blocked follower. With
+    /// <see cref="NavigationOptions.AsyncOrderPaths"/> the leader path (and blocked-follower
+    /// fallbacks) run on the async worker queue and assignment happens in the drain callback.
+    /// Aircraft members fly directly (no path request, mirroring single-unit orders). Members
+    /// without an AI update module are skipped.
     /// </summary>
     public static void MoveSquad(Navigation navigation, IReadOnlyList<GameObject> members, Vector3 destination)
     {
@@ -73,15 +83,52 @@ public static class GroupMovement
             }
         }
 
+        if (navigation.Options.AsyncOrderPaths)
+        {
+            // WI-N4-02: the leader search runs on the worker queue; leader and followers are
+            // assigned in the drain callback on the logic thread. Members hold position until
+            // then. A destroyed leader cancels the request in the drain without a callback.
+            navigation.SubmitPathRequest(
+                leader.Translation,
+                destination,
+                leader,
+                handle =>
+                {
+                    if (handle.TryGetResult(out var asyncPath, out var asyncEndIsPassable)
+                        && asyncPath.Count > 0)
+                    {
+                        AssignSquadMembers(
+                            navigation, ground, leader, asyncPath, asyncEndIsPassable, destination, asyncFallbacks: true);
+                    }
+                });
+            return;
+        }
+
         var path = navigation.CalculatePath(leader.Translation, destination, out var endIsPassable, PathRequestOrigin.SquadLeader);
         if (path.Count == 0)
         {
             return;
         }
 
+        AssignSquadMembers(navigation, ground, leader, path, endIsPassable, destination, asyncFallbacks: false);
+    }
+
+    private static void AssignSquadMembers(
+        Navigation navigation,
+        List<GameObject> ground,
+        GameObject leader,
+        IList<Vector3> path,
+        bool endIsPassable,
+        Vector3 destination,
+        bool asyncFallbacks)
+    {
         foreach (var member in ground)
         {
-            var ai = member.AIUpdate;
+            if (member.IsDestroyed)
+            {
+                continue;
+            }
+
             if (member == leader)
             {
                 AssignPath(member, path, Vector2.Zero, endIsPassable, destination);
@@ -100,33 +147,82 @@ public static class GroupMovement
             }
             else
             {
-                // Blocked follower: retrace is impossible, so this member pays for its own path.
-                BlockedFollowerCount++;
-                var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
-                if (fallback.Count > 0)
+                // Blocked follower (WI-B4-04): the formation slot is impassable. WI-N2-01: a
+                // follower starting in the leader's region first tries a bounded ring landing
+                // in the destination's region; only failed landings and other-region followers
+                // pay for their own full search.
+                var destinationNode = navigation.GetNodeAt(path[^1]);
+                var leaderStartNode = navigation.GetNodeAt(path[0]);
+                var followerStartNode = navigation.GetNodeAt(member.Translation);
+                if (leaderStartNode != null
+                    && followerStartNode != null
+                    && destinationNode != null
+                    && navigation.Graph.Regions.SameRegion(followerStartNode, leaderStartNode)
+                    && FollowerLanding.TryLand(
+                        navigation,
+                        offsetDestination,
+                        destinationNode,
+                        navigation.Options.MaxLandingRadiusCells,
+                        out var landingPosition,
+                        out var ringDistance))
                 {
-                    AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
+                    LandedFollowerCount++;
+                    navigation.AddLandedFollower();
+                    FollowerLanding.RecordLanding(ringDistance);
+                    AssignPath(member, path, offset, endIsPassable, destination, landingPosition);
+                }
+                else
+                {
+                    FallbackFollowerCount++;
+                    navigation.AddFallbackFollower();
+
+                    if (asyncFallbacks)
+                    {
+                        // WI-N4-02: the fallback search also runs on the worker queue.
+                        navigation.SubmitPathRequest(
+                            member.Translation,
+                            destination,
+                            member,
+                            fallbackHandle =>
+                            {
+                                if (fallbackHandle.TryGetResult(out var fallbackPath, out var fallbackEndIsPassable)
+                                    && fallbackPath.Count > 0)
+                                {
+                                    AssignPath(member, fallbackPath, Vector2.Zero, fallbackEndIsPassable, destination);
+                                }
+                            });
+                    }
+                    else
+                    {
+                        var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable, PathRequestOrigin.BlockedFollower);
+                        if (fallback.Count > 0)
+                        {
+                            AssignPath(member, fallback, Vector2.Zero, fallbackEndIsPassable, destination);
+                        }
+                    }
                 }
             }
         }
     }
 
-    private static void AssignPath(GameObject member, IList<Vector3> path, Vector2 offset, bool endIsPassable, Vector3 destination)
+    private static void AssignPath(GameObject member, IList<Vector3> path, Vector2 offset, bool endIsPassable, Vector3 destination, Vector3? landing = null)
     {
         var ai = member.AIUpdate!;
         ai.TargetPoints.Clear();
 
         // Mirror single-unit path following: skip the start point, walk the rest at this member's
-        // offset, and land exactly on the (offset) destination when it is passable.
+        // offset, and land exactly on the (offset) destination when it is passable. Landed
+        // followers (WI-N2-01) always override the tail: their landing cell is passable by
+        // construction.
         for (var i = 1; i < path.Count; i++)
         {
             var point = path[i];
             ai.TargetPoints.Add(new Vector3(point.X + offset.X, point.Y + offset.Y, point.Z));
         }
 
-        if (ai.TargetPoints.Count > 0 && endIsPassable)
+        if (ai.TargetPoints.Count > 0 && (landing.HasValue || endIsPassable))
         {
-            ai.TargetPoints[^1] = destination + new Vector3(offset.X, offset.Y, 0);
+            ai.TargetPoints[^1] = landing ?? destination + new Vector3(offset.X, offset.Y, 0);
         }
 
         if (ai.TargetPoints.Count > 0)

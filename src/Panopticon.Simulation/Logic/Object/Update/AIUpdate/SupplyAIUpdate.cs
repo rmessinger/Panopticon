@@ -49,13 +49,16 @@ public abstract class SupplyAIUpdate : AIUpdate
         _numBoxes = 0;
     }
 
-    internal override void SetTargetPoint(Vector3 targetPoint)
+    internal override void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         SupplyGatherStateToResume = SupplyGatherState;
         SupplyGatherState = SupplyGatherStates.Default;
         ClearConditionFlags();
-        base.SetTargetPoint(targetPoint);
+        base.SetTargetPoint(targetPoint, asyncEligible);
     }
+
+    // WI-N4-02: supply gather/deliver movement keeps synchronous paths.
+    internal override bool SupportsAsyncOrderPaths => false;
 
     internal virtual void ClearConditionFlags()
     {

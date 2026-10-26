@@ -61,11 +61,14 @@ public class WorkerAIUpdate : SupplyAIUpdate, IBuilderAIUpdate
         ResetSupplyState();
     }
 
-    internal override void SetTargetPoint(Vector3 targetPoint)
+    internal override void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         _state.ClearDozerTasks();
-        base.SetTargetPoint(targetPoint);
+        base.SetTargetPoint(targetPoint, asyncEligible);
     }
+
+    // WI-N4-02: worker dozer/supply workflow movement keeps synchronous paths.
+    internal override bool SupportsAsyncOrderPaths => false;
 
     #endregion
 

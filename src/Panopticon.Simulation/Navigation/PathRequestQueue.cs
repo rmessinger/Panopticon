@@ -55,6 +55,7 @@ public sealed class PathRequestQueue
     private long _cancelledCount;
     private long _appliedTotal;
     private long _deadlineMisses;
+    private readonly List<int> _waitFrameSamples = new();
 
     internal PathRequestQueue(Navigation navigation, int maxCompletionFrames)
     {
@@ -129,6 +130,16 @@ public sealed class PathRequestQueue
         }
     }
 
+    /// <summary>WI-N4-02: waited-frames sample per applied request, in apply order. Callers
+    /// derive run-level median/p99/max wait statistics.</summary>
+    public int[] CopyWaitFrameSamples()
+    {
+        lock (_gate)
+        {
+            return [.. _waitFrameSamples];
+        }
+    }
+
     internal PathRequestHandle Submit(Vector3 start, Vector3 end, GameObject? requester, Action<PathRequestHandle>? onCompleted)
     {
         lock (_gate)
@@ -200,8 +211,15 @@ public sealed class PathRequestQueue
 
                 if (request.CancelRequested || request.Requester?.IsDestroyed == true)
                 {
+                    // Count each request exactly once toward Outstanding: the worker may have
+                    // marked it cancelled already, or completed it before the cancel landed
+                    // (completions that race a cancel are discarded here, never applied).
+                    if (request.State is not (PathRequestState.Cancelled or PathRequestState.Completed))
+                    {
+                        _cancelledCount++;
+                    }
+
                     request.State = PathRequestState.Cancelled;
-                    _cancelledCount++;
                     _prefixIndex++;
 
                     continue;
@@ -210,6 +228,7 @@ public sealed class PathRequestQueue
                 if (request.State == PathRequestState.Completed)
                 {
                     request.State = PathRequestState.Applied;
+                    _waitFrameSamples.Add(request.WaitedFrames);
 
                     if (request.WaitedFrames > _maxCompletionFrames)
                     {
@@ -301,8 +320,13 @@ public sealed class PathRequestQueue
             {
                 lock (_gate)
                 {
+                    // Drain may already have marked this cancelled; count exactly once.
+                    if (request.State != PathRequestState.Cancelled)
+                    {
+                        _cancelledCount++;
+                    }
+
                     request.State = PathRequestState.Cancelled;
-                    _cancelledCount++;
                 }
 
                 return;
@@ -322,6 +346,20 @@ public sealed class PathRequestQueue
 
             lock (_gate)
             {
+                // Re-check under the gate: Drain may have cancelled this while it was computing.
+                // A raced completion is discarded, and each request resolves exactly one counter.
+                if (request.CancelRequested || request.Requester?.IsDestroyed == true)
+                {
+                    if (request.State != PathRequestState.Cancelled)
+                    {
+                        _cancelledCount++;
+                    }
+
+                    request.State = PathRequestState.Cancelled;
+
+                    return;
+                }
+
                 request.Waypoints = [.. _waypointBuffer];
                 request.EndIsPassable = endIsPassable;
                 request.State = PathRequestState.Completed;
@@ -334,8 +372,12 @@ public sealed class PathRequestQueue
 
             lock (_gate)
             {
+                if (request.State != PathRequestState.Cancelled)
+                {
+                    _cancelledCount++;
+                }
+
                 request.State = PathRequestState.Cancelled;
-                _cancelledCount++;
             }
         }
     }

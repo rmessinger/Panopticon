@@ -201,7 +201,7 @@ public class AIUpdate : UpdateModule
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
     }
 
-    internal void AppendPathToTargetPoint(in Vector3 targetPoint, PathRequestOrigin origin = PathRequestOrigin.Unit)
+    internal void AppendPathToTargetPoint(in Vector3 targetPoint, PathRequestOrigin origin = PathRequestOrigin.Unit, bool asyncEligible = false)
     {
         if (GameObject.Definition.KindOf == null)
         {
@@ -213,6 +213,14 @@ public class AIUpdate : UpdateModule
             if (GameEngine.Navigation == null)
             {
                 AddTargetPoint(targetPoint);
+                return;
+            }
+
+            // WI-N4-02: order-driven paths may compute on the async queue; workflow movement
+            // (scripts, dozer, supply, aircraft) passes asyncEligible false or opts out below.
+            if (asyncEligible && SupportsAsyncOrderPaths && GameEngine.Navigation.Options.AsyncOrderPaths)
+            {
+                RequestPathAsync(targetPoint);
                 return;
             }
 
@@ -236,6 +244,65 @@ public class AIUpdate : UpdateModule
         {
             AddTargetPoint(targetPoint);
         }
+    }
+
+    // WI-N4-01: pending async path request. Not persisted in save files; a load drops it, so a
+    // loaded unit re-issues movement through its next order.
+    private PathRequestHandle _pendingPathHandle;
+    private Vector3 _pendingPathTarget;
+
+    /// <summary>
+    /// Card WI-N4-01: submits this unit's path onto the async queue. Cancels any pending request
+    /// first; the drain applies the completion on the logic thread with the same post-processing
+    /// as <see cref="AppendPathToTargetPoint"/> (drop the start point, land exactly on a passable
+    /// target, set the moving condition). Aircraft, degenerate, and no-navigation cases fall back
+    /// to the synchronous <see cref="AddTargetPoint"/>. Order-eligible callers reach this via
+    /// <see cref="NavigationOptions.AsyncOrderPaths"/> (WI-N4-02).
+    /// </summary>
+    internal void RequestPathAsync(Vector3 targetPoint)
+    {
+        CancelPendingPath();
+
+        if (GameObject.Definition.KindOf == null
+            || GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft)
+            || targetPoint == GameObject.Translation
+            || GameEngine.Navigation == null)
+        {
+            AddTargetPoint(targetPoint);
+            return;
+        }
+
+        _pendingPathTarget = targetPoint;
+        _pendingPathHandle = GameEngine.Navigation.SubmitPathRequest(
+            GameObject.Translation, targetPoint, GameObject, OnPendingPathCompleted);
+    }
+
+    private void OnPendingPathCompleted(PathRequestHandle handle)
+    {
+        _pendingPathHandle = null;
+        if (!handle.TryGetResult(out var waypoints, out var endIsPassable))
+        {
+            return;
+        }
+
+        TargetPoints.Clear();
+        for (var i = 1; i < waypoints.Count; i++)
+        {
+            TargetPoints.Add(waypoints[i]);
+        }
+
+        if (TargetPoints.Count > 0 && endIsPassable)
+        {
+            TargetPoints[^1] = _pendingPathTarget;
+        }
+
+        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+    }
+
+    private void CancelPendingPath()
+    {
+        _pendingPathHandle?.Cancel();
+        _pendingPathHandle = null;
     }
 
     /// <summary>
@@ -269,7 +336,14 @@ public class AIUpdate : UpdateModule
             buildingCenter.Z);
     }
 
-    internal virtual void SetTargetPoint(Vector3 targetPoint)
+    /// <summary>
+    /// Whether order-driven movement may use the async path queue (WI-N4-02). Workflow
+    /// subclasses that drive their own movement state machines opt out to keep synchronous
+    /// paths: dozer, supply, hacker, and jet updates.
+    /// </summary>
+    internal virtual bool SupportsAsyncOrderPaths => true;
+
+    internal virtual void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         ResetMovementIntent();
         if (GameObject.ParentHorde != null)
@@ -283,7 +357,7 @@ public class AIUpdate : UpdateModule
         }
 
         TargetPoints.Clear();
-        AppendPathToTargetPoint(targetPoint);
+        AppendPathToTargetPoint(targetPoint, asyncEligible: asyncEligible);
     }
 
     internal void ConfigureAttackMove(bool enabled)
@@ -296,6 +370,8 @@ public class AIUpdate : UpdateModule
 
     internal void ResetMovementIntent()
     {
+        // WI-N4-01: a new movement intent invalidates any pending async path.
+        CancelPendingPath();
         _isAttackPath = false;
         _ignoreWeaponTargetForMovement = false;
     }

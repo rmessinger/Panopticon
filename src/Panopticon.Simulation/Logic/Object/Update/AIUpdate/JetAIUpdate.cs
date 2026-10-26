@@ -136,7 +136,7 @@ public sealed class JetAIUpdate : AIUpdate
         reader.PersistBoolean(ref _unknownBool5);
     }
 
-    internal override void SetTargetPoint(Vector3 targetPoint)
+    internal override void SetTargetPoint(Vector3 targetPoint, bool asyncEligible = false)
     {
         if (ModuleData.KeepsParkingSpaceWhenAirborne) // check if not a helicopter
         {
@@ -162,8 +162,11 @@ public sealed class JetAIUpdate : AIUpdate
             }
         }
 
-        base.SetTargetPoint(targetPoint);
+        base.SetTargetPoint(targetPoint, asyncEligible);
     }
+
+    // WI-N4-02: aircraft taxi/takeoff movement keeps synchronous paths.
+    internal override bool SupportsAsyncOrderPaths => false;
 
     public override UpdateSleepTime Update()
     {

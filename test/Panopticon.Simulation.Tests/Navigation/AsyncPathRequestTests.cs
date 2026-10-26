@@ -11,7 +11,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -303,6 +302,135 @@ public class AsyncPathRequestTests : MockedGameTest
         Assert.True(allocated < 1_000_000, $"steady-state submits allocated {allocated} bytes");
     }
 
+    [Fact, Trait("Category", "Roadmap")]
+    public void PendingHandle_CompletionAssignsWaypoints()
+    {
+        var (navigation, heightMap, start, end) = CreateNavigation();
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+        Assert.NotNull(unit.AIUpdate);
+
+        unit.AIUpdate.RequestPathAsync(end);
+        DrainUntil(navigation, () => unit.AIUpdate.TargetPoints.Count > 0);
+
+        // Same post-processing as AppendPathToTargetPoint: start point dropped, exact target
+        // landed on (the end tile is passable).
+        var points = unit.AIUpdate.TargetPoints;
+        Assert.True(points.Count > 1);
+        Assert.NotEqual(start, points[0]);
+        Assert.Equal(end, points[^1]);
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void PendingHandle_SecondRequestReplacesTheFirst()
+    {
+        var (navigation, heightMap, start, end) = CreateNavigation();
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+        var otherEnd = heightMap.GetPosition(1, heightMap.Height - 2);
+
+        unit.AIUpdate.RequestPathAsync(end);
+        unit.AIUpdate.RequestPathAsync(otherEnd);
+        DrainUntil(navigation, () => unit.AIUpdate.TargetPoints.Count > 0);
+
+        // The first request was cancelled and never applied; only the second path stands.
+        var points = unit.AIUpdate.TargetPoints;
+        Assert.True(points.Count > 1);
+        Assert.Equal(otherEnd, points[^1]);
+        Assert.NotEqual(end, points[^1]);
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void PendingHandle_ResetCancelsWithoutApplying()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+
+        unit.AIUpdate.RequestPathAsync(end);
+        unit.AIUpdate.ResetMovementIntent();
+        DrainUntil(navigation, () => navigation.AsyncPathOutstanding == 0);
+
+        // The cancelled request never applies waypoints.
+        Assert.Empty(unit.AIUpdate.TargetPoints);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void PendingHandle_DestroyedRequesterIsCancelledByDrain()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+
+        unit.AIUpdate.RequestPathAsync(end);
+        unit.SetObjectStatus(ObjectStatus.Destroyed, true);
+        DrainUntil(navigation, () => navigation.AsyncPathOutstanding == 0);
+
+        Assert.Empty(unit.AIUpdate.TargetPoints);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SetTargetPoint_AsyncOrderPathsSubmitsOrderEligibleCalls()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+
+        var before = NavigationClass.PathRequestCount;
+        unit.AIUpdate.SetTargetPoint(end, asyncEligible: true);
+
+        // WI-N4-02: the order path submits; no synchronous search runs and the unit holds.
+        Assert.Equal(before, NavigationClass.PathRequestCount);
+        Assert.Equal(1, navigation.AsyncPathSubmitted);
+        Assert.Empty(unit.AIUpdate.TargetPoints);
+
+        DrainUntil(navigation, () => unit.AIUpdate.TargetPoints.Count > 0);
+
+        var points = unit.AIUpdate.TargetPoints;
+        Assert.True(points.Count > 1);
+        Assert.Equal(end, points[^1]);
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SetTargetPoint_AsyncOrderPathsKeepsScriptCallsSynchronous()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+
+        var before = NavigationClass.PathRequestCount;
+        unit.AIUpdate.SetTargetPoint(end);
+
+        // Default eligibility is false (scripts, workflow callers): the path stays synchronous.
+        Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+        Assert.Equal(0, navigation.AsyncPathSubmitted);
+        Assert.True(unit.AIUpdate.TargetPoints.Count > 0);
+        Assert.Equal(end, unit.AIUpdate.TargetPoints[^1]);
+    }
+
+    /// <summary>Drains in a loop until <paramref name="done"/> holds; the queue applies
+    /// completions only inside <see cref="NavigationClass.DrainPathCompletions"/>.</summary>
+    private static void DrainUntil(NavigationClass navigation, Func<bool> done)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (!done())
+        {
+            navigation.DrainPathCompletions();
+            if (DateTime.UtcNow > deadline)
+            {
+                throw new TimeoutException(
+                    $"Async path request did not settle within 30 seconds (outstanding={navigation.AsyncPathOutstanding}).");
+            }
+
+            Thread.Sleep(10);
+        }
+    }
+
     private static (int X, int Y) FindInteriorOpenTile(NavigationClass navigation, HeightMap heightMap)
     {
         // The fixture map's interior is small and pocked with impassable cells, so a full
@@ -374,9 +502,9 @@ public class AsyncPathRequestTests : MockedGameTest
 
     private static void WaitForCompletion(IReadOnlyList<PathRequestHandle> handles)
     {
-        var deadline = Stopwatch.GetTimestamp() + TimeSpan.FromSeconds(30).Ticks;
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
 
-        while (Stopwatch.GetTimestamp() < deadline)
+        while (DateTime.UtcNow < deadline)
         {
             var allDone = true;
 
@@ -403,9 +531,9 @@ public class AsyncPathRequestTests : MockedGameTest
 
     private static void WaitForTerminalState(params PathRequestHandle[] handles)
     {
-        var deadline = Stopwatch.GetTimestamp() + TimeSpan.FromSeconds(30).Ticks;
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
 
-        while (Stopwatch.GetTimestamp() < deadline)
+        while (DateTime.UtcNow < deadline)
         {
             var allDone = true;
 
@@ -465,7 +593,7 @@ public class AsyncPathRequestTests : MockedGameTest
         return (navigation, heightMap, start, end);
     }
 
-    private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry)
+    private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry, TestGame game = null)
     {
         var definition = new ObjectDefinition($"AsyncPathRequest_{kind}_{_nextObjectId}");
         definition.KindOf.Set(kind, true);
@@ -473,7 +601,11 @@ public class AsyncPathRequestTests : MockedGameTest
             new ModuleDataContainer("ModuleTag_Body",
                 new ActiveBodyModuleData { MaxHealth = 100, InitialHealth = 100 },
                 ModuleInheritanceMode.Default, inherited: false));
-        var gameObject = new GameObject(definition, Generals.GameEngine, NewPlayer())
+        definition.Behaviors.Add("ModuleTag_AI",
+            new ModuleDataContainer("ModuleTag_AI",
+                new AIUpdateModuleData(),
+                ModuleInheritanceMode.Default, inherited: false));
+        var gameObject = new GameObject(definition, game?.GameEngine ?? Generals.GameEngine, NewPlayer())
         {
             Id = new ObjectId(_nextObjectId++),
         };

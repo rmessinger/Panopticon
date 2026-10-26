@@ -12,11 +12,11 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 | [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
 | [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
 | [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
-| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Ready |
-| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Blocked |
-| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Blocked |
-| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Ready |
-| [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Blocked |
+| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Done |
+| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Done |
+| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Ready |
+| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Done |
+| [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Done |
 | [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Blocked |
 
 Delivery: phase staging branch `staging/track-n`, numbered group PRs per the repository
@@ -153,7 +153,84 @@ logs under `~/log/n1-03/`.
 
 ## WI-N2 results
 
-Pending.
+WI-N2-01 (follower landing). Recorded 2026-10-24, seed 1, Release builds, on the post-main-merge
+tree. All earlier N0/N1 scenario numbers in this document were Debug-build runs; the Release
+re-baseline below supersedes them for comparisons. Artifacts: `/tmp/opencode/n2-01/`, logs under
+`~/log/n2-01/`.
+
+`NavigationOptions.MaxLandingRadiusCells` default 16. Landing-ring distribution over the whole
+M4 army-AI probe (6471 landings): ring 1 4968, ring 2 1369, ring 3 7, ring 4 105, ring 5 22,
+ring 6 and beyond 0. Every observed landing sits within ring 5; the 16-cell default covers the
+distribution with headroom, and the measured default equals the shipped one.
+
+PathfindingLoad (before = base without landing, after = landing on; spans are order-tick path
+span):
+
+| Case | Before span (ms) | After span (ms) | Before requests | After requests |
+|---|---|---|---|---|
+| squadless-1 | 1.50 | 1.52 | 1 unit | 1 unit |
+| squadless-10 | 11.74 | 12.08 | 10 unit | 10 unit |
+| squadless-100 | 89.63 | 90.85 | 100 unit | 100 unit |
+| squadless-1000 | 511.44 | 573.79 | 1000 unit | 1000 unit |
+| armyai-squads-1 | 0.83 | 0.84 | 1 unit | 1 unit |
+| armyai-squads-10 | 1.45 | 1.47 | 2 leader | 2 leader |
+| armyai-squads-100 | 4.13 | 4.20 | 13 leader | 13 leader |
+| armyai-squads-1000 | 40.56 | 41.68 | 125 leader + 1 blocked follower | 125 leader + 1 landed, 0 fallback |
+| squadless-10-impassable | 0.22 | 0.22 | 10 failed | 10 failed |
+
+Squad-less cases are untouched by this card; their spread is run noise on identical request and
+node counts (squadless-1000 expands 4128233 nodes both runs). The scenario's single blocked
+follower (armyai-squads-1000) converts from a fallback search to a landing; nodes expand 434796
+to 429519. Impassable offset-retrace points (recorded, fix is a follow-up per deep dive section
+6): armyai-squads-100 2, armyai-squads-1000 130.
+
+M4 army-AI probe (4500 frames, before = post-merge base, after = landing on):
+
+| Metric | Before | After |
+|---|---|---|
+| Worst-tick path requests | 912 (248 squads + 664 blocked followers) | 253 (248 squads + 5 fallback, 662 landed) |
+| Path span, nonzero ticks, mean / median (ms) | 85.9 / 69.5 | 58.2 / 52.1 |
+| Path span, nonzero ticks, p99 / max (ms) | 242.8 / 466.6 | 167.2 / 181.1 |
+| Path span, amortized over all ticks (ms) | 1.432 | 0.970 |
+
+Budget verdicts:
+
+| Budget | Value | Before | After | Verdict |
+|---|---|---|---|---|
+| `system.path.spanMs` amortized, M4 army-AI | at or under 1.7 ms | 1.432 ms | 0.970 ms | met at Release after the change |
+| p99 on order ticks, M4 army-AI | at or under 16.7 ms | 242.8 ms | 167.2 ms | still unmet, about 10x over |
+| Full searches per squad order | at or under squads plus fallback | 912 at the worst tick | 253 = 248 squads + 5 fallback | met exactly at the worst tick |
+
+Invariants: unassigned 0 and commanderless 0 in both runs. The idle-stall check fails on the
+post-merge base itself (sideA 2 units, max idle 2404 frames) and reads differently with landing
+on (sideA 6 units, max idle 1110 frames); the base failure is attributed to merged mainline
+content, since the pre-merge N1 head passes all checks on the same probe, and both base repeats
+compare identical (the probe is deterministic per build). The landing shift changes squad
+movement and therefore combat dynamics; the recorded impassable retrace points above are the
+candidate mechanism and have a scheduled follow-up card.
+
+WI-N2-02, group selection moves (Release, seed 1, PathfindingLoad, cluster cells 100; off = the
+N2-01 state):
+
+| Case | Off: span / requests | On: span / requests | Nodes off / on |
+|---|---|---|---|
+| squadless-10 | 11.71 ms / 10 unit | 4.12 ms / 3 leader + 1 unit | 63022 / 22084 |
+| squadless-100 | 89.53 ms / 100 unit | 26.10 ms / 29 leader + 1 unit | 459909 / 132384 |
+| squadless-1000 | 602.71 ms / 1000 unit | 80.54 ms / 108 leader + 1 unit | 4128233 / 427094 |
+| squadless-10-impassable | 0.22 ms / 10 failed | 0.13 ms / 4 failed | 0 / 0 |
+
+Army-AI squad cases are unchanged (hierarchy squads bucket before the cluster path). No blocked
+followers occur in the squadless cases (open-field formation offsets stay passable), so landing
+and fallback counters stay zero. Searches per squadless order at or under clusters plus one
+loner: met (109 searches for 108 clusters + 1 single in the 1000-unit case).
+
+The 1000-unit order-tick span moves from 602.71 ms (18x over the 33.3 ms one-frame budget) to
+80.54 ms (2.4x over) at the default cluster size; the budget question moves to the N3 gate.
+
+Cluster-size sensitivity, same scenario, `SelectionClusterCells` 200: squadless-1000 falls to
+33.90 ms over 36 leader searches (146,956 nodes), 1.02x the 33.3 ms budget; squadless-100 is
+16.31 ms. This is gate evidence: N2 at a wider cluster cell reaches the one-frame budget on the
+N0 case without shared-destination fields.
 
 ## WI-N3-01 gate decision
 
@@ -161,7 +238,54 @@ Pending.
 
 ## WI-N4 results
 
-Pending.
+WI-N4-02 (async order paths). Recorded 2026-10-25, seed 1, Release builds. Off = `AsyncOrderPaths`
+false (the shipped default), on = true. Artifacts: `/tmp/opencode/n4-02/`, logs under `~/log/n4-02/`.
+
+PathfindingLoad (spans are order-tick path span; requests columns show the request mix):
+
+| Case | Off span (ms) | On span (ms) | Off requests | On async submitted |
+|---|---|---|---|---|
+| squadless-1 | 1.52 | 0.00 | 1 unit | 1 |
+| squadless-10 | 12.23 | 0.00 | 10 unit | 10 |
+| squadless-100 | 90.31 | 0.00 | 100 unit | 100 |
+| squadless-1000 | 566.43 | 0.00 | 1000 unit | 1000 |
+| armyai-squads-1 | 0.78 | 0.00 | 1 unit | 1 |
+| armyai-squads-10 | 1.41 | 0.00 | 2 leader | 2 |
+| armyai-squads-100 | 4.08 | 0.00 | 13 leader | 13 |
+| armyai-squads-1000 | 40.01 | 0.00 | 125 leader | 125 |
+| squadless-10-impassable | 0.22 | 0.00 | 10 failed | 10 |
+
+With the option on every case reports a zero logic-thread `path` span and zero synchronous requests;
+the whole run submitted 1402 async requests, applied 1317, and recorded zero deadline misses against
+the 30-frame bound, with wait frames median 12, p99 29, max 29. Worker-thread search time totalled
+974.78 ms across the run and is reported separately (`WorkerSearchMs`), not inside the logic span.
+Failed searches still surface: the impassable case reports its 10 failed searches through the async
+path. Per-case async counts above are the requests drained within the first window tick.
+
+M4 army-AI probe (4500 frames, off = same tree with the option off):
+
+| Metric | Off | On |
+|---|---|---|
+| Logic `path` span, all ticks | mean 0.980 ms, p99 52.3, max 177.3 | 0.000 ms on every tick |
+| Worst-tick synchronous path requests | 253 (248 squads + 5 fallback) | 0 |
+| Async submitted / applied / cancelled | 0 / 0 / 0 | 18689 / 18687 / 2 |
+| Wait frames, median / p99 / max | n/a | 1 / 6 / 8 |
+| Deadline misses vs 30-frame bound | n/a | 0 |
+| Idle-stall check | fail (sideA 6 units idle over 600 frames) | pass |
+
+About 18700 async submissions over 75 decision ticks match the off-run's synchronous request volume;
+the 2 cancellations are superseded orders. With the option on, the B1 per-tick async counters read
+zero because worker threads finish searches between the probe's tick snapshots; the lifetime queue
+totals above are the authoritative counts. Worker search time is not part of the M4 record (the
+probe samples per-tick only).
+
+Verdict: the WI-N4 goal is met. With `AsyncOrderPaths` on, order-tick logic-thread path span drops
+to submission cost (measured zero across every scenario and probe tick), completions land inside the
+frame bound with deadline misses 0, and the M4 stall and squad invariants hold in the on-run. The
+off-run stall failure is the same pre-existing base issue recorded under WI-N2 results:
+option-off movement still includes the N2 landing change, which shifts which units the idle check
+flags, while the on-run passes the check outright. Aircraft, dozer, supply, worker, and script
+movement stay synchronous per the guardrails; option-off behaviour is unchanged.
 
 ## WI-N5-01 verification
 

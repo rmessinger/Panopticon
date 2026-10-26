@@ -159,6 +159,9 @@ public static class MassBattleCapacityProbeRunner
                 game.EnableFixedLogicTimestep();
             }
 
+            // WI-N4-02 knob: order-driven paths submit to the async worker queue.
+            game.Scene3D.Navigation.Options.AsyncOrderPaths = config.MassBattleCapacityProbeAsyncOrderPaths;
+
             FrameDeployment(game, profile);
 
             Action step = config.Headless
@@ -209,7 +212,7 @@ public static class MassBattleCapacityProbeRunner
 
             var report = BuildReport(
                 profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath,
-                anchor?.Build(), invariantSampler?.Build(), armyAiSides);
+                anchor?.Build(), invariantSampler?.Build(), armyAiSides, game.Scene3D.Navigation);
             reporter.Info(MassBattleCapacityProbeReport.WriteText(report));
 
             var reportPath = string.IsNullOrEmpty(config.MassBattleCapacityProbeReportPath)
@@ -703,6 +706,8 @@ public static class MassBattleCapacityProbeRunner
         private readonly List<double> _nodesExpanded;
         private readonly List<double> _failedSearches;
         private readonly List<double> _endpointAdjustments;
+        private readonly List<double> _landedFollowers;
+        private readonly List<double> _fallbackFollowers;
         private readonly List<double> _workerSearchMs;
 
         public PathStatisticsDeltas(int capacity)
@@ -715,6 +720,8 @@ public static class MassBattleCapacityProbeRunner
             _nodesExpanded = new List<double>(capacity);
             _failedSearches = new List<double>(capacity);
             _endpointAdjustments = new List<double>(capacity);
+            _landedFollowers = new List<double>(capacity);
+            _fallbackFollowers = new List<double>(capacity);
             _workerSearchMs = new List<double>(capacity);
         }
 
@@ -728,6 +735,8 @@ public static class MassBattleCapacityProbeRunner
             _nodesExpanded.Add(after.NodesExpanded - before.NodesExpanded);
             _failedSearches.Add(after.FailedSearches - before.FailedSearches);
             _endpointAdjustments.Add(after.EndpointAdjustments - before.EndpointAdjustments);
+            _landedFollowers.Add(after.LandedFollowers - before.LandedFollowers);
+            _fallbackFollowers.Add(after.FallbackFollowers - before.FallbackFollowers);
             _workerSearchMs.Add(after.WorkerSearchMs - before.WorkerSearchMs);
         }
 
@@ -741,6 +750,8 @@ public static class MassBattleCapacityProbeRunner
             AddPerTickAndPerSecondStatistics(record, "path.nodesExpanded", _nodesExpanded, game);
             AddPerTickAndPerSecondStatistics(record, "path.failedSearches", _failedSearches, game);
             AddPerTickAndPerSecondStatistics(record, "path.endpointAdjustments", _endpointAdjustments, game);
+            AddPerTickAndPerSecondStatistics(record, "path.landedFollowers", _landedFollowers, game);
+            AddPerTickAndPerSecondStatistics(record, "path.fallbackFollowers", _fallbackFollowers, game);
             AddPerTickAndPerSecondStatistics(record, "path.workerSearchMs", _workerSearchMs, game);
         }
     }
@@ -854,7 +865,8 @@ public static class MassBattleCapacityProbeRunner
         string? screenshotPath,
         MassBattleAsyncPathAnchorReport? asyncPathAnchor = null,
         MassBattleSquadInvariantReport? squadInvariant = null,
-        IReadOnlyList<ArmyAiSide>? armyAiSides = null)
+        IReadOnlyList<ArmyAiSide>? armyAiSides = null,
+        NavigationGrid? navigation = null)
     {
         var sides = armies.Select(army => new SideEngagementResult
         {
@@ -962,6 +974,21 @@ public static class MassBattleCapacityProbeRunner
             }
         }
 
+        // WI-N4-02: whole-run async order path stats; wait-frame percentiles over applied
+        // requests only.
+        var asyncWaitSamples = navigation?.CopyAsyncPathWaitFrameSamples() ?? [];
+        double asyncWaitMedian = 0;
+        double asyncWaitP99 = 0;
+        var asyncWaitMax = 0;
+        if (asyncWaitSamples.Length > 0)
+        {
+            var asyncWaitDoubles = asyncWaitSamples.Select(sample => (double)sample).ToArray();
+            Array.Sort(asyncWaitDoubles);
+            asyncWaitMedian = BootstrapStatistics.Percentile(asyncWaitDoubles, 0.5);
+            asyncWaitP99 = BootstrapStatistics.Percentile(asyncWaitDoubles, 0.99);
+            asyncWaitMax = asyncWaitSamples.Max();
+        }
+
         var report = new MassBattleCapacityProbeReport
         {
             Map = profile.Map.Name,
@@ -974,6 +1001,14 @@ public static class MassBattleCapacityProbeRunner
             MeasuredFramesRun = framesRun,
             StopReason = stopReason,
             ScreenshotPath = screenshotPath,
+            AsyncOrderPaths = navigation?.Options.AsyncOrderPaths == true,
+            AsyncSubmitted = navigation?.AsyncPathSubmitted ?? 0,
+            AsyncApplied = navigation?.AsyncPathApplied ?? 0,
+            AsyncCancelled = navigation?.AsyncPathCancelled ?? 0,
+            AsyncDeadlineMisses = navigation?.AsyncPathDeadlineMisses ?? 0,
+            AsyncWaitFramesMedian = asyncWaitMedian,
+            AsyncWaitFramesP99 = asyncWaitP99,
+            AsyncWaitFramesMax = asyncWaitMax,
             Sides = sides,
             Sorties = sorties,
             FailureReasons = reasons.Distinct().ToList(),

@@ -1875,10 +1875,10 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
     B4 anchor before/after recorded.
 
 ### N2: Shared group requests
-- [ ] N2-1 Bounded landing for blocked followers. (`WI-N2-01`)
+- [x] N2-1 Bounded landing for blocked followers. (`WI-N2-01`)
   - AC: full searches per squad order at or under squads plus fallback followers in the N0
     scenario and the M4 probe; M4 invariants hold.
-- [ ] N2-2 Group moves for squad-less selections behind `GroupSelectionMoves`. (`WI-N2-02`)
+- [x] N2-2 Group moves for squad-less selections behind `GroupSelectionMoves`. (`WI-N2-02`)
   - AC: option off changes nothing; option on bounds searches by clusters plus fallbacks; the
     1000-unit order-tick span is recorded against 33.3 ms.
 
@@ -1888,9 +1888,9 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
     budget verdict; a `Ready` implementation card exists only if the gate opened.
 
 ### N4: Off-thread order paths
-- [ ] N4-1 Pending path handles on `AIUpdate`. (`WI-N4-01`)
+- [x] N4-1 Pending path handles on `AIUpdate`. (`WI-N4-01`)
   - AC: assign, replace, reset, and destroyed-requester cases tested; no caller changes.
-- [ ] N4-2 Async order paths behind `AsyncOrderPaths`. (`WI-N4-02`)
+- [x] N4-2 Async order paths behind `AsyncOrderPaths`. (`WI-N4-02`)
   - AC: option off changes nothing; option on reduces the order-tick logic-thread `path` span to
     submission cost with waits inside the frame bound; M4 invariants hold.
 

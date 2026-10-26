@@ -117,6 +117,11 @@ public static class PathfindingLoadRunner
                 new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud },
                 null);
             var (sideA, navigation) = BootProfileGame(game, profile, seed);
+            // WI-N2-02 knobs: cluster-based group moves for squad-less selections.
+            navigation.Options.GroupSelectionMoves = config.PathfindingLoadGroupMoves;
+            navigation.Options.SelectionClusterCells = config.PathfindingLoadClusterCells;
+            // WI-N4-02 knob: order-driven paths submit to the async worker queue.
+            navigation.Options.AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths;
             var zoneB = profile.Sides[1].Zone;
             var crossMapDestination = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
 
@@ -234,11 +239,39 @@ public static class PathfindingLoadRunner
             totalStopwatch.Stop();
 
             var allPassed = reasons.Count == 0;
+
+            // WI-N4-02: whole-run async order path stats; wait-frame percentiles over applied
+            // requests only.
+            var waitSamples = navigation.CopyAsyncPathWaitFrameSamples();
+            double waitMedian = 0;
+            double waitP99 = 0;
+            var waitMax = 0;
+            if (waitSamples.Length > 0)
+            {
+                var waitDoubles = waitSamples.Select(sample => (double)sample).ToArray();
+                Array.Sort(waitDoubles);
+                waitMedian = BootstrapStatistics.Percentile(waitDoubles, 0.5);
+                waitP99 = BootstrapStatistics.Percentile(waitDoubles, 0.99);
+                waitMax = waitSamples.Max();
+            }
+
             var report = new PathfindingLoadReport
             {
                 Map = profile.Map.Path,
                 ProfilePath = profilePath,
                 Seed = seed,
+                GroupMoves = config.PathfindingLoadGroupMoves,
+                ClusterCells = config.PathfindingLoadClusterCells,
+                AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths,
+                WorkerSearchMs = navigation.Statistics.WorkerSearchMs,
+                AsyncSubmitted = navigation.AsyncPathSubmitted,
+                AsyncApplied = navigation.AsyncPathApplied,
+                AsyncCancelled = navigation.AsyncPathCancelled,
+                AsyncDeadlineMisses = navigation.AsyncPathDeadlineMisses,
+                AsyncFrameBound = navigation.AsyncPathFrameBound,
+                AsyncWaitFramesMedian = waitMedian,
+                AsyncWaitFramesP99 = waitP99,
+                AsyncWaitFramesMax = waitMax,
                 GridWidth = navigation.GridWidth,
                 GridHeight = navigation.GridHeight,
                 Derivation = "meanSearchMs = window path span sum / window sync request sum; " +
@@ -377,8 +410,33 @@ public static class PathfindingLoadRunner
         var destination = impassable ? impassableDestination : crossMapDestination;
 
         var statsBefore = navigation.Statistics;
+        var asyncSubmittedBefore = navigation.AsyncPathSubmitted;
         _ = navigation.ConsumePathSpan();
+
+        // WI-N2-01: attribute this order's landings and their ring distances cleanly.
+        FollowerLanding.ResetLandingRings();
         OrderProcessor.MoveUnits(navigation, sideA.Player, units, destination);
+        var landingRings = (long[])FollowerLanding.LandingRingHistogram.Clone();
+
+        // WI-N2-01: offset-shifted retrace waypoints on impassable cells, counted at order time
+        // (existing retrace behavior, reported, not fixed here).
+        var impassableRetracePoints = 0;
+        foreach (var unit in units)
+        {
+            var ai = unit.AIUpdate;
+            if (ai == null)
+            {
+                continue;
+            }
+
+            foreach (var point in ai.TargetPoints)
+            {
+                if (!navigation.IsPassable(point))
+                {
+                    impassableRetracePoints++;
+                }
+            }
+        }
 
         // First window tick emits the span of the inline order searches; the stats delta over
         // the same tick attributes the requests by origin. The order runs between ticks, so
@@ -411,6 +469,7 @@ public static class PathfindingLoadRunner
         }
 
         var after = statsAfterOrderTick ?? statsBefore;
+        var asyncSubmitted = navigation.AsyncPathSubmitted - asyncSubmittedBefore;
         var result = new PathfindingLoadCaseResult
         {
             Name = plan.Name,
@@ -437,6 +496,10 @@ public static class PathfindingLoadRunner
             NodesExpanded = after.NodesExpanded - statsBefore.NodesExpanded,
             FailedSearches = after.FailedSearches - statsBefore.FailedSearches,
             EndpointAdjustments = after.EndpointAdjustments - statsBefore.EndpointAdjustments,
+            LandedFollowers = after.LandedFollowers - statsBefore.LandedFollowers,
+            FallbackFollowers = after.FallbackFollowers - statsBefore.FallbackFollowers,
+            ImpassableRetracePoints = impassableRetracePoints,
+            LandingRings = landingRings,
             MeanSearchMs = windowSyncRequests > 0 ? windowSpanMs / windowSyncRequests : 0,
             P99SearchMs = perTickEstimates.Count > 0
                 ? BootstrapStatistics.Percentile([.. perTickEstimates.Order()], 0.99)
@@ -448,7 +511,7 @@ public static class PathfindingLoadRunner
             reasons.Add($"{plan.Name}: unreachable destination produced no failed searches.");
         }
 
-        if (result.SyncRequests == 0)
+        if (result.SyncRequests == 0 && asyncSubmitted == 0)
         {
             reasons.Add($"{plan.Name}: move order issued no path requests.");
         }
@@ -514,6 +577,9 @@ public static class PathfindingLoadRunner
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.failedSearches", [c.FailedSearches], seed));
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.meanSearchMs", [c.MeanSearchMs], seed));
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.p99SearchMs", [c.P99SearchMs], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.landedFollowers", [c.LandedFollowers], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.fallbackFollowers", [c.FallbackFollowers], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.impassableRetracePoints", [c.ImpassableRetracePoints], seed));
     }
 
     private static string? ResolveProfilePath(TestHarnessConfig config, ITestHarnessReporter reporter)

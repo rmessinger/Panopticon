@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 
@@ -48,6 +49,30 @@ public sealed record MassBattleCapacityProbeReport
 
     /// <summary>WI-M4-05: army-AI mode air mission totals per side; null in the scripted M1 mode.</summary>
     public List<AirMissionSideResult>? AirMissions { get; init; }
+
+    /// <summary>WI-N4-02: whether order-driven paths submitted to the async worker queue.</summary>
+    public bool AsyncOrderPaths { get; init; }
+
+    /// <summary>WI-N4-02: async submissions over the whole run.</summary>
+    public long AsyncSubmitted { get; init; }
+
+    /// <summary>WI-N4-02: completions applied at drain over the whole run.</summary>
+    public long AsyncApplied { get; init; }
+
+    /// <summary>WI-N4-02: submissions cancelled before applying over the whole run.</summary>
+    public long AsyncCancelled { get; init; }
+
+    /// <summary>WI-N4-02: applied requests that waited past the frame bound.</summary>
+    public long AsyncDeadlineMisses { get; init; }
+
+    /// <summary>WI-N4-02: median waited frames per applied request.</summary>
+    public double AsyncWaitFramesMedian { get; init; }
+
+    /// <summary>WI-N4-02: p99 waited frames per applied request.</summary>
+    public double AsyncWaitFramesP99 { get; init; }
+
+    /// <summary>WI-N4-02: maximum waited frames per applied request.</summary>
+    public int AsyncWaitFramesMax { get; init; }
 
     public static void WriteJson(MassBattleCapacityProbeReport report, string path)
     {
@@ -134,6 +159,18 @@ public sealed record MassBattleCapacityProbeReport
                 invariant.MaxBlockedFollowersPerDecisionTick));
             b.AppendLine(string.Format(
                 culture,
+                "Blocked-follower split (WI-N2-01): max landed {0}, max fallback {1} per decision tick.",
+                invariant.MaxLandedFollowersPerDecisionTick,
+                invariant.MaxFallbackFollowersPerDecisionTick));
+            var rings = string.Join(
+                ", ",
+                invariant.LandingRingHistogram
+                    .Select((count, ring) => (ring, count))
+                    .Where(entry => entry.count > 0)
+                    .Select(entry => $"r{entry.ring} {entry.count}"));
+            b.AppendLine($"Landing rings (WI-N2-01): {(rings.Length > 0 ? rings : "none")}.");
+            b.AppendLine(string.Format(
+                culture,
                 "Idle stalls (WI-M4-06): threshold {0} frames; parked jets excluded.",
                 invariant.StallThresholdFrames));
             foreach (var side in invariant.Sides)
@@ -144,6 +181,24 @@ public sealed record MassBattleCapacityProbeReport
                     side.MaxIdleFrames,
                     side.StalledUnitsAtEnd));
             }
+        }
+
+        if (report.AsyncOrderPaths)
+        {
+            b.AppendLine();
+            b.AppendLine(string.Format(
+                culture,
+                "Async order paths (WI-N4-02): submitted {0}, applied {1}, cancelled {2}, deadline misses {3}.",
+                report.AsyncSubmitted,
+                report.AsyncApplied,
+                report.AsyncCancelled,
+                report.AsyncDeadlineMisses));
+            b.AppendLine(string.Format(
+                culture,
+                "Async wait frames (WI-N4-02): median {0:0.0}, p99 {1:0.0}, max {2}.",
+                report.AsyncWaitFramesMedian,
+                report.AsyncWaitFramesP99,
+                report.AsyncWaitFramesMax));
         }
 
         if (report.AirMissions is { Count: > 0 })
@@ -257,6 +312,14 @@ public sealed record MassBattleSquadInvariantReport
     public int MembersAtWorstDecisionTick { get; init; }
 
     public long MaxBlockedFollowersPerDecisionTick { get; init; }
+
+    public long MaxLandedFollowersPerDecisionTick { get; init; }
+
+    public long MaxFallbackFollowersPerDecisionTick { get; init; }
+
+    /// <summary>Landing counts by ring distance from the blocked offset destination (WI-N2-01),
+    /// the distribution behind the MaxLandingRadiusCells default.</summary>
+    public long[] LandingRingHistogram { get; init; } = [];
 
     public int StallThresholdFrames { get; init; }
 }
