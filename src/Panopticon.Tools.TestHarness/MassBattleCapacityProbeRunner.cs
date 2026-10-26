@@ -163,6 +163,8 @@ public static class MassBattleCapacityProbeRunner
             game.Scene3D.Navigation.Options.AsyncOrderPaths = config.MassBattleCapacityProbeAsyncOrderPaths;
             // WI-N7-02 knob: squad offset retrace validation.
             game.Scene3D.Navigation.Options.ValidateOffsetRoutes = config.MassBattleCapacityProbeValidateOffsetRoutes;
+            // WI-N8-01 knob: blocked-unit resolution via bounded local repaths.
+            game.Scene3D.Navigation.Options.BlockedUnitResolution = config.MassBattleCapacityProbeBlockedResolution;
 
             FrameDeployment(game, profile);
 
@@ -714,6 +716,7 @@ public static class MassBattleCapacityProbeRunner
         private readonly List<double> _landedFollowers;
         private readonly List<double> _fallbackFollowers;
         private readonly List<double> _reroutedFollowers;
+        private readonly List<double> _blockedRepaths;
         private readonly List<double> _workerSearchMs;
         private readonly List<double> _goalHistogramMaxBucket;
 
@@ -734,6 +737,7 @@ public static class MassBattleCapacityProbeRunner
             _landedFollowers = new List<double>(capacity);
             _fallbackFollowers = new List<double>(capacity);
             _reroutedFollowers = new List<double>(capacity);
+            _blockedRepaths = new List<double>(capacity);
             _workerSearchMs = new List<double>(capacity);
             _goalHistogramMaxBucket = new List<double>(capacity);
         }
@@ -751,6 +755,7 @@ public static class MassBattleCapacityProbeRunner
             _landedFollowers.Add(after.LandedFollowers - before.LandedFollowers);
             _fallbackFollowers.Add(after.FallbackFollowers - before.FallbackFollowers);
             _reroutedFollowers.Add(after.ReroutedFollowers - before.ReroutedFollowers);
+            _blockedRepaths.Add(after.BlockedRepathRequests - before.BlockedRepathRequests);
             _workerSearchMs.Add(after.WorkerSearchMs - before.WorkerSearchMs);
             // WI-N3-01: gauge, not a delta; the probe resets the histogram window per tick.
             _goalHistogramMaxBucket.Add(after.GoalHistogramMaxBucket);
@@ -773,6 +778,7 @@ public static class MassBattleCapacityProbeRunner
             AddPerTickAndPerSecondStatistics(record, "path.landedFollowers", _landedFollowers, game);
             AddPerTickAndPerSecondStatistics(record, "path.fallbackFollowers", _fallbackFollowers, game);
             AddPerTickAndPerSecondStatistics(record, "path.reroutedFollowers", _reroutedFollowers, game);
+            AddPerTickAndPerSecondStatistics(record, "path.blockedRepath", _blockedRepaths, game);
             AddPerTickAndPerSecondStatistics(record, "path.workerSearchMs", _workerSearchMs, game);
             record.Statistics.Add(BenchmarkStatistics.FromSamples(
                 "path.goalHistogramMaxPerTick",

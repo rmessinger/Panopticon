@@ -81,6 +81,17 @@ public sealed class MovementProgress
         BlockerId = default;
     }
 
+    /// <summary>
+    /// Called when the blocked-unit resolver gives up near a crowded goal (WI-N8-01): the unit
+    /// clears its route and stops inside the crowd-arrival radius.
+    /// </summary>
+    public void RecordGoalCrowded()
+    {
+        FramesWithoutProgress++;
+        Reason = NavigationStallReason.GoalCrowded;
+        BlockerId = default;
+    }
+
     /// <summary>Clears all tracking; called on new orders, waypoint arrivals, and stops.</summary>
     public void Reset()
     {

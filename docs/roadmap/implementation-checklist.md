@@ -1935,7 +1935,7 @@ Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
   - AC: option off changes nothing; option on reads 0 `impassableRetracePoints` in every case.
 
 ### N8: Blocked-unit resolution
-- [ ] N8-1 Blocked wait and bounded local repath behind `BlockedUnitResolution`. (`WI-N8-01`)
+- [x] N8-1 Blocked wait and bounded local repath behind `BlockedUnitResolution`. (`WI-N8-01`)
   - AC: option off changes nothing; local repath is window-bounded; N5 path budgets still met.
 - [ ] N8-2 Give-way and mutual block yield. (`WI-N8-02`)
   - AC: `head-on-pair` settles with one sidestep; 0 wait-for cycles at case end; no sidestep

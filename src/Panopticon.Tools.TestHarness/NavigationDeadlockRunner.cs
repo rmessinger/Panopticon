@@ -88,6 +88,7 @@ public static class NavigationDeadlockRunner
             seed,
             frameBudget,
             config.NavigationDeadlockValidateOffsetRoutes,
+            config.NavigationDeadlockBlockedResolution,
             results);
         report.WriteJson(reportPath);
         report.WriteText(Path.ChangeExtension(reportPath, ".txt"));
@@ -190,6 +191,7 @@ public static class NavigationDeadlockRunner
 
         navigation.Options.AsyncOrderPaths = setup.AsyncOrderPaths;
         navigation.Options.ValidateOffsetRoutes = config.NavigationDeadlockValidateOffsetRoutes;
+        navigation.Options.BlockedUnitResolution = config.NavigationDeadlockBlockedResolution;
 
         // Structures mark their grid cells over the first ticks; orders are deferred until the
         // furniture settles so paths and region labels see the walls.
@@ -296,6 +298,7 @@ public static class NavigationDeadlockRunner
         var records = sampler.Records;
         var cycles = sampler.WaitForCycles;
         var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
+        var blockedRepaths = navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests;
         var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes);
 
         var result = new NavigationDeadlockCaseResult(
@@ -314,6 +317,7 @@ public static class NavigationDeadlockRunner
             navigation.AsyncPathCancelled - asyncCancelledBefore,
             maxImpassableRetracePoints,
             reroutedFollowers,
+            blockedRepaths,
             confirmed,
             note,
             [.. records],

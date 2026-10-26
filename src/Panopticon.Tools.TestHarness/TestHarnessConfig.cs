@@ -417,7 +417,15 @@ public sealed class TestHarnessConfig
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeValidateOffsetRoutes.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public bool MassBattleCapacityProbeValidateOffsetRoutes { get; set; } = false;
 
+    /// <summary>WI-N8-01: resolve blocked units with bounded local repaths (default false).</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeBlockedResolution.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
+    public bool MassBattleCapacityProbeBlockedResolution { get; set; } = false;
+
     /// <summary>WI-N7-02: validate squad offset retrace routes (default false).</summary>
     [HarnessParameter("NavigationDeadlock", "NavigationDeadlockValidateOffsetRoutes.", nameof(BuiltInScenario.NavigationDeadlock))]
     public bool NavigationDeadlockValidateOffsetRoutes { get; set; } = false;
+
+    /// <summary>WI-N8-01: resolve blocked units with bounded local repaths (default false).</summary>
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockBlockedResolution.", nameof(BuiltInScenario.NavigationDeadlock))]
+    public bool NavigationDeadlockBlockedResolution { get; set; } = false;
 }

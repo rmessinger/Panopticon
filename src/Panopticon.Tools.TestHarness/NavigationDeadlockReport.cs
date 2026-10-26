@@ -24,6 +24,7 @@ public sealed record NavigationDeadlockCaseResult(
     long AsyncCancelled,
     int ImpassableRetracePoints,
     long ReroutedFollowers,
+    long BlockedRepaths,
     bool MechanismConfirmed,
     string MechanismNote,
     IReadOnlyList<NavigationStallRecord> StallRecords,
@@ -36,6 +37,7 @@ public sealed record NavigationDeadlockReport(
     int Seed,
     int FrameBudget,
     bool ValidateOffsetRoutes,
+    bool BlockedResolution,
     IReadOnlyList<NavigationDeadlockCaseResult> Cases)
 {
     public const int CurrentSchemaVersion = 1;
@@ -59,12 +61,12 @@ public sealed record NavigationDeadlockReport(
         writer.WriteLine($"NavigationDeadlock baseline: map {Map}, seed {Seed}, budget {FrameBudget} frames/case.");
         writer.WriteLine();
         writer.WriteLine(
-            "Case                 Units Settled Frames Termination      SpanMs MaxTick Retrace Cycles Mech");
+            "Case                 Units Settled Frames Termination      SpanMs MaxTick Retrace Reroute Repath Cycles Mech");
         foreach (var result in Cases)
         {
             writer.WriteLine(string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
-                "{0,-20}{1,6}{2,8}{3,7} {4,-16}{5,7:F1}{6,8:F1}{7,8}{8,7}{9,6}",
+                "{0,-20}{1,6}{2,8}{3,7} {4,-16}{5,7:F1}{6,8:F1}{7,8}{8,8}{9,7}{10,7}{11,6}",
                 result.Name,
                 result.UnitsSpawned,
                 result.SettledUnits,
@@ -73,6 +75,8 @@ public sealed record NavigationDeadlockReport(
                 result.PathSpanMs,
                 result.MaxTickPathSpanMs,
                 result.ImpassableRetracePoints,
+                result.ReroutedFollowers,
+                result.BlockedRepaths,
                 result.WaitForCyclesAtEnd.Count,
                 result.MechanismConfirmed ? "yes" : "no"));
         }

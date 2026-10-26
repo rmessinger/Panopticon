@@ -212,6 +212,7 @@ public class AIUpdate : UpdateModule
         }
 
         Progress.Reset();
+        ResetLocalRepath();
 
         if (!GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft) && targetPoint != GameObject.Translation)
         {
@@ -260,6 +261,12 @@ public class AIUpdate : UpdateModule
     private PathRequestHandle _pendingPathHandle;
     private Vector3 _pendingPathTarget;
 
+    // WI-N8-01: blocked-unit resolver bookkeeping. Attempts reset when the unit progresses or
+    // takes a new order; at most one attempt fires per BlockedWaitFrames interval.
+    private const int NoLocalRepathAttempt = -1;
+    private int _localRepathAttempts;
+    private int _framesAtLastLocalRepathAttempt = NoLocalRepathAttempt;
+
     /// <summary>
     /// Card WI-N4-01: submits this unit's path onto the async queue. Cancels any pending request
     /// first; the drain applies the completion on the logic thread with the same post-processing
@@ -272,6 +279,7 @@ public class AIUpdate : UpdateModule
     {
         CancelPendingPath();
         Progress.Reset();
+        ResetLocalRepath();
 
         if (GameObject.Definition.KindOf == null
             || GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft)
@@ -334,6 +342,7 @@ public class AIUpdate : UpdateModule
         else
         {
             Progress.Reset();
+            ResetLocalRepath();
         }
 
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
@@ -350,6 +359,65 @@ public class AIUpdate : UpdateModule
         GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
         GameObject.Speed = 0;
         Progress.RecordNoRoute();
+    }
+
+    /// <summary>
+    /// WI-N8-01: terminal goal-crowded state. The resolver exhausted its attempts with the
+    /// goal inside the crowd-arrival radius: the route and moving state are cleared and the
+    /// stall reason records GoalCrowded for attribution.
+    /// </summary>
+    internal void SettleGoalCrowded()
+    {
+        TargetPoints.Clear();
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+        GameObject.Speed = 0;
+        Progress.RecordGoalCrowded();
+    }
+
+    /// <summary>
+    /// WI-N8-01: replaces the first <paramref name="supersededWaypoints"/> target points with
+    /// the local detour from the blocked-unit resolver; the detour rejoins the kept remainder.
+    /// </summary>
+    internal void SpliceLocalDetour(IReadOnlyList<Vector3> detour, int supersededWaypoints)
+    {
+        if (supersededWaypoints > 0)
+        {
+            TargetPoints.RemoveRange(0, supersededWaypoints);
+        }
+
+        TargetPoints.InsertRange(0, detour);
+        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+    }
+
+    /// <summary>
+    /// WI-N8-01: attempt cadence for the blocked-unit resolver. True when a new attempt may
+    /// fire now; false with <paramref name="gaveUp"/> true once the attempt budget is spent.
+    /// </summary>
+    internal bool TryBeginLocalRepathAttempt(int framesWithoutProgress, int blockedWaitFrames, int maxAttempts, out bool gaveUp)
+    {
+        if (_localRepathAttempts >= maxAttempts)
+        {
+            gaveUp = true;
+            return false;
+        }
+
+        if (_framesAtLastLocalRepathAttempt != NoLocalRepathAttempt
+            && framesWithoutProgress - _framesAtLastLocalRepathAttempt < blockedWaitFrames)
+        {
+            gaveUp = false;
+            return false;
+        }
+
+        _localRepathAttempts++;
+        _framesAtLastLocalRepathAttempt = framesWithoutProgress;
+        gaveUp = false;
+        return true;
+    }
+
+    internal void ResetLocalRepath()
+    {
+        _localRepathAttempts = 0;
+        _framesAtLastLocalRepathAttempt = NoLocalRepathAttempt;
     }
 
     /// <summary>
@@ -556,6 +624,7 @@ public class AIUpdate : UpdateModule
         TargetPoints.Clear();
         GameObject.Speed = 0;
         Progress.Reset();
+        ResetLocalRepath();
     }
 
     internal void SetTargetDirection(Vector3 targetDirection)
@@ -675,6 +744,23 @@ public class AIUpdate : UpdateModule
                     // WI-N6-01: the distance was sampled before the physics step, so this
                     // compares consecutive move steps toward the same waypoint.
                     Progress.RecordMoveStep(onPathDistToGoal, blocked, blocker);
+
+                    if (Progress.Reason == NavigationStallReason.None)
+                    {
+                        ResetLocalRepath();
+                    }
+                    else
+                    {
+                        var resolutionNav = GameEngine.Navigation;
+                        if (resolutionNav != null
+                            && resolutionNav.Options.BlockedUnitResolution
+                            && Progress.Reason == NavigationStallReason.BlockedByUnit
+                            && Progress.FramesWithoutProgress >= resolutionNav.Options.BlockedWaitFrames)
+                        {
+                            // WI-N8-01: bounded local repath around a non-progressing blocker.
+                            BlockedMovementResolver.TryResolve(GameObject, this, resolutionNav);
+                        }
+                    }
 
                     var use3DArrival = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist3D;
                     var distToTargetSq = use3DArrival
