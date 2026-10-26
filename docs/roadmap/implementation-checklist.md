@@ -1382,6 +1382,25 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
         ([`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md)).
     - AC: golden frames captured under the proportions mode catch an injected rescale regression,
       both presets default the option off, and disabled `Legacy` output matches the pre-phase capture.
+- [ ] G11 Terrain impact decals (persistent scorch marks from FX, logic modules and map objects,
+      drawn as a terrain overlay; design in the
+      [deep dive](deep-dives/g11-terrain-impact-decals.md)).
+  - [ ] G11-1 Decal store and scorch FX execution
+        ([`WI-G11-01`](agent/cards/WI-G11-01-terrain-decal-store-and-scorch-fx.md)).
+    - AC: `TerrainScorch` nuggets add decals using client random only; the store applies the
+      original cap and duplicate rule; every installed Generals and Zero Hour nugget parses.
+  - [ ] G11-2 Overlay mesh and render pass
+        ([`WI-G11-02`](agent/cards/WI-G11-02-terrain-decal-mesh-and-pass.md)).
+    - AC: mesher matches the original geometry and UVs in tests; scorches follow slopes and sit
+      under roads; existing goldens unchanged with no decals.
+  - [ ] G11-3 Logic and map scorch producers
+        ([`WI-G11-03`](agent/cards/WI-G11-03-logic-and-map-scorch-producers.md)).
+    - AC: implemented producers add original-size scorches, unimplemented ones are recorded;
+      map-placed scorches load once.
+  - [ ] G11-4 `Enhanced` lighting, limit and golden frames
+        ([`WI-G11-04`](agent/cards/WI-G11-04-enhanced-decals-and-golden-frames.md)).
+    - AC: `Enhanced` scorches are terrain-lit; `faithful` and `enhanced` goldens recorded and an
+      injected regression fails.
 
 ## Track H: Map & Unit Storage Formats
 

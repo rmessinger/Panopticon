@@ -401,6 +401,15 @@ Source of truth: [deep-dives/g10-realistic-proportions.md](../deep-dives/g10-rea
 |---|---|---|
 | [track-g-g10-realistic-proportions.md](track-g-g10-realistic-proportions.md) | G10-1…G10-3 | Realistic proportions |
 
+## Track G · G11 : Terrain impact decals
+
+Source of truth: [deep-dives/g11-terrain-impact-decals.md](../deep-dives/g11-terrain-impact-decals.md) :
+[Architecture diagrams §5](../deep-dives/g11-terrain-impact-decals.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g11-terrain-impact-decals.md](track-g-g11-terrain-impact-decals.md) | G11-1…G11-4 | Terrain impact decals |
+
 ## Track H · H1-H3 : Map storage
 
 Source of truth: [track-h-storage-formats.md](../track-h-storage-formats.md).

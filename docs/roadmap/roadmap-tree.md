@@ -318,6 +318,11 @@ mindmap
         G10-1 Reference-scale audit
         G10-2 Render-only scale overrides
         G10-3 Explicit opt-in and golden frames
+      G11 Terrain impact decals ⮕
+        G11-1 Decal store and scorch FX
+        G11-2 Overlay mesh and pass
+        G11-3 Logic and map producers
+        G11-4 Enhanced lighting and goldens
     H. Map and unit storage formats
       H1 Format requirements and current-state audit
       H2 Format-agnostic map interchange abstraction
@@ -480,6 +485,7 @@ flowchart LR
     G8["G8 Shadow quality tier"]
     G9["G9 Resolution-independent 2D & UI"]
     G10["G10 Realistic proportions"]
+    G11["G11 Terrain impact decals"]
     H3["H3 New map storage format"]
     M0["M0 Battle map"]
   end
@@ -685,6 +691,8 @@ flowchart LR
   G3 --> G4
   G2 --> G10
   G3 --> G10
+  G2 --> G11
+  G3 --> G11
   G2 --> G6
   G3 --> G6
   G2 --> G7
@@ -838,7 +846,7 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C,C8A,C8B,C8C,C9A,C9B,C9C,C9D,C10A,C10B,C10C,C10D,C11A,C11B,C11C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
-  class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
+  class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11 trackG;
   class H1,H2,H2A,H2B,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;

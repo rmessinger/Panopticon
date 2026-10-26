@@ -29,6 +29,7 @@
 | [G8. Shadow quality tier](deep-dives/g8-shadow-quality.md) | Select the existing four-cascade path at 2048² under `Enhanced`; add bounded receiver slope bias while retaining normal offset and original defaults. | Default-zoom shadows show no acne, visible cascade seams or detached contacts; `Legacy` matches its golden. | Done | G2, G3 |
 | [G9. Resolution-independent 2D & UI](deep-dives/g9-resolution-independent-2d.md) | Preserve G1's proportional physical-pixel layout. Add role-aware sampling and pixel-sized fonts, then dynamic control-bar chrome per the [HUD Decision](open-questions.md). `Legacy` retains legacy art. | Layout and hit regions stay unchanged; `Enhanced` chrome is sharp without legacy panel/button/frame bitmap draws; portraits/icons/minimap remain textures; `Legacy` matches its golden. | Done | G1, G2, G3 |
 | [G10. Realistic proportions](deep-dives/g10-realistic-proportions.md) | Re-derive asset reference scale and aircraft deviations, then add explicit opt-in per-definition render-only scaling. Shared world/bone matrices, `Geometry`, gameplay selection and `AttackRange` remain unchanged; see the [scope Decision](open-questions.md). | Comanche/MiG beside Crusader meet audited real-world length ratios within stated tolerance; disabled `Legacy` stays unchanged; a data test re-derives the asset table. | Done | G2, G3 |
+| [G11. Terrain impact decals](deep-dives/g11-terrain-impact-decals.md) | Execute the parsed-but-inert `TerrainScorch` FX and the other original scorch producers into a capped client-side decal store, drawn as a terrain overlay with the original geometry, tint and draw order under `Legacy` and terrain lighting under `Enhanced`. | Explosions leave persistent scorch marks that follow slopes and sit under roads; `Legacy` reproduces the original cap and duplicate rule; `faithful` and `enhanced` goldens guard the pass; simulation assertions are unchanged with decals on. | Not started | G2, G3 |
 
 ## Phase resources
 
@@ -47,6 +48,7 @@ Diagrams are required before any phase's first source-edit task card is marked `
 | G8 | [`g8-shadow-quality.md`](deep-dives/g8-shadow-quality.md) | [Architecture Diagrams](deep-dives/g8-shadow-quality.md#5-architecture-diagrams) | [`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md), [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md) |
 | G9 | [`g9-resolution-independent-2d.md`](deep-dives/g9-resolution-independent-2d.md) | [Architecture Diagrams](deep-dives/g9-resolution-independent-2d.md#5-architecture-diagrams) | [`WI-G9-01`](agent/cards/WI-G9-01-audit-2d-ui-resolution-path.md), [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md), [`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md) |
 | G10 | [`g10-realistic-proportions.md`](deep-dives/g10-realistic-proportions.md) | [Architecture Diagrams](deep-dives/g10-realistic-proportions.md#5-architecture-diagrams) | [`WI-G10-01`](agent/cards/WI-G10-01-audit-proportions-and-reference-scale.md), [`WI-G10-02`](agent/cards/WI-G10-02-presentation-scale-overrides.md), [`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md) |
+| G11 | [`g11-terrain-impact-decals.md`](deep-dives/g11-terrain-impact-decals.md) | [Architecture Diagrams](deep-dives/g11-terrain-impact-decals.md#5-architecture-diagrams) | [`WI-G11-01`](agent/cards/WI-G11-01-terrain-decal-store-and-scorch-fx.md), [`WI-G11-02`](agent/cards/WI-G11-02-terrain-decal-mesh-and-pass.md), [`WI-G11-03`](agent/cards/WI-G11-03-logic-and-map-scorch-producers.md), [`WI-G11-04`](agent/cards/WI-G11-04-enhanced-decals-and-golden-frames.md) ([plan](implementation/track-g-g11-terrain-impact-decals.md)) |
 | G6 corrective | [macOS battle artifacts](plans/macos-battle-artifacts.md) | [Particle boundary](plans/macos-battle-artifacts.md#particle-presentation-boundary) | [WI-G6-03](agent/cards/WI-G6-03-clamp-particle-opacity.md) |
 
 ## Cross-track dependencies
@@ -75,3 +77,6 @@ Hard dependencies are in the phase table above; these are the coordination notes
   assertion run identically with the option on or off. The overrides also stay per-definition
   visual state rather than asset mutation, so `Geometry`-driven selection and pathing consumers
   (`Scene25D.GetBoundingSphere`) are unaffected.
+- G11 decals are game-client state on the presentation side of the A3 seam. [Track F](track-f-terrain-destruction.md)
+  owns crater geometry and heightmap deformation; G11 only rebuilds decal meshes when heights
+  change, and its decal store is the place F adds crater textures.

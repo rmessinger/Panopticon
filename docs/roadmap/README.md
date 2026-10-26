@@ -228,6 +228,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/g8-shadow-quality.md`](deep-dives/g8-shadow-quality.md) | Track G phase G8 - Shadow quality tier: four 2048 cascades and a receiver-side slope-scaled bias. |
 | [`deep-dives/g9-resolution-independent-2d.md`](deep-dives/g9-resolution-independent-2d.md) | Track G phase G9 - Resolution-independent 2D and UI, and the dynamically drawn HUD. |
 | [`deep-dives/g10-realistic-proportions.md`](deep-dives/g10-realistic-proportions.md) | Track G phase G10 - Realistic proportions: reference scale audit and presentation-only aircraft scale overrides. |
+| [`deep-dives/g11-terrain-impact-decals.md`](deep-dives/g11-terrain-impact-decals.md) | Track G phase G11 - Terrain impact decals: scorch FX execution, capped decal store, terrain overlay pass, original producers, `Enhanced` lighting. |
 
 ---
 
@@ -286,8 +287,8 @@ track document.
   (`Legacy`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
   cutout & alpha-test clarity (the screen-door fix) · G6 gamma-correct rendering · G7 texture
   filtering & mip quality · G8 shadow quality tier · G9 resolution-independent 2D & UI ·
-  G10 realistic proportions (optional scale-correct aircraft presentation). Not gated
-  on Track P.
+  G10 realistic proportions (optional scale-correct aircraft presentation) · G11 terrain impact
+  decals (persistent scorch marks). Not gated on Track P.
 - [Track H - Map & Unit Storage Formats](track-h-storage-formats.md): H1 format requirements &
   current-state audit · H2 map interchange abstraction · H2a shared unit-content import layer · H2b metric core units · H3 new map storage format ·
   H4 new object/unit-definition storage format · H5 legacy migration & compatibility tooling · H6
@@ -446,7 +447,8 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
-| Track G total | `████▍░░░░░░` | 7 / 16 |
+| G11 - Terrain impact decals | `░░░░░░░░░░` | 0 / 4 |
+| Track G total | `███▌░░░░░░` | 7 / 20 |
 
 ### Track H - Map & Unit Storage Formats (H2a gated on P9 and C4d)
 

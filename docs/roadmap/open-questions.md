@@ -760,6 +760,12 @@
   followers). Track N builds no hierarchical layer; its only new structure, a shared-destination
   goal field, is gated on measurement after request sharing. Behavior-changing options default off
   until N5 evidence and an operator decision.
+- Terrain impact decals. Decision (2026-10-26): persistent scorch marks are Track G phase G11, not
+  Track F; F keeps crater geometry and heightmap deformation and reuses G11's decal store for
+  crater textures. Decals are a terrain overlay mesh following the original height-map grid, not
+  per-pixel projected decals like `RadiusCursorDecals`, so hundreds of marks cost one draw.
+  Runtime decals are not saved, matching the original. See the
+  [deep dive](deep-dives/g11-terrain-impact-decals.md#3-design).
 - Navigation deadlocks. Decision (2026-10-26): deadlock work extends Track N as N6 to N10 rather
   than a new track, because it shares N's measurement, options, and scenarios and N5's
   default-flip decision waits on it. Resolution is discrete (wait, friendly give-way, bounded local
