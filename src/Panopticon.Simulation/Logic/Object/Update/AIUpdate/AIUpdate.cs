@@ -86,6 +86,8 @@ public class AIUpdate : UpdateModule
     private ObjectId _repulsor2;
     private ObjectId _moveOutOfWay1;
     private ObjectId _moveOutOfWay2;
+    private bool _gaveWayOnce;
+    private uint _frameAtLastGiveWay;
     private LocomotorGoalType _locomotorGoalType;
     private Vector3 _locomotorGoalData;
     private WhichTurretType _turretSyncFlag;
@@ -387,6 +389,97 @@ public class AIUpdate : UpdateModule
 
         TargetPoints.InsertRange(0, detour);
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+    }
+
+    /// <summary>
+    /// Card WI-N8-02: asks this idle, arrived, or order-less unit to step out of
+    /// <paramref name="requester"/>'s way. Friendly requesters only, at most one sidestep per
+    /// BlockedWaitFrames window; the sidestep is the nearest free passable cell off the
+    /// requester's next segment. True when accepted.
+    /// </summary>
+    internal bool RequestGiveWay(GameObject requester, Panopticon.Navigation.Navigation navigation, in Vector2 segmentStart, in Vector2 segmentEnd)
+    {
+        if (requester.Owner != GameObject.Owner
+            || TargetPoints.Count > 0
+            || GameObject.ModelConditionFlags.Get(ModelConditionFlag.Moving)
+            || Progress.Reason != NavigationStallReason.None)
+        {
+            return false;
+        }
+
+        if (RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+        {
+            return false;
+        }
+
+        var sidestep = GiveWayPlanner.FindSidestep(
+            GameObject,
+            requester,
+            navigation,
+            segmentStart,
+            segmentEnd,
+            navigation.Options.LocalRepathWindowCells);
+        if (sidestep == null)
+        {
+            return false;
+        }
+
+        _moveOutOfWay1 = requester.Id;
+        AcceptSidestep(sidestep.Value);
+        return true;
+    }
+
+    /// <summary>
+    /// Card WI-N8-02: a mutually blocked unit with the higher object id yields by sidestepping
+    /// off <paramref name="other"/>'s next segment while keeping its route: the sidestep point
+    /// is inserted before the remaining waypoints.
+    /// </summary>
+    internal bool SidestepWhileKeepingRoute(GameObject other, Panopticon.Navigation.Navigation navigation, in Vector2 segmentStart, in Vector2 segmentEnd)
+    {
+        if (RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+        {
+            return false;
+        }
+
+        var sidestep = GiveWayPlanner.FindSidestep(
+            GameObject,
+            other,
+            navigation,
+            segmentStart,
+            segmentEnd,
+            navigation.Options.LocalRepathWindowCells);
+        if (sidestep == null)
+        {
+            return false;
+        }
+
+        _moveOutOfWay1 = other.Id;
+        _gaveWayOnce = true;
+        _frameAtLastGiveWay = CurrentLogicFrame();
+        ResetLocalRepath();
+        Progress.Reset();
+        TargetPoints.Insert(0, sidestep.Value);
+        return true;
+    }
+
+    /// <summary>True within the BlockedWaitFrames window after the last accepted sidestep.</summary>
+    internal bool RecentlyGaveWay(int blockedWaitFrames)
+    {
+        return _gaveWayOnce && CurrentLogicFrame() - _frameAtLastGiveWay < (uint)blockedWaitFrames;
+    }
+
+    private void AcceptSidestep(Vector3 sidestep)
+    {
+        _gaveWayOnce = true;
+        _frameAtLastGiveWay = CurrentLogicFrame();
+        ResetLocalRepath();
+        AddTargetPoint(sidestep);
+    }
+
+    private uint CurrentLogicFrame()
+    {
+        return (uint)(GameObject.GameEngine.Game.MapTime.TotalTime.TotalMilliseconds
+            / GameObject.GameEngine.MsPerLogicFrame);
     }
 
     /// <summary>

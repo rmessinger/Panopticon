@@ -13,7 +13,7 @@ namespace Panopticon.Navigation;
 /// </summary>
 internal sealed class LocalOccupancyWindow
 {
-    private const float FootprintPadding = 2.5f;
+    internal const float FootprintPadding = 2.5f;
 
     private readonly List<(Vector3 Position, float Radius)> _stationary = new();
 
@@ -58,6 +58,21 @@ internal sealed class LocalOccupancyWindow
         return obj.AIUpdate is { TargetPoints.Count: > 0 } ai
             && obj.ModelConditionFlags.Get(ModelConditionFlag.Moving)
             && ai.Progress.FramesWithoutProgress == 0;
+    }
+
+    /// <summary>True when no collected footprint overlaps the position within the given radius.</summary>
+    public bool IsFreeAt(Vector3 position, float radius)
+    {
+        foreach (var (otherPosition, otherRadius) in _stationary)
+        {
+            var combined = otherRadius + radius;
+            if (Vector3.DistanceSquared(position, otherPosition) <= combined * combined)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>Marks the collected footprints impassable on the window graph.</summary>

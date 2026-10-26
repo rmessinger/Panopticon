@@ -299,7 +299,7 @@ public static class NavigationDeadlockRunner
         var cycles = sampler.WaitForCycles;
         var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
         var blockedRepaths = navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests;
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes);
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes, config.NavigationDeadlockBlockedResolution);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -577,7 +577,8 @@ public static class NavigationDeadlockRunner
         int impassableRetracePoints,
         IReadOnlyList<NavigationStallRecord> currentStalls,
         int reroutedFollowers,
-        bool validateOffsetRoutes)
+        bool validateOffsetRoutes,
+        bool blockedResolution)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -585,6 +586,14 @@ public static class NavigationDeadlockRunner
             case NavigationDeadlockCasePlanner.HeadOnPair:
                 {
                     var blocked = records.Where(record => record.Reason == nameof(NavigationStallReason.BlockedByUnit)).ToList();
+                    // WI-N8-02: with blocked-unit resolution on the mechanism is remediated
+                    // instead of reproduced: the yield plus the expired-wait repath settles the pair.
+                    if (blockedResolution)
+                    {
+                        return (settledUnits == setup.OrderedUnits.Count && cycles.Count == 0,
+                            $"{settledUnits}/{setup.OrderedUnits.Count} settled (WI-N8-02 give-way), {cycles.Count} wait-for cycle(s), max {maxFrames} frames without progress.");
+                    }
+
                     return (cycles.Count >= 1 && blocked.Count >= 2,
                         $"{blocked.Count} mutually blocked records, {cycles.Count} wait-for cycle(s), max {maxFrames} frames without progress.");
                 }
@@ -608,6 +617,14 @@ public static class NavigationDeadlockRunner
                     var idleIds = setup.IdleUnits.Select(unit => unit.Id.Index).ToHashSet();
                     var behindIdle = records.Count(record =>
                         record.Reason == nameof(NavigationStallReason.BlockedByUnit) && idleIds.Contains(record.BlockerId));
+                    // WI-N8-02: with blocked-unit resolution on the mechanism is remediated
+                    // instead of reproduced: the idle tanks give way and the column flows.
+                    if (blockedResolution)
+                    {
+                        return (settledUnits > 0 && cycles.Count == 0,
+                            $"{settledUnits}/{setup.OrderedUnits.Count} settled past the idle tanks (WI-N8-02 give-way), {cycles.Count} wait-for cycle(s), max {maxFrames} frames.");
+                    }
+
                     return (behindIdle > 0,
                         $"{behindIdle} records blocked by the idle tanks, {settledUnits}/{setup.OrderedUnits.Count} settled, max {maxFrames} frames.");
                 }

@@ -1,4 +1,5 @@
 using System;
+using System;
 using System.Numerics;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -6,10 +7,11 @@ using Panopticon.Mathematics;
 namespace Panopticon.Navigation;
 
 /// <summary>
-/// Card WI-N8-01: resolves a ground unit blocked by a non-progressing unit past
+/// Card WI-N8-01/02: resolves a ground unit blocked by a non-progressing unit past
 /// <see cref="NavigationOptions.BlockedWaitFrames"/>. Steps: wait behind a progressing blocker,
-/// one bounded local repath per wait interval (give-way sidesteps are WI-N8-02), and give up
-/// after <see cref="NavigationOptions.MaxResolutionAttempts"/> attempts. Detection comes from
+/// give-way (idle or arrived friendly blockers sidestep, mutual blocks yield by the higher
+/// object id, WI-N8-02), one bounded local repath per wait interval, and give up after
+/// <see cref="NavigationOptions.MaxResolutionAttempts"/> attempts. Detection comes from
 /// <see cref="MovementProgress"/>; nothing here changes movement unless the option is on.
 /// </summary>
 internal static class BlockedMovementResolver
@@ -22,6 +24,12 @@ internal static class BlockedMovementResolver
         if (blocker == null || blocker.IsDestroyed || LocalOccupancyWindow.IsAdvancing(blocker))
         {
             // A progressing blocker is queueing traffic; wait as today.
+            return;
+        }
+
+        if (TryGiveWay(unit, aiUpdate, blocker, navigation))
+        {
+            // Give-way handled this step: a sidestep was accepted or one is already in flight.
             return;
         }
 
@@ -69,6 +77,74 @@ internal static class BlockedMovementResolver
         var toGoal = aiUpdate.TargetPoints[^1] - unit.Translation;
         var distance = toGoal.Vector2XY().Length();
         return distance <= crowdArrivalRadius;
+    }
+
+    /// <summary>
+    /// Card WI-N8-02: the give-way step. True means the resolution step is handled (wait);
+    /// false falls through to the local repath.
+    /// </summary>
+    private static bool TryGiveWay(GameObject unit, AIUpdate aiUpdate, GameObject blocker, Navigation navigation)
+    {
+        var blockerAi = blocker.AIUpdate;
+
+        // Mutual block: each records the other. Exactly one unit yields: the higher object id
+        // sidesteps off the lower unit's next segment; the lower waits for that to clear. A
+        // yield that cannot be planned falls through to the local repath instead of stalling.
+        // Mutual block: each records the other. Exactly one unit yields: the higher object id
+        // sidesteps off the lower unit's next segment; the lower waits for that to clear. A
+        // yield that cannot be planned, or a wait that outlives a full give-way cycle without
+        // the path clearing, falls through to the local repath instead of stalling.
+        if (blockerAi != null && blockerAi.Progress.BlockerId == unit.Id)
+        {
+            // The blocker's sidestep is not in flight and this wait has outlived a full
+            // give-way cycle: stop waiting and detour instead.
+            var waitExpired = aiUpdate.Progress.FramesWithoutProgress >= 2 * navigation.Options.BlockedWaitFrames
+                && !blockerAi.RecentlyGaveWay(navigation.Options.BlockedWaitFrames);
+            if (unit.Id.Index < blocker.Id.Index && !waitExpired)
+            {
+                return true;
+            }
+
+            if (aiUpdate.RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+            {
+                // A sidestep is already in flight; let it clear the path.
+                return true;
+            }
+
+            if (unit.Id.Index > blocker.Id.Index
+                && blockerAi.TargetPoints.Count > 0
+                && aiUpdate.SidestepWhileKeepingRoute(
+                    blocker,
+                    navigation,
+                    blocker.Translation.Vector2XY(),
+                    blockerAi.TargetPoints[0].Vector2XY()))
+            {
+                return true;
+            }
+        }
+
+        if (blockerAi == null || blocker.Owner != unit.Owner)
+        {
+            // Enemy blockers and blocker-less objects never give way; local repath instead.
+            return false;
+        }
+
+        if (blockerAi.RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+        {
+            // A sidestep is already in flight; let it clear the path.
+            return true;
+        }
+
+        if (aiUpdate.TargetPoints.Count == 0)
+        {
+            return false;
+        }
+
+        return blockerAi.RequestGiveWay(
+            unit,
+            navigation,
+            unit.Translation.Vector2XY(),
+            aiUpdate.TargetPoints[0].Vector2XY());
     }
 
     /// <summary>
