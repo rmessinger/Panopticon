@@ -307,6 +307,16 @@ public class Navigation
     public void DrainPathCompletions() => _pathRequestQueue?.Drain();
 
     /// <summary>
+    /// WI-N6-02: makes the next async request computed by the worker die without a callback
+    /// (the unexpected-exception path), for deadlock reproduction.
+    /// </summary>
+    internal void ForceNextWorkerFailure()
+    {
+        _pathRequestQueue ??= new PathRequestQueue(this, AsyncPathFrameBound);
+        _pathRequestQueue.ForceNextWorkerFailure();
+    }
+
+    /// <summary>
     /// Deadline misses across async path requests (WI-B4-05): completions that applied with a
     /// wait longer than <see cref="AsyncPathFrameBound"/> frames. Zero before the first
     /// submission.

@@ -393,12 +393,12 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
 | [`WI-N6-01`](../agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md) | N6 | Movement progress and stall attribution | N6-1 | Done |
-| [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Ready |
-| [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Blocked |
+| [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Done |
+| [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Ready |
 | [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Blocked |
-| [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Blocked |
+| [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Ready |
 | [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Blocked |
-| [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Blocked |
+| [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Ready |
 | [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Blocked |
 | [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Blocked |
 
@@ -435,6 +435,51 @@ above. Both modes still fail the idle-stall check (exit 5); the check itself mov
 deep dive section 3 target of zero-progress units within 600 frames, to be met by N7 to N9.
 
 Artifacts: `/tmp/opencode/n6-01/m4-{off,on}-report.json`, logs `~/log/n6-01/`.
+
+### WI-N6-02 baseline (2026-10-27, Release, seed 1, alpine assault, 3600-frame budget)
+
+NavigationDeadlock scenario, six cases, each run to settle or budget. All six mechanisms
+reproduce; five of six cases settle nothing inside the budget, confirming the deep dive
+section 1 finding that blocked ground units have no timeout, repath, or sidestep.
+
+| Case | Settled | Frames | Stalls by reason | Cycles | Span ms | Mechanism |
+| --- | --- | --- | --- | --- | --- | --- |
+| head-on-pair | 0 / 2 | 3600 | BlockedByUnit 2 | 1 | 9.6 | Confirmed |
+| corridor-opposed-20 | 0 / 40 | 3600 | BlockedByUnit 40 | 4 | 11.8 | Confirmed |
+| crowd-goal-100 | 3 / 100 | 3600 | BlockedByUnit 99, None 1 | 1 | 20.1 | Confirmed |
+| queue-behind-idle | 0 / 10 | 3600 | BlockedByUnit 10 | 0 | 4.4 | Confirmed |
+| async-no-route | 5 / 6 | 3600 | NoRoute 5, AwaitingPath 1 | 0 | 4.8 | Confirmed |
+| squad-offset-retrace | 2 / 8 | 3600 | BlockedByUnit 6, None 2 | 0 | 4.9 | Confirmed |
+
+Case notes:
+
+- head-on-pair: two tanks ordered through each other's start block every frame from the
+  first contact; 3487 frames without progress at the end. One wait-for cycle (the pair).
+- corridor-opposed-20: both columns jam at the 120-wide gap; 4 cycles among column heads.
+- crowd-goal-100: 100 squad-less tanks onto one point; 3 reach the goal radius, 99 hold
+  blocked records. The reason-None record is the crowd-wait pattern behind arrived units
+  (N9 evidence, same as the M4 reason-None population).
+- queue-behind-idle: a single-file column through the gap held by two idle tanks; at least
+  one record blames an idle tank directly (blocker chain into the parked pair).
+- async-no-route: sealed pocket (hollow annulus of power plants, pitch 30) rejects 5 async
+  requests that settle as NoRoute at frame 4 after drain; an injected worker failure at
+  frame 90 strands the victim in AwaitingPath for the remaining 3511 frames. Two N7
+  findings: a worker exception completes the request as Cancelled without a callback, and
+  such a request also blocks drain application behind it (head-of-line), observed when the
+  failure was injected at submit time: 5 submitted, 0 applied, all five units awaiting for
+  the whole budget.
+- squad-offset-retrace: 2 of 8 followers hold retrace points on impassable cells
+  (impassableRetracePoints 2), the WI-N2-01 residual this case isolates.
+
+Verdicts against the section 3 targets: the case-settling target and the zero-progress
+target are unmet everywhere except the NoRoute settle latency (the drain delivers the
+pocket failure within 4 frames, well inside the 2x AsyncPathFrameBound watchdog target,
+but that watchdog does not exist yet, N7). The wait-for-cycles target (0 at case end) is
+unmet in 3 of 6 cases. Path spans stay far inside the N5 budgets (max 20.1 ms single tick
+in crowd-goal-100, amortized below 0.01 ms). These targets stand as the acceptance gates
+for N7 to N9.
+
+Artifacts: `/tmp/opencode/n6-02/navigation-deadlock-report.json`, logs `~/log/n6-02/`.
 
 ## Confined passage queueing (N11-N14)
 

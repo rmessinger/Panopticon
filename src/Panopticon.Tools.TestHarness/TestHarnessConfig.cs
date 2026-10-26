@@ -386,6 +386,21 @@ public sealed class TestHarnessConfig
     [HarnessParameter("PathfindingLoad", "PathfindingLoadClusterCells.", nameof(BuiltInScenario.PathfindingLoad))]
     public int PathfindingLoadClusterCells { get; set; } = 100;
 
+    [HarnessParameter("NavigationDeadlock", "Comma-separated case filter; empty runs all cases.", nameof(BuiltInScenario.NavigationDeadlock))]
+    public string? NavigationDeadlockCaseFilter { get; set; } = null;
+
+    [HarnessParameter("NavigationDeadlock", "Frame budget per case (default 3600).", nameof(BuiltInScenario.NavigationDeadlock))]
+    public int NavigationDeadlockFrameBudget { get; set; } = 3600;
+
+    [HarnessParameter("NavigationDeadlock", "Skirmish seed (default 1).", nameof(BuiltInScenario.NavigationDeadlock))]
+    public int NavigationDeadlockSeed { get; set; } = 1;
+
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockReportPath.", nameof(BuiltInScenario.NavigationDeadlock))]
+    public string? NavigationDeadlockReportPath { get; set; } = null;
+
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockMapPath.", nameof(BuiltInScenario.NavigationDeadlock))]
+    public string? NavigationDeadlockMapPath { get; set; } = null;
+
     /// <summary>WI-N4-02: order-driven paths submit to the async worker queue (default false).</summary>
     [HarnessParameter("PathfindingLoad", "PathfindingLoadAsyncOrderPaths.", nameof(BuiltInScenario.PathfindingLoad))]
     public bool PathfindingLoadAsyncOrderPaths { get; set; } = false;

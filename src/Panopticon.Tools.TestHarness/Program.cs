@@ -181,6 +181,11 @@ public static class Program
             config.MassBattleCapacityProbeAsyncOrderPaths = bool.Parse(probeAsyncOrderPaths);
         }
 
+        ParseOptionalString(args, "--n6-cases", value => config.NavigationDeadlockCaseFilter = value);
+        ParseOptionalInt(args, "--n6-budget", value => config.NavigationDeadlockFrameBudget = value);
+        ParseOptionalInt(args, "--n6-seed", value => config.NavigationDeadlockSeed = value);
+        ParseOptionalString(args, "--n6-report", value => config.NavigationDeadlockReportPath = value);
+
         Run(config, reporter);
     }
 
@@ -422,6 +427,12 @@ public static class Program
         if (config.Scenario == BuiltInScenario.PathfindingLoad)
         {
             Environment.ExitCode = PathfindingLoadRunner.Run(installation, config, reporter);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.NavigationDeadlock)
+        {
+            Environment.ExitCode = NavigationDeadlockRunner.Run(installation, config, reporter);
             return;
         }
 
