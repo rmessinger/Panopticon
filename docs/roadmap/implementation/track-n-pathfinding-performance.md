@@ -392,8 +392,8 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
-| [`WI-N6-01`](../agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md) | N6 | Movement progress and stall attribution | N6-1 | Ready |
-| [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Blocked |
+| [`WI-N6-01`](../agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md) | N6 | Movement progress and stall attribution | N6-1 | Done |
+| [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Ready |
 | [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Blocked |
 | [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Blocked |
 | [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Blocked |
@@ -402,12 +402,39 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 | [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Blocked |
 | [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Blocked |
 
-Delivery: phase staging branch `staging/track-n-deadlocks`, numbered group PRs. Suggested groups:
+Delivery: stacked group PRs into `main` via the `gh stack` extension (superseded the staging model Oct 2026). Suggested groups:
 1 = N6, 2 = N7, 3 = N8, 4 = N9, 5 = N10. Groups 2 to 4 may stack in any order after group 1.
 
 ## Navigation deadlocks results
 
-Pending `WI-N6-01`.
+### WI-N6-01 baseline (2026-10-27, Release, seed 1, deepdivide 656x460, 4500 frames)
+
+Stall counting switched from the WI-M4-06 route-state rule to the progress rule (WI-N6-01).
+The old rule counted a unit holding target points as engaged and never registered jams; the
+new rule flags units holding an order with more than 600 frames without waypoint progress, or
+a NoRoute order. Counts rise by design; these tables are the new baseline, not a regression.
+
+| Metric (M4 army-AI probe) | Options off | AsyncOrderPaths on |
+| --- | --- | --- |
+| Stalled units at end (sideA / sideB) | 780 / 420 | 960 / 954 |
+| Max frames without progress | 4436 | 4435 |
+| Stall records: BlockedByUnit | 1728 | 1865 |
+| Stall records: reason None (no blocker identified) | 270 | 132 |
+| Wait-for cycles (latest sample) | 76 | 93 |
+| Worst-tick sync path requests | 253 | 0 |
+| Async applied / deadline misses | 0 / 0 | 18744 / 0 |
+
+Attribution, options off: the worst stalls are Ranger columns stuck nearly the whole run
+(frames 4400+) with adjacent unit ids blocking each other; the sampled wait-for cycles are
+mutual pairs, the head-on mechanism of deep dive section 1. Units with reason None hold
+orders without waypoint progress and without a footprint blocker in the swept probe: the
+crowd-wait pattern behind arrived units, which is N9 evidence, and no units reached the
+600-frame threshold with NoRoute. The pre-N6 idle-stall finding (2 to 6 stalled units under
+the route-state rule) is subsumed by this baseline: those units appear inside the counts
+above. Both modes still fail the idle-stall check (exit 5); the check itself moves to the
+deep dive section 3 target of zero-progress units within 600 frames, to be met by N7 to N9.
+
+Artifacts: `/tmp/opencode/n6-01/m4-{off,on}-report.json`, logs `~/log/n6-01/`.
 
 ## Confined passage queueing (N11-N14)
 
