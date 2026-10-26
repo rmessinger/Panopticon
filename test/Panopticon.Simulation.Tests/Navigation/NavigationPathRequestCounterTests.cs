@@ -78,11 +78,36 @@ public class NavigationPathRequestCounterTests
     {
         var (navigation, _, start, end) = CreateNavigation();
         var statsBefore = navigation.Statistics;
-
         var path = navigation.CalculatePath(start, end, out _);
 
         Assert.True(path.Count > 1);
         Assert.True(navigation.Statistics.NodesExpanded > statsBefore.NodesExpanded);
+    }
+
+    // WI-N3-01: the goal histogram buckets full searches by goal neighbourhood; same-goal
+    // searches accumulate one bucket, and the reset clears the window.
+    [Fact]
+    public void CalculatePath_BucketsFullSearchesByGoalNeighbourhood()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.ResetGoalHistogram();
+
+        navigation.CalculatePath(start, end, out _);
+        navigation.CalculatePath(start, end, out _);
+        var stats = navigation.Statistics;
+        Assert.Equal(2, stats.GoalHistogramSearches);
+        Assert.Equal(2, stats.GoalHistogramMaxBucket);
+
+        // Opposite corner searches land in a different neighbourhood: the shared bucket stays 2.
+        navigation.CalculatePath(end, start, out _);
+        stats = navigation.Statistics;
+        Assert.Equal(3, stats.GoalHistogramSearches);
+        Assert.Equal(2, stats.GoalHistogramMaxBucket);
+
+        navigation.ResetGoalHistogram();
+        stats = navigation.Statistics;
+        Assert.Equal(0, stats.GoalHistogramSearches);
+        Assert.Equal(0, stats.GoalHistogramMaxBucket);
     }
 
     // WI-N0-01: an off-graph endpoint fails without expanding any node.

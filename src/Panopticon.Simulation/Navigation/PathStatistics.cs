@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Panopticon.Navigation;
@@ -25,6 +26,10 @@ public enum PathRequestOrigin
 /// </summary>
 public sealed class PathStatistics
 {
+    /// <summary>Goal cells are bucketed into squares of this many cells per side for the
+    /// shared-destination histogram (WI-N3-01).</summary>
+    public const int GoalNeighbourhoodCells = 8;
+
     public long UnitRequests { get; }
     public long SquadLeaderRequests { get; }
     public long BlockedFollowerRequests { get; }
@@ -46,6 +51,14 @@ public sealed class PathStatistics
     /// as the stepper's nested path span instead.</summary>
     public double WorkerSearchMs { get; }
 
+    /// <summary>Full searches recorded since the last goal-histogram reset (WI-N3-01): every
+    /// ComputePath that reaches Graph.Search, sync or async.</summary>
+    public long GoalHistogramSearches { get; }
+
+    /// <summary>Largest number of full searches sharing one goal neighbourhood since the last
+    /// goal-histogram reset (WI-N3-01); a per-window gauge, not a cumulative counter.</summary>
+    public long GoalHistogramMaxBucket { get; }
+
     public PathStatistics(
         long unitRequests,
         long squadLeaderRequests,
@@ -57,7 +70,9 @@ public sealed class PathStatistics
         long endpointAdjustments,
         long landedFollowers,
         long fallbackFollowers,
-        double workerSearchMs)
+        double workerSearchMs,
+        long goalHistogramSearches,
+        long goalHistogramMaxBucket)
     {
         UnitRequests = unitRequests;
         SquadLeaderRequests = squadLeaderRequests;
@@ -70,6 +85,8 @@ public sealed class PathStatistics
         LandedFollowers = landedFollowers;
         FallbackFollowers = fallbackFollowers;
         WorkerSearchMs = workerSearchMs;
+        GoalHistogramSearches = goalHistogramSearches;
+        GoalHistogramMaxBucket = goalHistogramMaxBucket;
     }
 
     public long SynchronousRequests => UnitRequests + SquadLeaderRequests + BlockedFollowerRequests + HordeRequests;
@@ -103,6 +120,13 @@ internal sealed class PathStatisticsAccumulator
     private long _landedFollowers;
     private long _fallbackFollowers;
     private long _workerSearchTicks;
+
+    // WI-N3-01: goal histogram window. Buckets key goal cells into GoalNeighbourhoodCells
+    // squares; the harness resets the window per tick, so max-bucket readings are per tick.
+    private readonly object _goalGate = new();
+    private Dictionary<long, long>? _goalHistogram;
+    private long _goalHistogramSearches;
+    private long _goalHistogramMaxBucket;
 
     public void AddRequest(PathRequestOrigin origin)
     {
@@ -140,6 +164,32 @@ internal sealed class PathStatisticsAccumulator
 
     public void AddWorkerSearchTicks(long stopwatchTicks) => Interlocked.Add(ref _workerSearchTicks, stopwatchTicks);
 
+    public void RecordFullSearchGoal(long bucketKey)
+    {
+        Interlocked.Increment(ref _goalHistogramSearches);
+        lock (_goalGate)
+        {
+            _goalHistogram ??= new Dictionary<long, long>();
+            _goalHistogram.TryGetValue(bucketKey, out var count);
+            count++;
+            _goalHistogram[bucketKey] = count;
+            if (count > _goalHistogramMaxBucket)
+            {
+                _goalHistogramMaxBucket = count;
+            }
+        }
+    }
+
+    public void ResetGoalHistogram()
+    {
+        Interlocked.Exchange(ref _goalHistogramSearches, 0);
+        Interlocked.Exchange(ref _goalHistogramMaxBucket, 0);
+        lock (_goalGate)
+        {
+            _goalHistogram?.Clear();
+        }
+    }
+
     public PathStatistics Snapshot() => new(
         Interlocked.Read(ref _unitRequests),
         Interlocked.Read(ref _squadLeaderRequests),
@@ -151,5 +201,7 @@ internal sealed class PathStatisticsAccumulator
         Interlocked.Read(ref _endpointAdjustments),
         Interlocked.Read(ref _landedFollowers),
         Interlocked.Read(ref _fallbackFollowers),
-        Interlocked.Read(ref _workerSearchTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
+        Interlocked.Read(ref _workerSearchTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency,
+        Interlocked.Read(ref _goalHistogramSearches),
+        Interlocked.Read(ref _goalHistogramMaxBucket));
 }

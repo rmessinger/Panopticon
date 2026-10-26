@@ -200,7 +200,7 @@ public static class MassBattleCapacityProbeRunner
                     config.MassBattleCapacityProbeAsyncAnchorRequestsPerBurst ?? 8)
                 : null;
 
-            var (framesRun, benchmarkRecord) = RunEngagement(
+            var (framesRun, benchmarkRecord, maxGoalNeighbourhoodRequests) = RunEngagement(
                 game, armies, step, frameBudget, config.Headless, reporter, anchor, invariantSampler, scriptedOrders: !armyAi);
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
@@ -212,7 +212,8 @@ public static class MassBattleCapacityProbeRunner
 
             var report = BuildReport(
                 profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath,
-                anchor?.Build(), invariantSampler?.Build(), armyAiSides, game.Scene3D.Navigation);
+                anchor?.Build(), invariantSampler?.Build(), armyAiSides, game.Scene3D.Navigation,
+                maxGoalNeighbourhoodRequests: maxGoalNeighbourhoodRequests);
             reporter.Info(MassBattleCapacityProbeReport.WriteText(report));
 
             var reportPath = string.IsNullOrEmpty(config.MassBattleCapacityProbeReportPath)
@@ -454,7 +455,7 @@ public static class MassBattleCapacityProbeRunner
     /// and the delta of the engine path-request counter per tick. In windowed mode the step
     /// includes render and present, so tick.wallMs is the frame time and tick.fps the frame rate.
     /// </summary>
-    private static (int FramesRun, BenchmarkRunRecord Record) RunEngagement(
+    private static (int FramesRun, BenchmarkRunRecord Record, long MaxGoalNeighbourhoodRequests) RunEngagement(
         Game game,
         List<SideArmy> armies,
         Action step,
@@ -542,6 +543,8 @@ public static class MassBattleCapacityProbeRunner
                 recorder.EndTick((uint)frame + 1);
                 pathDeltas.Add(NavigationGrid.PathRequestCount - pathRequestsBefore);
                 pathStatisticsDeltas.AddTick(pathStatsBefore, navigation.Statistics);
+                // WI-N3-01: close the goal-histogram window after reading the per-tick gauge.
+                navigation.ResetGoalHistogram();
                 partitionDirtyDeltas.Add(PartitionCellManager.DirtyObjectsProcessed - dirtyBefore);
                 partitionCandidateDeltas.Add(PartitionCellManager.CandidatePairs - candidatesBefore);
                 partitionHitDeltas.Add(PartitionCellManager.ExactHits - hitsBefore);
@@ -576,7 +579,7 @@ public static class MassBattleCapacityProbeRunner
             game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
         }
 
-        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, pathStatisticsDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
+        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, pathStatisticsDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless), pathStatisticsDeltas.MaxGoalNeighbourhoodRequests);
     }
 
     /// <summary>
@@ -709,6 +712,11 @@ public static class MassBattleCapacityProbeRunner
         private readonly List<double> _landedFollowers;
         private readonly List<double> _fallbackFollowers;
         private readonly List<double> _workerSearchMs;
+        private readonly List<double> _goalHistogramMaxBucket;
+
+        /// <summary>WI-N3-01: largest single-tick bucket of full searches sharing one goal
+        /// neighbourhood over the run.</summary>
+        public long MaxGoalNeighbourhoodRequests { get; private set; }
 
         public PathStatisticsDeltas(int capacity)
         {
@@ -723,6 +731,7 @@ public static class MassBattleCapacityProbeRunner
             _landedFollowers = new List<double>(capacity);
             _fallbackFollowers = new List<double>(capacity);
             _workerSearchMs = new List<double>(capacity);
+            _goalHistogramMaxBucket = new List<double>(capacity);
         }
 
         public void AddTick(PathStatistics before, PathStatistics after)
@@ -738,6 +747,12 @@ public static class MassBattleCapacityProbeRunner
             _landedFollowers.Add(after.LandedFollowers - before.LandedFollowers);
             _fallbackFollowers.Add(after.FallbackFollowers - before.FallbackFollowers);
             _workerSearchMs.Add(after.WorkerSearchMs - before.WorkerSearchMs);
+            // WI-N3-01: gauge, not a delta; the probe resets the histogram window per tick.
+            _goalHistogramMaxBucket.Add(after.GoalHistogramMaxBucket);
+            if (after.GoalHistogramMaxBucket > MaxGoalNeighbourhoodRequests)
+            {
+                MaxGoalNeighbourhoodRequests = after.GoalHistogramMaxBucket;
+            }
         }
 
         public void AddToRecord(BenchmarkRunRecord record, Game game)
@@ -753,6 +768,10 @@ public static class MassBattleCapacityProbeRunner
             AddPerTickAndPerSecondStatistics(record, "path.landedFollowers", _landedFollowers, game);
             AddPerTickAndPerSecondStatistics(record, "path.fallbackFollowers", _fallbackFollowers, game);
             AddPerTickAndPerSecondStatistics(record, "path.workerSearchMs", _workerSearchMs, game);
+            record.Statistics.Add(BenchmarkStatistics.FromSamples(
+                "path.goalHistogramMaxPerTick",
+                [.. _goalHistogramMaxBucket],
+                ProbeSeed));
         }
     }
 
@@ -866,7 +885,8 @@ public static class MassBattleCapacityProbeRunner
         MassBattleAsyncPathAnchorReport? asyncPathAnchor = null,
         MassBattleSquadInvariantReport? squadInvariant = null,
         IReadOnlyList<ArmyAiSide>? armyAiSides = null,
-        NavigationGrid? navigation = null)
+        NavigationGrid? navigation = null,
+        long maxGoalNeighbourhoodRequests = 0)
     {
         var sides = armies.Select(army => new SideEngagementResult
         {
@@ -1009,6 +1029,7 @@ public static class MassBattleCapacityProbeRunner
             AsyncWaitFramesMedian = asyncWaitMedian,
             AsyncWaitFramesP99 = asyncWaitP99,
             AsyncWaitFramesMax = asyncWaitMax,
+            MaxGoalNeighbourhoodRequestsPerTick = maxGoalNeighbourhoodRequests,
             Sides = sides,
             Sorties = sorties,
             FailureReasons = reasons.Distinct().ToList(),

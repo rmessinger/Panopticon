@@ -415,6 +415,9 @@ public static class PathfindingLoadRunner
 
         // WI-N2-01: attribute this order's landings and their ring distances cleanly.
         FollowerLanding.ResetLandingRings();
+        // WI-N3-01: goal histogram window covers the order itself plus the first window tick,
+        // matching how the order-tick path span sample attributes the inline searches.
+        navigation.ResetGoalHistogram();
         OrderProcessor.MoveUnits(navigation, sideA.Player, units, destination);
         var landingRings = (long[])FollowerLanding.LandingRingHistogram.Clone();
 
@@ -445,6 +448,8 @@ public static class PathfindingLoadRunner
         var orderTickPathSpanMs = 0.0;
         var windowSpanMs = 0.0;
         var windowSyncRequests = 0L;
+        var maxGoalNeighbourhoodRequests = 0L;
+        var orderTickFullSearches = 0L;
         var perTickEstimates = new List<double>();
         var syncRequestsBeforeTick = statsBefore.SynchronousRequests;
         for (var t = 0; t < WindowTicks; t++)
@@ -460,6 +465,15 @@ public static class PathfindingLoadRunner
             {
                 perTickEstimates.Add(spanMs / syncDelta);
             }
+
+            // WI-N3-01: per-tick gauge; reset keeps each tick's bucket maximums separate.
+            maxGoalNeighbourhoodRequests = Math.Max(maxGoalNeighbourhoodRequests, statsAfterTick.GoalHistogramMaxBucket);
+            if (t == 0)
+            {
+                orderTickFullSearches = statsAfterTick.GoalHistogramSearches;
+            }
+
+            navigation.ResetGoalHistogram();
 
             if (t == 0)
             {
@@ -500,6 +514,8 @@ public static class PathfindingLoadRunner
             FallbackFollowers = after.FallbackFollowers - statsBefore.FallbackFollowers,
             ImpassableRetracePoints = impassableRetracePoints,
             LandingRings = landingRings,
+            MaxGoalNeighbourhoodRequests = maxGoalNeighbourhoodRequests,
+            OrderTickFullSearches = orderTickFullSearches,
             MeanSearchMs = windowSyncRequests > 0 ? windowSpanMs / windowSyncRequests : 0,
             P99SearchMs = perTickEstimates.Count > 0
                 ? BootstrapStatistics.Percentile([.. perTickEstimates.Order()], 0.99)
@@ -580,6 +596,8 @@ public static class PathfindingLoadRunner
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.landedFollowers", [c.LandedFollowers], seed));
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.fallbackFollowers", [c.FallbackFollowers], seed));
         record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.impassableRetracePoints", [c.ImpassableRetracePoints], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.maxGoalNeighbourhoodRequests", [c.MaxGoalNeighbourhoodRequests], seed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples($"case.{c.Name}.orderTickFullSearches", [c.OrderTickFullSearches], seed));
     }
 
     private static string? ResolveProfilePath(TestHarnessConfig config, ITestHarnessReporter reporter)
