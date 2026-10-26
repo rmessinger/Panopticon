@@ -1,4 +1,4 @@
-# Track N: Multi-unit pathfinding performance
+# Track N: Multi-unit pathfinding performance and deadlocks
 
 Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-unit-pathfinding.md) :
 [Architecture diagrams §8](../deep-dives/n-multi-unit-pathfinding.md#8-architecture-diagrams).
@@ -384,3 +384,27 @@ the accepted run-to-run nondeterminism and the base-stall follow-up should land 
 on-mode invariant can hold run over run. `GroupSelectionMoves` additionally changes
 player-visible movement (cluster followers retrace leader paths), so it stays opt-in until the
 order UX is reviewed against per-unit paths.
+
+## Navigation deadlocks (N6-N10)
+
+Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigation-deadlocks.md) :
+[Architecture diagrams §8](../deep-dives/n-navigation-deadlocks.md#8-architecture-diagrams).
+
+| Card | Phase | Title | Checklist item | Status |
+|---|---|---|---|---|
+| [`WI-N6-01`](../agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md) | N6 | Movement progress and stall attribution | N6-1 | Ready |
+| [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Blocked |
+| [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Blocked |
+| [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Blocked |
+| [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Blocked |
+| [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Blocked |
+| [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Blocked |
+| [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Blocked |
+| [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Blocked |
+
+Delivery: phase staging branch `staging/track-n-deadlocks`, numbered group PRs. Suggested groups:
+1 = N6, 2 = N7, 3 = N8, 4 = N9, 5 = N10. Groups 2 to 4 may stack in any order after group 1.
+
+## Navigation deadlocks results
+
+Pending `WI-N6-01`.

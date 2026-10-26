@@ -1849,7 +1849,7 @@ depend on the Track A/B/C phases listed in the track doc. Design:
 - [ ] M5-4 Live windowed spectator view. (`WI-M5-09`, `WI-M5-10`)
   - AC: B1 records a 30 fps median with the full battle in view on the operator's machine.
 
-## Track N: Multi-Unit Pathfinding Performance
+## Track N: Multi-Unit Pathfinding Performance and Deadlocks
 
 See [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md). N0 depends on B1,
 B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
@@ -1898,6 +1898,40 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 - [x] N5-1 Verify every Track N budget at scale. (`WI-N5-01`)
   - AC: each budget in the deep dive has a Met or Missed verdict with numbers; M4 invariants and
     engagement checks pass; the default-flip recommendation is recorded.
+
+### N6: Deadlock detection baseline
+Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
+- [ ] N6-1 Movement progress and stall attribution. (`WI-N6-01`)
+  - AC: per-unit stall records with reason and blocker, and wait-for cycles, are reported; movement
+    is unchanged; the M4 idle-stall failure units are attributed.
+- [ ] N6-2 `NavigationDeadlock` scenario and baseline. (`WI-N6-02`)
+  - AC: six seeded cases reproduce their mechanisms or report why not; baseline and target
+    revisions are recorded.
+
+### N7: Path liveness
+- [ ] N7-1 Async and squad path liveness. (`WI-N7-01`)
+  - AC: failed, thrown, and stale requests settle the unit or fall back once; failed squad leaders
+    settle members; `async-no-route` ends with 0 units in `AwaitingPath`.
+- [ ] N7-2 Offset route validation behind `ValidateOffsetRoutes`. (`WI-N7-02`)
+  - AC: option off changes nothing; option on reads 0 `impassableRetracePoints` in every case.
+
+### N8: Blocked-unit resolution
+- [ ] N8-1 Blocked wait and bounded local repath behind `BlockedUnitResolution`. (`WI-N8-01`)
+  - AC: option off changes nothing; local repath is window-bounded; N5 path budgets still met.
+- [ ] N8-2 Give-way and mutual block yield. (`WI-N8-02`)
+  - AC: `head-on-pair` settles with one sidestep; 0 wait-for cycles at case end; no sidestep
+    cascade.
+
+### N9: Destination crowding
+- [ ] N9-1 Destination slots behind `DestinationSlots`. (`WI-N9-01`)
+  - AC: option off changes nothing; slots are unique, passable, in-region, deterministic.
+- [ ] N9-2 Crowd arrival. (`WI-N9-02`)
+  - AC: `crowd-goal-100` ends with 0 units holding routes in both slot modes.
+
+### N10: Deadlock verification
+- [ ] N10-1 Verify every deadlock target. (`WI-N10-01`)
+  - AC: each target has a verdict across 3 seeds; M4 stall results recorded per run; default-flip
+    recommendation recorded.
 
 ## Track X: Miscellaneous fixes and tweaks
 

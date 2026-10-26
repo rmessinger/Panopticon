@@ -344,7 +344,7 @@ mindmap
       M3 Mixed roster normalization ⮕
       M4 Army-scale AI ⮕
       M5 1000 vs 1000 battle ⮕
-    N. Multi-unit pathfinding performance
+    N. Multi-unit pathfinding performance and deadlocks
       N0 Path cost baseline ⮕
         N0-1 Path span and counters
         N0-2 Pathfinding load scenario
@@ -362,6 +362,20 @@ mindmap
         N4-2 Async order paths
       N5 Scale verification ⮕
         N5-1 Budget verification
+      N6 Deadlock detection baseline ⮕
+        N6-1 Movement progress and stall attribution
+        N6-2 Navigation deadlock scenario
+      N7 Path liveness ⮕
+        N7-1 Async and squad path liveness
+        N7-2 Offset route validation
+      N8 Blocked-unit resolution ⮕
+        N8-1 Wait and local repath
+        N8-2 Give-way and mutual block
+      N9 Destination crowding ⮕
+        N9-1 Destination slots
+        N9-2 Crowd arrival
+      N10 Deadlock verification ⮕
+        N10-1 Deadlock target verification
 ```
 
 ---
@@ -561,6 +575,19 @@ flowchart LR
   subgraph S10["Stage 10 · Storage round-trip regression"]
     direction TB
     H7["H7 Validation & round-trip regression"]
+    N6["N6 Deadlock detection baseline"]
+  end
+
+  subgraph S11["Stage 11 · Navigation deadlock resolution"]
+    direction TB
+    N7["N7 Path liveness"]
+    N8["N8 Blocked-unit resolution"]
+    N9["N9 Destination crowding"]
+  end
+
+  subgraph S12["Stage 12 · Navigation deadlock verification"]
+    direction TB
+    N10["N10 Deadlock verification"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -799,6 +826,13 @@ flowchart LR
   N2 --> N5
   N3 --> N5
   N4 --> N5
+  N5 --> N6
+  N6 --> N7
+  N6 --> N8
+  N6 --> N9
+  N7 --> N10
+  N8 --> N10
+  N9 --> N10
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
@@ -811,7 +845,7 @@ flowchart LR
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class M0,M1,M2,M3,M4,M5 trackM;
-  class N0,N1,N2,N3,N4,N5 trackN;
+  class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10 trackN;
   class A4S seam;
 ```
 

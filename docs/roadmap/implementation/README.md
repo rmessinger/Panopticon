@@ -553,6 +553,15 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 |---|---|---|
 | [track-n-pathfinding-performance.md](track-n-pathfinding-performance.md) | N0-1…N5-1 | Path cost baseline, search core, group requests, goal field gate, async order paths, verification (WI-N0-01..WI-N5-01) |
 
+## Track N · N6-N10 : Navigation deadlocks
+
+Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigation-deadlocks.md) :
+[Architecture diagrams §8](../deep-dives/n-navigation-deadlocks.md#8-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-n-pathfinding-performance.md](track-n-pathfinding-performance.md#navigation-deadlocks-n6-n10) | N6-1…N10-1 | Stall attribution, deadlock scenario, path liveness, blocked-unit resolution, destination crowding, verification (WI-N6-01..WI-N10-01) |
+
 ## Track X · X1: Imported-unit hit feedback
 
 Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), including grounded [architecture diagrams](../deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams).

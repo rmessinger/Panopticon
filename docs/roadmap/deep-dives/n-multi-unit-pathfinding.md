@@ -39,7 +39,8 @@ Out of scope:
 - Partition and collision cost (B4 closed, B3 parallelism).
 - Locomotor surface layers, water, and the `Pathfinder` stubs (E1).
 - Unit-size clearance and local avoidance or steering. These change movement results, not
-  request cost.
+  request cost. Blocked-unit and crowding deadlocks are N6 to N10 in the
+  [deadlock deep dive](n-navigation-deadlocks.md).
 - Cross-shard routing (B6-5) and larger-map streaming (B4a).
 - The pathfinding seam extraction (A4-32), which wraps N's result.
 
@@ -141,7 +142,7 @@ checks.
 |---|---|
 | Region labels disagree with the search's diagonal rule and reject reachable goals | Labels reuse `GetAdjacentNodes`; the N1 corpus includes diagonal-only gaps and asserts equality |
 | Relabeling after every structure placement costs more than it saves | N1 measures relabel time; labels relabel lazily on query, not per placement |
-| Landed followers retrace leader offsets across impassable mid-path cells (already true today, since only the destination is checked) | N2 records the count of impassable retrace points in the scenario report; fixing it is a follow-up card, not silent scope |
+| Landed followers retrace leader offsets across impassable mid-path cells (already true today, since only the destination is checked) | N2 records the count of impassable retrace points in the scenario report; fixing it is `WI-N7-02` ([deadlock deep dive](n-navigation-deadlocks.md)) |
 | Holding units for async paths raises idle time | N4 asserts M4 stall invariants and reports wait frames |
 | Seeded baselines move | Options default off; suspected-deviation protocol from `AGENTS.md` |
 

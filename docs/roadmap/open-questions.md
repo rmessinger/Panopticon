@@ -760,3 +760,10 @@
   followers). Track N builds no hierarchical layer; its only new structure, a shared-destination
   goal field, is gated on measurement after request sharing. Behavior-changing options default off
   until N5 evidence and an operator decision.
+- Navigation deadlocks. Decision (2026-10-26): deadlock work extends Track N as N6 to N10 rather
+  than a new track, because it shares N's measurement, options, and scenarios and N5's
+  default-flip decision waits on it. Resolution is discrete (wait, friendly give-way, bounded local
+  repath, destination slots, crowd arrival), matching the ported original-engine fields; continuous
+  local avoidance stays out because it changes every move and every baseline. The global grid stays
+  unit-free. New behavior options default off until N10. See the
+  [deep dive](deep-dives/n-navigation-deadlocks.md#5-decisions).
