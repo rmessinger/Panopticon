@@ -86,6 +86,12 @@ internal sealed class GraphicsSettingsController
             effectivePrefilteredTerrainTextures = sessionPrefilteredTerrainTextures.Value;
         }
 
+        var effectiveDecalLimit = Math.Clamp(requested.TerrainDecalLimit, 0, 2000);
+        if (effectiveDecalLimit != requested.TerrainDecalLimit)
+        {
+            _fallbacks.Add($"TerrainDecalLimit {requested.TerrainDecalLimit} -> {effectiveDecalLimit} (supported range 0..2000).");
+        }
+
         Effective = GraphicsSettings.Create(
             effectiveSampleCount,
             requested.AlphaTestMode,
@@ -95,7 +101,9 @@ internal sealed class GraphicsSettingsController
             requested.ShadowTier,
             requested.UiMode,
             requested.RealisticProportions,
-            effectivePrefilteredTerrainTextures);
+            effectivePrefilteredTerrainTextures,
+            effectiveDecalLimit,
+            requested.TerrainDecalLighting);
     }
 
     /// <summary>

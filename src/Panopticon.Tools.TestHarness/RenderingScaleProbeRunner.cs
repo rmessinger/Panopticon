@@ -89,7 +89,9 @@ public static class RenderingScaleProbeRunner
                     ShadowTier.Original,
                     UiMode.DynamicHud,
                     realisticProportions: false,
-                    prefilteredTerrainTextures: game.GraphicsSettings.PrefilteredTerrainTextures);
+                    prefilteredTerrainTextures: game.GraphicsSettings.PrefilteredTerrainTextures,
+                    terrainDecalLimit: game.GraphicsSettings.TerrainDecalLimit,
+                    terrainDecalLighting: game.GraphicsSettings.TerrainDecalLighting);
             }
 
             var spawned = SpawnField(game, definition, unitCount, reporter);

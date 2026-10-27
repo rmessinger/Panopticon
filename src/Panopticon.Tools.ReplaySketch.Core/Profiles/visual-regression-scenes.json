@@ -7,6 +7,11 @@
 
   "Scenes": [
     {
+      "Name": "terrain-scorch",
+      "Profile": "vr-terrain-scorch.json",
+      "CaptureFrame": 1
+    },
+    {
       "Name": "terrain-default",
       "Profile": "vr-terrain-default.json",
       "CaptureFrame": 1

@@ -1,0 +1,33 @@
+using System.Runtime.InteropServices;
+using Panopticon.Rendering;
+using Veldrid;
+
+namespace Panopticon.Graphics.Shaders;
+
+internal sealed class TerrainDecalShaderResources : ShaderSetBase
+{
+    public readonly Pipeline Pipeline;
+
+    public TerrainDecalShaderResources(ShaderSetStore store)
+        : base(store, "Road", "TerrainDecal", RoadShaderResources.RoadVertex.VertexDescriptor)
+    {
+        Pipeline = AddDisposable(store.GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
+            new GraphicsPipelineDescription(
+                BlendStateDescription.SingleAlphaBlend,
+                DepthStencilStateDescription.DepthOnlyLessEqualRead,
+                RasterizerStateDescriptionUtility.CullNoneSolid,
+                PrimitiveTopology.TriangleList,
+                Description,
+                ResourceLayouts,
+                store.OutputDescription)));
+    }
+
+    internal ResourceSet CreateMaterialResourceSet(Texture texture, Sampler sampler, DeviceBuffer constants) =>
+        GraphicsDevice.ResourceFactory.CreateResourceSet(new ResourceSetDescription(MaterialResourceLayout, texture, sampler, constants));
+
+    [StructLayout(LayoutKind.Sequential, Size = 16)]
+    internal struct DecalConstants
+    {
+        public int TerrainLit;
+    }
+}

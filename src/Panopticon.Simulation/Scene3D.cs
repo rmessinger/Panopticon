@@ -194,6 +194,11 @@ public sealed class Scene3D : DisposableBase, IScene3D
         {
             var mapObject = mapObjects[i];
 
+            if (Terrain != null && Panopticon.Terrain.Decals.TerrainDecalMapLoader.TryAdd(Terrain.Decals, mapObject))
+            {
+                continue;
+            }
+
             switch (mapObject.RoadType & RoadType.PrimaryType)
             {
                 case RoadType.None:
@@ -404,7 +409,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
             _orderGeneratorSystem.Update(gameTime, _orderGeneratorInputHandler.KeyModifiers);
         }
 
-        Terrain?.Update(Waters, gameTime);
+        Terrain?.Update(Waters, gameTime, Game.EffectiveGraphicsSettings);
 
         ParticleSystemManager?.Update(gameTime);
 

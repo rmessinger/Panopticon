@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G11-04` |
 | Roadmap phase | [Track G · G11](../../track-g-rendering-clarity.md): Terrain impact decals |
-| Status | `Blocked` |
+| Status | `Blocked`: code implemented; canonical Linux/Vulkan goldens unavailable on this host |
 | Type | `implementation` |
 | Effort | `S` |
 | Prerequisites | `WI-G11-02`, `WI-G11-03` |
@@ -42,6 +42,11 @@ Light decals with the terrain's lighting under `Enhanced`, set its decal limit, 
 - [ ] `Enhanced` scorches darken with terrain in shadow instead of keeping a constant tint.
 - [ ] Both preset goldens recorded; the injected regression fails.
 - [ ] Standard validation passes.
+
+Local evidence: both preset captures render; disabling decals fails the golden comparer at
+3.8906% differing pixels against a 0.1% limit. Legacy differs from the card-02 capture at two
+pixels by one channel level, within the canonical tolerance. Reference-host goldens, explicit
+building-shadow coverage, and full-suite closeout remain pending. See the implementation plan.
 
 ## Validation commands
 

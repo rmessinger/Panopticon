@@ -13,7 +13,7 @@ public class VisualRegressionSceneSetTests
 
         var names = sceneSet.Scenes.Select(scene => scene.Name).ToArray();
         Assert.Equal(
-            ["terrain-default", "terrain-grazing", "foliage-distance", "cutout-fences", "unit-silhouettes", "shadow-casters", "hud", "hud-4x", "proportions", "proportions-on"],
+            ["terrain-scorch", "terrain-default", "terrain-grazing", "foliage-distance", "cutout-fences", "unit-silhouettes", "shadow-casters", "hud", "hud-4x", "proportions", "proportions-on"],
             names);
     }
 

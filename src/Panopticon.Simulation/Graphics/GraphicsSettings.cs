@@ -16,7 +16,9 @@ public sealed class GraphicsSettings
         ShadowTier shadowTier,
         UiMode uiMode,
         bool realisticProportions,
-        bool prefilteredTerrainTextures = false)
+        bool prefilteredTerrainTextures = false,
+        int terrainDecalLimit = 500,
+        TerrainDecalLighting terrainDecalLighting = TerrainDecalLighting.LegacyTint)
     {
         SampleCount = sampleCount;
         AlphaTestMode = alphaTestMode;
@@ -27,6 +29,8 @@ public sealed class GraphicsSettings
         UiMode = uiMode;
         RealisticProportions = realisticProportions;
         PrefilteredTerrainTextures = prefilteredTerrainTextures;
+        TerrainDecalLimit = terrainDecalLimit;
+        TerrainDecalLighting = terrainDecalLighting;
     }
 
     /// <summary>
@@ -62,7 +66,9 @@ public sealed class GraphicsSettings
         ShadowTier.High,
         UiMode.DynamicHud,
         realisticProportions: false,
-        prefilteredTerrainTextures: true);
+        prefilteredTerrainTextures: true,
+        terrainDecalLimit: 2000,
+        terrainDecalLighting: TerrainDecalLighting.TerrainLit);
 
     /// <summary>
     /// Builds a settings value from explicit members. Used by the capability-clamping
@@ -77,7 +83,9 @@ public sealed class GraphicsSettings
         ShadowTier shadowTier,
         UiMode uiMode,
         bool realisticProportions,
-        bool prefilteredTerrainTextures = false) => new(
+        bool prefilteredTerrainTextures = false,
+        int terrainDecalLimit = 500,
+        TerrainDecalLighting terrainDecalLighting = TerrainDecalLighting.LegacyTint) => new(
         sampleCount,
         alphaTestMode,
         colourSpaceMode,
@@ -86,10 +94,18 @@ public sealed class GraphicsSettings
         shadowTier,
         uiMode,
         realisticProportions,
-        prefilteredTerrainTextures);
+        prefilteredTerrainTextures,
+        terrainDecalLimit,
+        terrainDecalLighting);
 
     /// <summary>Multisample count for 3D render targets; 1 is single-sample.</summary>
     public int SampleCount { get; }
+    public int TerrainDecalLimit { get; }
+    public TerrainDecalLighting TerrainDecalLighting { get; }
+
+    public GraphicsSettings WithTerrainDecals(int limit, TerrainDecalLighting lighting) => new(
+        SampleCount, AlphaTestMode, ColourSpaceMode, Anisotropy, MipLodBias,
+        ShadowTier, UiMode, RealisticProportions, PrefilteredTerrainTextures, limit, lighting);
 
     public AlphaTestMode AlphaTestMode { get; }
 
@@ -107,7 +123,7 @@ public sealed class GraphicsSettings
     /// <summary>Overrides terrain data selection only; a new session is required.</summary>
     public GraphicsSettings WithPrefilteredTerrainTextures(bool enabled) => new(
         SampleCount, AlphaTestMode, ColourSpaceMode, Anisotropy, MipLodBias,
-        ShadowTier, UiMode, RealisticProportions, enabled);
+        ShadowTier, UiMode, RealisticProportions, enabled, TerrainDecalLimit, TerrainDecalLighting);
 
     public ShadowTier ShadowTier { get; }
 
@@ -129,7 +145,9 @@ public sealed class GraphicsSettings
         ShadowTier,
         UiMode,
         realisticProportions,
-        PrefilteredTerrainTextures);
+        PrefilteredTerrainTextures,
+        TerrainDecalLimit,
+        TerrainDecalLighting);
 }
 
 public enum AlphaTestMode

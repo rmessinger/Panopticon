@@ -19,6 +19,8 @@ public class GraphicsSettingsTests : MockedGameTest
         Assert.Equal(ShadowTier.Original, settings.ShadowTier);
         Assert.Equal(UiMode.LegacyArt, settings.UiMode);
         Assert.False(settings.RealisticProportions);
+        Assert.Equal(500, settings.TerrainDecalLimit);
+        Assert.Equal(TerrainDecalLighting.LegacyTint, settings.TerrainDecalLighting);
     }
 
     [Fact]
@@ -39,6 +41,8 @@ public class GraphicsSettingsTests : MockedGameTest
         Assert.Equal(UiMode.DynamicHud, enhanced.UiMode);
         Assert.Equal(UiMode.LegacyArt, legacy.UiMode);
         Assert.Equal(legacy.RealisticProportions, enhanced.RealisticProportions);
+        Assert.Equal(2000, enhanced.TerrainDecalLimit);
+        Assert.Equal(TerrainDecalLighting.TerrainLit, enhanced.TerrainDecalLighting);
     }
 
     [Fact]
@@ -57,6 +61,17 @@ public class GraphicsSettingsTests : MockedGameTest
         Assert.Equal(enhanced.PrefilteredTerrainTextures, enabled.PrefilteredTerrainTextures);
         Assert.Equal(enhanced.ShadowTier, enabled.ShadowTier);
         Assert.Equal(enhanced.UiMode, enabled.UiMode);
+        Assert.Equal(enhanced.TerrainDecalLimit, enabled.TerrainDecalLimit);
+        Assert.Equal(enhanced.TerrainDecalLighting, enabled.TerrainDecalLighting);
+    }
+
+    [Fact]
+    public void DecalOverridesSurviveOtherSettingsCopies()
+    {
+        var settings = GraphicsSettings.Enhanced().WithTerrainDecals(123, TerrainDecalLighting.LegacyTint)
+            .WithPrefilteredTerrainTextures(false).WithRealisticProportions(true);
+        Assert.Equal(123, settings.TerrainDecalLimit);
+        Assert.Equal(TerrainDecalLighting.LegacyTint, settings.TerrainDecalLighting);
     }
 
     [Fact]

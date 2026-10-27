@@ -8,6 +8,44 @@ namespace Panopticon.Tests.Tools.ReplaySketch;
 
 public class CaptureProfileTests
 {
+    [Fact]
+    public void ScorchScene_RoundTripsEveryScorchType()
+    {
+        var profile = CaptureProfileLoader.LoadEmbeddedCapture("vr-terrain-scorch.json");
+        var loaded = RoundTrip(profile);
+        Assert.Equal(profile.Scorches.Count, loaded.Scorches.Count);
+        for (var index = 0; index < profile.Scorches.Count; index++)
+        {
+            Assert.Equal(profile.Scorches[index].Type, loaded.Scorches[index].Type);
+            Assert.Equal(profile.Scorches[index].Radius, loaded.Scorches[index].Radius);
+            Assert.Equal(profile.Scorches[index].X, loaded.Scorches[index].X);
+            Assert.Equal(profile.Scorches[index].Y, loaded.Scorches[index].Y);
+        }
+
+        Assert.Empty(CaptureProfileValidator.Validate(loaded));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    public void Scorches_RejectInvalidRadii(float radius)
+    {
+        var profile = CaptureProfileLoader.LoadEmbeddedCapture("vr-terrain-scorch.json");
+        profile.Scorches[0].Radius = radius;
+        Assert.Contains(CaptureProfileValidator.Validate(profile), error => error.StartsWith("Scorches need"));
+    }
+
+    [Fact]
+    public void Scorches_RejectInvalidCoordinatesAndTypes()
+    {
+        var profile = CaptureProfileLoader.LoadEmbeddedCapture("vr-terrain-scorch.json");
+        profile.Scorches[0].X = float.NaN;
+        profile.Scorches[1].Type = (Panopticon.FX.TerrainScorchType)10;
+        Assert.Equal(2, CaptureProfileValidator.Validate(profile).Count);
+    }
+
     private static readonly JsonSerializerOptions RoundTripOptions = new()
     {
         WriteIndented = true,

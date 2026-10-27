@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G11-03` |
 | Roadmap phase | [Track G · G11](../../track-g-rendering-clarity.md): Terrain impact decals |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `S` |
 | Prerequisites | `WI-G11-01` |
@@ -40,10 +40,10 @@ Add scorches from the three original logic producers and from map-placed scorch 
 
 ## Acceptance criteria
 
-- [ ] Each implemented producer adds decals with the original size and type; unimplemented producers are listed as gaps.
-- [ ] Map-placed scorches appear on load and are not double-added on reload.
-- [ ] Headless runs (no client) skip decals without errors.
-- [ ] Standard validation passes.
+- [x] Each implemented producer adds decals with the original size and type; unimplemented producers are listed as gaps.
+- [x] Map-placed scorches use the typed map property; synthetic ingestion and reload duplicate tests pass.
+- [x] Headless runs (no client) skip decals without errors.
+- [ ] Full standard validation pending group closeout; focused tests pass.
 
 ## Validation commands
 

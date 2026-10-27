@@ -1,0 +1,29 @@
+{
+  "Name": "vr-terrain-scorch",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" }
+  ],
+  "Actors": [
+    { "Id": "shadow-caster", "Definition": "AmericaPowerPlant", "Owner": "usa", "X": 700, "Y": 740, "FacingDegrees": 0 }
+  ],
+  "Scorches": [
+    { "X": 550, "Y": 600, "Radius": 40, "Type": "Scorch1" },
+    { "X": 650, "Y": 600, "Radius": 40, "Type": "Scorch2" },
+    { "X": 750, "Y": 600, "Radius": 40, "Type": "Scorch3" },
+    { "X": 850, "Y": 600, "Radius": 40, "Type": "Scorch4" },
+    { "X": 550, "Y": 740, "Radius": 40, "Type": "ShadowScorch" },
+    { "X": 740, "Y": 740, "Radius": 60, "Type": "Scorch1" }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 700, "Y": 690, "Z": 0 },
+    "Height": 450
+  },
+  "Commands": [],
+  "Expectations": []
+}

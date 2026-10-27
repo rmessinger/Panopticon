@@ -12,6 +12,7 @@ public sealed class HeightMap
     public const int HorizontalScale = 10;
 
     private readonly float _verticalScale;
+    internal float VerticalScale => _verticalScale;
 
     private readonly HeightMapData _heightMapData;
 

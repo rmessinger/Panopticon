@@ -447,7 +447,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
-| G11 - Terrain impact decals | `░░░░░░░░░░` | 0 / 4 |
+| G11 - Terrain impact decals | `█████░░░░░` | 2 / 4 |
 | Track G total | `███▌░░░░░░` | 7 / 20 |
 
 ### Track H - Map & Unit Storage Formats (H2a gated on P9 and C4d)
