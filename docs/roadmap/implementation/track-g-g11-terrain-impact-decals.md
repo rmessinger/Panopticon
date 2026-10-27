@@ -41,3 +41,16 @@ Installed Generals maps carrying scorches: CHI04 (2), CHI05 (53), Dark Mountain 
 GLA02 (1), GLA06 (16), GLA07 (30), Mountain Fox (5), Scorched Earth (51), USA04 (10),
 USA07 (48), USA08 (11). The inventory reports existing map parser gaps for Homeland Alliance,
 Training01, USA06, and Winter Wolf; those maps were not counted.
+
+`WI-G11-02`: original grid/UV geometry and newest-first alpha order, a priority-5 terrain
+overlay, atlas loading, constant Legacy tint, and store/overlapping-height invalidation.
+Mesher and live invalidation tests pass. The existing road vertex shader supplies the same
+position, normal, cloud UV and view-depth interface, so no duplicate vertex shader was added.
+Terrain currently uses the flipped diagonal everywhere; decals follow that topology. The
+mesher also tests the original unflipped split, but no separate per-cell flip state is stored
+by the current terrain path.
+
+Legacy headless capture inspected: all scorch cells render, conform to the hillside, and stay
+below the road pass. Artifact: `~/log/g11-terrain-decals/legacy-v1-5c46e46e957d4b4e9ef90066276827e2/`.
+Windowed verification and external sharing remain pending: the shared viewer filesystem is not
+mounted on this Mac and no desktop browser is connected. Group-wide golden validation follows.

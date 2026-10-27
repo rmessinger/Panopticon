@@ -17,6 +17,16 @@ public static class CaptureProfileValidator
         var actorIds = new HashSet<string>();
         var playerIds = new HashSet<string>();
 
+        foreach (var scorch in profile.Scorches)
+        {
+            if (!float.IsFinite(scorch.X) || !float.IsFinite(scorch.Y)
+                || !float.IsFinite(scorch.Radius) || scorch.Radius <= 0
+                || (int)scorch.Type < -1 || (int)scorch.Type > 4)
+            {
+                errors.Add("Scorches need finite coordinates, a positive finite radius, and a supported type.");
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(profile.Name))
         {
             errors.Add("Scenario name must not be empty.");

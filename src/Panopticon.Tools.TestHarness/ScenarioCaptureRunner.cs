@@ -192,6 +192,11 @@ public static class ScenarioCaptureRunner
             };
         }
 
+        foreach (var scorch in profile.Scorches)
+        {
+            game.GameClient.AddScorch(new Vector3(scorch.X, scorch.Y, 0), scorch.Radius, scorch.Type);
+        }
+
         foreach (var _ in Enumerable.Range(0, profile.SettleFrames))
         {
             Step(game);

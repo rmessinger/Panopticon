@@ -11,6 +11,7 @@ namespace Panopticon.Tools.ReplaySketch.Model.Capture;
 /// </summary>
 public class CaptureProfile
 {
+    public List<CaptureTerrainScorch> Scorches { get; set; } = [];
     /// <summary>Scenario name; used in the manifest and in the default output directory name.</summary>
     public string Name { get; set; } = "capture";
 

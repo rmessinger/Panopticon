@@ -46,6 +46,7 @@ internal sealed class ShaderResourceManager : DisposableBase
     public readonly RoadShaderResources Road;
     public readonly SpriteShaderResources Sprite;
     public readonly TerrainShaderResources Terrain;
+    public readonly TerrainDecalShaderResources TerrainDecal;
     public readonly WaterShaderResources Water;
 
     public ShaderResourceManager(
@@ -74,6 +75,7 @@ internal sealed class ShaderResourceManager : DisposableBase
             Road = AddDisposable(new RoadShaderResources(shaderSetStore, standardGraphicsResources.WorldAnisoSampler));
             Sprite = AddDisposable(new SpriteShaderResources(shaderSetStore));
             Terrain = AddDisposable(new TerrainShaderResources(shaderSetStore));
+            TerrainDecal = AddDisposable(new TerrainDecalShaderResources(shaderSetStore));
             Water = AddDisposable(new WaterShaderResources(shaderSetStore));
 
             _shaderMaterialResources = new Dictionary<string, ShaderMaterialShaderResources>

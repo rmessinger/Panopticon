@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G11-02` |
 | Roadmap phase | [Track G · G11](../../track-g-rendering-clarity.md): Terrain impact decals |
-| Status | `Ready` |
+| Status | `In progress` (code implemented; visual closeout pending) |
 | Type | `implementation` |
 | Effort | `M` |
 | Prerequisites | `WI-G11-01`, `WI-G3-04` |
@@ -40,11 +40,11 @@ Draw stored decals as an alpha-blended terrain overlay mesh that reproduces the 
 
 ## Acceptance criteria
 
-- [ ] Mesher tests match hand-computed vertex counts, heights, UVs, and flip-state triangles.
+- [x] Mesher tests match hand-computed vertex counts, heights, UVs, and flip-state triangles.
 - [ ] Roads draw over scorches; scorches follow slopes without z-fighting at default zoom.
 - [ ] Existing G3 goldens are unchanged with no decals present.
 - [ ] A captured frame is shared.
-- [ ] Standard validation passes.
+- [ ] Full standard validation pending group closeout; focused tests pass.
 
 ## Validation commands
 

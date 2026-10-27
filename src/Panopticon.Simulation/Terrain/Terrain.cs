@@ -65,6 +65,8 @@ public sealed class Terrain : DisposableBase
 
     public HeightMap HeightMap { get; }
     public TerrainDecalStore Decals { get; } = new();
+    private readonly TerrainDecalRenderer _decalRenderer;
+    internal int DecalMeshBuildCount => _decalRenderer.MeshBuildCount;
 
     private float _causticsIndex;
 
@@ -153,6 +155,8 @@ public sealed class Terrain : DisposableBase
             mapFile.EnvironmentData?.CloudTexture ?? "tscloudmed.dds",
             OnDemandTextureLoader.DataRole);
 
+        _decalRenderer = AddDisposable(new TerrainDecalRenderer(loadContext, heightMap, Decals, scene));
+
         OnHeightMapChanged();
     }
 
@@ -162,6 +166,7 @@ public sealed class Terrain : DisposableBase
     /// </summary>
     public void ApplyWorldSampler(Sampler worldSampler)
     {
+        _decalRenderer.Invalidate();
         if (_materialSetSources == null)
         {
             return;
@@ -304,6 +309,7 @@ public sealed class Terrain : DisposableBase
     /// </summary>
     private void OnHeightMapChanged(in RectangleF bounds)
     {
+        _decalRenderer?.Invalidate(bounds);
         for (var i = 0; i < _patches.Count; i++)
         {
             var patch = _patches[i];
@@ -326,6 +332,7 @@ public sealed class Terrain : DisposableBase
 
     internal void OnHeightMapChanged()
     {
+        _decalRenderer?.Invalidate();
         foreach (var patch in _patches)
         {
             patch.Dispose();
@@ -744,6 +751,7 @@ public sealed class Terrain : DisposableBase
 
     internal void Update(WaterSettings waterSettings, in TimeInterval time)
     {
+        _decalRenderer.Update();
         RadiusCursorDecals.Update(time);
 
         _materialConstantsBuffer.Value.CausticTextureIndex = waterSettings.IsRenderCaustics
