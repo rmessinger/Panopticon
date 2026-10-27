@@ -377,6 +377,69 @@ public class AIUpdate : UpdateModule
     }
 
     /// <summary>
+    /// WI-N9-02: crowd arrival. A unit on its final segment, held off behind an arrived
+    /// friendly standing within <see cref="NavigationOptions.CrowdArrivalRadius"/> of this
+    /// unit's goal, stops and reports CrowdArrived instead of holding its route. Active when
+    /// <see cref="NavigationOptions.BlockedUnitResolution"/> or
+    /// <see cref="NavigationOptions.DestinationSlots"/> is on; a unit with a reachable free
+    /// goal never settles here.
+    /// </summary>
+    internal bool TryCrowdArrive(Panopticon.Navigation.Navigation navigation)
+    {
+        var options = navigation.Options;
+        if (!options.BlockedUnitResolution && !options.DestinationSlots)
+        {
+            return false;
+        }
+
+        // Final approach only: every remaining waypoint sits inside the arrival disk around
+        // the goal (the strict last-segment test strands units whose route tail holds one
+        // intermediate waypoint inside the crowd).
+        if (TargetPoints.Count == 0)
+        {
+            return false;
+        }
+
+        var goal = TargetPoints[^1];
+        for (var i = 0; i < TargetPoints.Count - 1; i++)
+        {
+            var toWaypoint = TargetPoints[i] - goal;
+            if (toWaypoint.Vector2XY().Length() > options.CrowdArrivalRadius)
+            {
+                return false;
+            }
+        }
+
+        var blocker = GameObject.GameEngine.GameLogic.GetObjectById(Progress.BlockerId);
+        if (blocker == null || blocker.IsDestroyed || blocker.Owner != GameObject.Owner)
+        {
+            return false;
+        }
+
+        var blockerAi = blocker.AIUpdate;
+        if (blockerAi == null
+            || blockerAi.TargetPoints.Count > 0
+            || blocker.ModelConditionFlags.Get(ModelConditionFlag.Moving))
+        {
+            // Not an arrived friendly: moving, ordered, or not a unit.
+            return false;
+        }
+
+        var toBlocker = blocker.Translation - goal;
+        if (toBlocker.Vector2XY().Length() > options.CrowdArrivalRadius)
+        {
+            // The blocker stands away from this unit's goal: the goal is reachable.
+            return false;
+        }
+
+        TargetPoints.Clear();
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+        GameObject.Speed = 0;
+        Progress.RecordCrowdArrived();
+        return true;
+    }
+
+    /// <summary>
     /// WI-N8-01: replaces the first <paramref name="supersededWaypoints"/> target points with
     /// the local detour from the blocked-unit resolver; the detour rejoins the kept remainder.
     /// </summary>
@@ -846,9 +909,12 @@ public class AIUpdate : UpdateModule
                     {
                         var resolutionNav = GameEngine.Navigation;
                         if (resolutionNav != null
-                            && resolutionNav.Options.BlockedUnitResolution
                             && Progress.Reason == NavigationStallReason.BlockedByUnit
-                            && Progress.FramesWithoutProgress >= resolutionNav.Options.BlockedWaitFrames)
+                            && Progress.FramesWithoutProgress >= resolutionNav.Options.BlockedWaitFrames
+                            // WI-N9-02: crowd arrival first; it is terminal for final-segment
+                            // units held off near their goal and cheaper than any repath.
+                            && !TryCrowdArrive(resolutionNav)
+                            && resolutionNav.Options.BlockedUnitResolution)
                         {
                             // WI-N8-01: bounded local repath around a non-progressing blocker.
                             BlockedMovementResolver.TryResolve(GameObject, this, resolutionNav);

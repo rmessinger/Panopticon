@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N10-01` |
 | Roadmap phase | [N10](../../track-n-pathfinding-performance.md): Deadlock verification |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-N7-02`, `WI-N8-02`, `WI-N9-02` |

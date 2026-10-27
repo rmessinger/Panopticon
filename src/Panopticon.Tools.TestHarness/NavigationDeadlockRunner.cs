@@ -386,7 +386,7 @@ public static class NavigationDeadlockRunner
         var cycles = sampler.WaitForCycles;
         var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
         var blockedRepaths = navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests;
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes, config.NavigationDeadlockBlockedResolution);
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes, config.NavigationDeadlockBlockedResolution, config.NavigationDeadlockDestinationSlots);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -665,7 +665,8 @@ public static class NavigationDeadlockRunner
         IReadOnlyList<NavigationStallRecord> currentStalls,
         int reroutedFollowers,
         bool validateOffsetRoutes,
-        bool blockedResolution)
+        bool blockedResolution,
+        bool destinationSlots)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -695,6 +696,17 @@ public static class NavigationDeadlockRunner
             case NavigationDeadlockCasePlanner.CrowdGoal100:
                 {
                     var crowdWait = records.Count(record => record.Reason == nameof(NavigationStallReason.None));
+                    // WI-N9-02: with crowd arrival active (either gate option on) the mechanism
+                    // is remediated: units settle CrowdArrived behind arrived friendlies. The
+                    // pile interior of mutually blocked ordered units stays, recorded honestly.
+                    if (blockedResolution || destinationSlots)
+                    {
+                        var arrived = records.Count(record => record.Reason == nameof(NavigationStallReason.CrowdArrived));
+                        var holding = records.Count(record => record.Reason == nameof(NavigationStallReason.BlockedByUnit));
+                        return (arrived > 0,
+                            $"{settledUnits}/{setup.OrderedUnits.Count} settled, {arrived} CrowdArrived records (WI-N9-02), {holding} still holding blocked routes, max {maxFrames} frames.");
+                    }
+
                     return (settledUnits < setup.OrderedUnits.Count,
                         $"{settledUnits}/{setup.OrderedUnits.Count} settled, {crowdWait} unattributed crowd-wait records, max {maxFrames} frames.");
                 }

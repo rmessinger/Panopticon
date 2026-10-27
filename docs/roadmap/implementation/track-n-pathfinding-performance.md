@@ -399,8 +399,8 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 | [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Done |
 | [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Done |
 | [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Done |
-| [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Blocked |
-| [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Blocked |
+| [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Done |
+| [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Ready |
 
 Delivery: stacked group PRs into `main` via the `gh stack` extension (superseded the staging model Oct 2026). Suggested groups:
 1 = N6, 2 = N7, 3 = N8, 4 = N9, 5 = N10. Groups 2 to 4 may stack in any order after group 1.
@@ -627,6 +627,37 @@ offsets either way; past the bound or off-region the shared point remains.
 - Option off changes nothing.
 
 Artifacts: `/tmp/opencode/n9-01/{nd,pl}-slots.json`, logs `~/log/n9-01/`.
+
+### WI-N9-02 results (2026-10-26, Release, seed 1)
+
+Crowd arrival: a unit whose whole remaining route sits inside the arrival disk around its
+goal, blocked for `BlockedWaitFrames` by an arrived friendly (no route, not moving, same
+owner) standing inside `CrowdArrivalRadius` of the goal, clears its route and reports
+`CrowdArrived`. Active when `BlockedUnitResolution` or `DestinationSlots` is on. The radius
+default moved from the N8-01 placeholder 60 to 250, taken from the WI-N6-02 crowd
+distribution (100 Crusader footprints pack into a ~225-unit disk); the GoalCrowded give-up
+shares the radius and settles more willingly as a result.
+
+- Install-free tests (synthetic 16x16): settle fires behind an arrived friendly near the
+  goal; never for a reachable goal (blocker outside the radius), a moving or enemy or ordered
+  blocker, a multi-segment route reaching outside the disk, or with both gate options off
+  (4/4). Crowd-arrival tests + full Navigation filter pass.
+- crowd-goal-100 (alpine assault, budget 3600): slots off (resolution gate) 16/100 settled
+  with 2 CrowdArrived records; slots on 17/100 with 3 CrowdArrived plus 3 GoalCrowded
+  (baseline 3/100). The acceptance criterion of 0 units holding routes is unmet and recorded:
+  the crowd front settles behind arrived friendlies, but the pile interior is mutually
+  blocked ordered units that neither arrive nor block on arrived units; dissolving that
+  interior needs the corridor-class capacity work outside N9 scope. 85 (slots off) and 82
+  (slots on) units still hold blocked routes at budget end.
+- Side effects of the 250 radius on the other cases (full runs): queue-behind-idle 9/10
+  settled with resolution only (was 6/10 at radius 60; wider GoalCrowded give-up and crowd
+  arrival settle units the column jam held); squad-offset-retrace 4/8 (was 2/8, 2 GoalCrowded
+  settles); head-on 2/2 at frame 367 and corridor 0/40 unchanged; async-no-route unchanged.
+  With slots added, queue drops to 5/10 and corridor settles its first unit (1/40): option
+  interplay, recorded for the N10 review.
+- Option off changes nothing.
+
+Artifacts: `/tmp/opencode/n9-02/`, logs `~/log/n9-02/`.
 
 ## Confined passage queueing (N11-N14)
 
