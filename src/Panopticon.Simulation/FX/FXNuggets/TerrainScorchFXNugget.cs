@@ -1,6 +1,5 @@
 using System.Numerics;
 using Panopticon.Data.Ini;
-using Panopticon.Terrain.Decals;
 
 namespace Panopticon.FX;
 
@@ -21,19 +20,6 @@ public sealed class TerrainScorchFXNugget : FXNugget
     [AddedIn(SageGame.Bfme2)]
     public Vector2 RandomRange { get; private set; }
 
-    internal override void Execute(FXListExecutionContext context)
-    {
-        var client = context.GameEngine.GameClient;
-        var terrain = context.GameEngine.Terrain;
-        if (client == null || terrain == null)
-        {
-            return;
-        }
-
-        var type = Type == TerrainScorchType.Random
-            ? (TerrainScorchType)client.Random.Next((int)TerrainScorchType.Scorch1, (int)TerrainScorchType.Scorch4)
-            : Type;
-        terrain.Decals.Limit = context.GameEngine.Game.EffectiveGraphicsSettings.TerrainDecalLimit;
-        terrain.Decals.Add(TerrainDecalTemplate.Scorch, context.Position, Radius, (int)type);
-    }
+    internal override void Execute(FXListExecutionContext context) =>
+        context.GameEngine.GameClient?.AddScorch(context.Position, Radius, Type);
 }

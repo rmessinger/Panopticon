@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Numerics;
+using Panopticon.FX;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
+using Panopticon.Terrain.Decals;
 
 namespace Panopticon.Client;
 
@@ -24,6 +27,24 @@ internal sealed class GameClient : DisposableBase, IPersistableObject
         _objectDefinitionLookupTable = new ObjectDefinitionLookupTable(game.AssetStore.ObjectDefinitions);
 
         Random = game.CreateRandom();
+    }
+
+    public void AddScorch(Vector3 position, float radius, TerrainScorchType type)
+    {
+        var terrain = _game.Scene3D?.Terrain;
+        if (terrain == null)
+        {
+            return;
+        }
+
+        var cell = type == TerrainScorchType.Random ? Random.Next(0, 3) : (int)type;
+        if (cell < 0 || cell > (int)TerrainScorchType.ShadowScorch)
+        {
+            cell = 0;
+        }
+
+        terrain.Decals.Limit = _game.EffectiveGraphicsSettings.TerrainDecalLimit;
+        terrain.Decals.Add(TerrainDecalTemplate.Scorch, position, radius, cell);
     }
 
     public Drawable CreateDrawable(ObjectDefinition objectDefinition, GameObject gameObject)

@@ -1393,7 +1393,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
         ([`WI-G11-02`](agent/cards/WI-G11-02-terrain-decal-mesh-and-pass.md)).
     - AC: mesher matches the original geometry and UVs in tests; scorches follow slopes and sit
       under roads; existing goldens unchanged with no decals.
-  - [ ] G11-3 Logic and map scorch producers
+  - [x] G11-3 Logic and map scorch producers
         ([`WI-G11-03`](agent/cards/WI-G11-03-logic-and-map-scorch-producers.md)).
     - AC: implemented producers add original-size scorches, unimplemented ones are recorded;
       map-placed scorches load once.

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Panopticon.Content;
 using Panopticon.Data.Ini;
+using Panopticon.Data.Map;
 using Panopticon.FX;
 using Panopticon.Tests.Data;
 using Xunit;
@@ -22,6 +23,36 @@ public sealed class TerrainScorchDataTests
 
     [GameFact(SageGame.CncGeneralsZeroHour)]
     public void ZeroHourScorches_ParseSupportedTypes() => AssertInstalledScorches(SageGame.CncGeneralsZeroHour);
+
+    [GameFact(SageGame.CncGenerals)]
+    public void InstalledMaps_RecordScorchProducers()
+    {
+        using var files = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
+        var total = 0;
+        foreach (var file in files.GetFilesInDirectory("maps", "*.map", SearchOption.AllDirectories))
+        {
+            MapFile map;
+            try
+            {
+                map = MapFile.FromFileSystemEntry(file);
+            }
+            catch (Exception exception) when (exception is EndOfStreamException or InvalidDataException)
+            {
+                _output.WriteLine($"Map parser gap: {file.FilePath}");
+                continue;
+            }
+
+            var count = map.ObjectsList.Objects.Count(mapObject =>
+                mapObject.Properties.GetPropOrNull("scorchType")?.Key.PropertyType == AssetPropertyType.Integer);
+            total += count;
+            if (count > 0)
+            {
+                _output.WriteLine($"{file.FilePath}: {count} scorches");
+            }
+        }
+
+        Assert.True(total > 0);
+    }
 
     private void AssertInstalledScorches(SageGame game)
     {
