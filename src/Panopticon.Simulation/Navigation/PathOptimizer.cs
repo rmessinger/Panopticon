@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace Panopticon.Navigation;
 
@@ -52,6 +53,22 @@ public static class PathOptimizer
                 }
             }
         }
+    }
+
+    // WI-N11-01: world-position variant for legs that start or end off the node lattice
+    // (live unit positions, sidestep and detour splice points). Mirrors the node walk,
+    // including its skip of the start cell: a unit already standing on an impassable cell
+    // can still plan its way off it.
+    internal static bool IsDirectLinePassable(Navigation navigation, Vector2 start, Vector2 end)
+    {
+        var startNode = navigation.GetNodeAt(new Vector3(start, 0.0f));
+        var endNode = navigation.GetNodeAt(new Vector3(end, 0.0f));
+        if (startNode == null || endNode == null || !endNode.IsPassable)
+        {
+            return false;
+        }
+
+        return IsDirectLinePassable(startNode, endNode, navigation.Graph);
     }
 
     // WI-N7-02: shared with OffsetRouteValidator for offset retrace validation.

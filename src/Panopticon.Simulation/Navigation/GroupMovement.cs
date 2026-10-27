@@ -12,6 +12,9 @@ namespace Panopticon.Navigation;
 /// per squad and followers retrace it at their formation offsets (position relative to the leader
 /// when the order was issued), so path requests scale with squad count rather than unit count.
 /// A follower whose offset destination is impassable falls back to its own path request.
+/// WI-N11-01: with <see cref="NavigationOptions.ValidateOffsetRoutes"/> the driven legs of every
+/// assignment (offset retrace, landing tail, reroute first leg) must stay on passable cells;
+/// unclear assignments reroute onto the leader route or pay for their own search.
 /// </summary>
 public static class GroupMovement
 {
@@ -149,80 +152,139 @@ public static class GroupMovement
             var offsetDestination = destination + new Vector3(offset.X, offset.Y, 0);
             var offsetDestinationPassable = navigation.IsPassable(offsetDestination);
 
-            // WI-N7-02: the slot may be passable while the offset retrace crosses impassable
-            // cells. With validation on, such a follower lands on the leader route near the
-            // destination, or falls back to its own search when no landing exists.
-            var crossesOffsetRoute = offsetDestinationPassable
-                && navigation.Options.ValidateOffsetRoutes
+            // WI-N7-02 + WI-N11-01: the offset retrace is validated whether or not the slot is
+            // passable. The blocked-slot landing below keeps the offset waypoints, so an offset
+            // waypoint on an impassable cell must take the same reroute; Crosses also flags the
+            // offset destination itself (route[^1] + offset). The driven legs are checked
+            // separately because the landing tail replacement and the reroute's first leg from
+            // the member's position are not part of the walked route.
+            var validationOn = navigation.Options.ValidateOffsetRoutes;
+            var crossesOffsetRoute = validationOn
                 && OffsetRouteValidator.Crosses(navigation, path, offset);
+            var offsetRouteUsable = !crossesOffsetRoute
+                && (!validationOn
+                    || AssignedLegsAreClear(navigation, member.Translation, path, offset, null, endIsPassable, destination));
 
-            if (offsetDestinationPassable && !crossesOffsetRoute)
+            if (offsetRouteUsable && offsetDestinationPassable)
             {
                 AssignPath(member, path, offset, endIsPassable, destination);
                 continue;
             }
 
-            if (crossesOffsetRoute)
+            if (offsetRouteUsable)
             {
-                navigation.AddReroutedFollower();
-                var leaderDestinationNode = navigation.GetNodeAt(path[^1]);
-
-                // A zero landing radius disables landing here too (WI-N2-01 semantics), even
-                // though the destination itself is passable at ring 0.
-                if (navigation.Options.MaxLandingRadiusCells > 0
-                    && leaderDestinationNode != null
+                // Blocked follower (WI-B4-04): the formation slot is impassable. WI-N2-01: a
+                // follower starting in the leader's region first tries a bounded ring landing
+                // in the destination's region; only failed landings and other-region followers
+                // pay for their own full search. WI-N11-01: this branch only runs with
+                // validation off; an impassable slot always fails Crosses (route[^1] + offset
+                // is the slot itself), so validation on reroutes below instead.
+                var destinationNode = navigation.GetNodeAt(path[^1]);
+                var leaderStartNode = navigation.GetNodeAt(path[0]);
+                var followerStartNode = navigation.GetNodeAt(member.Translation);
+                if (leaderStartNode != null
+                    && followerStartNode != null
+                    && destinationNode != null
+                    && navigation.Graph.Regions.SameRegion(followerStartNode, leaderStartNode)
                     && FollowerLanding.TryLand(
                         navigation,
-                        destination,
-                        leaderDestinationNode,
+                        offsetDestination,
+                        destinationNode,
                         navigation.Options.MaxLandingRadiusCells,
-                        out var landingPosition,
-                        out var ringDistance))
+                        out var blockedLandingPosition,
+                        out var blockedRingDistance))
                 {
                     LandedFollowerCount++;
                     navigation.AddLandedFollower();
-                    FollowerLanding.RecordLanding(ringDistance);
-                    AssignPath(member, path, Vector2.Zero, endIsPassable, destination, landingPosition);
+                    FollowerLanding.RecordLanding(blockedRingDistance);
+                    AssignPath(member, path, offset, endIsPassable, destination, blockedLandingPosition);
                     continue;
                 }
 
-                // Failed landing: pay for an own search like a blocked follower.
                 FallbackFollowerCount++;
                 navigation.AddFallbackFollower();
                 IssueFallbackSearch(navigation, member, destination, asyncFallbacks);
                 continue;
             }
 
-            // Blocked follower (WI-B4-04): the formation slot is impassable. WI-N2-01: a
-            // follower starting in the leader's region first tries a bounded ring landing
-            // in the destination's region; only failed landings and other-region followers
-            // pay for their own full search.
-            var destinationNode = navigation.GetNodeAt(path[^1]);
-            var leaderStartNode = navigation.GetNodeAt(path[0]);
-            var followerStartNode = navigation.GetNodeAt(member.Translation);
-            if (leaderStartNode != null
-                && followerStartNode != null
-                && destinationNode != null
-                && navigation.Graph.Regions.SameRegion(followerStartNode, leaderStartNode)
+            // Crossing retrace (WI-N7-02) or unclear driven legs (WI-N11-01): land on the
+            // leader route near the destination, or fall back to an own search when no
+            // landing exists or its first leg from this member's position is blocked.
+            navigation.AddReroutedFollower();
+            var crossingDestinationNode = navigation.GetNodeAt(path[^1]);
+
+            // A zero landing radius disables landing here too (WI-N2-01 semantics), even
+            // though the destination itself is passable at ring 0.
+            if (navigation.Options.MaxLandingRadiusCells > 0
+                && crossingDestinationNode != null
                 && FollowerLanding.TryLand(
                     navigation,
-                    offsetDestination,
-                    destinationNode,
+                    destination,
+                    crossingDestinationNode,
                     navigation.Options.MaxLandingRadiusCells,
-                    out var blockedLandingPosition,
-                    out var blockedRingDistance))
+                    out var landingPosition,
+                    out var ringDistance)
+                && AssignedLegsAreClear(
+                    navigation, member.Translation, path, Vector2.Zero, landingPosition, false, destination))
             {
                 LandedFollowerCount++;
                 navigation.AddLandedFollower();
-                FollowerLanding.RecordLanding(blockedRingDistance);
-                AssignPath(member, path, offset, endIsPassable, destination, blockedLandingPosition);
+                FollowerLanding.RecordLanding(ringDistance);
+                AssignPath(member, path, Vector2.Zero, endIsPassable, destination, landingPosition);
                 continue;
             }
 
+            // Failed landing: pay for an own search like a blocked follower.
             FallbackFollowerCount++;
             navigation.AddFallbackFollower();
             IssueFallbackSearch(navigation, member, destination, asyncFallbacks);
         }
+    }
+
+    /// <summary>
+    /// WI-N11-01: walks the legs the member will actually drive for an assignment built like
+    /// <see cref="AssignPath"/> (offset waypoints, optional landing or destination tail
+    /// replacement). Returns false when any leg leaves the graph, crosses an impassable cell,
+    /// or ends on one. The member's own cell is exempt: the start node resolves from its
+    /// position, which may sit on an impassable cell.
+    /// </summary>
+    private static bool AssignedLegsAreClear(
+        Navigation navigation,
+        Vector3 memberPosition,
+        IList<Vector3> path,
+        Vector2 offset,
+        Vector3? landing,
+        bool endIsPassable,
+        Vector3 destination)
+    {
+        if (path.Count < 2)
+        {
+            return true;
+        }
+
+        var from = new Vector2(memberPosition.X, memberPosition.Y);
+        for (var i = 1; i < path.Count; i++)
+        {
+            Vector3 to;
+            if (i == path.Count - 1 && (landing.HasValue || endIsPassable))
+            {
+                to = landing ?? destination + new Vector3(offset.X, offset.Y, 0);
+            }
+            else
+            {
+                var point = path[i];
+                to = new Vector3(point.X + offset.X, point.Y + offset.Y, point.Z);
+            }
+
+            if (!PathOptimizer.IsDirectLinePassable(navigation, from, new Vector2(to.X, to.Y)))
+            {
+                return false;
+            }
+
+            from = new Vector2(to.X, to.Y);
+        }
+
+        return true;
     }
 
     private static void IssueFallbackSearch(

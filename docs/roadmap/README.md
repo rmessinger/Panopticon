@@ -313,7 +313,8 @@ track document.
   destination crowding · N10 deadlock verification · N11 passage detection and baseline · N12
   passage queues · N13 opposing flow and group entry · N14 passage verification · N15 layered
   navigation contract and baseline · N16 strategic sector graph · N17 corridor main path · N18
-  group local router · N19 unit steering · N20 layered navigation verification. Depends on B1,
+  group local router · N19 unit steering · N20 layered navigation verification · N21 structure
+  passability coverage. Depends on B1,
   B4, and M4.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1. X6 extracts navigation logic from `AIUpdate` into its own class after N11.
@@ -524,7 +525,8 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N18 - Group local router | `░░░░░░░░░░` | 0 / 3 |
 | N19 - Unit steering | `░░░░░░░░░░` | 0 / 2 |
 | N20 - Layered navigation verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `█████░░░░░` | 20 / 39 |
+| N21 - Structure passability coverage | `██████████` | 1 / 1 |
+| Track N total | `█████░░░░░` | 21 / 40 |
 
 ---
 

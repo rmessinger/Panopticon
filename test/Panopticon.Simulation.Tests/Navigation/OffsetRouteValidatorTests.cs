@@ -84,14 +84,17 @@ public class OffsetRouteValidatorTests : MockedGameTest
         var game = new TestGame(SageGame.CncGenerals, navigation);
 
         // The follower sits four tiles south of the leader: its offset destination is
-        // passable, but the offset retrace crosses the wall column.
+        // passable, but the offset retrace crosses the wall column at (5, 6). The smoothed
+        // leader route is one straight leg to (4, 2), and the reroute's first leg from the
+        // follower's position down to that route stays clear of the wall, so the follower
+        // lands on the leader route.
         var leader = NewUnit(World(8, 2), game: game);
         var follower = NewUnit(World(8, 6), game: game);
 
         var before = NavigationClass.PathRequestCount;
         var statsBefore = navigation.Statistics;
 
-        GroupMovement.MoveSquad(navigation, [leader, follower], World(1, 2));
+        GroupMovement.MoveSquad(navigation, [leader, follower], World(4, 2));
 
         var stats = navigation.Statistics;
         Assert.Equal(before + 1, NavigationClass.PathRequestCount);
@@ -103,6 +106,74 @@ public class OffsetRouteValidatorTests : MockedGameTest
 
         // The rerouted follower rides the leader's exact route and lands on it; no retrace
         // point crosses the wall.
+        Assert.True(follower.AIUpdate!.TargetPoints.Count > 0);
+        Assert.Equal(World(4, 2), follower.AIUpdate.TargetPoints[^1]);
+        Assert.All(follower.AIUpdate.TargetPoints, point => Assert.True(navigation.IsPassable(point)));
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void MoveSquad_BlockedSlotReroutesOntoTheLeaderRoute()
+    {
+        var navigation = CreateNavigation();
+        navigation.Options.ValidateOffsetRoutes = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+
+        // WI-N11-01: the formation slot (5, 6) sits on the wall. The legacy blocked-slot
+        // branch kept the offset waypoints and only replaced the tail, so the follower drove
+        // offset waypoints straight through the wall; Crosses never ran because the slot was
+        // impassable. The slot now takes the same reroute as a crossing retrace, and the
+        // reroute's single leg from (8, 6) to (5, 2) rounds the wall's open top.
+        var leader = NewUnit(World(8, 2), game: game);
+        var follower = NewUnit(World(8, 6), game: game);
+
+        var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
+
+        GroupMovement.MoveSquad(navigation, [leader, follower], World(5, 2));
+
+        var stats = navigation.Statistics;
+        Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+        Assert.Equal(0, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
+        Assert.Equal(1, stats.ReroutedFollowers - statsBefore.ReroutedFollowers);
+        Assert.Equal(1, stats.LandedFollowers - statsBefore.LandedFollowers);
+        Assert.Equal(0, stats.FallbackFollowers - statsBefore.FallbackFollowers);
+
+        // The follower rides the leader route at zero offset; the slot cell itself stays
+        // impassable so the assignment cannot be the offset retrace.
+        Assert.False(navigation.Graph.GetNode(5, 6).IsPassable);
+        Assert.True(follower.AIUpdate!.TargetPoints.Count > 0);
+        Assert.Equal(World(5, 2), follower.AIUpdate.TargetPoints[^1]);
+        Assert.Equal(leader.AIUpdate!.TargetPoints, follower.AIUpdate.TargetPoints);
+        Assert.All(follower.AIUpdate.TargetPoints, point => Assert.True(navigation.IsPassable(point)));
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void MoveSquad_CrossingFollowerWithBlockedRerouteLegFallsBackToItsOwnSearch()
+    {
+        var navigation = CreateNavigation();
+        navigation.Options.ValidateOffsetRoutes = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+
+        // WI-N11-01: the offset retrace crosses the wall, and the reroute's first leg from
+        // (8, 6) straight to the smoothed route's single waypoint (1, 2) also crosses the
+        // wall at (5, 4). Pre-N11 that leg was unvalidated; now the landing is refused and
+        // the follower pays for its own search around the wall's open top.
+        var leader = NewUnit(World(8, 2), game: game);
+        var follower = NewUnit(World(8, 6), game: game);
+
+        var before = NavigationClass.PathRequestCount;
+        var statsBefore = navigation.Statistics;
+
+        GroupMovement.MoveSquad(navigation, [leader, follower], World(1, 2));
+
+        var stats = navigation.Statistics;
+        Assert.Equal(before + 2, NavigationClass.PathRequestCount);
+        Assert.Equal(1, stats.ReroutedFollowers - statsBefore.ReroutedFollowers);
+        Assert.Equal(0, stats.LandedFollowers - statsBefore.LandedFollowers);
+        Assert.Equal(1, stats.FallbackFollowers - statsBefore.FallbackFollowers);
+        Assert.Equal(1, stats.BlockedFollowerRequests - statsBefore.BlockedFollowerRequests);
+
+        // The fallback route exists around the wall and never crosses it.
         Assert.True(follower.AIUpdate!.TargetPoints.Count > 0);
         Assert.Equal(World(1, 2), follower.AIUpdate.TargetPoints[^1]);
         Assert.All(follower.AIUpdate.TargetPoints, point => Assert.True(navigation.IsPassable(point)));

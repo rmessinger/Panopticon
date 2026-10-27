@@ -316,16 +316,21 @@ public class Navigation
             return;
         }
 
-        for (var x = bottomLeftNode.X; x < topRightNode.X; x++)
+        // WI-N11-01: floor mapping puts the top-right corner's node up to one cell short of
+        // the last overlapping cell, hence the +1; the per-cell overlap test trims the rest.
+        var maxX = Math.Min(topRightNode.X + 1, _graph.Width - 1);
+        var maxY = Math.Min(topRightNode.Y + 1, _graph.Height - 1);
+
+        for (var x = bottomLeftNode.X; x <= maxX; x++)
         {
-            for (var y = bottomLeftNode.Y; y < topRightNode.Y; y++)
+            for (var y = bottomLeftNode.Y; y <= maxY; y++)
             {
                 var node = _graph.GetNode(x, y);
                 var position = GetNodePosition(node);
                 var terrainHeight = _heightMap.GetHeight(position.X, position.Y);
                 if (collider.Transform.Translation.Z <= terrainHeight &&
                     terrainHeight <= collider.Transform.Translation.Z + collider.Height &&
-                    collider.Contains(position)) // TODO: should we use a rectangle here instead of only a point?
+                    axisAlignedBoundingArea.Intersects(CellArea(position)))
                 {
                     node.Passability = passable ? Passability.Passable : Passability.Impassable;
                 }
@@ -340,10 +345,18 @@ public class Navigation
         _passabilityVersion++;
     }
 
+    // WI-N11-01: nodes sit on a lattice; each owns the square cell around its position.
+    // Rectangle overlap closes the gaps point containment left between lattice points, where
+    // paths could plan through structure footprints (edge cells are included on purpose).
+    private static RectangleF CellArea(Vector2 nodePosition)
+    {
+        const float cell = HeightMap.HorizontalScale;
+        return new RectangleF(nodePosition.X - cell / 2, nodePosition.Y - cell / 2, cell, cell);
+    }
+
     // WI-N1-03: monotonic passability version; async path submissions snapshot cells together
     // with this number and the worker only re-applies bytes when it changes.
     private int _passabilityVersion = 1;
-
     internal int PassabilityVersion => _passabilityVersion;
 
     internal PassabilitySnapshot BuildPassabilitySnapshot()

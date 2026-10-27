@@ -405,6 +405,51 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 Delivery: stacked group PRs into `main` via the `gh stack` extension (superseded the staging model Oct 2026). Suggested groups:
 1 = N6, 2 = N7, 3 = N8, 4 = N9, 5 = N10. Groups 2 to 4 may stack in any order after group 1.
 
+## Structure passability coverage (N21)
+
+Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigation-deadlocks.md) : [§4 N21](../deep-dives/n-navigation-deadlocks.md#n21-structure-passability-coverage).
+
+| Card | Phase | Title | Checklist item | Status |
+|---|---|---|---|---|
+| [`WI-N21-01`](../agent/cards/WI-N21-01-structure-passability-coverage.md) | N21 | Structure passability coverage | N21-1 | Done |
+
+Delivery: group 6 in the Track N stack, branching off `track-n-n10-5-verification`.
+
+### WI-N21-01 results (2026-10-27, Release, seed 1)
+
+- Marking now marks every node whose cell square overlaps the collider's axis-aligned bounding
+  area within the height band, inclusive of edge cells; the loop's top-right node extends one
+  cell because node mapping floors. Point containment previously left about half of a rotated
+  cottage's footprint grid-passable (55 of 121 in-range nodes for `GermanCotage01`).
+- Sidestep candidates additionally require a passable approach leg (blocker to candidate) and
+  resume leg (candidate back to the first remaining waypoint); local-detour splices require a
+  passable approach leg, otherwise the detour is dropped and the attempt is consumed. The start
+  cell is exempt in all walks so a unit standing on an impassable cell can leave.
+- Squad assignment legs are validated with the same walk (`GroupMovement.AssignSquadMembers`):
+  every driven leg of an offset retrace, reroute, or landing tail must stay on passable cells.
+  An impassable formation slot now takes the crossing reroute onto the leader route (the legacy
+  blocked-slot branch kept the offset waypoints and never ran `Crosses`); a reroute whose first
+  leg from the follower's position is blocked falls back to its own search. Option off changes
+  nothing.
+- `NavigationDeadlock` with `BlockedUnitResolution` and `ValidateOffsetRoutes` on, slots off,
+  versus the N10 no-slots row: head-on 2/2 at 367, queue 9/10, corridor 0/40, async 6/6 at 92
+  unchanged; crowd-goal-100 11/100 (was 16/100; the goal-adjacent cottage now blocks
+  squeeze-through settles); squad-offset-retrace 0/8 with 44 blocked repaths (was 231), 7
+  followers rerouted onto the leader route, 0 impassable retrace points, and one fallback search
+  beyond the leader request.
+- World-space probe of squad-offset-retrace at frame 2400: no tank center inside a structure
+  footprint and no tank on an impassable cell; the N8 capture had three tanks inside footprints
+  on impassable cells. A leg-walk audit of every driven leg every 60 frames dropped from 39
+  unique violations at N10 to one transient: a leg that was clear at order time but clipped
+  marked cells after local-avoidance drift, never driven (the resolver rerouted the unit first).
+  Residual corner slivers of unit AABBs against wall faces are sub-cell proximity, not entry.
+- Follower offset retraces stay behind `ValidateOffsetRoutes`; the N10 default-flip
+  recommendation is unchanged.
+
+GIF evidence: `navdeadlock-squad-offset-retrace-N11-v2.gif` in the screenshot viewer (captures
+under `/tmp/opencode/gifs/cap-N11B/`, report `rep-N11B-squad-offset-retrace.json`).
+
+
 ## Navigation deadlocks results
 
 ### WI-N6-01 baseline (2026-10-27, Release, seed 1, deepdivide 656x460, 4500 frames)
