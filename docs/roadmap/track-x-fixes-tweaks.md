@@ -14,6 +14,7 @@ Open-ended queue for bounded fixes and presentation tweaks. Each phase has its o
 | X3. Cursor modernization | Evaluate open-source replacements for the original cursor set and their high-DPI loader requirements. | A comparison contact sheet and animated GIF show licensed candidate cursors next to the originals at 1x and 2x; a recorded loader assessment names any required code change, with the original set kept as the default. | Not started | — |
 | X4. ReplaySketch TabControl shell | Replace the hand-built tab strip in the ReplaySketch `MainWindow` with an Avalonia `TabControl`. | All five tabs switch through one `TabControl` with their selection side effects and screenshot mode intact; the Model-after-Harness stacked-frame bug is gone, and captures of every tab show unchanged content. | Not started | — |
 | X5. Render culling dispatch | Stop per-pass frustum culling from paying thread-pool dispatch for small or cheap work. | A CPU-sampling profile of the windowed capacity probe attributes per-pass culling cost; culling runs serially below a measured item threshold and in processor-sized chunks above it, with identical visible lists and before/after `shadowPass`/`forwardPass` medians recorded. | Not started | M1 |
+| X6. AIUpdate navigation extraction | Move navigation logic out of `AIUpdate` into its own per-unit class. | `AIUpdate` delegates path requests, route application, blocked-movement, and give-way logic to a `UnitNavigation` class that does not reference `AIUpdate`; saves, determinism baselines, and the `NavigationDeadlock` report are unchanged. | Not started | N11 |
 
 ## Phase resources
 
@@ -24,5 +25,6 @@ Open-ended queue for bounded fixes and presentation tweaks. Each phase has its o
 | X3 | [Cursor modernization](implementation/track-x-x3-cursor-modernization.md) | Loader diagrams gated on `WI-X3-01` | [WI-X3-01](implementation/track-x-x3-cursor-modernization.md) |
 | X4 | [TabControl shell](implementation/track-x-x4-replaysketch-tabcontrol.md) | [Architecture](implementation/track-x-x4-replaysketch-tabcontrol.md#architecture-diagrams) | [WI-X4-01](implementation/track-x-x4-replaysketch-tabcontrol.md) |
 | X5 | [Culling dispatch](implementation/track-x-x5-render-culling-dispatch.md) | [Architecture](implementation/track-x-x5-render-culling-dispatch.md#architecture-diagrams) | [WI-X5-01](implementation/track-x-x5-render-culling-dispatch.md) |
+| X6 | [Navigation extraction](implementation/track-x-x6-aiupdate-navigation-extraction.md) | [Architecture](implementation/track-x-x6-aiupdate-navigation-extraction.md#architecture-diagrams) | [WI-X6-01](implementation/track-x-x6-aiupdate-navigation-extraction.md) |
 
 X1 consumes the published M2 tank row, not the unresolved M2 aircraft or infantry contracts. `WI-M2-03` is a card-level prerequisite. X1 does not close M2 or introduce an EE2 effects importer.

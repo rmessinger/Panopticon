@@ -313,7 +313,7 @@ track document.
   passage queues · N13 opposing flow and group entry · N14 passage verification. Depends on B1,
   B4, and M4.
 
-- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1.
+- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1. X6 extracts navigation logic from `AIUpdate` into its own class after N11.
 
 ### Cross-track dependencies
 
@@ -370,6 +370,7 @@ track document.
 | X3 - Cursor modernization | `░░░░░░░░░░` | 0 / 1 |
 | X4 - ReplaySketch TabControl shell | `░░░░░░░░░░` | 0 / 1 |
 | X5 - Render culling dispatch | `░░░░░░░░░░` | 0 / 1 |
+| X6 - AIUpdate navigation extraction | `░░░░░░░░░░` | 0 / 1 |
 
 Track X has no terminal completion target; this table covers authored phases only.
 

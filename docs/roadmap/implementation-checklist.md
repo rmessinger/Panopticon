@@ -2034,3 +2034,10 @@ Dependency: M1. [Plan and card](implementation/track-x-x5-render-culling-dispatc
 
 - [ ] X5-1 Measure and right-size parallel culling dispatch in `RenderItemCollection.FilterVisible` (`WI-X5-01`).
   - AC: CPU-sampling profile of the windowed capacity probe attributes culling cost before the change; serial path below a measured threshold and processor-sized chunks above it; serial and parallel visible lists identical in tests; before/after `shadowPass`/`forwardPass` medians with CIs recorded in the plan.
+
+### X6: AIUpdate navigation extraction
+
+Dependency: N11. [Plan and card](implementation/track-x-x6-aiupdate-navigation-extraction.md).
+
+- [ ] X6-1 Extract path request, route application, blocked-movement, and give-way logic from `AIUpdate` into `UnitNavigation` (`WI-X6-01`).
+  - AC: `AIUpdate` holds no navigation logic and `UnitNavigation` has no `AIUpdate` reference; load/persist order unchanged; `SeededRunTests`, golden baselines, and the seed 1 `NavigationDeadlock` report match pre-refactor output.
