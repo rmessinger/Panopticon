@@ -135,7 +135,7 @@ public static class MassBattleCapacityProbeRunner
                 ArmyAiSides.ApplyPolicies(playerSettings);
             }
 
-            game.StartSkirmishOrMultiPlayerGame(profile.Map.Path, new EchoConnection(), playerSettings, (int)ProbeSeed, isMultiPlayer: false);
+            game.StartSkirmishOrMultiPlayerGame(profile.Map.Path, new EchoConnection(), playerSettings, (int)(config.MassBattleCapacityProbeSeed ?? (int)ProbeSeed), isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
             game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
@@ -207,7 +207,7 @@ public static class MassBattleCapacityProbeRunner
                 : null;
 
             var (framesRun, benchmarkRecord, maxGoalNeighbourhoodRequests) = RunEngagement(
-                game, armies, step, frameBudget, config.Headless, reporter, anchor, invariantSampler, scriptedOrders: !armyAi);
+                game, armies, step, frameBudget, config.Headless, reporter, anchor, invariantSampler, scriptedOrders: !armyAi, probeSeed: (uint)(config.MassBattleCapacityProbeSeed ?? (int)ProbeSeed));
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
             string? screenshotPath = null;
@@ -470,7 +470,8 @@ public static class MassBattleCapacityProbeRunner
         ITestHarnessReporter reporter,
         MassBattleAsyncPathAnchor? anchor = null,
         MassBattleSquadInvariantSampler? invariantSampler = null,
-        bool scriptedOrders = true)
+        bool scriptedOrders = true,
+        uint probeSeed = 1)
     {
         var navigation = game.Scene3D.Navigation;
         var allJets = armies.SelectMany(army => army.Jets).ToList();
@@ -585,7 +586,7 @@ public static class MassBattleCapacityProbeRunner
             game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
         }
 
-        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, pathStatisticsDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless), pathStatisticsDeltas.MaxGoalNeighbourhoodRequests);
+        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, pathStatisticsDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless, probeSeed), pathStatisticsDeltas.MaxGoalNeighbourhoodRequests);
     }
 
     /// <summary>
@@ -638,7 +639,8 @@ public static class MassBattleCapacityProbeRunner
         int framesRun,
         int frameBudget,
         bool stopPredicateTriggered,
-        bool headless)
+        bool headless,
+        uint probeSeed = 1)
     {
         var environment = EnvironmentRecord.Capture();
         environment.InstallId = game.Definition.Identifier;
@@ -651,7 +653,7 @@ public static class MassBattleCapacityProbeRunner
 
         var record = new BenchmarkRunRecord(
             BenchmarkScenarioId,
-            ProbeSeed,
+            probeSeed,
             SettleFrames,
             frameBudget,
             framesRun,

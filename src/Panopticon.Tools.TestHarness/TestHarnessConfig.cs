@@ -237,6 +237,10 @@ public sealed class TestHarnessConfig
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeFrameBudget.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public int? MassBattleCapacityProbeFrameBudget { get; set; } = null;
 
+    /// <summary>WI-N10-01: probe skirmish seed; null keeps the authored default (1).</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeSeed.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
+    public int? MassBattleCapacityProbeSeed { get; set; } = null;
+
     // ── Rendering-scale probe (B5) ─────────────────────────────────────────
 
     /// <summary>Repeated-model unit count for the render-scale probe. Null uses 10000.</summary>

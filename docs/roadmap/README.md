@@ -513,7 +513,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N7 - Path liveness | `██████████` | 2 / 2 |
 | N8 - Blocked-unit resolution | `██████████` | 2 / 2 |
 | N9 - Destination crowding | `██████████` | 2 / 2 |
-| N10 - Deadlock verification | `░░░░░░░░░░` | 0 / 1 |
+| N10 - Deadlock verification | `██████████` | 1 / 1 |
 | N11 - Passage detection and baseline | `░░░░░░░░░░` | 0 / 2 |
 | N12 - Passage queues | `░░░░░░░░░░` | 0 / 2 |
 | N13 - Opposing flow and group entry | `░░░░░░░░░░` | 0 / 2 |
@@ -524,7 +524,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N18 - Group local router | `░░░░░░░░░░` | 0 / 3 |
 | N19 - Unit steering | `░░░░░░░░░░` | 0 / 2 |
 | N20 - Layered navigation verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `█████░░░░░` | 19 / 39 |
+| Track N total | `█████░░░░░` | 20 / 39 |
 
 ---
 

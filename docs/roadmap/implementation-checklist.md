@@ -1948,7 +1948,7 @@ Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
   - AC: `crowd-goal-100` ends with 0 units holding routes in both slot modes.
 
 ### N10: Deadlock verification
-- [ ] N10-1 Verify every deadlock target. (`WI-N10-01`)
+- [x] N10-1 Verify every deadlock target. (`WI-N10-01`)
   - AC: each target has a verdict across 3 seeds; M4 stall results recorded per run; default-flip
     recommendation recorded.
 

@@ -199,6 +199,8 @@ public static class Program
             config.MassBattleCapacityProbeBlockedResolution = bool.Parse(probeBlockedResolution);
         }
 
+        ParseOptionalInt(args, "--probe-seed", value => config.MassBattleCapacityProbeSeed = value);
+
         var n6ValidateOffsets = GetArgValue(args, "--n6-validate-offsets");
         if (!string.IsNullOrEmpty(n6ValidateOffsets))
         {
