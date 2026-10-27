@@ -195,6 +195,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/mass-battle-1k.md`](deep-dives/mass-battle-1k.md) | Long-term goal and Track M phases M0-M5 - Viewing model, map requirements and sourcing, EE2 DDF translation and roster normalization, army-scale AI, and scale dependencies. |
 | [`deep-dives/n-multi-unit-pathfinding.md`](deep-dives/n-multi-unit-pathfinding.md) | Track N phases N0-N5 - Path cost evidence, budgets, search core, follower landing, group selection moves, gated goal fields, async order paths. |
 | [`deep-dives/n-navigation-deadlocks.md`](deep-dives/n-navigation-deadlocks.md) | Track N phases N6-N10 - Deadlock evidence, stall attribution, path liveness, blocked-unit resolution, destination crowding. |
+| [`deep-dives/n-confined-passage-queueing.md`](deep-dives/n-confined-passage-queueing.md) | Track N phases N11-N14 - Passage detection from route cross-sections, ad hoc passage queues with shared lane paths and unit order, opposing flow, squad entry. |
 | [`deep-dives/x1-imported-unit-hit-feedback.md`](deep-dives/x1-imported-unit-hit-feedback.md) | X1: explicit imported-vehicle target effects and readable mixed-source duel evidence. |
 | [`deep-dives/c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | Track C phase C1 - CPU-only model and animation import contracts, W3D reference adapters, runtime materialization, and parity. |
 | [`deep-dives/c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | Track C phase C2 - Direct-index and exact-name animation-channel binding to runtime model hierarchies. |
@@ -308,7 +309,9 @@ track document.
   N0 path cost baseline · N1 search core efficiency · N2 shared group requests · N3
   shared-destination fields (gated) · N4 off-thread order paths · N5 scale verification (N0-N5
   done) · N6 deadlock detection baseline · N7 path liveness · N8 blocked-unit resolution · N9
-  destination crowding · N10 deadlock verification. Depends on B1, B4, and M4.
+  destination crowding · N10 deadlock verification · N11 passage detection and baseline · N12
+  passage queues · N13 opposing flow and group entry · N14 passage verification. Depends on B1,
+  B4, and M4.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1.
 
@@ -506,7 +509,11 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N8 - Blocked-unit resolution | `░░░░░░░░░░` | 0 / 2 |
 | N9 - Destination crowding | `░░░░░░░░░░` | 0 / 2 |
 | N10 - Deadlock verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `█████▌░░░░` | 11 / 20 |
+| N11 - Passage detection and baseline | `░░░░░░░░░░` | 0 / 2 |
+| N12 - Passage queues | `░░░░░░░░░░` | 0 / 2 |
+| N13 - Opposing flow and group entry | `░░░░░░░░░░` | 0 / 2 |
+| N14 - Passage verification | `░░░░░░░░░░` | 0 / 1 |
+| Track N total | `████░░░░░░` | 11 / 27 |
 
 ---
 

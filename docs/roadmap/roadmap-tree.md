@@ -381,6 +381,17 @@ mindmap
         N9-2 Crowd arrival
       N10 Deadlock verification ⮕
         N10-1 Deadlock target verification
+      N11 Passage detection and baseline ⮕
+        N11-1 Passage finder
+        N11-2 Passage cases and baseline
+      N12 Passage queues ⮕
+        N12-1 Coordinator, order, and lane path
+        N12-2 Hold, release, and route splice
+      N13 Opposing flow and group entry ⮕
+        N13-1 Opposing flow arbitration
+        N13-2 Squad and cluster entry
+      N14 Passage verification ⮕
+        N14-1 Passage target verification
 ```
 
 ---
@@ -589,11 +600,23 @@ flowchart LR
     N7["N7 Path liveness"]
     N8["N8 Blocked-unit resolution"]
     N9["N9 Destination crowding"]
+    N11["N11 Passage detection and baseline"]
   end
 
-  subgraph S12["Stage 12 · Navigation deadlock verification"]
+  subgraph S12["Stage 12 · Navigation deadlock verification & passage queues"]
     direction TB
     N10["N10 Deadlock verification"]
+    N12["N12 Passage queues"]
+  end
+
+  subgraph S13["Stage 13 · Passage flow"]
+    direction TB
+    N13["N13 Opposing flow and group entry"]
+  end
+
+  subgraph S14["Stage 14 · Passage verification"]
+    direction TB
+    N14["N14 Passage verification"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -841,6 +864,11 @@ flowchart LR
   N7 --> N10
   N8 --> N10
   N9 --> N10
+  N6 --> N11
+  N11 --> N12
+  N12 --> N13
+  N13 --> N14
+  N10 --> N14
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
@@ -853,7 +881,7 @@ flowchart LR
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class M0,M1,M2,M3,M4,M5 trackM;
-  class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10 trackN;
+  class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14 trackN;
   class A4S seam;
 ```
 

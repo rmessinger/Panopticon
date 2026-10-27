@@ -54,6 +54,8 @@ Out of scope:
   stubs today).
 - Push-apart collision response and crush behavior in `PhysicsBehavior`.
 - Aircraft, which do not use the footprint gate.
+- Proactive queueing at narrow passages: N11 to N14, in the
+  [passage deep dive](n-confined-passage-queueing.md).
 
 ## 3. Targets
 

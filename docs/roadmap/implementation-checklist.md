@@ -1952,6 +1952,36 @@ Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
   - AC: each target has a verdict across 3 seeds; M4 stall results recorded per run; default-flip
     recommendation recorded.
 
+### N11: Passage detection and baseline
+Design: [passage deep dive](deep-dives/n-confined-passage-queueing.md).
+- [ ] N11-1 Passage finder and cross-section cache. (`WI-N11-01`)
+  - AC: synthetic gaps and corridors return one span with the expected throat and lanes; one-sided
+    walls return none; repeated scans hit the cache.
+- [ ] N11-2 Passage cases and option-off baseline. (`WI-N11-02`)
+  - AC: five passage cases detect their gaps and record settle frames, mouth jams, cycles, and
+    retrace points; movement unchanged.
+
+### N12: Passage queues
+- [ ] N12-1 Passage coordinator, queue order, and lane path behind `PassageQueueing`. (`WI-N12-01`)
+  - AC: deterministic ranks, fixed ranks never change, balanced lanes, one-pitch release spacing;
+    option off constructs nothing.
+- [ ] N12-2 Passage hold, release, and route splice. (`WI-N12-02`)
+  - AC: option off changes nothing; open ground opens 0 passages; column and converge cases settle
+    with 0 mouth jams and 0 cycles.
+
+### N13: Opposing flow and group entry
+- [ ] N13-1 Opposing flow arbitration. (`WI-N13-01`)
+  - AC: grants alternate within bounds; single-lane and two-lane opposing cases settle with 0
+    cycles.
+- [ ] N13-2 Squad and cluster passage entry. (`WI-N13-02`)
+  - AC: `passage-squad-12` has 0 offset waypoints on impassable cells inside the passage; blocks
+    are never interleaved; M4 squad invariants hold.
+
+### N14: Passage verification
+- [ ] N14-1 Verify every passage target. (`WI-N14-01`)
+  - AC: each target has a verdict across 3 seeds and three option modes; `passage` span recorded
+    against budget; default-flip recommendation recorded.
+
 ## Track X: Miscellaneous fixes and tweaks
 
 Open-ended queue: [phase definitions](track-x-fixes-tweaks.md). Entries below cover authored work, not a terminal track milestone.

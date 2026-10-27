@@ -2,7 +2,8 @@
 
 > Part of the [Large-Scale RTS Roadmap](README.md). This track cuts the cost of path requests
 > issued by multi-unit orders (army-AI squads, player selections, scripted group moves), then makes
-> those moves live: units that hold an order keep progressing or settle.
+> those moves live: units that hold an order keep progressing or settle, and groups crossing a
+> narrow passage queue through it in order.
 >
 > Architecture context: see [`agent/current-state.md`](agent/current-state.md).
 >
@@ -25,6 +26,11 @@ N7 closes path liveness gaps, N8 resolves blocked units, and N9 spreads crowded 
 three depend only on N6. N10 verifies the targets and feeds the default-flip decision. Design:
 [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
 
+N11 to N14 add proactive queueing at narrow passages, complementing N8's reactive resolution.
+N11 detects passages along routes and baselines passage cases, N12 forms ad hoc queues with a
+shared lane path and unit order, N13 handles opposing flows and squads, and N14 verifies against
+N10. Design: [passage deep dive](deep-dives/n-confined-passage-queueing.md).
+
 ## Phases
 
 > The Milestone column states the demonstrable outcome that marks each phase done. Granular steps
@@ -43,6 +49,10 @@ three depend only on N6. N10 verifies the targets and feeds the default-flip dec
 | N8. Blocked-unit resolution | Resolve blocked units by wait, friendly give-way, and bounded local repath behind an option. | Head-on and opposed-corridor cases settle with 0 wait-for cycles; N5 path budgets still met. | Not started | N6 |
 | N9. Destination crowding | Give selections distinct goal slots and let units crowd-arrive behind an arrived friendly. | The crowded-goal case ends with 0 units holding routes. | Not started | N6 |
 | N10. Deadlock verification | Re-run N6 cases and the M4 probe over 3 seeds with all options on, then each off in turn. | Every deadlock target has a verdict; the M4 stall check passes run over run or the miss is attributed; a default-flip recommendation is recorded. | Not started | N7, N8, N9 |
+| N11. Passage detection and baseline | Find narrow passages along unit routes from grid cross-sections, and baseline seeded passage cases. | `PassageFinder` returns throat, width, and lane count for gaps and corridors and none for one-sided walls; five passage cases record option-off settle frames, mouth jams, and cycles. | Not started | N6 |
+| N12. Passage queues | Form ad hoc queues of allied units crossing the same passage, with one shared lane path, deterministic order, hold before the mouth, and release behind an option. | `passage-column-40` and `passage-converge-2x20` settle with 0 mouth jams and 0 cycles; open-ground moves are unchanged with the option on. | Not started | N11 |
+| N13. Opposing flow and group entry | Share a passage between opposing flows by lane split or bounded grants, and enter squads and clusters as contiguous blocks. | Single-lane and two-lane opposing cases settle with 0 cycles; `passage-squad-12` has 0 offset waypoints on impassable cells inside the passage. | Not started | N12 |
+| N14. Passage verification | Re-run passage cases, N6 cases, and the M4 probe over 3 seeds with and without queueing and N8. | Every passage target has a verdict; the `passage` span meets its budget or the miss is attributed; a `PassageQueueing` default-flip recommendation is recorded. | Not started | N10, N13 |
 
 ## Phase resources
 
@@ -50,6 +60,7 @@ three depend only on N6. N10 verifies the targets and feeds the default-flip dec
 |---|---|---|---|
 | N0-N5 | [Multi-unit pathfinding](deep-dives/n-multi-unit-pathfinding.md) | [§8](deep-dives/n-multi-unit-pathfinding.md#8-architecture-diagrams) | `WI-N0-01..02`, `WI-N1-01..03`, `WI-N2-01..02`, `WI-N3-01`, `WI-N4-01..02`, `WI-N5-01` ([plan](implementation/track-n-pathfinding-performance.md)) |
 | N6-N10 | [Navigation deadlocks](deep-dives/n-navigation-deadlocks.md) | [§8](deep-dives/n-navigation-deadlocks.md#8-architecture-diagrams) | [`WI-N6-01`](agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md), `WI-N6-02`, `WI-N7-01..02`, `WI-N8-01..02`, `WI-N9-01..02`, `WI-N10-01` ([plan](implementation/track-n-pathfinding-performance.md#navigation-deadlocks-n6-n10)) |
+| N11-N14 | [Confined passage queueing](deep-dives/n-confined-passage-queueing.md) | [§8](deep-dives/n-confined-passage-queueing.md#8-architecture-diagrams) | [`WI-N11-01`](agent/cards/WI-N11-01-passage-finder.md), `WI-N11-02`, `WI-N12-01..02`, `WI-N13-01..02`, `WI-N14-01` ([plan](implementation/track-n-pathfinding-performance.md#confined-passage-queueing-n11-n14)) |
 
 ## Cross-track notes
 
@@ -61,4 +72,7 @@ three depend only on N6. N10 verifies the targets and feeds the default-flip dec
   pre-N one.
 - M5 does not depend on N. N's results lower the tick cost M5's live view measures, and N6 to N10
   remove stalled units from its battles.
-- N6's corridor cases reuse the `RoutingChoke` wall-gap setup (M5 addendum).
+- N6's corridor cases and N11's passage cases reuse the `RoutingChoke` wall-gap setup (M5
+  addendum).
+- E1 owns unit-size clearance in the grid; N11 measures passage width along routes and leaves
+  the grid point-sized.

@@ -773,3 +773,10 @@
   local avoidance stays out because it changes every move and every baseline. The global grid stays
   unit-free. New behavior options default off until N10. See the
   [deep dive](deep-dives/n-navigation-deadlocks.md#5-decisions).
+- Confined passage queueing. Decision (2026-10-27): proactive queueing at narrow passages extends
+  Track N as N11 to N14 and complements N8's reactive resolution; queued units report `Queued` so
+  N8 leaves them alone. Passages are detected from cross-sections along each route, not from a
+  precomputed choke graph, and the grid stays point-sized. Ad hoc passage groups are
+  navigation-transient, not `SquadHierarchy` squads. Ordering is deterministic on the logic thread.
+  `PassageQueueing` defaults off until N14. See the
+  [deep dive](deep-dives/n-confined-passage-queueing.md#5-decisions).

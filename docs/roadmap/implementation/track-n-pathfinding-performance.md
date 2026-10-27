@@ -408,3 +408,26 @@ Delivery: phase staging branch `staging/track-n-deadlocks`, numbered group PRs. 
 ## Navigation deadlocks results
 
 Pending `WI-N6-01`.
+
+## Confined passage queueing (N11-N14)
+
+Source of truth: [deep-dives/n-confined-passage-queueing.md](../deep-dives/n-confined-passage-queueing.md) :
+[Architecture diagrams §8](../deep-dives/n-confined-passage-queueing.md#8-architecture-diagrams).
+
+| Card | Phase | Title | Checklist item | Status |
+|---|---|---|---|---|
+| [`WI-N11-01`](../agent/cards/WI-N11-01-passage-finder.md) | N11 | Passage finder and cross-section cache | N11-1 | Ready |
+| [`WI-N11-02`](../agent/cards/WI-N11-02-passage-cases-and-baseline.md) | N11 | Passage cases and option-off baseline | N11-2 | Blocked |
+| [`WI-N12-01`](../agent/cards/WI-N12-01-passage-coordinator-and-queue.md) | N12 | Passage coordinator, queue order, and lane path | N12-1 | Blocked |
+| [`WI-N12-02`](../agent/cards/WI-N12-02-passage-hold-and-release-movement.md) | N12 | Passage hold, release, and route splice | N12-2 | Blocked |
+| [`WI-N13-01`](../agent/cards/WI-N13-01-opposing-flow-arbitration.md) | N13 | Opposing flow arbitration | N13-1 | Blocked |
+| [`WI-N13-02`](../agent/cards/WI-N13-02-group-passage-entry.md) | N13 | Squad and cluster passage entry | N13-2 | Blocked |
+| [`WI-N14-01`](../agent/cards/WI-N14-01-passage-verification.md) | N14 | Passage queueing verification | N14-1 | Blocked |
+
+Delivery: phase staging branch `staging/track-n-passages`, numbered group PRs. Suggested groups:
+1 = N11, 2 = N12, 3 = N13, 4 = N14. `WI-N11-01` may start before N6; `WI-N11-02` waits on
+`WI-N6-02`.
+
+## Confined passage queueing results
+
+Pending `WI-N11-01`.
