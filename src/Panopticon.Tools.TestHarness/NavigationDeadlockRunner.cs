@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Data;
+using Panopticon.Graphics;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
@@ -42,6 +43,25 @@ public static class NavigationDeadlockRunner
     private const float UnitSpacing = 60f;
     private const float ArrivalRadius = 90f;
     private const int SettleFrames = 30;
+    private const int CaptureWidth = 1280;
+    private const int CaptureHeight = 720;
+
+    private static float CaptureCameraHeight(string caseName) => caseName switch
+    {
+        NavigationDeadlockCasePlanner.HeadOnPair => 500f,
+        NavigationDeadlockCasePlanner.CrowdGoal100 => 1000f,
+        NavigationDeadlockCasePlanner.AsyncNoRoute => 1100f,
+        NavigationDeadlockCasePlanner.SquadOffsetRetrace => 700f,
+        _ => 1300f,
+    };
+
+    private static Vector2 CaptureCenter(string caseName) => caseName switch
+    {
+        NavigationDeadlockCasePlanner.HeadOnPair => new Vector2(CorridorCenterX, 800f),
+        NavigationDeadlockCasePlanner.CrowdGoal100 => new Vector2(CorridorCenterX, 900f),
+        NavigationDeadlockCasePlanner.AsyncNoRoute => new Vector2(CorridorCenterX, 1000f),
+        _ => new Vector2(CorridorCenterX, 1000f),
+    };
     private const int RetraceSampleStride = 10;
 
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
@@ -156,6 +176,26 @@ public static class NavigationDeadlockRunner
 
         game.EnableFixedLogicTimestep();
 
+        var captureDirectory = string.IsNullOrWhiteSpace(config.NavigationDeadlockCaptureDirectory)
+            ? null
+            : Path.Combine(config.NavigationDeadlockCaptureDirectory!, plan.Name);
+        var captureRecords = new List<RoutingChokeCaptureFrame>();
+        if (captureDirectory != null)
+        {
+            Directory.CreateDirectory(captureDirectory);
+            foreach (var stale in Directory.GetFiles(captureDirectory, "*.png"))
+            {
+                File.Delete(stale);
+            }
+
+            game.EnableFixedRenderTimestep();
+            game.Scene3D.RenderScene.GetRenderBucket("Particles").Visible = false;
+            while (game.Scene2D.WndWindowManager.OpenWindowCount > 0)
+            {
+                game.Scene2D.WndWindowManager.PopWindow();
+            }
+        }
+
         var unitDefinition = game.AssetStore.ObjectDefinitions.GetByName(UnitDefinitionName);
         var wallDefinition = game.AssetStore.ObjectDefinitions.GetByName(WallDefinitionName);
         if (unitDefinition == null || wallDefinition == null)
@@ -211,6 +251,36 @@ public static class NavigationDeadlockRunner
 
         setup.IssueOrders();
 
+        void CaptureFrame(int logicFrame)
+        {
+            if (captureDirectory == null)
+            {
+                return;
+            }
+
+            game.Panel.EnsureFrame(new Rectangle(0, 0, CaptureWidth, CaptureHeight));
+            var center = CaptureCenter(plan.Name);
+            var target = new Vector3(center, game.Scene3D.Terrain.GetGroundHeight(center) ?? 0);
+            game.Scene3D.Camera.SetLookAt(target + Vector3.UnitZ * CaptureCameraHeight(plan.Name), target, Vector3.UnitY);
+            game.Render();
+            var file = $"frame_{captureRecords.Count:D4}.png";
+            FrameCapturer.CaptureToPng(
+                game.GraphicsDevice,
+                game.Panel.Framebuffer.ColorTargets[0].Target,
+                Path.Combine(captureDirectory, file));
+            var actors = new List<RoutingChokeManifestActor>(allUnits.Count);
+            for (var i = 0; i < allUnits.Count; i++)
+            {
+                var screen = game.Scene3D.Camera.WorldToScreenPoint(allUnits[i].Translation);
+                actors.Add(new RoutingChokeManifestActor("unit", $"unit {i}", screen.X, screen.Y, 16f));
+            }
+
+            captureRecords.Add(new RoutingChokeCaptureFrame(captureRecords.Count, logicFrame, file, actors, [],
+                RoutingChokeNavigationOverlay.Capture(game, allUnits)));
+        }
+
+        CaptureFrame(0);
+
         var sampler = new NavigationStallSampler();
         var settled = new HashSet<uint>();
         var framesToSettle = (int?)null;
@@ -242,6 +312,11 @@ public static class NavigationDeadlockRunner
                 maxTickPathSpanMs = Math.Max(maxTickPathSpanMs, currentTickPathSpanMs);
 
                 sampler.Sample((uint)framesRun, allUnits);
+
+                if (captureDirectory != null && (framesRun + 1) % Math.Max(1, config.NavigationDeadlockCaptureStride) == 0)
+                {
+                    CaptureFrame(framesRun + 1);
+                }
 
                 if (setup.LateInjectFrame == framesRun + 1)
                 {
@@ -293,6 +368,16 @@ public static class NavigationDeadlockRunner
         finally
         {
             game.LogicStepper.SystemSpan -= OnSystemSpan;
+        }
+
+        if (captureDirectory != null)
+        {
+            CaptureFrame(framesRun);
+            File.WriteAllText(
+                Path.Combine(captureDirectory, "manifest.json"),
+                System.Text.Json.JsonSerializer.Serialize(
+                    new RoutingChokeCaptureManifest(CaptureWidth, CaptureHeight, captureRecords),
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         }
 
         var records = sampler.Records;

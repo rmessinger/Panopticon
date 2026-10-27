@@ -491,6 +491,20 @@ frame (ambient particles, water shimmer). For behavior-level A/B verification co
 trajectories instead (bit-identical when the simulation is unchanged); reserve pixel diffs for
 controlled scenes without ambient effects.
 
+## Recipe: NavigationDeadlock case captures (WI-N6 GIF record)
+
+The `NavigationDeadlock` scenario captures per-case frame sequences for
+`scripts/annotate_capture_gif.py`, reusing the RoutingChoke capture path (Panel.EnsureFrame,
+fixed render timestep, hidden Particles bucket, popped Scene2D windows, manifest with unit
+actors and the navigation overlay). Knobs: `--n6-capture-dir <dir>` writes one subdirectory
+per case (cleared first), `--n6-capture-stride <n>` sets the frame stride (default 30; a final
+frame is always captured). Behavior flags combine freely, for example
+`--n6-blocked-resolution true --n6-validate-offsets true` reproduces the N8 group behavior.
+Captures of merged groups build from their branch tips with the same support; when the harness
+config conflicts on cherry-pick, re-apply the two `NavigationDeadlockCapture*` knobs by hand.
+Annotate with `python3 scripts/annotate_capture_gif.py <capture-dir> <out.gif> --navigation
+--annotated-dir <frames-dir>`.
+
 ## History
 
 Past session transcripts are stored in `~/.local/share/opencode/opencode.db` (SQLite, `part`

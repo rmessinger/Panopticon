@@ -421,6 +421,12 @@ public sealed class TestHarnessConfig
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeBlockedResolution.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public bool MassBattleCapacityProbeBlockedResolution { get; set; } = false;
 
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockCaptureDirectory (one subdirectory per case).", nameof(BuiltInScenario.NavigationDeadlock))]
+    public string? NavigationDeadlockCaptureDirectory { get; set; } = null;
+
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockCaptureStride (frames, default 30).", nameof(BuiltInScenario.NavigationDeadlock))]
+    public int NavigationDeadlockCaptureStride { get; set; } = 30;
+
     /// <summary>WI-N7-02: validate squad offset retrace routes (default false).</summary>
     [HarnessParameter("NavigationDeadlock", "NavigationDeadlockValidateOffsetRoutes.", nameof(BuiltInScenario.NavigationDeadlock))]
     public bool NavigationDeadlockValidateOffsetRoutes { get; set; } = false;

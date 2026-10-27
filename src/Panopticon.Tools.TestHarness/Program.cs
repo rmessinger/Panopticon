@@ -214,6 +214,8 @@ public static class Program
         ParseOptionalString(args, "--n6-cases", value => config.NavigationDeadlockCaseFilter = value);
         ParseOptionalInt(args, "--n6-budget", value => config.NavigationDeadlockFrameBudget = value);
         ParseOptionalInt(args, "--n6-seed", value => config.NavigationDeadlockSeed = value);
+        ParseOptionalString(args, "--n6-capture-dir", value => config.NavigationDeadlockCaptureDirectory = value);
+        ParseOptionalInt(args, "--n6-capture-stride", value => config.NavigationDeadlockCaptureStride = value);
         ParseOptionalString(args, "--n6-report", value => config.NavigationDeadlockReportPath = value);
 
         Run(config, reporter);
