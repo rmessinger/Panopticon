@@ -1385,7 +1385,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
 - [ ] G11 Terrain impact decals (persistent scorch marks from FX, logic modules and map objects,
       drawn as a terrain overlay; design in the
       [deep dive](deep-dives/g11-terrain-impact-decals.md)).
-  - [ ] G11-1 Decal store and scorch FX execution
+  - [x] G11-1 Decal store and scorch FX execution
         ([`WI-G11-01`](agent/cards/WI-G11-01-terrain-decal-store-and-scorch-fx.md)).
     - AC: `TerrainScorch` nuggets add decals using client random only; the store applies the
       original cap and duplicate rule; every installed Generals and Zero Hour nugget parses.

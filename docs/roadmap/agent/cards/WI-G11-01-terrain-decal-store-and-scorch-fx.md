@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G11-01` |
 | Roadmap phase | [Track G · G11](../../track-g-rendering-clarity.md): Terrain impact decals |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `S` |
 | Prerequisites | `WI-G2-03` |
@@ -40,10 +40,10 @@ Give `TerrainScorch` FX nuggets a working `Execute` that records scorch decals i
 
 ## Acceptance criteria
 
-- [ ] Store tests cover eviction order, duplicate rejection, version bumps, and clear.
-- [ ] `RANDOM` resolution draws from client random only (logic random sequence unchanged in a test).
-- [ ] The data test passes for both games and the counts are recorded.
-- [ ] Standard validation passes.
+- [x] Store tests cover eviction order, duplicate rejection, version bumps, and clear.
+- [x] `RANDOM` resolution draws from client random only (logic random sequence unchanged in a test).
+- [x] The data test passes for both games and the counts are recorded.
+- [ ] Full standard validation pending group closeout; focused tests pass.
 
 ## Validation commands
 

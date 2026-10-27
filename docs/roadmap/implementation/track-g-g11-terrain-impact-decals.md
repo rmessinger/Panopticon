@@ -21,4 +21,9 @@ Source of truth: [design and diagrams](../deep-dives/g11-terrain-impact-decals.m
 
 ## Results
 
-Pending `WI-G11-01`.
+`WI-G11-01`: capped client decal store, original numeric scorch types, floating-point radius,
+and FX execution. Original duplicate rejection compares both axes and radius against
+`radius / 4`; full stores evict before that check. Store and live FX tests cover the client
+random boundary and unload cleanup. Effective parsed nugget counts: Generals 30, Zero Hour 46
+(raw archive occurrences include comments or overridden definitions). Focused tests pass with
+both installs; group-wide validation remains pending.

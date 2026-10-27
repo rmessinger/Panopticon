@@ -14,6 +14,7 @@ using Panopticon.IO;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Rendering;
+using Panopticon.Terrain.Decals;
 using Panopticon.Utilities;
 using Panopticon.Utilities.Extensions;
 using SixLabors.ImageSharp;
@@ -63,6 +64,7 @@ public sealed class Terrain : DisposableBase
     public readonly MapFile Map;
 
     public HeightMap HeightMap { get; }
+    public TerrainDecalStore Decals { get; } = new();
 
     private float _causticsIndex;
 
@@ -75,6 +77,7 @@ public sealed class Terrain : DisposableBase
     internal Terrain(MapFile mapFile, HeightMap heightMap, AssetLoadContext loadContext, RenderScene scene)
     {
         Map = mapFile;
+        AddDisposeAction(Decals.Clear);
 
         HeightMap = heightMap;
 

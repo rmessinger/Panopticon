@@ -90,6 +90,7 @@ public sealed class GraphicsSettings
 
     /// <summary>Multisample count for 3D render targets; 1 is single-sample.</summary>
     public int SampleCount { get; }
+    public int TerrainDecalLimit => 500;
 
     public AlphaTestMode AlphaTestMode { get; }
 

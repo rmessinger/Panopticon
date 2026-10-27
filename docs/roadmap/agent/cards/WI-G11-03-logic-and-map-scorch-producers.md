@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G11-03` |
 | Roadmap phase | [Track G · G11](../../track-g-rendering-clarity.md): Terrain impact decals |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `implementation` |
 | Effort | `S` |
 | Prerequisites | `WI-G11-01` |
