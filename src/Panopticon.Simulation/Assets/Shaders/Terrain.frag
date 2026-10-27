@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "ForwardPass.h"
+#include "TerrainLighting.h"
 
 layout(set = MATERIAL_CONSTANTS_RESOURCE_SET, binding = 0) uniform TerrainMaterialConstants
 {
@@ -242,29 +243,8 @@ vec3 DoCausticsRendering(vec3 textureColor, vec3 blendColor)
 
 void main()
 {
-    float nDotL = saturate(dot(in_WorldNormal, -_GlobalLightingConstantsPS.Terrain.Lights[0].Direction));
-    vec3 shadowVisibility = ShadowVisibility(
-        in_WorldPosition, 
-        in_ViewSpaceDepth, 
-        nDotL, 
-        in_WorldNormal, 
-        ivec2(gl_FragCoord.xy));
-
-    vec3 diffuseColor;
-    vec3 specularColor;
-
-    DoLighting(
-        _GlobalLightingConstantsPS.Terrain,
-        in_WorldPosition,
-        in_WorldNormal,
-        vec3(1, 1, 1),
-        vec3(1, 1, 1),
-        vec3(0, 0, 0),
-        0,
-        false,
-        shadowVisibility,
-        diffuseColor,
-        specularColor);
+    vec3 diffuseColor = GetTerrainDiffuseLighting(in_WorldPosition, in_WorldNormal,
+        in_ViewSpaceDepth, ivec2(gl_FragCoord.xy));
 
     vec3 textureColor = SampleBlendedTextures(in_UV);
 

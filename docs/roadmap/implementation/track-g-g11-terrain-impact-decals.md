@@ -54,3 +54,28 @@ Legacy headless capture inspected: all scorch cells render, conform to the hills
 below the road pass. Artifact: `~/log/g11-terrain-decals/legacy-v1-5c46e46e957d4b4e9ef90066276827e2/`.
 Windowed verification and external sharing remain pending: the shared viewer filesystem is not
 mounted on this Mac and no desktop browser is connected. Group-wide golden validation follows.
+
+`WI-G11-04`: Enhanced selects terrain lighting and a 2000-decal cap; Legacy retains its tint
+and 500-decal cap. Shared terrain lighting includes shadow visibility; decals also use the
+existing cloud term. Settings copies preserve both fields, the controller clamps the limit
+to 0..2000, and sampler changes rebuild live decal resource sets.
+
+The `terrain-scorch` scene is registered for both presets. Both local captures render; an
+injected zero-decal limit fails `GoldenFrameComparer` at 3.8906% differing pixels against a
+0.1% limit. Legacy card-02 versus card-04 captures differ at two pixels by one channel level,
+within the canonical tolerance. Artifacts remain under `~/log/g11-terrain-decals/`; canonical
+manifest/store entries were not changed because they are pinned to duchessa's AMD/Vulkan
+backend. Explicit building-shadow and complete flat/slope/road scene coverage still require
+reference-host review before card closeout.
+
+Validation: source solution build passes; 35 focused simulation/settings tests and 20 capture
+profile/scene-set tests pass; changed-file `dotnet format`, brace-newline scan, and diff checks
+pass. ReplaySketch native screenshot mode also succeeds on macOS; the Map panel remains
+functional (`map-panel-v1.png`). No Avalonia UI source was changed.
+
+The broader non-interactive simulation suite finished: 2520 passed, 9 failed, 8 skipped.
+Failures: missing installed `.cur`/`.bse` fixtures, WND parsing, SCB/map roundtrips,
+parking-place landing, scenario-matrix replay parsing, hijacker ownership, and the A5 benchmark
+smoke test. These are outside the changed decal paths; their baseline status has not been
+verified. Results: `~/log/g11-terrain-decals/noninteractive-results/g11-noninteractive.trx`.
+Broader validation is not clean and canonical goldens remain pending, so G11 is not complete.

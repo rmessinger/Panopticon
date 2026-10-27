@@ -409,7 +409,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
             _orderGeneratorSystem.Update(gameTime, _orderGeneratorInputHandler.KeyModifiers);
         }
 
-        Terrain?.Update(Waters, gameTime);
+        Terrain?.Update(Waters, gameTime, Game.EffectiveGraphicsSettings);
 
         ParticleSystemManager?.Update(gameTime);
 

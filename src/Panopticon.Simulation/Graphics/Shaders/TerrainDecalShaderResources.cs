@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Panopticon.Rendering;
 using Veldrid;
 
@@ -21,6 +22,12 @@ internal sealed class TerrainDecalShaderResources : ShaderSetBase
                 store.OutputDescription)));
     }
 
-    internal ResourceSet CreateMaterialResourceSet(Texture texture, Sampler sampler) =>
-        GraphicsDevice.ResourceFactory.CreateResourceSet(new ResourceSetDescription(MaterialResourceLayout, texture, sampler));
+    internal ResourceSet CreateMaterialResourceSet(Texture texture, Sampler sampler, DeviceBuffer constants) =>
+        GraphicsDevice.ResourceFactory.CreateResourceSet(new ResourceSetDescription(MaterialResourceLayout, texture, sampler, constants));
+
+    [StructLayout(LayoutKind.Sequential, Size = 16)]
+    internal struct DecalConstants
+    {
+        public int TerrainLit;
+    }
 }

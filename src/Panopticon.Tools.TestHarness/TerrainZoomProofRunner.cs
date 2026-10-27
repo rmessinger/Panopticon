@@ -48,7 +48,8 @@ public static class TerrainZoomProofRunner
                 : new MeasurementRegion(0.4, 0.7, 0.25, 0.18);
             var enhanced = GraphicsSettings.Enhanced();
             var control = GraphicsSettings.Create(enhanced.SampleCount, enhanced.AlphaTestMode, enhanced.ColourSpaceMode,
-                4, enhanced.MipLodBias, enhanced.ShadowTier, enhanced.UiMode, enhanced.RealisticProportions);
+                4, enhanced.MipLodBias, enhanced.ShadowTier, enhanced.UiMode, enhanced.RealisticProportions,
+                terrainDecalLimit: enhanced.TerrainDecalLimit, terrainDecalLighting: enhanced.TerrainDecalLighting);
             var captures = new List<CaptureEvidence>();
             foreach (var (name, settings, scale) in new[]
             {

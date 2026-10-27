@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Panopticon.Content.Loaders;
+using Panopticon.Graphics;
+using Panopticon.Graphics.Shaders;
 using Panopticon.Mathematics;
 using Panopticon.Rendering;
 
@@ -11,6 +13,7 @@ internal sealed class TerrainDecalRenderer : DisposableBase
     private readonly HeightMap _heightMap;
     private readonly TerrainDecalStore _store;
     private readonly RenderBucket _bucket;
+    private readonly ConstantBuffer<TerrainDecalShaderResources.DecalConstants> _constants;
     private readonly List<TerrainDecalRenderObject> _objects = new();
     private int _version = -1;
     private bool _dirty;
@@ -22,9 +25,18 @@ internal sealed class TerrainDecalRenderer : DisposableBase
         _heightMap = heightMap;
         _store = store;
         _bucket = scene.CreateRenderBucket("TerrainDecals", 5);
+        _constants = AddDisposable(new ConstantBuffer<TerrainDecalShaderResources.DecalConstants>(context.GraphicsDevice, "TerrainDecalConstants"));
     }
 
     internal void Invalidate() => _dirty = true;
+
+    internal void ApplyWorldSampler(Veldrid.Sampler sampler)
+    {
+        foreach (var renderObject in _objects)
+        {
+            renderObject.ApplyWorldSampler(sampler);
+        }
+    }
 
     internal void Invalidate(RectangleF bounds)
     {
@@ -39,8 +51,11 @@ internal sealed class TerrainDecalRenderer : DisposableBase
         }
     }
 
-    internal void Update()
+    internal void Update(GraphicsSettings settings)
     {
+        _store.Limit = settings.TerrainDecalLimit;
+        _constants.Value.TerrainLit = settings.TerrainDecalLighting == TerrainDecalLighting.TerrainLit ? 1 : 0;
+        _constants.Update(_context.GraphicsDevice);
         if (_version == _store.Version && !_dirty)
         {
             return;
@@ -67,7 +82,7 @@ internal sealed class TerrainDecalRenderer : DisposableBase
             var mesh = TerrainDecalMesher.Build(_heightMap, run);
             if (mesh.Indices.Length > 0)
             {
-                var renderObject = new TerrainDecalRenderObject(_context, mesh, template);
+                var renderObject = new TerrainDecalRenderObject(_context, mesh, template, _constants.Buffer);
                 _bucket.AddObject(renderObject);
                 _objects.Add(renderObject);
             }

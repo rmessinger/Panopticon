@@ -166,7 +166,7 @@ public sealed class Terrain : DisposableBase
     /// </summary>
     public void ApplyWorldSampler(Sampler worldSampler)
     {
-        _decalRenderer.Invalidate();
+        _decalRenderer.ApplyWorldSampler(worldSampler);
         if (_materialSetSources == null)
         {
             return;
@@ -749,9 +749,9 @@ public sealed class Terrain : DisposableBase
         return HeightMap.GetHeight(x, y);
     }
 
-    internal void Update(WaterSettings waterSettings, in TimeInterval time)
+    internal void Update(WaterSettings waterSettings, in TimeInterval time, GraphicsSettings settings)
     {
-        _decalRenderer.Update();
+        _decalRenderer.Update(settings);
         RadiusCursorDecals.Update(time);
 
         _materialConstantsBuffer.Value.CausticTextureIndex = waterSettings.IsRenderCaustics

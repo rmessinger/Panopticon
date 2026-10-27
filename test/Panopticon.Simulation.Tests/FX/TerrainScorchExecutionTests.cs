@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Numerics;
-using Panopticon.Logic;
 using Panopticon.FX;
+using Panopticon.Logic;
 using Panopticon.Mathematics;
 using Panopticon.Network;
 using Panopticon.Tests.Data;
@@ -41,17 +41,17 @@ public sealed class TerrainScorchExecutionTests
             var after = new uint[SageRandom.StateWordCount];
             logic.CopyState(after);
             Assert.Equal(before, after);
-            terrain.Update(game.Scene3D.Waters, default);
+            terrain.Update(game.Scene3D.Waters, default, game.EffectiveGraphicsSettings);
             var builds = terrain.DecalMeshBuildCount;
-            terrain.Update(game.Scene3D.Waters, default);
+            terrain.Update(game.Scene3D.Waters, default, game.EffectiveGraphicsSettings);
             Assert.Equal(builds, terrain.DecalMeshBuildCount);
             terrain.SetMaxHeight(new Panopticon.Logic.Object.SphereCollider(
                 new Transform(new Vector3(100, 100, 0), Quaternion.Identity), 5), 0);
-            terrain.Update(game.Scene3D.Waters, default);
+            terrain.Update(game.Scene3D.Waters, default, game.EffectiveGraphicsSettings);
             Assert.Equal(builds + 1, terrain.DecalMeshBuildCount);
             terrain.SetMaxHeight(new Panopticon.Logic.Object.SphereCollider(
                 new Transform(new Vector3(100, 900, 0), Quaternion.Identity), 5), 0);
-            terrain.Update(game.Scene3D.Waters, default);
+            terrain.Update(game.Scene3D.Waters, default, game.EffectiveGraphicsSettings);
             Assert.Equal(builds + 1, terrain.DecalMeshBuildCount);
             terrain.Dispose();
             Assert.Empty(terrain.Decals.Decals);
