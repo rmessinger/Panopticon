@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N9-02` |
 | Roadmap phase | [N9](../../track-n-pathfinding-performance.md): Destination crowding |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `source-edit` |
 | Effort | `S` |
 | Prerequisites | `WI-N9-01` |

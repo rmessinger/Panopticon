@@ -109,6 +109,7 @@ public static class NavigationDeadlockRunner
             frameBudget,
             config.NavigationDeadlockValidateOffsetRoutes,
             config.NavigationDeadlockBlockedResolution,
+            config.NavigationDeadlockDestinationSlots,
             results);
         report.WriteJson(reportPath);
         report.WriteText(Path.ChangeExtension(reportPath, ".txt"));
@@ -232,6 +233,7 @@ public static class NavigationDeadlockRunner
         navigation.Options.AsyncOrderPaths = setup.AsyncOrderPaths;
         navigation.Options.ValidateOffsetRoutes = config.NavigationDeadlockValidateOffsetRoutes;
         navigation.Options.BlockedUnitResolution = config.NavigationDeadlockBlockedResolution;
+        navigation.Options.DestinationSlots = config.NavigationDeadlockDestinationSlots;
 
         // Structures mark their grid cells over the first ticks; orders are deferred until the
         // furniture settles so paths and region labels see the walls.

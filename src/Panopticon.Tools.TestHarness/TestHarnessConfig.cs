@@ -434,4 +434,16 @@ public sealed class TestHarnessConfig
     /// <summary>WI-N8-01: resolve blocked units with bounded local repaths (default false).</summary>
     [HarnessParameter("NavigationDeadlock", "NavigationDeadlockBlockedResolution.", nameof(BuiltInScenario.NavigationDeadlock))]
     public bool NavigationDeadlockBlockedResolution { get; set; } = false;
+
+    /// <summary>WI-N9-01: spread selection goals into destination slots (default false).</summary>
+    [HarnessParameter("PathfindingLoad", "PathfindingLoadDestinationSlots.", nameof(BuiltInScenario.PathfindingLoad))]
+    public bool PathfindingLoadDestinationSlots { get; set; } = false;
+
+    /// <summary>WI-N9-01: spread selection goals into destination slots (default false).</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeDestinationSlots.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
+    public bool MassBattleCapacityProbeDestinationSlots { get; set; } = false;
+
+    /// <summary>WI-N9-01: spread selection goals into destination slots (default false).</summary>
+    [HarnessParameter("NavigationDeadlock", "NavigationDeadlockDestinationSlots.", nameof(BuiltInScenario.NavigationDeadlock))]
+    public bool NavigationDeadlockDestinationSlots { get; set; } = false;
 }

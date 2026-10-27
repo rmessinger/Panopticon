@@ -38,6 +38,7 @@ public sealed record NavigationDeadlockReport(
     int FrameBudget,
     bool ValidateOffsetRoutes,
     bool BlockedResolution,
+    bool DestinationSlots,
     IReadOnlyList<NavigationDeadlockCaseResult> Cases)
 {
     public const int CurrentSchemaVersion = 1;

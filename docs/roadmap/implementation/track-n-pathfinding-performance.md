@@ -398,7 +398,7 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 | [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Done |
 | [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Done |
 | [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Done |
-| [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Ready |
+| [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Done |
 | [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Blocked |
 | [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Blocked |
 
@@ -600,6 +600,33 @@ falls through to the local repath instead of looping. One sidestep per blocker p
 - Option off changes nothing.
 
 Artifacts: `/tmp/opencode/n8-02/`, logs `~/log/n8-02/`.
+
+### WI-N9-01 results (2026-10-26, Release, seed 1)
+
+Destination slots (`NavigationOptions.DestinationSlots`, default off) give squad-less
+selections per-unit goals: `DestinationSlots.Assign` packs rings outward from the order point
+by footprint radius (ring step from the largest radius, 16-cell bound from
+`DestinationSlotCells` since Generals parses `MaxCellsAdjustDestination` as 0), passable cells
+in the destination's region, deterministic by distance then object id. Squads keep formation
+offsets either way; past the bound or off-region the shared point remains.
+
+- Install-free tests (synthetic 16x16): slots are unique, passable, in-region, packed outward
+  in non-decreasing distance, deterministic across input orderings, fall back past the bound,
+  and `MoveUnits` spreads a squad-less selection while the option off keeps the shared point
+  (5/5).
+- NavigationDeadlock with the option on (alpine assault, budget 3600): crowd-goal-100
+  4/100 settled (baseline 3/100). The gain is marginal by geometry: 100 Crusader footprints
+  cannot pack inside a 16-cell bound (ring capacity at 50-unit spacing is ~38 tanks), so most
+  of the crowd still presses on the packed disk. The blocked records drop from 99 to 98 with 2
+  unattributed crowd-waits. Other cases are untouched by slots alone (head-on 0/2, corridor
+  0/40 with 7 cycles, queue 0/10: this run has only the slots option on).
+- PathfindingLoad with the option on (deepdivide): searches per order unchanged (squadless
+  rows stay at one unit request per unit, army-AI rows at squad leaders; the N2 bound holds
+  trivially). Squadless-1000 order-tick span 601.13 ms vs 536.24 baseline (+12 percent,
+  different goal cells); armyai-squads-1000 42.84 vs 41.74 ms (noise).
+- Option off changes nothing.
+
+Artifacts: `/tmp/opencode/n9-01/{nd,pl}-slots.json`, logs `~/log/n9-01/`.
 
 ## Confined passage queueing (N11-N14)
 

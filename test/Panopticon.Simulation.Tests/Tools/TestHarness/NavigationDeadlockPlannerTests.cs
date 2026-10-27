@@ -87,6 +87,7 @@ public class NavigationDeadlockPlannerTests
             FrameBudget: 3600,
             ValidateOffsetRoutes: false,
             BlockedResolution: false,
+            DestinationSlots: false,
             Cases: [result]);
 
         var path = Path.Combine(Path.GetTempPath(), $"navigation-deadlock-{Guid.NewGuid():N}.json");

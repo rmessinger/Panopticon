@@ -727,9 +727,40 @@ public sealed class OrderProcessor
             return;
         }
 
+        if (navigation != null && navigation.Options.DestinationSlots && remainder.Count > 1)
+        {
+            // WI-N9-01: squad-less selections get per-unit goal slots instead of one point.
+            IssueSlottedTargets(navigation, remainder, targetPosition);
+            return;
+        }
+
         foreach (var unit in remainder)
         {
             unit.AIUpdate?.SetTargetPoint(targetPosition, asyncEligible: true);
+        }
+    }
+
+    /// <summary>
+    /// Card WI-N9-01: per-unit goal slots for squad-less selections while
+    /// <see cref="NavigationOptions.DestinationSlots"/> is on. The bound prefers
+    /// <see cref="GameData.MaxCellsAdjustDestination"/> when the running game parses a nonzero
+    /// value (Bfme2 and later); Generals-era data leaves it 0, so
+    /// <see cref="NavigationOptions.DestinationSlotCells"/> carries the bound.
+    /// </summary>
+    private static void IssueSlottedTargets(
+        NavigationClass navigation,
+        IReadOnlyCollection<GameObject> units,
+        Vector3 targetPosition)
+    {
+        var maxCells = units.First().GameEngine.Game?.AssetStore?.GameData?.Current?.MaxCellsAdjustDestination is > 0
+            ? units.First().GameEngine.Game.AssetStore.GameData.Current.MaxCellsAdjustDestination
+            : navigation.Options.DestinationSlotCells;
+
+        var movable = units.Where(unit => unit.AIUpdate != null).ToList();
+        var slots = DestinationSlots.Assign(navigation, targetPosition, movable, maxCells);
+        for (var i = 0; i < movable.Count; i++)
+        {
+            movable[i].AIUpdate!.SetTargetPoint(slots[i], asyncEligible: true);
         }
     }
 
@@ -777,6 +808,13 @@ public sealed class OrderProcessor
             {
                 singles.Add(bucket[0]);
             }
+        }
+
+        if (navigation.Options.DestinationSlots && singles.Count > 1)
+        {
+            // WI-N9-01: cluster members that paid for their own path also get goal slots.
+            IssueSlottedTargets(navigation, singles, targetPosition);
+            return;
         }
 
         foreach (var unit in singles)

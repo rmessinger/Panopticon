@@ -165,6 +165,8 @@ public static class MassBattleCapacityProbeRunner
             game.Scene3D.Navigation.Options.ValidateOffsetRoutes = config.MassBattleCapacityProbeValidateOffsetRoutes;
             // WI-N8-01 knob: blocked-unit resolution via bounded local repaths.
             game.Scene3D.Navigation.Options.BlockedUnitResolution = config.MassBattleCapacityProbeBlockedResolution;
+            // WI-N9-01 knob: spread selection goals into destination slots.
+            game.Scene3D.Navigation.Options.DestinationSlots = config.MassBattleCapacityProbeDestinationSlots;
 
             FrameDeployment(game, profile);
 

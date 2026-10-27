@@ -107,4 +107,21 @@ public sealed class NavigationOptions
     /// crowded unit may stop and still count as settled.
     /// </summary>
     public float CrowdArrivalRadius { get; set; } = DefaultCrowdArrivalRadius;
+
+    /// <summary>
+    /// When true, squad-less and cluster selections receive per-unit goal slots packed outward
+    /// from the order point (WI-N9-01) instead of one shared destination. Squads keep their
+    /// formation offsets either way. Default false.
+    /// </summary>
+    public bool DestinationSlots { get; set; }
+
+    /// <summary>
+    /// Default Chebyshev bound in cells for the WI-N9-01 slot search.
+    /// <see cref="GameData.MaxCellsAdjustDestination"/> takes precedence when a game parses a
+    /// nonzero value; Generals-era data leaves it 0.
+    /// </summary>
+    public const int DefaultDestinationSlotCells = 16;
+
+    /// <summary>WI-N9-01: Chebyshev bound in cells for the outward slot search.</summary>
+    public int DestinationSlotCells { get; set; } = DefaultDestinationSlotCells;
 }
