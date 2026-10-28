@@ -400,7 +400,7 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 | [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Done |
 | [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Done |
 | [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Done |
-| [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Ready |
+| [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Done |
 
 Delivery: stacked group PRs into `main` via the `gh stack` extension (superseded the staging model Oct 2026). Suggested groups:
 1 = N6, 2 = N7, 3 = N8, 4 = N9, 5 = N10. Groups 2 to 4 may stack in any order after group 1.
@@ -658,6 +658,68 @@ shares the radius and settles more willingly as a result.
 - Option off changes nothing.
 
 Artifacts: `/tmp/opencode/n9-02/`, logs `~/log/n9-02/`.
+
+### WI-N10-01 verification (2026-10-26, Release, seeds 1-3)
+
+Twenty-four runs: every `NavigationDeadlock` case and the M4 army-AI probe at seeds 1, 2, and 3
+with all Track N options on, then each of `ValidateOffsetRoutes`, `BlockedUnitResolution`, and
+`DestinationSlots` off in turn (`AsyncOrderPaths` on throughout). The NavigationDeadlock cases
+are seed-stable (identical numbers at all three seeds; deterministic by construction), so case
+numbers below cite one seed; M4 numbers vary by seed and cite ranges. The M4 idle-stall check
+fails in every run (exit 5), the documented pre-existing base finding.
+
+Deep dive section 3 verdicts:
+
+| Target | Verdict | Numbers (all options on) |
+| --- | --- | --- |
+| Every deadlock case settles in budget | Missed | head-on-pair 2/2 at 367 and async-no-route 6/6 at 92-93 settle; corridor-opposed-20 1/40, crowd-goal-100 17/100, queue-behind-idle 5/10, squad-offset-retrace 0/8 do not |
+| M4 zero-progress units none over 600 frames, 3 seeds | Missed | max frames without progress 3401-4040 per side per seed; stalled at end 355-956 per side |
+| Wait-for cycles 0 at case end | Missed | 4 of 6 cases read 0 (head-on, queue, async, squad-offset); corridor 2, crowd 8 |
+| No-route settle latency | Met | pocket failure settles 6/6 at frames 92-93 in every config and seed; the drain delivers the failure within 4 frames of the order, inside the 60-frame watchdog bound |
+| Resolution cost keeps N5 budgets | Met | M4 `system.path.spanMs` medians 0.537-1.644 ms, `tick.wallMs` 17-21 ms, async 0 deadline misses in all 12 runs; the (2W+1)^2 repath bound is pinned by the N8 tests |
+
+Residual causes for the misses: corridor-opposed-20 pushes 40 tanks through one 120-unit gap
+(capacity, not liveness); crowd-goal-100's interior holds mutually blocked ordered units whose
+goals are other units' positions (arrival semantics terminate 17 and convert 3 to
+`CrowdArrived`, but the pile cannot drain through the ring); queue-behind-idle settles the
+column head through give-way while the tail's mutually blocked units settle only partially
+(5/10 with slots, 9/10 without); squad-offset-retrace with validation on reroutes all followers
+onto the leader route, where they bunch at the wall end (0/8; without validation 4/8). M4's
+stalled population is combat-locked attack-move clusters: attack-move pauses freeze the
+progress counter while the units fire, and mass mutual blocking of ordered units is not a
+path-liveness failure.
+
+Option isolation (NavigationDeadlock, seed-stable; M4 3-seed ranges):
+
+- BlockedUnitResolution off regresses every case to the N6 baseline: head-on 0/2 with 1 cycle,
+  queue 0/10, corridor 0/40 with 7 cycles, crowd 4/100, no repaths anywhere; M4 cycles rise to
+  40-54 (16-31 on) and stalled units reach 983. It is the load-bearing option.
+- DestinationSlots off costs the corridor its single settler (0/40) and crowd one settle
+  (16/100), but improves queue-behind-idle to 9/10 (slotted columns interleave worse behind
+  the gap); M4 deltas stay inside seed noise. Mixed value.
+- ValidateOffsetRoutes off changes only squad-offset-retrace among the cases: 4/8 settled with
+  22 repaths versus 0/8 with 231 (validation packs followers onto the leader route and they
+  bunch at the wall end); M4 cycles trend slightly better with it on (16-31 vs 22-34). The
+  N7-02 retrace-point elimination stands.
+
+Default-flip recommendation for the operator:
+
+- BlockedUnitResolution: flip on. Decisive deadlock relief (head-on and queue mechanisms
+  remediated, M4 cycles halved), bounded cost (span medians under 1.7 ms, window-bound
+  repaths).
+- AsyncOrderPaths: flip on for gameplay runs. Zero deadline misses and wait frames 1/4-8
+  across all 12 probe runs since the N7 liveness work; keep off only for byte-determinism
+  baselines, where completion frames legitimately vary.
+- DestinationSlots: keep off by default. Crowd spreading gains one settle and the corridor's
+  first settler, at a measured queue regression (9/10 to 5/10) and M4 noise. Operators may
+  enable it for crowd-heavy scenarios.
+- ValidateOffsetRoutes: keep off by default. It removes impassable retraces (the N7-02 goal)
+  but collapses formation spread on cliff-hugging paths and costs squad-offset settles;
+  enable where offset retraces across obstacles are observed.
+- GroupSelectionMoves: unchanged by N6-N10 (not part of the deadlock matrix); the N5 verdict
+  (budgets met, optional) stands.
+
+Artifacts: `/tmp/opencode/n10-01/` (24 runs), logs `~/log/n10-01/`.
 
 ## Confined passage queueing (N11-N14)
 
