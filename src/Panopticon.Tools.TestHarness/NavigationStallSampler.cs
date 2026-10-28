@@ -35,6 +35,10 @@ public sealed class NavigationStallSampler
 
     public IReadOnlyList<NavigationStallRecord> Records => _worstByUnit.Values.OrderBy(record => record.UnitId).ToList();
 
+    /// <summary>Stalls in the latest sample (WI-N7-01): the live set, without worst-case
+    /// retention, so a unit that settled stops appearing.</summary>
+    public IReadOnlyList<NavigationStallRecord> CurrentStalls => _current;
+
     public IReadOnlyList<NavigationWaitForCycle> WaitForCycles => _cycles;
 
     public void Sample(uint frame, IEnumerable<GameObject> units)

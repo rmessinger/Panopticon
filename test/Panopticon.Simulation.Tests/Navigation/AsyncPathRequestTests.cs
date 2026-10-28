@@ -413,6 +413,91 @@ public class AsyncPathRequestTests : MockedGameTest
         Assert.Equal(end, unit.AIUpdate.TargetPoints[^1]);
     }
 
+    [Fact, Trait("Category", "Roadmap")]
+    public void WorkerFailure_CompletesFailedAndSettlesTheUnit()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+        Assert.NotNull(unit.AIUpdate);
+
+        navigation.ForceNextWorkerFailure();
+        unit.AIUpdate.SetTargetPoint(end, asyncEligible: true);
+        // Wait on the applied count: Outstanding already drops to zero when the worker
+        // completes, but the Failed result only settles the unit at the drain.
+        DrainUntil(navigation, () => navigation.AsyncPathApplied == 1);
+
+        // WI-N7-01: the exception completes the request as Failed (applied, not cancelled)
+        // and the callback settles the unit as NoRoute.
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+        Assert.Empty(unit.AIUpdate.TargetPoints);
+        Assert.Equal(NavigationStallReason.NoRoute, unit.AIUpdate.Progress.Reason);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void PendingTimeout_CancelsAndFallsBackToOneSynchronousSearch()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        navigation.Options.PendingPathTimeoutFrames = 2;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+        Assert.NotNull(unit.AIUpdate);
+
+        // Park the worker so the request stays unresolved while the drain ages it.
+        navigation.BlockAsyncWorker();
+        unit.AIUpdate.RequestPathAsync(end);
+        for (var i = 0; i < 3; i++)
+        {
+            navigation.DrainPathCompletions();
+        }
+
+        var before = NavigationClass.PathRequestCount;
+        unit.AIUpdate.CheckPendingPathTimeout();
+
+        // One synchronous fallback search lands the route; the pending handle is gone.
+        Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+        Assert.True(unit.AIUpdate.TargetPoints.Count > 0);
+        Assert.Equal(end, unit.AIUpdate.TargetPoints[^1]);
+
+        // The fallback fires once; a second check issues nothing further.
+        unit.AIUpdate.CheckPendingPathTimeout();
+        Assert.Equal(before + 1, NavigationClass.PathRequestCount);
+
+        navigation.ReleaseAsyncWorker();
+        DrainUntil(navigation, () => navigation.AsyncPathOutstanding == 0);
+        Assert.Equal(end, unit.AIUpdate.TargetPoints[^1]);
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void PendingTimeout_EmptyFallbackSettlesNoRoute()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        navigation.Options.PendingPathTimeoutFrames = 2;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var unit = NewUnit(start, game: game);
+        Assert.NotNull(unit.AIUpdate);
+
+        var offMap = end + new Vector3(1_000_000, 0, 0);
+        navigation.BlockAsyncWorker();
+        unit.AIUpdate.RequestPathAsync(offMap);
+        for (var i = 0; i < 3; i++)
+        {
+            navigation.DrainPathCompletions();
+        }
+
+        unit.AIUpdate.CheckPendingPathTimeout();
+
+        // WI-N7-01: the fallback search has no route either; the unit settles.
+        Assert.Empty(unit.AIUpdate.TargetPoints);
+        Assert.Equal(NavigationStallReason.NoRoute, unit.AIUpdate.Progress.Reason);
+
+        navigation.ReleaseAsyncWorker();
+        DrainUntil(navigation, () => navigation.AsyncPathOutstanding == 0);
+    }
+
     /// <summary>Drains in a loop until <paramref name="done"/> holds; the queue applies
     /// completions only inside <see cref="NavigationClass.DrainPathCompletions"/>.</summary>
     private static void DrainUntil(NavigationClass navigation, Func<bool> done)

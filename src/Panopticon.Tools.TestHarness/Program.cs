@@ -181,6 +181,24 @@ public static class Program
             config.MassBattleCapacityProbeAsyncOrderPaths = bool.Parse(probeAsyncOrderPaths);
         }
 
+        var n0ValidateOffsets = GetArgValue(args, "--n0-validate-offsets");
+        if (!string.IsNullOrEmpty(n0ValidateOffsets))
+        {
+            config.PathfindingLoadValidateOffsetRoutes = bool.Parse(n0ValidateOffsets);
+        }
+
+        var probeValidateOffsets = GetArgValue(args, "--probe-validate-offsets");
+        if (!string.IsNullOrEmpty(probeValidateOffsets))
+        {
+            config.MassBattleCapacityProbeValidateOffsetRoutes = bool.Parse(probeValidateOffsets);
+        }
+
+        var n6ValidateOffsets = GetArgValue(args, "--n6-validate-offsets");
+        if (!string.IsNullOrEmpty(n6ValidateOffsets))
+        {
+            config.NavigationDeadlockValidateOffsetRoutes = bool.Parse(n6ValidateOffsets);
+        }
+
         ParseOptionalString(args, "--n6-cases", value => config.NavigationDeadlockCaseFilter = value);
         ParseOptionalInt(args, "--n6-budget", value => config.NavigationDeadlockFrameBudget = value);
         ParseOptionalInt(args, "--n6-seed", value => config.NavigationDeadlockSeed = value);

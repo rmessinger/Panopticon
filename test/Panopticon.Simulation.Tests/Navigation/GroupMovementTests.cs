@@ -404,6 +404,57 @@ public class GroupMovementTests : MockedGameTest
         Assert.Equal(destination, ai.TargetPoints[^1]);
     }
 
+    [Fact, Trait("Category", "Roadmap")]
+    public void SquadMove_AsyncLeaderFailureSettlesEveryMember()
+    {
+        var (navigation, _, start, end) = CreateNavigation();
+        navigation.Options.AsyncOrderPaths = true;
+        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var followers = new List<GameObject>
+        {
+            NewUnit(start),
+            NewUnit(start + new Vector3(0, -1, 0)),
+        };
+        var squad = new List<GameObject>(followers) { leader };
+
+        navigation.ForceNextWorkerFailure();
+        GroupMovement.MoveSquad(navigation, squad, end);
+
+        DrainAsync(navigation);
+
+        // WI-N7-01: the worker death completes the leader request as Failed and the callback
+        // settles every member as NoRoute; no fallback search is issued.
+        Assert.Equal(1, navigation.AsyncPathSubmitted);
+        Assert.Equal(1, navigation.AsyncPathApplied);
+        Assert.Equal(0, navigation.AsyncPathOutstanding);
+        var stats = navigation.Statistics;
+        Assert.Equal(0, stats.FallbackFollowers);
+        foreach (var member in squad)
+        {
+            Assert.Empty(member.AIUpdate.TargetPoints);
+            Assert.Equal(NavigationStallReason.NoRoute, member.AIUpdate.Progress.Reason);
+        }
+    }
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void SquadMove_SyncEmptyLeaderPathSettlesEveryMember()
+    {
+        var (navigation, _, start, _) = CreateNavigation();
+        var offMap = start + new Vector3(1_000_000, 0, 0);
+        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var follower = NewUnit(start);
+        var squad = new List<GameObject> { leader, follower };
+
+        GroupMovement.MoveSquad(navigation, squad, offMap);
+
+        // WI-N7-01: a leader search that produces no route settles every member.
+        foreach (var member in squad)
+        {
+            Assert.Empty(member.AIUpdate.TargetPoints);
+            Assert.Equal(NavigationStallReason.NoRoute, member.AIUpdate.Progress.Reason);
+        }
+    }
+
     /// <summary>Pumps the async queue until every submitted request is terminal. Uses a real
     /// wall-clock deadline: the Stopwatch-tick deadlines of the shared helpers miscompute on
     /// hosts where Stopwatch.Frequency differs from TimeSpan ticks per second.</summary>

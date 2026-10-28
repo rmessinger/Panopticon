@@ -22,6 +22,19 @@ public enum PathRequestState
 }
 
 /// <summary>
+/// Terminal outcome of a request as seen through a <see cref="PathRequestHandle"/> (WI-N7-01).
+/// <see cref="PathRequestOutcome.Failed"/> is a worker exception surfaced as a completion with
+/// no waypoints, so the drain applies it and the callback settles the requester.
+/// </summary>
+public enum PathRequestOutcome
+{
+    Pending,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
+/// <summary>
 /// Card WI-B4-05: bounded async pathfinding beside the synchronous <see cref="Navigation"/>
 /// API. A single background worker computes requests in submission order against
 /// submission-time passability snapshots; the logic thread applies completions in the same
@@ -301,6 +314,14 @@ public sealed class PathRequestQueue
                 request.State = PathRequestState.Computing;
             }
 
+            ManualResetEventSlim? block;
+            lock (_gate)
+            {
+                block = _workerBlock;
+            }
+
+            block?.Wait();
+
             Compute(request);
         }
     }
@@ -317,6 +338,26 @@ public sealed class PathRequestQueue
     private volatile bool _failNextCompute;
 
     internal void ForceNextWorkerFailure() => _failNextCompute = true;
+
+    // WI-N7-01: test seam that parks the worker before its next Compute, so a request can be
+    // held unresolved and aged past the pending-path watchdog deterministically.
+    private ManualResetEventSlim? _workerBlock;
+
+    internal void BlockWorker()
+    {
+        lock (_gate)
+        {
+            _workerBlock ??= new ManualResetEventSlim(false);
+        }
+    }
+
+    internal void ReleaseWorker()
+    {
+        lock (_gate)
+        {
+            _workerBlock?.Set();
+        }
+    }
 
     private void Compute(PathRequest request)
     {
@@ -385,12 +426,27 @@ public sealed class PathRequestQueue
 
             lock (_gate)
             {
-                if (request.State != PathRequestState.Cancelled)
+                if (request.CancelRequested || request.Requester?.IsDestroyed == true
+                    || request.State == PathRequestState.Cancelled)
                 {
-                    _cancelledCount++;
+                    if (request.State != PathRequestState.Cancelled)
+                    {
+                        _cancelledCount++;
+                    }
+
+                    request.State = PathRequestState.Cancelled;
+
+                    return;
                 }
 
-                request.State = PathRequestState.Cancelled;
+                // WI-N7-01: a worker exception completes the request as Failed (an empty
+                // completion with a Failed outcome) so the drain applies it in order and the
+                // callback settles the requester instead of leaving it awaiting forever.
+                request.Failed = true;
+                request.Waypoints = [];
+                request.EndIsPassable = false;
+                request.State = PathRequestState.Completed;
+                _completedCount++;
             }
         }
     }
@@ -400,6 +456,7 @@ public sealed class PathRequestQueue
         lock (_gate)
         {
             _disposed = true;
+            _workerBlock?.Set();
             Monitor.Pulse(_gate);
         }
     }

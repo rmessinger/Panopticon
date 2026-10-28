@@ -1928,10 +1928,10 @@ Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
     revisions are recorded.
 
 ### N7: Path liveness
-- [ ] N7-1 Async and squad path liveness. (`WI-N7-01`)
+- [x] N7-1 Async and squad path liveness. (`WI-N7-01`)
   - AC: failed, thrown, and stale requests settle the unit or fall back once; failed squad leaders
     settle members; `async-no-route` ends with 0 units in `AwaitingPath`.
-- [ ] N7-2 Offset route validation behind `ValidateOffsetRoutes`. (`WI-N7-02`)
+- [x] N7-2 Offset route validation behind `ValidateOffsetRoutes`. (`WI-N7-02`)
   - AC: option off changes nothing; option on reads 0 `impassableRetracePoints` in every case.
 
 ### N8: Blocked-unit resolution

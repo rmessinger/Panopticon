@@ -44,6 +44,38 @@ public sealed class PathRequestHandle
         }
     }
 
+    /// <summary>WI-N7-01: terminal outcome of this request; Failed means the worker died
+    /// computing it and the completion carries no waypoints.</summary>
+    public PathRequestOutcome Outcome
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _request.State switch
+                {
+                    PathRequestState.Completed or PathRequestState.Applied
+                        => _request.Failed ? PathRequestOutcome.Failed : PathRequestOutcome.Completed,
+                    PathRequestState.Cancelled => PathRequestOutcome.Cancelled,
+                    _ => PathRequestOutcome.Pending,
+                };
+            }
+        }
+    }
+
+    /// <summary>WI-N7-01: ticks this request has spent unresolved in the queue; aged by the
+    /// drain. Input for the pending-path watchdog.</summary>
+    public int WaitedFrames
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _request.WaitedFrames;
+            }
+        }
+    }
+
     /// <summary>Returns the computed waypoints once the request completed or was applied.</summary>
     public bool TryGetResult(out IList<Vector3> waypoints, out bool endIsPassable)
     {

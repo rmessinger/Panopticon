@@ -87,6 +87,7 @@ public static class NavigationDeadlockRunner
             mapPath,
             seed,
             frameBudget,
+            config.NavigationDeadlockValidateOffsetRoutes,
             results);
         report.WriteJson(reportPath);
         report.WriteText(Path.ChangeExtension(reportPath, ".txt"));
@@ -117,8 +118,9 @@ public static class NavigationDeadlockRunner
         public Action? AfterSettle { get; set; }
 
         // WI-N6-02: async-no-route injects its worker failure only after the pocket rejects
-        // have applied, because a failed request at the queue head also blocks every request
-        // behind it (observed: all followers strand awaiting). Frame counts from IssueOrders.
+        // have applied, keeping the pocket requests' completions attributable (pre-N7 a
+        // failed request at the queue head also blocked every request behind it; failures
+        // now complete as Failed and advance the queue). Frame counts from IssueOrders.
         public int? LateInjectFrame { get; set; }
 
         public Action? LateInject { get; set; }
@@ -187,6 +189,7 @@ public static class NavigationDeadlockRunner
         }
 
         navigation.Options.AsyncOrderPaths = setup.AsyncOrderPaths;
+        navigation.Options.ValidateOffsetRoutes = config.NavigationDeadlockValidateOffsetRoutes;
 
         // Structures mark their grid cells over the first ticks; orders are deferred until the
         // furniture settles so paths and region labels see the walls.
@@ -202,6 +205,7 @@ public static class NavigationDeadlockRunner
         var asyncSubmittedBefore = navigation.AsyncPathSubmitted;
         var asyncAppliedBefore = navigation.AsyncPathApplied;
         var asyncCancelledBefore = navigation.AsyncPathCancelled;
+        var statsBefore = navigation.Statistics;
 
         setup.IssueOrders();
 
@@ -291,7 +295,8 @@ public static class NavigationDeadlockRunner
 
         var records = sampler.Records;
         var cycles = sampler.WaitForCycles;
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints);
+        var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -308,6 +313,7 @@ public static class NavigationDeadlockRunner
             navigation.AsyncPathApplied - asyncAppliedBefore,
             navigation.AsyncPathCancelled - asyncCancelledBefore,
             maxImpassableRetracePoints,
+            reroutedFollowers,
             confirmed,
             note,
             [.. records],
@@ -564,7 +570,10 @@ public static class NavigationDeadlockRunner
         IReadOnlyList<NavigationStallRecord> records,
         IReadOnlyList<NavigationWaitForCycle> cycles,
         int settledUnits,
-        int impassableRetracePoints)
+        int impassableRetracePoints,
+        IReadOnlyList<NavigationStallRecord> currentStalls,
+        int reroutedFollowers,
+        bool validateOffsetRoutes)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -602,13 +611,24 @@ public static class NavigationDeadlockRunner
             case NavigationDeadlockCasePlanner.AsyncNoRoute:
                 {
                     var noRoute = records.Count(record => record.Reason == nameof(NavigationStallReason.NoRoute));
-                    var awaiting = records.Count(record => record.Reason == nameof(NavigationStallReason.AwaitingPath));
-                    return (noRoute > 0 && awaiting > 0,
-                        $"{noRoute} NoRoute records, {awaiting} awaiting records from the injected failure, {settledUnits}/{setup.OrderedUnits.Count} settled. {setup.SetupNote}");
+                    var stillAwaiting = currentStalls.Count(record => record.Reason == nameof(NavigationStallReason.AwaitingPath));
+                    // WI-N7-01: worker failures complete as Failed and settle the requester, so
+                    // liveness holds when the pocket settled NoRoute and nothing still awaits.
+                    return (noRoute > 0 && stillAwaiting == 0,
+                        $"{noRoute} NoRoute records, {stillAwaiting} units still awaiting at end (WI-N7-01 expects 0; pre-N7 the victim awaited the whole budget), {settledUnits}/{setup.OrderedUnits.Count} settled. {setup.SetupNote}");
                 }
 
             case NavigationDeadlockCasePlanner.SquadOffsetRetrace:
                 {
+                    // WI-N7-02: with offset validation on the mechanism is remediated instead
+                    // of reproduced: followers reroute onto the leader route and no retrace
+                    // point lands on an impassable cell.
+                    if (validateOffsetRoutes)
+                    {
+                        return (reroutedFollowers > 0 && impassableRetracePoints == 0,
+                            $"{reroutedFollowers} followers rerouted onto the leader route, {impassableRetracePoints} impassable retrace points (WI-N7-02), {settledUnits}/{setup.OrderedUnits.Count} settled.");
+                    }
+
                     return (impassableRetracePoints > 0,
                         $"{impassableRetracePoints} impassable retrace points observed, {settledUnits}/{setup.OrderedUnits.Count} settled.");
                 }

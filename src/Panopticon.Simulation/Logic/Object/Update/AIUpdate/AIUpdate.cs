@@ -231,15 +231,14 @@ public class AIUpdate : UpdateModule
 
             var start = GameObject.Translation;
             var path = GameEngine.Navigation.CalculatePath(start, targetPoint, out var endIsPassable, origin);
-            if (path.Count > 0)
+            if (path.Count == 0)
             {
-                path.RemoveAt(0);
+                // WI-N7-01: the order produced no route; the unit settles instead of holding.
+                SettleNoRoute();
+                return;
             }
-            else
-            {
-                // WI-N6-01: the order produced no route; recorded for stall attribution.
-                Progress.RecordNoRoute();
-            }
+
+            path.RemoveAt(0);
 
             TargetPoints.AddRange(path);
             if (TargetPoints.Count > 0 && endIsPassable)
@@ -292,11 +291,30 @@ public class AIUpdate : UpdateModule
     private void OnPendingPathCompleted(PathRequestHandle handle)
     {
         _pendingPathHandle = null;
+
+        // WI-N7-01: a worker death surfaces as a Failed completion; the unit settles.
+        if (handle.Outcome == PathRequestOutcome.Failed)
+        {
+            SettleNoRoute();
+            return;
+        }
+
         if (!handle.TryGetResult(out var waypoints, out var endIsPassable))
         {
             return;
         }
 
+        if (waypoints.Count == 0)
+        {
+            SettleNoRoute();
+            return;
+        }
+
+        ApplyRoute(waypoints, endIsPassable, _pendingPathTarget);
+    }
+
+    private void ApplyRoute(IList<Vector3> waypoints, bool endIsPassable, Vector3 target)
+    {
         TargetPoints.Clear();
         for (var i = 1; i < waypoints.Count; i++)
         {
@@ -305,7 +323,7 @@ public class AIUpdate : UpdateModule
 
         if (TargetPoints.Count > 0 && endIsPassable)
         {
-            TargetPoints[^1] = _pendingPathTarget;
+            TargetPoints[^1] = target;
         }
 
         // WI-N6-01: an empty completion is a failed order; a route resumes progress tracking.
@@ -319,6 +337,53 @@ public class AIUpdate : UpdateModule
         }
 
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+    }
+
+    /// <summary>
+    /// WI-N7-01: terminal no-route state. The order can produce no route (failed search,
+    /// worker death, empty async completion), so the route and moving state are cleared and the
+    /// stall reason records NoRoute for attribution.
+    /// </summary>
+    internal void SettleNoRoute()
+    {
+        TargetPoints.Clear();
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+        GameObject.Speed = 0;
+        Progress.RecordNoRoute();
+    }
+
+    /// <summary>
+    /// WI-N7-01: pending-path watchdog. A pending async order path older than
+    /// <see cref="NavigationOptions.PendingPathTimeoutFrames"/> cancels and falls back to one
+    /// synchronous search; a failed fallback settles the unit. Called from <see cref="Update"/>
+    /// each tick while a handle is pending.
+    /// </summary>
+    internal void CheckPendingPathTimeout()
+    {
+        if (_pendingPathHandle == null)
+        {
+            return;
+        }
+
+        var navigation = GameEngine.Navigation;
+        if (navigation == null
+            || _pendingPathHandle.WaitedFrames <= navigation.Options.PendingPathTimeoutFrames)
+        {
+            return;
+        }
+
+        var target = _pendingPathTarget;
+        CancelPendingPath();
+
+        var path = navigation.CalculatePath(
+            GameObject.Translation, target, out var endIsPassable, PathRequestOrigin.Unit);
+        if (path.Count == 0)
+        {
+            SettleNoRoute();
+            return;
+        }
+
+        ApplyRoute(path, endIsPassable, target);
     }
 
     private void CancelPendingPath()
@@ -532,6 +597,7 @@ public class AIUpdate : UpdateModule
         if (_pendingPathHandle != null)
         {
             Progress.RecordAwaitingPath();
+            CheckPendingPathTimeout();
         }
 
         StateMachine.Update();

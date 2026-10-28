@@ -122,6 +122,8 @@ public static class PathfindingLoadRunner
             navigation.Options.SelectionClusterCells = config.PathfindingLoadClusterCells;
             // WI-N4-02 knob: order-driven paths submit to the async worker queue.
             navigation.Options.AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths;
+            // WI-N7-02 knob: squad offset retrace validation.
+            navigation.Options.ValidateOffsetRoutes = config.PathfindingLoadValidateOffsetRoutes;
             var zoneB = profile.Sides[1].Zone;
             var crossMapDestination = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
 
@@ -263,6 +265,7 @@ public static class PathfindingLoadRunner
                 GroupMoves = config.PathfindingLoadGroupMoves,
                 ClusterCells = config.PathfindingLoadClusterCells,
                 AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths,
+                ValidateOffsetRoutes = config.PathfindingLoadValidateOffsetRoutes,
                 WorkerSearchMs = navigation.Statistics.WorkerSearchMs,
                 AsyncSubmitted = navigation.AsyncPathSubmitted,
                 AsyncApplied = navigation.AsyncPathApplied,
@@ -512,6 +515,7 @@ public static class PathfindingLoadRunner
             EndpointAdjustments = after.EndpointAdjustments - statsBefore.EndpointAdjustments,
             LandedFollowers = after.LandedFollowers - statsBefore.LandedFollowers,
             FallbackFollowers = after.FallbackFollowers - statsBefore.FallbackFollowers,
+            ReroutedFollowers = after.ReroutedFollowers - statsBefore.ReroutedFollowers,
             ImpassableRetracePoints = impassableRetracePoints,
             LandingRings = landingRings,
             MaxGoalNeighbourhoodRequests = maxGoalNeighbourhoodRequests,
