@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N8-02` |
 | Roadmap phase | [N8](../../track-n-pathfinding-performance.md): Blocked-unit resolution |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-N8-01` |

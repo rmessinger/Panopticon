@@ -86,6 +86,8 @@ public class AIUpdate : UpdateModule
     private ObjectId _repulsor2;
     private ObjectId _moveOutOfWay1;
     private ObjectId _moveOutOfWay2;
+    private bool _gaveWayOnce;
+    private uint _frameAtLastGiveWay;
     private LocomotorGoalType _locomotorGoalType;
     private Vector3 _locomotorGoalData;
     private WhichTurretType _turretSyncFlag;
@@ -212,6 +214,7 @@ public class AIUpdate : UpdateModule
         }
 
         Progress.Reset();
+        ResetLocalRepath();
 
         if (!GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft) && targetPoint != GameObject.Translation)
         {
@@ -260,6 +263,12 @@ public class AIUpdate : UpdateModule
     private PathRequestHandle _pendingPathHandle;
     private Vector3 _pendingPathTarget;
 
+    // WI-N8-01: blocked-unit resolver bookkeeping. Attempts reset when the unit progresses or
+    // takes a new order; at most one attempt fires per BlockedWaitFrames interval.
+    private const int NoLocalRepathAttempt = -1;
+    private int _localRepathAttempts;
+    private int _framesAtLastLocalRepathAttempt = NoLocalRepathAttempt;
+
     /// <summary>
     /// Card WI-N4-01: submits this unit's path onto the async queue. Cancels any pending request
     /// first; the drain applies the completion on the logic thread with the same post-processing
@@ -272,6 +281,7 @@ public class AIUpdate : UpdateModule
     {
         CancelPendingPath();
         Progress.Reset();
+        ResetLocalRepath();
 
         if (GameObject.Definition.KindOf == null
             || GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft)
@@ -334,6 +344,7 @@ public class AIUpdate : UpdateModule
         else
         {
             Progress.Reset();
+            ResetLocalRepath();
         }
 
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
@@ -350,6 +361,156 @@ public class AIUpdate : UpdateModule
         GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
         GameObject.Speed = 0;
         Progress.RecordNoRoute();
+    }
+
+    /// <summary>
+    /// WI-N8-01: terminal goal-crowded state. The resolver exhausted its attempts with the
+    /// goal inside the crowd-arrival radius: the route and moving state are cleared and the
+    /// stall reason records GoalCrowded for attribution.
+    /// </summary>
+    internal void SettleGoalCrowded()
+    {
+        TargetPoints.Clear();
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+        GameObject.Speed = 0;
+        Progress.RecordGoalCrowded();
+    }
+
+    /// <summary>
+    /// WI-N8-01: replaces the first <paramref name="supersededWaypoints"/> target points with
+    /// the local detour from the blocked-unit resolver; the detour rejoins the kept remainder.
+    /// </summary>
+    internal void SpliceLocalDetour(IReadOnlyList<Vector3> detour, int supersededWaypoints)
+    {
+        if (supersededWaypoints > 0)
+        {
+            TargetPoints.RemoveRange(0, supersededWaypoints);
+        }
+
+        TargetPoints.InsertRange(0, detour);
+        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+    }
+
+    /// <summary>
+    /// Card WI-N8-02: asks this idle, arrived, or order-less unit to step out of
+    /// <paramref name="requester"/>'s way. Friendly requesters only, at most one sidestep per
+    /// BlockedWaitFrames window; the sidestep is the nearest free passable cell off the
+    /// requester's next segment. True when accepted.
+    /// </summary>
+    internal bool RequestGiveWay(GameObject requester, Panopticon.Navigation.Navigation navigation, in Vector2 segmentStart, in Vector2 segmentEnd)
+    {
+        if (requester.Owner != GameObject.Owner
+            || TargetPoints.Count > 0
+            || GameObject.ModelConditionFlags.Get(ModelConditionFlag.Moving)
+            || Progress.Reason != NavigationStallReason.None)
+        {
+            return false;
+        }
+
+        if (RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+        {
+            return false;
+        }
+
+        var sidestep = GiveWayPlanner.FindSidestep(
+            GameObject,
+            requester,
+            navigation,
+            segmentStart,
+            segmentEnd,
+            navigation.Options.LocalRepathWindowCells);
+        if (sidestep == null)
+        {
+            return false;
+        }
+
+        _moveOutOfWay1 = requester.Id;
+        AcceptSidestep(sidestep.Value);
+        return true;
+    }
+
+    /// <summary>
+    /// Card WI-N8-02: a mutually blocked unit with the higher object id yields by sidestepping
+    /// off <paramref name="other"/>'s next segment while keeping its route: the sidestep point
+    /// is inserted before the remaining waypoints.
+    /// </summary>
+    internal bool SidestepWhileKeepingRoute(GameObject other, Panopticon.Navigation.Navigation navigation, in Vector2 segmentStart, in Vector2 segmentEnd)
+    {
+        if (RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+        {
+            return false;
+        }
+
+        var sidestep = GiveWayPlanner.FindSidestep(
+            GameObject,
+            other,
+            navigation,
+            segmentStart,
+            segmentEnd,
+            navigation.Options.LocalRepathWindowCells);
+        if (sidestep == null)
+        {
+            return false;
+        }
+
+        _moveOutOfWay1 = other.Id;
+        _gaveWayOnce = true;
+        _frameAtLastGiveWay = CurrentLogicFrame();
+        ResetLocalRepath();
+        Progress.Reset();
+        TargetPoints.Insert(0, sidestep.Value);
+        return true;
+    }
+
+    /// <summary>True within the BlockedWaitFrames window after the last accepted sidestep.</summary>
+    internal bool RecentlyGaveWay(int blockedWaitFrames)
+    {
+        return _gaveWayOnce && CurrentLogicFrame() - _frameAtLastGiveWay < (uint)blockedWaitFrames;
+    }
+
+    private void AcceptSidestep(Vector3 sidestep)
+    {
+        _gaveWayOnce = true;
+        _frameAtLastGiveWay = CurrentLogicFrame();
+        ResetLocalRepath();
+        AddTargetPoint(sidestep);
+    }
+
+    private uint CurrentLogicFrame()
+    {
+        return (uint)(GameObject.GameEngine.Game.MapTime.TotalTime.TotalMilliseconds
+            / GameObject.GameEngine.MsPerLogicFrame);
+    }
+
+    /// <summary>
+    /// WI-N8-01: attempt cadence for the blocked-unit resolver. True when a new attempt may
+    /// fire now; false with <paramref name="gaveUp"/> true once the attempt budget is spent.
+    /// </summary>
+    internal bool TryBeginLocalRepathAttempt(int framesWithoutProgress, int blockedWaitFrames, int maxAttempts, out bool gaveUp)
+    {
+        if (_localRepathAttempts >= maxAttempts)
+        {
+            gaveUp = true;
+            return false;
+        }
+
+        if (_framesAtLastLocalRepathAttempt != NoLocalRepathAttempt
+            && framesWithoutProgress - _framesAtLastLocalRepathAttempt < blockedWaitFrames)
+        {
+            gaveUp = false;
+            return false;
+        }
+
+        _localRepathAttempts++;
+        _framesAtLastLocalRepathAttempt = framesWithoutProgress;
+        gaveUp = false;
+        return true;
+    }
+
+    internal void ResetLocalRepath()
+    {
+        _localRepathAttempts = 0;
+        _framesAtLastLocalRepathAttempt = NoLocalRepathAttempt;
     }
 
     /// <summary>
@@ -556,6 +717,7 @@ public class AIUpdate : UpdateModule
         TargetPoints.Clear();
         GameObject.Speed = 0;
         Progress.Reset();
+        ResetLocalRepath();
     }
 
     internal void SetTargetDirection(Vector3 targetDirection)
@@ -675,6 +837,23 @@ public class AIUpdate : UpdateModule
                     // WI-N6-01: the distance was sampled before the physics step, so this
                     // compares consecutive move steps toward the same waypoint.
                     Progress.RecordMoveStep(onPathDistToGoal, blocked, blocker);
+
+                    if (Progress.Reason == NavigationStallReason.None)
+                    {
+                        ResetLocalRepath();
+                    }
+                    else
+                    {
+                        var resolutionNav = GameEngine.Navigation;
+                        if (resolutionNav != null
+                            && resolutionNav.Options.BlockedUnitResolution
+                            && Progress.Reason == NavigationStallReason.BlockedByUnit
+                            && Progress.FramesWithoutProgress >= resolutionNav.Options.BlockedWaitFrames)
+                        {
+                            // WI-N8-01: bounded local repath around a non-progressing blocker.
+                            BlockedMovementResolver.TryResolve(GameObject, this, resolutionNav);
+                        }
+                    }
 
                     var use3DArrival = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist3D;
                     var distToTargetSq = use3DArrival

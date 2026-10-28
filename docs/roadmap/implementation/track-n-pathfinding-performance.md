@@ -396,8 +396,8 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 | [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Done |
 | [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Done |
 | [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Done |
-| [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Ready |
-| [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Blocked |
+| [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Done |
+| [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Done |
 | [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Ready |
 | [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Blocked |
 | [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Blocked |
@@ -536,6 +536,70 @@ search when landing is disabled or fails.
   for the N10 default-flip review.
 
 Artifacts: `/tmp/opencode/n7-02/`, logs `~/log/n7-02/`.
+
+### WI-N8-01 results (2026-10-28, Release, seed 1)
+
+Blocked-unit resolution (`NavigationOptions.BlockedUnitResolution`, default off) waits
+`BlockedWaitFrames` (15) frames without progress behind a non-advancing blocker, then splices a
+bounded local detour: a `(2W+1)^2` cell window (`LocalRepathWindowCells` 12) around the unit,
+passability plus stationary-unit occupancy, rejoin at the first waypoint outside the window
+clamped into it, at most `MaxResolutionAttempts` (3) attempts per blocked stretch, then give up
+and settle `GoalCrowded` when the goal is within `CrowdArrivalRadius` (60) or keep the route and
+report. Advancing blockers are waited out; attempts reset on any progress.
+
+- Install-free tests (synthetic 16x16): a unit blocked by a stationary registered unit splices a
+  detour around the blocked cell and preserves its goal; expansion is bounded by the window
+  square (81 cells at W 4); the attempt cooldown and advancing-blocker wait hold; give-up
+  settles GoalCrowded within the arrival radius and keeps the route beyond it.
+- NavigationDeadlock with the option on (alpine assault, budget 3600): repaths fire in every
+  blocking case (head-on-pair 8, corridor-opposed-20 143, crowd-goal-100 352, queue-behind-idle
+  33, squad-offset-retrace 22; async-no-route 0) but no case settles that did not settle before.
+  Mutual pairs oscillate: a detour makes progress, attempts reset, the pair re-blocks (head-on
+  max frames 3471). Columns exhaust attempts against the queue head and keep their routes
+  (queue-behind-idle 0/10). crowd-goal-100 converts its crowd-wait into 1 GoalCrowded settle
+  plus 352 repaths, still 3/100. This matches the deep-dive split: local repath relieves
+  individual jams, give-way (WI-N8-02) resolves standing mutual and queue deadlocks.
+- M4 army-AI probe with AsyncOrderPaths and BlockedUnitResolution on, deepdivide, 4500 frames:
+  path.blockedRepathPerTick median 1 (30 per second), system.path.spanMs median 0.059 ms,
+  tick.wallMs median 16.5, async 18704/18703/1, 0 deadline misses, wait 1/4/7. N5 budgets hold.
+  Stalls remain (954/976 at end; records 1961 BlockedByUnit + 14 GoalCrowded + 23 reason None,
+  cycles 52 vs 93 in the N7-01 on-run): mass combat blocking needs the give-way leg; the
+  reason-None crowd-wait records dropped from 91 to 23.
+- Option off changes nothing (default-off; the resolver only runs behind the option check and
+  the progress trigger).
+
+Artifacts: `/tmp/opencode/n8-01/`, logs `~/log/n8-01/`.
+
+### WI-N8-02 results (2026-10-28, Release, seed 1)
+
+Give-way extends `BlockedUnitResolution` (same option, no new knob) with the deep-dive step 2: a
+friendly idle or order-less blocker is asked to sidestep (`AIUpdate.RequestGiveWay`, recording the
+requester in `_moveOutOfWay1`); `GiveWayPlanner.FindSidestep` picks the nearest free passable cell
+in the local window that clears the requester's next segment by both radii plus padding plus a
+10.0f re-block margin. Mutual blocks yield by the higher object id; the lower unit waits, but its
+wait expires after twice `BlockedWaitFrames` without blocker activity, and every failed give-way
+falls through to the local repath instead of looping. One sidestep per blocker per wait window.
+
+- Install-free tests (synthetic 16x16): mutual pair, the higher id sidesteps and the lower waits;
+  an idle friendly blocker sidesteps exactly once (no cascade within the window); an enemy
+  blocker never gives way and the requester repaths; a busy friendly blocker refuses and the
+  requester repaths. Navigation and GroundFootprint filters 99/99.
+- NavigationDeadlock with the option on (alpine assault, budget 3600, final run): head-on-pair
+  settles 2/2 at frame 367 with 0 cycles and 1 repath (the yield plus the expired-wait repath
+  resolves the pair; was 0/2 forever at N8-01); queue-behind-idle settles 6/10 with 0 cycles (was
+  0/10; the idle tanks give way and the column flows); crowd-goal-100 reaches 9/100 (was 3);
+  corridor-opposed-20 remains 0/40 (two 20-columns through one 120-wide gap is a capacity
+  problem, recorded as unmet rather than tuned away); async-no-route and squad-offset-retrace
+  unchanged (6/6 at frame 93, 2/8).
+- M4 army-AI probe with AsyncOrderPaths and BlockedUnitResolution on, deepdivide, 4500 frames:
+  stalls 729/626 at end (N8-01: 954/976), cycles 29 (was 52), records 1616 BlockedByUnit + 380
+  reason None + 2 GoalCrowded; give-way converts blocked-stalls into crowd-waits (reason None up
+  from 23). path.blockedRepathPerTick median 17 (510 per second, up from 1: unjammed units
+  re-block in mass combat), system.path.spanMs median 1.644 ms, tick.wallMs median 19.1; the
+  amortized N5 span budget still holds, order-tick spans remain asynchronous.
+- Option off changes nothing.
+
+Artifacts: `/tmp/opencode/n8-02/`, logs `~/log/n8-02/`.
 
 ## Confined passage queueing (N11-N14)
 

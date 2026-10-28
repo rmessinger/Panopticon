@@ -75,6 +75,7 @@ public class NavigationDeadlockPlannerTests
             AsyncCancelled: 0,
             ImpassableRetracePoints: 0,
             ReroutedFollowers: 0,
+            BlockedRepaths: 0,
             MechanismConfirmed: true,
             MechanismNote: "2 mutually blocked records, 1 wait-for cycle(s), max 120 frames without progress.",
             StallRecords: records,
@@ -85,6 +86,7 @@ public class NavigationDeadlockPlannerTests
             Seed: 1,
             FrameBudget: 3600,
             ValidateOffsetRoutes: false,
+            BlockedResolution: false,
             Cases: [result]);
 
         var path = Path.Combine(Path.GetTempPath(), $"navigation-deadlock-{Guid.NewGuid():N}.json");

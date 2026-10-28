@@ -117,6 +117,84 @@ public class Navigation
     }
 
     /// <summary>
+    /// Card WI-N8-01: bounded local detour search for the blocked-unit resolver. Builds a
+    /// window graph over the (2W+1)^2 cell square around the start node (W the window
+    /// half-extent, clamped to the graph), clamps the rejoin into the square, applies
+    /// stationary-unit occupancy, and searches it. The detour starts one cell past the unit
+    /// and rejoins the route at the clamped <paramref name="rejoin"/>. Volume and time land in
+    /// the statistics under <see cref="PathRequestOrigin.BlockedRepath"/>.
+    /// </summary>
+    internal List<Vector3> CalculateLocalPath(Vector3 start, Vector3 rejoin, int windowCells, LocalOccupancyWindow occupancy)
+    {
+        _statistics.AddRequest(PathRequestOrigin.BlockedRepath);
+        var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+        var result = new List<Vector3>();
+        try
+        {
+            var startNode = GetNodeAt(start);
+            if (startNode == null)
+            {
+                _statistics.AddFailedSearch();
+                return result;
+            }
+
+            var x0 = Math.Max(0, startNode.X - windowCells);
+            var y0 = Math.Max(0, startNode.Y - windowCells);
+            var x1 = Math.Min(_graph.Width - 1, startNode.X + windowCells);
+            var y1 = Math.Min(_graph.Height - 1, startNode.Y + windowCells);
+            var rejoinNode = GetNodeAt(rejoin);
+            if (rejoinNode == null)
+            {
+                _statistics.AddFailedSearch();
+                return result;
+            }
+
+            rejoinNode = _graph.GetNode(
+                Math.Clamp(rejoinNode.X, x0, x1),
+                Math.Clamp(rejoinNode.Y, y0, y1));
+            var local = new Graph(x1 - x0 + 1, y1 - y0 + 1);
+            for (var y = y0; y <= y1; y++)
+            {
+                for (var x = x0; x <= x1; x++)
+                {
+                    local.GetNode(x - x0, y - y0).Passability = _graph.GetNode(x, y).Passability;
+                }
+            }
+
+            occupancy.Mark(this, local, x0, y0);
+
+            var localStart = local.GetNode(startNode.X - x0, startNode.Y - y0);
+            var localRejoin = local.GetNode(rejoinNode.X - x0, rejoinNode.Y - y0);
+            if (!localRejoin.IsPassable)
+            {
+                _statistics.AddFailedSearch();
+                return result;
+            }
+
+            var route = local.Search(localStart, localRejoin);
+            _statistics.AddNodesExpanded(local.SearchNodesExpanded);
+            if (route == null)
+            {
+                _statistics.AddFailedSearch();
+                return result;
+            }
+
+            // The search route starts one cell past the start node (WI-N1-01 contract), so
+            // every step is a real detour waypoint.
+            foreach (var node in route)
+            {
+                result.Add(GetNodeWorldPosition(_graph.GetNode(node.X + x0, node.Y + y0)));
+            }
+
+            return result;
+        }
+        finally
+        {
+            _pathSearchTicks += System.Diagnostics.Stopwatch.GetTimestamp() - startTimestamp;
+        }
+    }
+
+    /// <summary>
     /// Logic-thread ComputePath time accumulated since the last consume (WI-N0-01), emitted by
     /// the stepper as the nested path span. Async worker search time is excluded: it accumulates
     /// into <see cref="PathStatistics.WorkerSearchMs"/> instead.

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Data;
+using Panopticon.Graphics;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
@@ -42,6 +43,25 @@ public static class NavigationDeadlockRunner
     private const float UnitSpacing = 60f;
     private const float ArrivalRadius = 90f;
     private const int SettleFrames = 30;
+    private const int CaptureWidth = 1280;
+    private const int CaptureHeight = 720;
+
+    private static float CaptureCameraHeight(string caseName) => caseName switch
+    {
+        NavigationDeadlockCasePlanner.HeadOnPair => 500f,
+        NavigationDeadlockCasePlanner.CrowdGoal100 => 1000f,
+        NavigationDeadlockCasePlanner.AsyncNoRoute => 1100f,
+        NavigationDeadlockCasePlanner.SquadOffsetRetrace => 700f,
+        _ => 1300f,
+    };
+
+    private static Vector2 CaptureCenter(string caseName) => caseName switch
+    {
+        NavigationDeadlockCasePlanner.HeadOnPair => new Vector2(CorridorCenterX, 800f),
+        NavigationDeadlockCasePlanner.CrowdGoal100 => new Vector2(CorridorCenterX, 900f),
+        NavigationDeadlockCasePlanner.AsyncNoRoute => new Vector2(CorridorCenterX, 1000f),
+        _ => new Vector2(CorridorCenterX, 1000f),
+    };
     private const int RetraceSampleStride = 10;
 
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
@@ -88,6 +108,7 @@ public static class NavigationDeadlockRunner
             seed,
             frameBudget,
             config.NavigationDeadlockValidateOffsetRoutes,
+            config.NavigationDeadlockBlockedResolution,
             results);
         report.WriteJson(reportPath);
         report.WriteText(Path.ChangeExtension(reportPath, ".txt"));
@@ -155,6 +176,26 @@ public static class NavigationDeadlockRunner
 
         game.EnableFixedLogicTimestep();
 
+        var captureDirectory = string.IsNullOrWhiteSpace(config.NavigationDeadlockCaptureDirectory)
+            ? null
+            : Path.Combine(config.NavigationDeadlockCaptureDirectory!, plan.Name);
+        var captureRecords = new List<RoutingChokeCaptureFrame>();
+        if (captureDirectory != null)
+        {
+            Directory.CreateDirectory(captureDirectory);
+            foreach (var stale in Directory.GetFiles(captureDirectory, "*.png"))
+            {
+                File.Delete(stale);
+            }
+
+            game.EnableFixedRenderTimestep();
+            game.Scene3D.RenderScene.GetRenderBucket("Particles").Visible = false;
+            while (game.Scene2D.WndWindowManager.OpenWindowCount > 0)
+            {
+                game.Scene2D.WndWindowManager.PopWindow();
+            }
+        }
+
         var unitDefinition = game.AssetStore.ObjectDefinitions.GetByName(UnitDefinitionName);
         var wallDefinition = game.AssetStore.ObjectDefinitions.GetByName(WallDefinitionName);
         if (unitDefinition == null || wallDefinition == null)
@@ -190,6 +231,7 @@ public static class NavigationDeadlockRunner
 
         navigation.Options.AsyncOrderPaths = setup.AsyncOrderPaths;
         navigation.Options.ValidateOffsetRoutes = config.NavigationDeadlockValidateOffsetRoutes;
+        navigation.Options.BlockedUnitResolution = config.NavigationDeadlockBlockedResolution;
 
         // Structures mark their grid cells over the first ticks; orders are deferred until the
         // furniture settles so paths and region labels see the walls.
@@ -208,6 +250,36 @@ public static class NavigationDeadlockRunner
         var statsBefore = navigation.Statistics;
 
         setup.IssueOrders();
+
+        void CaptureFrame(int logicFrame)
+        {
+            if (captureDirectory == null)
+            {
+                return;
+            }
+
+            game.Panel.EnsureFrame(new Rectangle(0, 0, CaptureWidth, CaptureHeight));
+            var center = CaptureCenter(plan.Name);
+            var target = new Vector3(center, game.Scene3D.Terrain.GetGroundHeight(center) ?? 0);
+            game.Scene3D.Camera.SetLookAt(target + Vector3.UnitZ * CaptureCameraHeight(plan.Name), target, Vector3.UnitY);
+            game.Render();
+            var file = $"frame_{captureRecords.Count:D4}.png";
+            FrameCapturer.CaptureToPng(
+                game.GraphicsDevice,
+                game.Panel.Framebuffer.ColorTargets[0].Target,
+                Path.Combine(captureDirectory, file));
+            var actors = new List<RoutingChokeManifestActor>(allUnits.Count);
+            for (var i = 0; i < allUnits.Count; i++)
+            {
+                var screen = game.Scene3D.Camera.WorldToScreenPoint(allUnits[i].Translation);
+                actors.Add(new RoutingChokeManifestActor("unit", $"unit {i}", screen.X, screen.Y, 16f));
+            }
+
+            captureRecords.Add(new RoutingChokeCaptureFrame(captureRecords.Count, logicFrame, file, actors, [],
+                RoutingChokeNavigationOverlay.Capture(game, allUnits)));
+        }
+
+        CaptureFrame(0);
 
         var sampler = new NavigationStallSampler();
         var settled = new HashSet<uint>();
@@ -240,6 +312,11 @@ public static class NavigationDeadlockRunner
                 maxTickPathSpanMs = Math.Max(maxTickPathSpanMs, currentTickPathSpanMs);
 
                 sampler.Sample((uint)framesRun, allUnits);
+
+                if (captureDirectory != null && (framesRun + 1) % Math.Max(1, config.NavigationDeadlockCaptureStride) == 0)
+                {
+                    CaptureFrame(framesRun + 1);
+                }
 
                 if (setup.LateInjectFrame == framesRun + 1)
                 {
@@ -293,10 +370,21 @@ public static class NavigationDeadlockRunner
             game.LogicStepper.SystemSpan -= OnSystemSpan;
         }
 
+        if (captureDirectory != null)
+        {
+            CaptureFrame(framesRun);
+            File.WriteAllText(
+                Path.Combine(captureDirectory, "manifest.json"),
+                System.Text.Json.JsonSerializer.Serialize(
+                    new RoutingChokeCaptureManifest(CaptureWidth, CaptureHeight, captureRecords),
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+        }
+
         var records = sampler.Records;
         var cycles = sampler.WaitForCycles;
         var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes);
+        var blockedRepaths = navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests;
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes, config.NavigationDeadlockBlockedResolution);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -314,6 +402,7 @@ public static class NavigationDeadlockRunner
             navigation.AsyncPathCancelled - asyncCancelledBefore,
             maxImpassableRetracePoints,
             reroutedFollowers,
+            blockedRepaths,
             confirmed,
             note,
             [.. records],
@@ -573,7 +662,8 @@ public static class NavigationDeadlockRunner
         int impassableRetracePoints,
         IReadOnlyList<NavigationStallRecord> currentStalls,
         int reroutedFollowers,
-        bool validateOffsetRoutes)
+        bool validateOffsetRoutes,
+        bool blockedResolution)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -581,6 +671,14 @@ public static class NavigationDeadlockRunner
             case NavigationDeadlockCasePlanner.HeadOnPair:
                 {
                     var blocked = records.Where(record => record.Reason == nameof(NavigationStallReason.BlockedByUnit)).ToList();
+                    // WI-N8-02: with blocked-unit resolution on the mechanism is remediated
+                    // instead of reproduced: the yield plus the expired-wait repath settles the pair.
+                    if (blockedResolution)
+                    {
+                        return (settledUnits == setup.OrderedUnits.Count && cycles.Count == 0,
+                            $"{settledUnits}/{setup.OrderedUnits.Count} settled (WI-N8-02 give-way), {cycles.Count} wait-for cycle(s), max {maxFrames} frames without progress.");
+                    }
+
                     return (cycles.Count >= 1 && blocked.Count >= 2,
                         $"{blocked.Count} mutually blocked records, {cycles.Count} wait-for cycle(s), max {maxFrames} frames without progress.");
                 }
@@ -604,6 +702,14 @@ public static class NavigationDeadlockRunner
                     var idleIds = setup.IdleUnits.Select(unit => unit.Id.Index).ToHashSet();
                     var behindIdle = records.Count(record =>
                         record.Reason == nameof(NavigationStallReason.BlockedByUnit) && idleIds.Contains(record.BlockerId));
+                    // WI-N8-02: with blocked-unit resolution on the mechanism is remediated
+                    // instead of reproduced: the idle tanks give way and the column flows.
+                    if (blockedResolution)
+                    {
+                        return (settledUnits > 0 && cycles.Count == 0,
+                            $"{settledUnits}/{setup.OrderedUnits.Count} settled past the idle tanks (WI-N8-02 give-way), {cycles.Count} wait-for cycle(s), max {maxFrames} frames.");
+                    }
+
                     return (behindIdle > 0,
                         $"{behindIdle} records blocked by the idle tanks, {settledUnits}/{setup.OrderedUnits.Count} settled, max {maxFrames} frames.");
                 }

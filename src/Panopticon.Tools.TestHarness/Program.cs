@@ -193,15 +193,29 @@ public static class Program
             config.MassBattleCapacityProbeValidateOffsetRoutes = bool.Parse(probeValidateOffsets);
         }
 
+        var probeBlockedResolution = GetArgValue(args, "--probe-blocked-resolution");
+        if (!string.IsNullOrEmpty(probeBlockedResolution))
+        {
+            config.MassBattleCapacityProbeBlockedResolution = bool.Parse(probeBlockedResolution);
+        }
+
         var n6ValidateOffsets = GetArgValue(args, "--n6-validate-offsets");
         if (!string.IsNullOrEmpty(n6ValidateOffsets))
         {
             config.NavigationDeadlockValidateOffsetRoutes = bool.Parse(n6ValidateOffsets);
         }
 
+        var n6BlockedResolution = GetArgValue(args, "--n6-blocked-resolution");
+        if (!string.IsNullOrEmpty(n6BlockedResolution))
+        {
+            config.NavigationDeadlockBlockedResolution = bool.Parse(n6BlockedResolution);
+        }
+
         ParseOptionalString(args, "--n6-cases", value => config.NavigationDeadlockCaseFilter = value);
         ParseOptionalInt(args, "--n6-budget", value => config.NavigationDeadlockFrameBudget = value);
         ParseOptionalInt(args, "--n6-seed", value => config.NavigationDeadlockSeed = value);
+        ParseOptionalString(args, "--n6-capture-dir", value => config.NavigationDeadlockCaptureDirectory = value);
+        ParseOptionalInt(args, "--n6-capture-stride", value => config.NavigationDeadlockCaptureStride = value);
         ParseOptionalString(args, "--n6-report", value => config.NavigationDeadlockReportPath = value);
 
         Run(config, reporter);

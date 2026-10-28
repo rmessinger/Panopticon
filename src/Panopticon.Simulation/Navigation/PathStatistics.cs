@@ -16,6 +16,9 @@ public enum PathRequestOrigin
     BlockedFollower,
     Horde,
     Async,
+
+    /// <summary>Bounded local detours issued by the blocked-unit resolver (WI-N8-01).</summary>
+    BlockedRepath,
 }
 
 /// <summary>
@@ -34,6 +37,7 @@ public sealed class PathStatistics
     public long SquadLeaderRequests { get; }
     public long BlockedFollowerRequests { get; }
     public long HordeRequests { get; }
+    public long BlockedRepathRequests { get; }
     public long AsyncRequests { get; }
     public long NodesExpanded { get; }
     public long FailedSearches { get; }
@@ -69,6 +73,7 @@ public sealed class PathStatistics
         long squadLeaderRequests,
         long blockedFollowerRequests,
         long hordeRequests,
+        long blockedRepathRequests,
         long asyncRequests,
         long nodesExpanded,
         long failedSearches,
@@ -84,6 +89,7 @@ public sealed class PathStatistics
         SquadLeaderRequests = squadLeaderRequests;
         BlockedFollowerRequests = blockedFollowerRequests;
         HordeRequests = hordeRequests;
+        BlockedRepathRequests = blockedRepathRequests;
         AsyncRequests = asyncRequests;
         NodesExpanded = nodesExpanded;
         FailedSearches = failedSearches;
@@ -96,7 +102,8 @@ public sealed class PathStatistics
         GoalHistogramMaxBucket = goalHistogramMaxBucket;
     }
 
-    public long SynchronousRequests => UnitRequests + SquadLeaderRequests + BlockedFollowerRequests + HordeRequests;
+    public long SynchronousRequests => UnitRequests + SquadLeaderRequests + BlockedFollowerRequests
+        + HordeRequests + BlockedRepathRequests;
 
     public long RequestsFor(PathRequestOrigin origin) => origin switch
     {
@@ -104,6 +111,7 @@ public sealed class PathStatistics
         PathRequestOrigin.SquadLeader => SquadLeaderRequests,
         PathRequestOrigin.BlockedFollower => BlockedFollowerRequests,
         PathRequestOrigin.Horde => HordeRequests,
+        PathRequestOrigin.BlockedRepath => BlockedRepathRequests,
         PathRequestOrigin.Async => AsyncRequests,
         _ => throw new ArgumentOutOfRangeException(nameof(origin)),
     };
@@ -120,6 +128,7 @@ internal sealed class PathStatisticsAccumulator
     private long _squadLeaderRequests;
     private long _blockedFollowerRequests;
     private long _hordeRequests;
+    private long _blockedRepathRequests;
     private long _asyncRequests;
     private long _nodesExpanded;
     private long _failedSearches;
@@ -151,6 +160,9 @@ internal sealed class PathStatisticsAccumulator
                 break;
             case PathRequestOrigin.Horde:
                 Interlocked.Increment(ref _hordeRequests);
+                break;
+            case PathRequestOrigin.BlockedRepath:
+                Interlocked.Increment(ref _blockedRepathRequests);
                 break;
             case PathRequestOrigin.Async:
                 Interlocked.Increment(ref _asyncRequests);
@@ -205,6 +217,7 @@ internal sealed class PathStatisticsAccumulator
         Interlocked.Read(ref _squadLeaderRequests),
         Interlocked.Read(ref _blockedFollowerRequests),
         Interlocked.Read(ref _hordeRequests),
+        Interlocked.Read(ref _blockedRepathRequests),
         Interlocked.Read(ref _asyncRequests),
         Interlocked.Read(ref _nodesExpanded),
         Interlocked.Read(ref _failedSearches),

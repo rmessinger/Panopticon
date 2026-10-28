@@ -62,4 +62,49 @@ public sealed class NavigationOptions
     /// unchanged until the operator flips it.
     /// </summary>
     public bool ValidateOffsetRoutes { get; set; }
+
+    /// <summary>
+    /// When true, a ground unit blocked by a non-progressing unit past
+    /// <see cref="BlockedWaitFrames"/> repaths around it inside a bounded window (WI-N8-01).
+    /// Default false; blocked units keep the stop-and-turn behavior until the operator flips it.
+    /// </summary>
+    public bool BlockedUnitResolution { get; set; }
+
+    /// <summary>Authored default for <see cref="BlockedWaitFrames"/> (WI-N8-01).</summary>
+    public const int DefaultBlockedWaitFrames = 15;
+
+    /// <summary>
+    /// WI-N8-01: frames without progress before the blocked-unit resolver may act. A blocker
+    /// that is itself progressing resets the resolution cadence, so following traffic queues.
+    /// </summary>
+    public int BlockedWaitFrames { get; set; } = DefaultBlockedWaitFrames;
+
+    /// <summary>Authored default for <see cref="LocalRepathWindowCells"/> (WI-N8-01).</summary>
+    public const int DefaultLocalRepathWindowCells = 12;
+
+    /// <summary>
+    /// WI-N8-01: half-extent in cells of the local repath window; one detour search expands at
+    /// most (2W+1)^2 cells, stationary units' footprints included through LocalOccupancyWindow.
+    /// </summary>
+    public int LocalRepathWindowCells { get; set; } = DefaultLocalRepathWindowCells;
+
+    /// <summary>Authored default for <see cref="MaxResolutionAttempts"/> (WI-N8-01).</summary>
+    public const int DefaultMaxResolutionAttempts = 3;
+
+    /// <summary>
+    /// WI-N8-01: local repath attempts before the unit gives up; afterwards it settles as
+    /// GoalCrowded when inside <see cref="CrowdArrivalRadius"/> of its goal, else keeps its
+    /// route and stays reported.
+    /// </summary>
+    public int MaxResolutionAttempts { get; set; } = DefaultMaxResolutionAttempts;
+
+    /// <summary>Default for <see cref="CrowdArrivalRadius"/> (WI-N8-01): the mass-battle
+    /// reachability arrival radius.</summary>
+    public const float DefaultCrowdArrivalRadius = 60.0f;
+
+    /// <summary>
+    /// WI-N8-01 give-up and WI-N9 crowd-arrival radius in world units: how close to the goal a
+    /// crowded unit may stop and still count as settled.
+    /// </summary>
+    public float CrowdArrivalRadius { get; set; } = DefaultCrowdArrivalRadius;
 }
