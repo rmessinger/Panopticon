@@ -138,7 +138,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Shared unit-content importing (H2a, before M2), map interchange, versioned map/unit storage, migration, authoring integration, and round-trip validation. Distinct from B3/B4a-5 runtime storage. H2a depends on P9/C4d; the storage foundation is gated on Track P. |
 | [`track-w-western-front.md`](track-w-western-front.md) | human | Western Front simulation: charter fixture, aggregate sector model, fidelity promotion and reconciliation, geospatial sector, command and logistics experiments, distributed regions, and a long-run campaign. Built as a domain through the A4-1 seam and A4-4 state projection. |
 | [`track-m-mass-battle.md`](track-m-mass-battle.md) | human | Mixed-roster mass battle: capacity probe, battle map, EE2 combat units, roster normalization, army-scale AI, and the 1000 vs 1000 battle in batch, replay, and live modes. |
-| [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md) | human | Multi-unit pathfinding performance and deadlocks: path cost baseline, search core efficiency, shared group requests, gated shared-destination fields, off-thread order paths, scale verification, stall attribution, path liveness, blocked-unit resolution, and destination crowding. |
+| [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md) | human | Multi-unit pathfinding performance and deadlocks: path cost baseline, search core efficiency, shared group requests, gated shared-destination fields, off-thread order paths, scale verification, stall attribution, path liveness, blocked-unit resolution, destination crowding, passage queueing, and layered navigation (strategic sectors, corridor main paths, navigation groups, steering). |
 | [`track-x-fixes-tweaks.md`](track-x-fixes-tweaks.md) | human | Open-ended miscellaneous fixes and tweaks, each with a bounded milestone. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `Panopticon.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
@@ -196,6 +196,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/n-multi-unit-pathfinding.md`](deep-dives/n-multi-unit-pathfinding.md) | Track N phases N0-N5 - Path cost evidence, budgets, search core, follower landing, group selection moves, gated goal fields, async order paths. |
 | [`deep-dives/n-navigation-deadlocks.md`](deep-dives/n-navigation-deadlocks.md) | Track N phases N6-N10 - Deadlock evidence, stall attribution, path liveness, blocked-unit resolution, destination crowding. |
 | [`deep-dives/n-confined-passage-queueing.md`](deep-dives/n-confined-passage-queueing.md) | Track N phases N11-N14 - Passage detection from route cross-sections, ad hoc passage queues with shared lane paths and unit order, opposing flow, squad entry. |
+| [`deep-dives/n-layered-navigation.md`](deep-dives/n-layered-navigation.md) | Track N phases N15-N20 - Layer contract, sector-and-portal strategic graph, corridor main paths, persistent navigation groups, reciprocal steering. |
 | [`deep-dives/x1-imported-unit-hit-feedback.md`](deep-dives/x1-imported-unit-hit-feedback.md) | X1: explicit imported-vehicle target effects and readable mixed-source duel evidence. |
 | [`deep-dives/c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | Track C phase C1 - CPU-only model and animation import contracts, W3D reference adapters, runtime materialization, and parity. |
 | [`deep-dives/c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | Track C phase C2 - Direct-index and exact-name animation-channel binding to runtime model hierarchies. |
@@ -305,12 +306,14 @@ track document.
   battle (in progress: scenario, batch chain, and spectator done; full-scale acceptance batches,
   replay, and the live-fps measurement pending). Depends on P9 and A1, then B1, H2a, C4d, A4, B4,
   B5, and A5.
-- [Track N - Multi-Unit Pathfinding Performance and Deadlocks](track-n-pathfinding-performance.md):
+- [Track N - Multi-Unit Pathfinding Performance, Deadlocks, and Layered Navigation](track-n-pathfinding-performance.md):
   N0 path cost baseline · N1 search core efficiency · N2 shared group requests · N3
   shared-destination fields (gated) · N4 off-thread order paths · N5 scale verification (N0-N5
   done) · N6 deadlock detection baseline · N7 path liveness · N8 blocked-unit resolution · N9
   destination crowding · N10 deadlock verification · N11 passage detection and baseline · N12
-  passage queues · N13 opposing flow and group entry · N14 passage verification. Depends on B1,
+  passage queues · N13 opposing flow and group entry · N14 passage verification · N15 layered
+  navigation contract and baseline · N16 strategic sector graph · N17 corridor main path · N18
+  group local router · N19 unit steering · N20 layered navigation verification. Depends on B1,
   B4, and M4.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1. X6 extracts navigation logic from `AIUpdate` into its own class after N11.
@@ -354,8 +357,9 @@ track document.
   A4-3. W2 is the first B7-4 group-aggregation instance and does not wait for B7. W3a consumes
   B4b, W4 and W6 consume A5, and W5 consumes B6.
 - Track N follows B4 and M4: it reuses B4's async queue and group movement and measures on M4's
-  army-AI probe. E1's surface layers make N1's region labels per-layer, and A4-32 wraps N's
-  `Navigation` surface. M5 does not depend on N.
+  army-AI probe. E1's surface layers make N1's region labels and N16's sector graph per-layer,
+  and A4-32 wraps N's `Navigation` surface. N15 builds on X6's `UnitNavigation`. M5 does not
+  depend on N.
 
 ---
 
@@ -495,7 +499,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | M5 - 1000 vs 1000 battle | `░░░░░░░░░░` | 0 / 4 |
 | Track M total | `████████░░` | 16 / 20 |
 
-### Track N - Multi-Unit Pathfinding Performance and Deadlocks (gated on B4 and M4)
+### Track N - Multi-Unit Pathfinding Performance, Deadlocks, and Layered Navigation (gated on B4 and M4)
 
 | Phase | Progress | Items |
 |---|---|---|
@@ -514,7 +518,13 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N12 - Passage queues | `░░░░░░░░░░` | 0 / 2 |
 | N13 - Opposing flow and group entry | `░░░░░░░░░░` | 0 / 2 |
 | N14 - Passage verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `████░░░░░░` | 11 / 27 |
+| N15 - Layered navigation contract and baseline | `░░░░░░░░░░` | 0 / 2 |
+| N16 - Strategic sector graph | `░░░░░░░░░░` | 0 / 2 |
+| N17 - Corridor main path | `░░░░░░░░░░` | 0 / 2 |
+| N18 - Group local router | `░░░░░░░░░░` | 0 / 3 |
+| N19 - Unit steering | `░░░░░░░░░░` | 0 / 2 |
+| N20 - Layered navigation verification | `░░░░░░░░░░` | 0 / 1 |
+| Track N total | `███░░░░░░░` | 11 / 39 |
 
 ---
 

@@ -580,6 +580,15 @@ Source of truth: [deep-dives/n-confined-passage-queueing.md](../deep-dives/n-con
 |---|---|---|
 | [track-n-pathfinding-performance.md](track-n-pathfinding-performance.md#confined-passage-queueing-n11-n14) | N11-1…N14-1 | Passage finder, passage cases, ad hoc queues and lane paths, hold and release, opposing flow, squad entry, verification (WI-N11-01..WI-N14-01) |
 
+## Track N · N15-N20 : Layered navigation
+
+Source of truth: [deep-dives/n-layered-navigation.md](../deep-dives/n-layered-navigation.md) :
+[Architecture diagrams §9](../deep-dives/n-layered-navigation.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-n-pathfinding-performance.md](track-n-pathfinding-performance.md#layered-navigation-n15-n20) | N15-1…N20-1 | Navigation plan contract, layered cases, sector graph, strategic planner, corridor main path, navigation groups, width-adaptive formation, crowd routing, steering core and integration, verification (WI-N15-01..WI-N20-01) |
+
 ## Track X · X1: Imported-unit hit feedback
 
 Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), including grounded [architecture diagrams](../deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams).

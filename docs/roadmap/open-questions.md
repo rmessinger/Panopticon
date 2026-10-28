@@ -759,7 +759,8 @@
   request rate; M4 showed per-order cost (912 full searches on one decision tick, 664 from blocked
   followers). Track N builds no hierarchical layer; its only new structure, a shared-destination
   goal field, is gated on measurement after request sharing. Behavior-changing options default off
-  until N5 evidence and an operator decision.
+  until N5 evidence and an operator decision. The no-hierarchy clause is superseded by the layered
+  navigation decision (2026-10-28).
 - Terrain impact decals. Decision (2026-10-26): persistent scorch marks are Track G phase G11, not
   Track F; F keeps crater geometry and heightmap deformation and reuses G11's decal store for
   crater textures. Decals are a terrain overlay mesh following the original height-map grid, not
@@ -771,7 +772,9 @@
   default-flip decision waits on it. Resolution is discrete (wait, friendly give-way, bounded local
   repath, destination slots, crowd arrival), matching the ported original-engine fields; continuous
   local avoidance stays out because it changes every move and every baseline. The global grid stays
-  unit-free. New behavior options default off until N10. See the
+  unit-free. New behavior options default off until N10. Continuous steering is later added behind
+  an option by the layered navigation decision (2026-10-28), with this discrete resolution as its
+  fallback. See the
   [deep dive](deep-dives/n-navigation-deadlocks.md#5-decisions).
 - Confined passage queueing. Decision (2026-10-27): proactive queueing at narrow passages extends
   Track N as N11 to N14 and complements N8's reactive resolution; queued units report `Queued` so
@@ -780,3 +783,12 @@
   navigation-transient, not `SquadHierarchy` squads. Ordering is deterministic on the logic thread.
   `PassageQueueing` defaults off until N14. See the
   [deep dive](deep-dives/n-confined-passage-queueing.md#5-decisions).
+- Layered navigation. Decision (2026-10-28): Track N extends as N15 to N20 to split navigation into
+  strategic, main-path, local-route, and steering layers with explicit ownership of a per-unit
+  `NavigationPlan`. The strategic layer is a fixed-size sector-and-portal graph over the existing
+  grid with local rebuilds, not a navigation mesh; flow fields stay closed (N3). This supersedes the
+  "no hierarchical layer" clause of the Track N ownership decision: B4's gate measured request
+  latency, while the layers serve route scope, group cohesion, and local replanning. Continuous
+  reciprocal steering becomes the lowest layer behind `UnitSteering`, with N8's discrete
+  resolution as fallback. Navigation groups are transient and carry no AI intent. New options
+  default off until N20. See the [deep dive](deep-dives/n-layered-navigation.md#6-decisions).

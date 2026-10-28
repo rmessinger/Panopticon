@@ -49,7 +49,8 @@ verification at scale (N10).
 Out of scope:
 
 - Continuous local avoidance or steering (velocity obstacles, flow-based crowds). See the
-  decision in section 5.
+  decision in section 5; N19 later adds steering behind an option, in the
+  [layered navigation deep dive](n-layered-navigation.md).
 - Unit-size clearance in the global grid and per-layer bridges and water (E1; bridge layers are
   stubs today).
 - Push-apart collision response and crush behavior in `PhysicsBehavior`.

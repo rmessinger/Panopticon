@@ -431,3 +431,31 @@ Delivery: phase staging branch `staging/track-n-passages`, numbered group PRs. S
 ## Confined passage queueing results
 
 Pending `WI-N11-01`.
+
+## Layered navigation (N15-N20)
+
+Source of truth: [deep-dives/n-layered-navigation.md](../deep-dives/n-layered-navigation.md) :
+[Architecture diagrams §9](../deep-dives/n-layered-navigation.md#9-architecture-diagrams).
+
+| Card | Phase | Title | Checklist item | Status |
+|---|---|---|---|---|
+| [`WI-N15-01`](../agent/cards/WI-N15-01-navigation-plan-layer-contract.md) | N15 | Navigation plan and layer contract | N15-1 | Blocked |
+| [`WI-N15-02`](../agent/cards/WI-N15-02-layered-cases-and-baseline.md) | N15 | Layered cases, layer spans, and option-off baseline | N15-2 | Blocked |
+| [`WI-N16-01`](../agent/cards/WI-N16-01-sector-graph.md) | N16 | Sector graph with incremental rebuild | N16-1 | Ready |
+| [`WI-N16-02`](../agent/cards/WI-N16-02-strategic-planner.md) | N16 | Strategic planner and route-quality corpus | N16-2 | Blocked |
+| [`WI-N17-01`](../agent/cards/WI-N17-01-corridor-search-and-stitching.md) | N17 | Masked corridor search and segment stitching | N17-1 | Blocked |
+| [`WI-N17-02`](../agent/cards/WI-N17-02-layered-unit-main-path.md) | N17 | Layered unit main path behind `LayeredNavigation` | N17-2 | Blocked |
+| [`WI-N18-01`](../agent/cards/WI-N18-01-navigation-group-and-spine.md) | N18 | Navigation groups and spine following | N18-1 | Blocked |
+| [`WI-N18-02`](../agent/cards/WI-N18-02-width-adaptive-formation-and-passages.md) | N18 | Width-adaptive formation and passage handoff | N18-2 | Blocked |
+| [`WI-N18-03`](../agent/cards/WI-N18-03-crowd-routing.md) | N18 | Crowd routing for large selections | N18-3 | Blocked |
+| [`WI-N19-01`](../agent/cards/WI-N19-01-steering-core.md) | N19 | Reciprocal velocity-obstacle steering core | N19-1 | Ready |
+| [`WI-N19-02`](../agent/cards/WI-N19-02-steering-integration.md) | N19 | Steering integration with N8 fallback | N19-2 | Blocked |
+| [`WI-N20-01`](../agent/cards/WI-N20-01-layered-navigation-verification.md) | N20 | Layered navigation verification | N20-1 | Blocked |
+
+Delivery: phase staging branch `staging/track-n-layers`, numbered group PRs. Suggested groups:
+1 = N16 and `WI-N19-01` (pure, no movement change), 2 = N15, 3 = N17, 4 = N18, 5 = `WI-N19-02`,
+6 = N20. Group 1 may start now; group 2 waits on `WI-X6-01`.
+
+## Layered navigation results
+
+Pending `WI-N16-01`.

@@ -1868,7 +1868,7 @@ depend on the Track A/B/C phases listed in the track doc. Design:
 - [ ] M5-4 Live windowed spectator view. (`WI-M5-09`, `WI-M5-10`)
   - AC: B1 records a 30 fps median with the full battle in view on the operator's machine.
 
-## Track N: Multi-Unit Pathfinding Performance and Deadlocks
+## Track N: Multi-Unit Pathfinding Performance, Deadlocks, and Layered Navigation
 
 See [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md). N0 depends on B1,
 B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
@@ -1981,6 +1981,55 @@ Design: [passage deep dive](deep-dives/n-confined-passage-queueing.md).
 - [ ] N14-1 Verify every passage target. (`WI-N14-01`)
   - AC: each target has a verdict across 3 seeds and three option modes; `passage` span recorded
     against budget; default-flip recommendation recorded.
+
+### N15: Layered navigation contract and baseline
+Design: [layered navigation deep dive](deep-dives/n-layered-navigation.md).
+- [ ] N15-1 Navigation plan and layer contract. (`WI-N15-01`)
+  - AC: every route write goes through `NavigationPlan`; `MovementProgress.Layer` set with stall
+    reasons; baselines and saves unchanged.
+- [ ] N15-2 Layered cases, layer spans, and option-off baseline. (`WI-N15-02`)
+  - AC: five layered cases and per-layer spans report over 3 seeds; targets confirmed or revised
+    with numbers; movement unchanged.
+
+### N16: Strategic sector graph
+- [ ] N16-1 Sector graph with incremental rebuild. (`WI-N16-01`)
+  - AC: synthetic portals and components as expected; edge costs exact; connectivity agrees with
+    region labels; a placement rebuilds only touched sectors.
+- [ ] N16-2 Strategic planner and route-quality corpus. (`WI-N16-02`)
+  - AC: routes exist exactly when regions connect; abstract expansions at most 5% of full-grid
+    expansions or the miss recorded; zero steady-state allocation.
+
+### N17: Corridor main path
+- [ ] N17-1 Masked corridor search and segment stitching. (`WI-N17-01`)
+  - AC: unmasked search unchanged on the N1 corpus; stitched length ratio median at most 1.05 and
+    p99 at most 1.20 or the miss recorded.
+- [ ] N17-2 Layered unit main path behind `LayeredNavigation`. (`WI-N17-02`)
+  - AC: option off unchanged; option on has 0 seam gaps, full-grid expansions per order down at
+    least 80%, and replans only affected units after a placement.
+
+### N18: Group local router
+- [ ] N18-1 Navigation groups and spine following. (`WI-N18-01`)
+  - AC: option off constructs nothing; 0 member waypoints in walls and median slot lag at most 2
+    pitches in `layered-cross-map-8x12`; M4 squad invariants hold.
+- [ ] N18-2 Width-adaptive formation and passage handoff. (`WI-N18-02`)
+  - AC: squad passage and detour cases settle with 0 waypoints in walls and 0 cycles; N14 targets
+    still met.
+- [ ] N18-3 Crowd routing for large selections. (`WI-N18-03`)
+  - AC: crowd cases settle with 0 units holding routes; assignment reproducible; 1000-unit order
+    tick at or under N5.
+
+### N19: Unit steering
+- [ ] N19-1 Reciprocal velocity-obstacle steering core. (`WI-N19-01`)
+  - AC: synthetic head-on, crossing, and wall cases avoid contact; results independent of neighbor
+    input order; zero allocation.
+- [ ] N19-2 Steering integration with N8 fallback. (`WI-N19-02`)
+  - AC: option off unchanged; option on passes head-on and crossing cases with 0 give-way events
+    and 0 gate stops; `steer` span median at most 1.0 ms in the M4 probe or the miss recorded.
+
+### N20: Layered navigation verification
+- [ ] N20-1 Verify every layered target. (`WI-N20-01`)
+  - AC: each target has a verdict across 3 seeds and four option modes; N10 and N14 targets
+    re-verified; default-flip recommendations recorded.
 
 ## Track X: Miscellaneous fixes and tweaks
 

@@ -349,7 +349,7 @@ mindmap
       M3 Mixed roster normalization ⮕
       M4 Army-scale AI ⮕
       M5 1000 vs 1000 battle ⮕
-    N. Multi-unit pathfinding performance and deadlocks
+    N. Multi-unit pathfinding performance, deadlocks, and layered navigation
       N0 Path cost baseline ⮕
         N0-1 Path span and counters
         N0-2 Pathfinding load scenario
@@ -392,6 +392,24 @@ mindmap
         N13-2 Squad and cluster entry
       N14 Passage verification ⮕
         N14-1 Passage target verification
+      N15 Layered navigation contract and baseline ⮕
+        N15-1 Navigation plan and layer contract
+        N15-2 Layered cases and baseline
+      N16 Strategic sector graph ⮕
+        N16-1 Sector graph
+        N16-2 Strategic planner
+      N17 Corridor main path ⮕
+        N17-1 Corridor search and stitching
+        N17-2 Layered unit main path
+      N18 Group local router ⮕
+        N18-1 Navigation groups and spine
+        N18-2 Width-adaptive formation
+        N18-3 Crowd routing
+      N19 Unit steering ⮕
+        N19-1 Steering core
+        N19-2 Steering integration
+      N20 Layered navigation verification ⮕
+        N20-1 Layered target verification
 ```
 
 ---
@@ -572,6 +590,7 @@ flowchart LR
     H2B["H2b Metric core units"]
     N2["N2 Shared group requests"]
     N4["N4 Off-thread order paths"]
+    N16["N16 Strategic sector graph"]
   end
 
   subgraph S8["Stage 8 · Long-run campaign & mixed rosters"]
@@ -609,14 +628,27 @@ flowchart LR
     N12["N12 Passage queues"]
   end
 
-  subgraph S13["Stage 13 · Passage flow"]
+  subgraph S13["Stage 13 · Passage flow & layered plans"]
     direction TB
     N13["N13 Opposing flow and group entry"]
+    N15["N15 Layered navigation contract and baseline"]
   end
 
-  subgraph S14["Stage 14 · Passage verification"]
+  subgraph S14["Stage 14 · Passage verification, corridor paths & steering"]
     direction TB
     N14["N14 Passage verification"]
+    N17["N17 Corridor main path"]
+    N19["N19 Unit steering"]
+  end
+
+  subgraph S15["Stage 15 · Group local routing"]
+    direction TB
+    N18["N18 Group local router"]
+  end
+
+  subgraph S16["Stage 16 · Layered navigation verification"]
+    direction TB
+    N20["N20 Layered navigation verification"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -869,6 +901,16 @@ flowchart LR
   N12 --> N13
   N13 --> N14
   N10 --> N14
+  N10 --> N15
+  N1 --> N16
+  N15 --> N17
+  N16 --> N17
+  N14 --> N18
+  N17 --> N18
+  N10 --> N19
+  N15 --> N19
+  N18 --> N20
+  N19 --> N20
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
@@ -881,7 +923,7 @@ flowchart LR
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class M0,M1,M2,M3,M4,M5 trackM;
-  class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14 trackN;
+  class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14,N15,N16,N17,N18,N19,N20 trackN;
   class A4S seam;
 ```
 
