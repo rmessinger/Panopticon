@@ -2031,6 +2031,11 @@ Design: [layered navigation deep dive](deep-dives/n-layered-navigation.md).
   - AC: each target has a verdict across 3 seeds and four option modes; N10 and N14 targets
     re-verified; default-flip recommendations recorded.
 
+### N21: Structure passability coverage
+- [x] N21-1 Close the through-structure holes in marking and resolution legs. (`WI-N21-01`)
+  - AC: overlapping cells marked, no spliced leg crosses impassable cells, capture shows no
+    tank entering a structure, NavigationDeadlock numbers re-recorded.
+
 ## Track X: Miscellaneous fixes and tweaks
 
 Open-ended queue: [phase definitions](track-x-fixes-tweaks.md). Entries below cover authored work, not a terminal track milestone.

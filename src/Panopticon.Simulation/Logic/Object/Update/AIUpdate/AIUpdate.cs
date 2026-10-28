@@ -481,7 +481,8 @@ public class AIUpdate : UpdateModule
             navigation,
             segmentStart,
             segmentEnd,
-            navigation.Options.LocalRepathWindowCells);
+            navigation.Options.LocalRepathWindowCells,
+            resumePoint: null);
         if (sidestep == null)
         {
             return false;
@@ -504,13 +505,16 @@ public class AIUpdate : UpdateModule
             return false;
         }
 
+        // WI-N11-01: the resume leg back to the first remaining waypoint is validated with
+        // the approach leg, so the yield cannot splice a drive through impassable cells.
         var sidestep = GiveWayPlanner.FindSidestep(
             GameObject,
             other,
             navigation,
             segmentStart,
             segmentEnd,
-            navigation.Options.LocalRepathWindowCells);
+            navigation.Options.LocalRepathWindowCells,
+            TargetPoints.Count > 0 ? TargetPoints[0].Vector2XY() : null);
         if (sidestep == null)
         {
             return false;

@@ -30,6 +30,9 @@ Code facts (see the [grounding appendix](#appendix-grounding)):
 - The pathfinding grid holds terrain and structures only. Units never mark cells, so a path can
   end on a cell held by an arrived unit. `GameData.MaxCellsAdjustDestination` is parsed with no
   consumer.
+- Structure colliders mark cells by rectangle overlap with each node's cell square (N21); node
+  centers alone left passable cells inside rotated or edge-adjacent footprints, and paths
+  planned through them.
 - Every unit of a squad-less selection gets the same final point. Arrival requires
   `CloseEnoughDist`, so units held off by an arrived unit keep their waypoints indefinitely.
 - An async path that is cancelled by a worker exception never calls back; the unit stands with
@@ -148,6 +151,31 @@ each N7 to N9 option off in turn, and report each target in section 3 with befor
 numbers, the N5 path budgets, and M4 invariants. Records a default-flip recommendation for
 `AsyncOrderPaths`, `GroupSelectionMoves`, `ValidateOffsetRoutes`, `BlockedUnitResolution`, and
 `DestinationSlots`.
+
+### N21: Structure passability coverage
+
+Two holes let ground units drive through structures (observed in the N8
+squad-offset-retrace capture):
+
+1. Cell marking used node-center point containment inside the collider's rotated box. Rotated
+   and edge-adjacent colliders left grid-passable cells inside footprints, so searches planned
+   waypoints through buildings. Marking now marks every node whose cell square
+   (`HeightMap.HorizontalScale` around the lattice position) overlaps the collider's
+   axis-aligned bounding area within the height band.
+2. Blocked-resolution legs (give-way sidestep approach and resume, local-detour approach) were
+   validated only at their endpoint cells. They now must pass `PathOptimizer.IsDirectLinePassable`,
+   a Bresenham cell walk; the start cell is exempt so a unit standing on an impassable cell can
+   still plan its way off it.
+3. Squad assignment legs in `GroupMovement.AssignSquadMembers` had the same endpoint-only hole:
+   a follower with an impassable formation slot kept the offset waypoints (validation never ran),
+   and a rerouted follower drove an unvalidated first leg from its position to the leader route.
+   With `ValidateOffsetRoutes` on, every driven leg of an assignment (offset retrace, reroute
+   first leg, landing tail) must pass `IsDirectLinePassable`; unclear assignments reroute onto
+   the leader route or fall back to their own search. Impassable slots take the crossing reroute
+   like any other blocked retrace.
+
+Follower offset retraces remain behind `ValidateOffsetRoutes`; the N10 verdict stands. The grid
+stays the only structure barrier: the swept-footprint gate remains unit-units by design.
 
 ## 5. Decisions
 

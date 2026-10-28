@@ -1,5 +1,4 @@
 using System;
-using System;
 using System.Numerics;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -61,7 +60,10 @@ internal static class BlockedMovementResolver
             Math.Max(unit.Translation.X, rejoin.X),
             Math.Max(unit.Translation.Y, rejoin.Y));
         var detour = navigation.CalculateLocalPath(unit.Translation, rejoin, options.LocalRepathWindowCells, occupancy);
-        if (detour.Count > 0)
+        // WI-N11-01: the approach leg from the unit's live position must not cross
+        // impassable cells; a crossing detour is dropped and the attempt is consumed.
+        if (detour.Count > 0
+            && PathOptimizer.IsDirectLinePassable(navigation, unit.Translation.Vector2XY(), detour[0].Vector2XY()))
         {
             aiUpdate.SpliceLocalDetour(detour, superseded);
         }

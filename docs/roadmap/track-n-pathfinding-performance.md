@@ -67,6 +67,7 @@ as fallback. N20 verifies every Track N target with the layers on. Design:
 | N18. Group local router | Move squads, clusters, and crowds as persistent navigation groups that follow one spine with width-adaptive slots, behind `GroupRouting`. | Cohesion targets met; layered and passage squad cases settle with 0 waypoints in walls; groups hand off to passage queues and resume. | Not started | N14, N17 |
 | N19. Unit steering | Steer moving ground units around neighbors and nearby obstacles with reciprocal velocity obstacles behind `UnitSteering`, with N8 as fallback. | Head-on and crossing cases pass with 0 give-way events and 0 gate stops; the `steer` span meets budget. | Not started | N10, N15 |
 | N20. Layered navigation verification | Re-run every Track N case and the M4 probe over 3 seeds with layers on, then each layer off. | Every layered target has a verdict; N10 and N14 targets still hold; default-flip recommendations recorded for the three options. | Not started | N18, N19 |
+| N21. Structure passability coverage | Close the through-structure holes in cell marking and blocked-resolution legs. | No planned or spliced leg crosses a structure footprint; the squad-offset-retrace capture shows no tank entering a structure; NavigationDeadlock numbers are re-recorded. | Done | N10 |
 
 ## Phase resources
 
@@ -76,6 +77,7 @@ as fallback. N20 verifies every Track N target with the layers on. Design:
 | N6-N10 | [Navigation deadlocks](deep-dives/n-navigation-deadlocks.md) | [§8](deep-dives/n-navigation-deadlocks.md#8-architecture-diagrams) | [`WI-N6-01`](agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md), `WI-N6-02`, `WI-N7-01..02`, `WI-N8-01..02`, `WI-N9-01..02`, `WI-N10-01` ([plan](implementation/track-n-pathfinding-performance.md#navigation-deadlocks-n6-n10)) |
 | N11-N14 | [Confined passage queueing](deep-dives/n-confined-passage-queueing.md) | [§8](deep-dives/n-confined-passage-queueing.md#8-architecture-diagrams) | [`WI-N11-01`](agent/cards/WI-N11-01-passage-finder.md), `WI-N11-02`, `WI-N12-01..02`, `WI-N13-01..02`, `WI-N14-01` ([plan](implementation/track-n-pathfinding-performance.md#confined-passage-queueing-n11-n14)) |
 | N15-N20 | [Layered navigation](deep-dives/n-layered-navigation.md) | [§9](deep-dives/n-layered-navigation.md#9-architecture-diagrams) | [`WI-N16-01`](agent/cards/WI-N16-01-sector-graph.md), [`WI-N19-01`](agent/cards/WI-N19-01-steering-core.md), `WI-N15-01..02`, `WI-N16-02`, `WI-N17-01..02`, `WI-N18-01..03`, `WI-N19-02`, `WI-N20-01` ([plan](implementation/track-n-pathfinding-performance.md#layered-navigation-n15-n20)) |
+| N21 | [Navigation deadlocks](deep-dives/n-navigation-deadlocks.md) | [§8](deep-dives/n-navigation-deadlocks.md#8-architecture-diagrams) | [`WI-N21-01`](agent/cards/WI-N21-01-structure-passability-coverage.md) ([plan](implementation/track-n-pathfinding-performance.md#structure-passability-coverage-n21)) |
 
 ## Cross-track notes
 

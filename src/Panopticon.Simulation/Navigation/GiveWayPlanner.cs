@@ -17,6 +17,8 @@ internal static class GiveWayPlanner
     /// next segment (<paramref name="segmentStart"/> to <paramref name="segmentEnd"/>) by the
     /// combined footprint radii plus padding, or null when no such cell exists. Ring order is
     /// row-major like <see cref="FollowerLanding.TryLand"/> so the choice is deterministic.
+    /// WI-N11-01: the approach leg (blocker to candidate) and, when given, the resume leg
+    /// (candidate to <paramref name="resumePoint"/>) must not cross impassable cells.
     /// </summary>
     internal static Vector3? FindSidestep(
         GameObject blocker,
@@ -24,7 +26,8 @@ internal static class GiveWayPlanner
         Navigation navigation,
         Vector2 segmentStart,
         Vector2 segmentEnd,
-        int windowCells)
+        int windowCells,
+        Vector2? resumePoint = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(windowCells);
 
@@ -60,8 +63,11 @@ internal static class GiveWayPlanner
 
                     var x = blockerNode.X + dx;
                     var y = blockerNode.Y + dy;
-                    var node = navigation.Graph.GetNode(x, y);
-                    if (node == null || !node.IsPassable
+
+                    // Rings reaching past the graph edge skip those cells: GetNode throws
+                    // instead of returning null.
+                    if (!navigation.Graph.TryGetNode(x, y, out var node)
+                        || !node.IsPassable
                         || !navigation.Graph.Regions.SameRegion(node, blockerNode))
                     {
                         continue;
@@ -74,6 +80,23 @@ internal static class GiveWayPlanner
                     }
 
                     if (!occupancy.IsFreeAt(position, blocker.Geometry.BoundingCircleRadius) || !ClearsRequester(position, requester, blocker))
+                    {
+                        continue;
+                    }
+
+                    // WI-N11-01: a straight drive to the candidate (and on to the resume
+                    // waypoint) must stay on passable cells; endpoints beyond a wall are
+                    // unreachable however passable they look.
+                    if (!PathOptimizer.IsDirectLinePassable(
+                            navigation,
+                            blocker.Translation.Vector2XY(),
+                            position.Vector2XY()))
+                    {
+                        continue;
+                    }
+
+                    if (resumePoint != null
+                        && !PathOptimizer.IsDirectLinePassable(navigation, position.Vector2XY(), resumePoint.Value))
                     {
                         continue;
                     }

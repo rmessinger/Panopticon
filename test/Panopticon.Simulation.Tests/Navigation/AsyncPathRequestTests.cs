@@ -552,12 +552,13 @@ public class AsyncPathRequestTests : MockedGameTest
 
     private static void BlockTile(NavigationClass navigation, HeightMap heightMap, int x, int y)
     {
-        // Same collider geometry as NavigationRegionsTests: the marking loop's top-right
-        // bound is exclusive, so the rect reaches one tile past the last intended center.
-        var corner = heightMap.GetPosition(x - 1, y - 1);
-        const float tile = 10f;
-        var width = 2 * tile + 1.01f * tile;
-        var collider = new BoxCollider(new RectangleF(corner.X, corner.Y, width, width), 1000f);
+        // Covers exactly the target tile's cell square (node position +/- half a cell);
+        // the 0.02 inset keeps edge-inclusive overlap from spilling into neighbours.
+        var corner = heightMap.GetPosition(x, y);
+        const float inset = 0.02f;
+        var collider = new BoxCollider(
+            new RectangleF(corner.X - 5f + inset, corner.Y - 5f + inset, 10f - 2 * inset, 10f - 2 * inset),
+            1000f);
         navigation.UpdateAreaPassability(collider, false);
     }
 

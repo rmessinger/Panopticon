@@ -153,18 +153,23 @@ public class NavigationRegionsTests
         return true;
     }
 
-    // A world rect whose marking loop covers exactly the tile range [x0..x1] x [y0..y1]:
-    // near corner on the x0/y0 tile center (inclusive), far corner one tile past the x1/y1
-    // center (the loop's top-right bound is exclusive).
+    // A world rect covering exactly the tile range [x0..x1] x [y0..y1]: each node owns the
+    // cell square around its lattice position, and the 0.02 inset keeps edge-inclusive
+    // overlap from spilling into the neighbouring cells.
     private static void MarkTiles(NavigationClass navigation, Panopticon.Navigation.Graph graph, int x0, int x1, int y0, int y1)
     {
         var origin = navigation.GetNodePosition(graph.GetNode(x0, y0));
         var tile = navigation.GetNodePosition(graph.GetNode(x0 + 1, y0)).X - origin.X;
-        var width = navigation.GetNodePosition(graph.GetNode(x1, y0)).X - origin.X + 1.01f * tile;
-        var height = navigation.GetNodePosition(graph.GetNode(x0, y1)).Y - origin.Y + 1.01f * tile;
+        const float inset = 0.02f;
 
         navigation.UpdateAreaPassability(
-            new BoxCollider(new RectangleF(origin.X, origin.Y, width, height), 1000.0f),
+            new BoxCollider(
+                new RectangleF(
+                    origin.X - tile / 2 + inset,
+                    origin.Y - tile / 2 + inset,
+                    (x1 - x0) * tile + tile - 2 * inset,
+                    (y1 - y0) * tile + tile - 2 * inset),
+                1000.0f),
             passable: false);
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
+using Panopticon.Mathematics;
 using Panopticon.Navigation;
 using Panopticon.Terrain;
 using Xunit;
@@ -186,6 +187,64 @@ public class GiveWayTests : MockedGameTest
         Assert.Single(blocker.AIUpdate!.TargetPoints);
         Assert.Equal(World(5, 12), blocker.AIUpdate!.TargetPoints[0]);
         Assert.Equal(1, navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests);
+    }
+
+    [Fact]
+    public void SidestepRefusedWhenEveryCandidateRequiresCrossingImpassableCells()
+    {
+        var navigation = CreateNavigation();
+        navigation.Options.BlockedUnitResolution = true;
+        navigation.Options.BlockedWaitFrames = 2;
+        navigation.Options.LocalRepathWindowCells = 4;
+        var game = new TestGame(SageGame.CncGenerals, navigation);
+        var owner = NewPlayer();
+
+        var unit = NewUnit(World(8, 2), game: game, player: owner);
+        SetRadii(unit);
+        var blocker = NewRegisteredUnit(World(5, 2), ObjectKinds.Vehicle, game, owner);
+        SetRadii(blocker);
+
+        // WI-N11-01: an impassable moat on the Chebyshev ring around the blocker at
+        // (5, 2), plus occupants on the four diagonal ring-1 cells. Ring-1 candidates on
+        // the requester's segment fail clearance, the rest of ring 1 is occupied, and every
+        // candidate from ring 3 outward needs a straight drive across the moat. Before the
+        // leg validation the planner would accept a ring-3 cell and drive straight through.
+        for (var y = 0; y <= 4; y++)
+        {
+            for (var x = 3; x <= 7; x++)
+            {
+                if (Math.Max(Math.Abs(x - 5), Math.Abs(y - 2)) == 2)
+                {
+                    BlockCell(navigation, x, y);
+                }
+            }
+        }
+
+        foreach (var (x, y) in new[] { (4, 1), (6, 1), (4, 3), (6, 3) })
+        {
+            SetRadii(NewRegisteredUnit(World(x, y), ObjectKinds.Vehicle, game, owner));
+        }
+
+        var ai = unit.AIUpdate!;
+        ai.TargetPoints.Add(World(1, 2));
+        DriveBlocked(ai, blocker.Id);
+
+        var statsBefore = navigation.Statistics;
+        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+
+        // No sidestep was spliced onto the walled-in blocker; the requester repaths instead.
+        Assert.Empty(blocker.AIUpdate!.TargetPoints);
+        Assert.Equal(1, navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests);
+    }
+
+    private static void BlockCell(NavigationClass navigation, int x, int y)
+    {
+        const float inset = 0.02f;
+        navigation.UpdateAreaPassability(
+            new BoxCollider(
+                new RectangleF(x * 10f - 5f + inset, y * 10f - 5f + inset, 10f - 2 * inset, 10f - 2 * inset),
+                1000f),
+            passable: false);
     }
 
     private static void DriveBlocked(AIUpdate ai, ObjectId blockerId)
