@@ -124,6 +124,8 @@ public static class PathfindingLoadRunner
             navigation.Options.AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths;
             // WI-N7-02 knob: squad offset retrace validation.
             navigation.Options.ValidateOffsetRoutes = config.PathfindingLoadValidateOffsetRoutes;
+            // WI-N9-01 knob: spread selection goals into destination slots.
+            navigation.Options.DestinationSlots = config.PathfindingLoadDestinationSlots;
             var zoneB = profile.Sides[1].Zone;
             var crossMapDestination = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
 
@@ -266,6 +268,7 @@ public static class PathfindingLoadRunner
                 ClusterCells = config.PathfindingLoadClusterCells,
                 AsyncOrderPaths = config.PathfindingLoadAsyncOrderPaths,
                 ValidateOffsetRoutes = config.PathfindingLoadValidateOffsetRoutes,
+                DestinationSlots = config.PathfindingLoadDestinationSlots,
                 WorkerSearchMs = navigation.Statistics.WorkerSearchMs,
                 AsyncSubmitted = navigation.AsyncPathSubmitted,
                 AsyncApplied = navigation.AsyncPathApplied,

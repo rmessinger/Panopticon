@@ -118,6 +118,9 @@ public sealed record PathfindingLoadReport
     /// impassable cells.</summary>
     public bool ValidateOffsetRoutes { get; init; }
 
+    /// <summary>WI-N9-01: whether squad-less selections received per-unit goal slots.</summary>
+    public bool DestinationSlots { get; init; }
+
     /// <summary>WI-N4-02: total worker-thread search time, separate from the logic-thread span.</summary>
     public double WorkerSearchMs { get; init; }
 

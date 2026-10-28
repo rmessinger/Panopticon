@@ -98,13 +98,31 @@ public sealed class NavigationOptions
     /// </summary>
     public int MaxResolutionAttempts { get; set; } = DefaultMaxResolutionAttempts;
 
-    /// <summary>Default for <see cref="CrowdArrivalRadius"/> (WI-N8-01): the mass-battle
-    /// reachability arrival radius.</summary>
-    public const float DefaultCrowdArrivalRadius = 60.0f;
+    /// <summary>Default for <see cref="CrowdArrivalRadius"/> (WI-N9-02): the WI-N6-02
+    /// crowd-goal-100 distribution packs 100 Crusader footprints into a ~225-unit disk, so
+    /// 250 covers the settled crowd.</summary>
+    public const float DefaultCrowdArrivalRadius = 250.0f;
 
     /// <summary>
     /// WI-N8-01 give-up and WI-N9 crowd-arrival radius in world units: how close to the goal a
     /// crowded unit may stop and still count as settled.
     /// </summary>
     public float CrowdArrivalRadius { get; set; } = DefaultCrowdArrivalRadius;
+
+    /// <summary>
+    /// When true, squad-less and cluster selections receive per-unit goal slots packed outward
+    /// from the order point (WI-N9-01) instead of one shared destination. Squads keep their
+    /// formation offsets either way. Default false.
+    /// </summary>
+    public bool DestinationSlots { get; set; }
+
+    /// <summary>
+    /// Default Chebyshev bound in cells for the WI-N9-01 slot search.
+    /// <see cref="GameData.MaxCellsAdjustDestination"/> takes precedence when a game parses a
+    /// nonzero value; Generals-era data leaves it 0.
+    /// </summary>
+    public const int DefaultDestinationSlotCells = 16;
+
+    /// <summary>WI-N9-01: Chebyshev bound in cells for the outward slot search.</summary>
+    public int DestinationSlotCells { get; set; } = DefaultDestinationSlotCells;
 }

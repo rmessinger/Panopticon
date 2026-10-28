@@ -211,6 +211,24 @@ public static class Program
             config.NavigationDeadlockBlockedResolution = bool.Parse(n6BlockedResolution);
         }
 
+        var n0DestinationSlots = GetArgValue(args, "--n0-destination-slots");
+        if (!string.IsNullOrEmpty(n0DestinationSlots))
+        {
+            config.PathfindingLoadDestinationSlots = bool.Parse(n0DestinationSlots);
+        }
+
+        var probeDestinationSlots = GetArgValue(args, "--probe-destination-slots");
+        if (!string.IsNullOrEmpty(probeDestinationSlots))
+        {
+            config.MassBattleCapacityProbeDestinationSlots = bool.Parse(probeDestinationSlots);
+        }
+
+        var n6DestinationSlots = GetArgValue(args, "--n6-destination-slots");
+        if (!string.IsNullOrEmpty(n6DestinationSlots))
+        {
+            config.NavigationDeadlockDestinationSlots = bool.Parse(n6DestinationSlots);
+        }
+
         ParseOptionalString(args, "--n6-cases", value => config.NavigationDeadlockCaseFilter = value);
         ParseOptionalInt(args, "--n6-budget", value => config.NavigationDeadlockFrameBudget = value);
         ParseOptionalInt(args, "--n6-seed", value => config.NavigationDeadlockSeed = value);

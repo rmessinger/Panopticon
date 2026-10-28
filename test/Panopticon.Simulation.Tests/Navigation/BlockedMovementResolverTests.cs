@@ -129,6 +129,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         navigation.Options.BlockedWaitFrames = 2;
         navigation.Options.LocalRepathWindowCells = 4;
         navigation.Options.MaxResolutionAttempts = 1;
+        navigation.Options.CrowdArrivalRadius = 60.0f;
         var game = new TestGame(SageGame.CncGenerals, navigation);
 
         var unit = NewUnit(World(8, 2), game: game);
@@ -161,6 +162,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         navigation.Options.BlockedWaitFrames = 2;
         navigation.Options.LocalRepathWindowCells = 4;
         navigation.Options.MaxResolutionAttempts = 1;
+        navigation.Options.CrowdArrivalRadius = 60.0f;
         var game = new TestGame(SageGame.CncGenerals, navigation);
 
         var unit = NewUnit(World(8, 2), game: game);
@@ -194,7 +196,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         Assert.Equal(15, options.BlockedWaitFrames);
         Assert.Equal(12, options.LocalRepathWindowCells);
         Assert.Equal(3, options.MaxResolutionAttempts);
-        Assert.Equal(60.0f, options.CrowdArrivalRadius);
+        Assert.Equal(250.0f, options.CrowdArrivalRadius);
     }
 
     private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry, TestGame? game = null)

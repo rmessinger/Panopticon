@@ -92,6 +92,17 @@ public sealed class MovementProgress
         BlockerId = default;
     }
 
+    /// <summary>
+    /// Called when a final-segment unit settles behind an arrived friendly near its goal
+    /// (WI-N9-02): the route is cleared and the arrival is reported.
+    /// </summary>
+    public void RecordCrowdArrived()
+    {
+        FramesWithoutProgress++;
+        Reason = NavigationStallReason.CrowdArrived;
+        BlockerId = default;
+    }
+
     /// <summary>Clears all tracking; called on new orders, waypoint arrivals, and stops.</summary>
     public void Reset()
     {

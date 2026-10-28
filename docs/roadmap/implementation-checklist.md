@@ -1942,9 +1942,9 @@ Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
     cascade.
 
 ### N9: Destination crowding
-- [ ] N9-1 Destination slots behind `DestinationSlots`. (`WI-N9-01`)
+- [x] N9-1 Destination slots behind `DestinationSlots`. (`WI-N9-01`)
   - AC: option off changes nothing; slots are unique, passable, in-region, deterministic.
-- [ ] N9-2 Crowd arrival. (`WI-N9-02`)
+- [x] N9-2 Crowd arrival. (`WI-N9-02`)
   - AC: `crowd-goal-100` ends with 0 units holding routes in both slot modes.
 
 ### N10: Deadlock verification
