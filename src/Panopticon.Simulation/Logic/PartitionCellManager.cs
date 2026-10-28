@@ -242,7 +242,14 @@ public sealed class PartitionCellManager : IPersistableObject
 
     internal bool GroundFootprintFits(GameObject obj, Vector2 destination)
     {
+        return GroundFootprintFits(obj, destination, out _);
+    }
+
+    // WI-N6-01: reports the first blocking object so movement progress can attribute stalls.
+    internal bool GroundFootprintFits(GameObject obj, Vector2 destination, out ObjectId blocker)
+    {
         _groundFootprintCandidates.Clear();
+        blocker = default;
         var start = obj.Translation.Vector2XY();
         if (Vector2.DistanceSquared(start, destination) < 0.000001f)
         {
@@ -255,6 +262,7 @@ public sealed class PartitionCellManager : IPersistableObject
         {
             if (BlocksGroundAdvance(candidate.GameObject))
             {
+                blocker = candidate.GameObject.Id;
                 return false;
             }
         }

@@ -311,10 +311,23 @@ public sealed class PathRequestQueue
     private Graph _workerGraph;
     private int _appliedVersion;
 
+    // WI-N6-02: test seam that makes the next computed request die the way an unexpected
+    // worker exception would (cancelled without a callback), reproducing the deadlocked
+    // awaiting unit. Set before submitting; consumed by the next Compute call.
+    private volatile bool _failNextCompute;
+
+    internal void ForceNextWorkerFailure() => _failNextCompute = true;
+
     private void Compute(PathRequest request)
     {
         try
         {
+            if (_failNextCompute)
+            {
+                _failNextCompute = false;
+                throw new InvalidOperationException("Injected async path worker failure (WI-N6-02).");
+            }
+
             // Racy hint check; Drain re-checks authoritatively before applying.
             if (request.CancelRequested || request.Requester?.IsDestroyed == true)
             {

@@ -100,6 +100,9 @@ public class AIUpdate : UpdateModule
     /// </summary>
     public List<Vector3> TargetPoints { get; set; }
 
+    /// <summary>WI-N6-01: movement liveness tracking for the current order; detection only.</summary>
+    public MovementProgress Progress { get; } = new();
+
     public float CurrentLocomotorSpeed
     {
         get
@@ -208,6 +211,8 @@ public class AIUpdate : UpdateModule
             return;
         }
 
+        Progress.Reset();
+
         if (!GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft) && targetPoint != GameObject.Translation)
         {
             if (GameEngine.Navigation == null)
@@ -229,6 +234,11 @@ public class AIUpdate : UpdateModule
             if (path.Count > 0)
             {
                 path.RemoveAt(0);
+            }
+            else
+            {
+                // WI-N6-01: the order produced no route; recorded for stall attribution.
+                Progress.RecordNoRoute();
             }
 
             TargetPoints.AddRange(path);
@@ -262,6 +272,7 @@ public class AIUpdate : UpdateModule
     internal void RequestPathAsync(Vector3 targetPoint)
     {
         CancelPendingPath();
+        Progress.Reset();
 
         if (GameObject.Definition.KindOf == null
             || GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft)
@@ -275,6 +286,7 @@ public class AIUpdate : UpdateModule
         _pendingPathTarget = targetPoint;
         _pendingPathHandle = GameEngine.Navigation.SubmitPathRequest(
             GameObject.Translation, targetPoint, GameObject, OnPendingPathCompleted);
+        Progress.RecordAwaitingPath();
     }
 
     private void OnPendingPathCompleted(PathRequestHandle handle)
@@ -294,6 +306,16 @@ public class AIUpdate : UpdateModule
         if (TargetPoints.Count > 0 && endIsPassable)
         {
             TargetPoints[^1] = _pendingPathTarget;
+        }
+
+        // WI-N6-01: an empty completion is a failed order; a route resumes progress tracking.
+        if (TargetPoints.Count == 0)
+        {
+            Progress.RecordNoRoute();
+        }
+        else
+        {
+            Progress.Reset();
         }
 
         GameObject.SetModelConditionState(ModelConditionFlag.Moving);
@@ -468,6 +490,7 @@ public class AIUpdate : UpdateModule
         _waypointEnumerator = null;
         TargetPoints.Clear();
         GameObject.Speed = 0;
+        Progress.Reset();
     }
 
     internal void SetTargetDirection(Vector3 targetDirection)
@@ -506,6 +529,11 @@ public class AIUpdate : UpdateModule
 
     public override UpdateSleepTime Update()
     {
+        if (_pendingPathHandle != null)
+        {
+            Progress.RecordAwaitingPath();
+        }
+
         StateMachine.Update();
         AcquireAttackMoveTarget();
 
@@ -575,7 +603,12 @@ public class AIUpdate : UpdateModule
                         TargetPoints[0],
                         onPathDistToGoal,
                         CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
-                        ref blocked);
+                        ref blocked,
+                        out var blocker);
+
+                    // WI-N6-01: the distance was sampled before the physics step, so this
+                    // compares consecutive move steps toward the same waypoint.
+                    Progress.RecordMoveStep(onPathDistToGoal, blocked, blocker);
 
                     var use3DArrival = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist3D;
                     var distToTargetSq = use3DArrival
@@ -589,6 +622,7 @@ public class AIUpdate : UpdateModule
                     {
                         Logger.Debug($"Reached point {TargetPoints[0]}");
                         TargetPoints.RemoveAt(0);
+                        Progress.Reset();
                         if (TargetPoints.Count == 0)
                         {
                             MoveToNextWaypointOrStop();

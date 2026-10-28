@@ -57,8 +57,12 @@ internal sealed class MassBattleSquadInvariantSampler
 
         public int MaxIdleFrames { get; set; }
 
-        public int StalledUnitsAtEnd { get; set; }
+        public int StalledUnits { get; set; }
     }
+
+    // WI-N6-01: game-wide stall records and wait-for cycles; blocker edges cross sides.
+    private readonly NavigationStallSampler _stallSampler = new();
+    private uint _sampleFrame;
 
     private readonly List<Side> _sides;
 
@@ -122,13 +126,20 @@ internal sealed class MassBattleSquadInvariantSampler
             SampleStalls(side);
         }
 
+        _sampleFrame++;
+        _stallSampler.Sample(
+            _sampleFrame,
+            _sides.SelectMany(side => side.Player.OwnedObjects));
+
         SamplePathRequests();
     }
 
-    // WI-M4-06: a live combat unit is idle when it holds no target point, its weapon has no
-    // valid target, and it has not moved since the last sample, while enemies remain. Parked
-    // jets are excluded: parking between sorties is intentional idle time (WI-M4-05). Idleness
-    // longer than the authored threshold is a stall.
+    // WI-N6-01: a live combat unit is stalled when it holds target points but has made no
+    // progress toward the current waypoint beyond the threshold, or its last order produced
+    // no route, while enemies remain. The WI-M4-06 position/route rule counted any unit
+    // holding target points as engaged, hiding jams; counts are expected to rise and N6
+    // records the new baseline. Parked jets are excluded: parking between sorties is
+    // intentional idle time (WI-M4-05).
     private const int StallThresholdFrames = 600;
 
     private static void SampleStalls(Side side)
@@ -139,6 +150,7 @@ internal sealed class MassBattleSquadInvariantSampler
             return;
         }
 
+        var stalledUnits = 0;
         foreach (var unit in side.Player.OwnedObjects)
         {
             if (unit.IsEffectivelyDead || unit.IsStructure || !unit.CanAttack)
@@ -151,20 +163,43 @@ internal sealed class MassBattleSquadInvariantSampler
                 continue;
             }
 
-            var position = unit.Transform.Translation;
-            var movedOrNew = !side.IdleTracking.TryGetValue(unit.Id.Index, out var tracked)
-                || tracked.LastPosition != position;
-            if (movedOrNew)
+            var progress = unit.AIUpdate?.Progress;
+            if (progress == null)
             {
-                side.IdleTracking[unit.Id.Index] = (position, 0);
+                stalledUnits += TrackPositionIdle(side, unit);
                 continue;
             }
 
-            var engaged = unit.AIUpdate?.TargetPoints.Count > 0 || unit.CurrentWeapon?.HasValidTarget == true;
-            var idleFrames = engaged ? 0 : tracked.IdleFrames + 1;
-            side.IdleTracking[unit.Id.Index] = (position, idleFrames);
-            side.MaxIdleFrames = Math.Max(side.MaxIdleFrames, idleFrames);
+            side.MaxIdleFrames = Math.Max(side.MaxIdleFrames, progress.FramesWithoutProgress);
+            var holdingOrder = unit.AIUpdate.TargetPoints.Count > 0;
+            if ((holdingOrder && progress.FramesWithoutProgress > StallThresholdFrames)
+                || progress.Reason == NavigationStallReason.NoRoute)
+            {
+                stalledUnits++;
+            }
         }
+
+        side.StalledUnits = stalledUnits;
+    }
+
+    // Fallback for units without AIUpdate-driven progress (none in the M4 roster): the
+    // WI-M4-06 position rule.
+    private static int TrackPositionIdle(Side side, GameObject unit)
+    {
+        var position = unit.Transform.Translation;
+        var movedOrNew = !side.IdleTracking.TryGetValue(unit.Id.Index, out var tracked)
+            || tracked.LastPosition != position;
+        if (movedOrNew)
+        {
+            side.IdleTracking[unit.Id.Index] = (position, 0);
+            return 0;
+        }
+
+        var engaged = unit.CurrentWeapon?.HasValidTarget == true;
+        var idleFrames = engaged ? 0 : tracked.IdleFrames + 1;
+        side.IdleTracking[unit.Id.Index] = (position, idleFrames);
+        side.MaxIdleFrames = Math.Max(side.MaxIdleFrames, idleFrames);
+        return idleFrames > StallThresholdFrames ? 1 : 0;
     }
 
     private static bool EnemiesRemain(Player player)
@@ -238,11 +273,6 @@ internal sealed class MassBattleSquadInvariantSampler
 
     public MassBattleSquadInvariantReport Build()
     {
-        foreach (var side in _sides)
-        {
-            side.StalledUnitsAtEnd = side.IdleTracking.Values.Count(t => t.IdleFrames > StallThresholdFrames);
-        }
-
         return new MassBattleSquadInvariantReport
         {
             Sides = _sides.Select(side => new SquadInvariantSideResult
@@ -255,7 +285,7 @@ internal sealed class MassBattleSquadInvariantSampler
                 CommanderlessSquads = side.CurrentCommanderless,
                 MaxCommanderlessSquads = side.MaxCommanderless,
                 MaxIdleFrames = side.MaxIdleFrames,
-                StalledUnitsAtEnd = side.StalledUnitsAtEnd,
+                StalledUnitsAtEnd = side.StalledUnits,
             }).ToList(),
             DecisionTicksObserved = DecisionTicksObserved,
             MaxPathRequestsPerDecisionTick = MaxPathRequestsPerDecisionTick,
@@ -266,6 +296,8 @@ internal sealed class MassBattleSquadInvariantSampler
             MaxFallbackFollowersPerDecisionTick = MaxFallbackFollowersPerDecisionTick,
             LandingRingHistogram = [.. FollowerLanding.LandingRingHistogram],
             StallThresholdFrames = StallThresholdFrames,
+            StallRecords = _stallSampler.Records.ToList(),
+            WaitForCycles = _stallSampler.WaitForCycles.ToList(),
         };
     }
 }

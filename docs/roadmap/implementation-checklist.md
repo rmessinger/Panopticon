@@ -1920,10 +1920,10 @@ B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
 
 ### N6: Deadlock detection baseline
 Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
-- [ ] N6-1 Movement progress and stall attribution. (`WI-N6-01`)
+- [x] N6-1 Movement progress and stall attribution. (`WI-N6-01`)
   - AC: per-unit stall records with reason and blocker, and wait-for cycles, are reported; movement
     is unchanged; the M4 idle-stall failure units are attributed.
-- [ ] N6-2 `NavigationDeadlock` scenario and baseline. (`WI-N6-02`)
+- [x] N6-2 `NavigationDeadlock` scenario and baseline. (`WI-N6-02`)
   - AC: six seeded cases reproduce their mechanisms or report why not; baseline and target
     revisions are recorded.
 

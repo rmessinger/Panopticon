@@ -175,7 +175,7 @@ public sealed record MassBattleCapacityProbeReport
             b.AppendLine($"Landing rings (WI-N2-01): {(rings.Length > 0 ? rings : "none")}.");
             b.AppendLine(string.Format(
                 culture,
-                "Idle stalls (WI-M4-06): threshold {0} frames; parked jets excluded.",
+                "Idle stalls (WI-M4-06, progress rule WI-N6-01): threshold {0} frames; parked jets excluded.",
                 invariant.StallThresholdFrames));
             foreach (var side in invariant.Sides)
             {
@@ -185,6 +185,22 @@ public sealed record MassBattleCapacityProbeReport
                     side.MaxIdleFrames,
                     side.StalledUnitsAtEnd));
             }
+
+            var reasons = string.Join(
+                ", ",
+                invariant.StallRecords
+                    .GroupBy(record => record.Reason)
+                    .OrderBy(group => group.Key)
+                    .Select(group => $"{group.Key} {group.Count()}"));
+            b.AppendLine(string.Format(
+                culture,
+                "Stall records (WI-N6-01): {0} units ({1}).",
+                invariant.StallRecords.Count,
+                reasons.Length > 0 ? reasons : "no stalls"));
+            b.AppendLine(string.Format(
+                culture,
+                "Wait-for cycles (WI-N6-01): {0} at the latest sample.",
+                invariant.WaitForCycles.Count));
         }
 
         if (report.AsyncOrderPaths)
@@ -332,6 +348,12 @@ public sealed record MassBattleSquadInvariantReport
     public long[] LandingRingHistogram { get; init; } = [];
 
     public int StallThresholdFrames { get; init; }
+
+    /// <summary>WI-N6-01: worst stall state per unit, game-wide.</summary>
+    public IReadOnlyList<NavigationStallRecord> StallRecords { get; init; } = [];
+
+    /// <summary>WI-N6-01: mutual-blocking cycles at the latest sample.</summary>
+    public IReadOnlyList<NavigationWaitForCycle> WaitForCycles { get; init; } = [];
 }
 
 public sealed record SquadInvariantSideResult

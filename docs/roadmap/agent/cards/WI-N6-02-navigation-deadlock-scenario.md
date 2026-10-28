@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N6-02` |
 | Roadmap phase | [N6](../../track-n-pathfinding-performance.md): Deadlock detection baseline |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-N6-01` |

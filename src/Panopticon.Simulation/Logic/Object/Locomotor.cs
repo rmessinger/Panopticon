@@ -284,7 +284,7 @@ public sealed class Locomotor : IPersistableObject
         physics.StickToGround = LocomotorTemplate.StickToGround;
     }
 
-    private bool GroundAheadFitsFootprint(GameObject obj, in Vector3 goalPos, float speed)
+    private bool GroundAheadFitsFootprint(GameObject obj, in Vector3 goalPos, float speed, out ObjectId blocker)
     {
         var translation = obj.Translation;
         var directionX = goalPos.X - translation.X;
@@ -292,6 +292,7 @@ public sealed class Locomotor : IPersistableObject
         var distanceToGoal = MathF.Sqrt(directionX * directionX + directionY * directionY);
         if (distanceToGoal < 0.001f)
         {
+            blocker = default;
             return true;
         }
 
@@ -299,12 +300,20 @@ public sealed class Locomotor : IPersistableObject
         var probeX = translation.X + directionX / distanceToGoal * lookahead;
         var probeY = translation.Y + directionY / distanceToGoal * lookahead;
 
-        return _gameEngine.Game.PartitionCellManager.GroundFootprintFits(obj, new Vector2(probeX, probeY));
+        return _gameEngine.Game.PartitionCellManager.GroundFootprintFits(obj, new Vector2(probeX, probeY), out blocker);
     }
 
     public void LocoUpdateMoveTowardsPosition(GameObject obj, in Vector3 goalPos, float onPathDistToGoal, float desiredSpeed, ref bool blocked)
     {
+        this.LocoUpdateMoveTowardsPosition(obj, goalPos, onPathDistToGoal, desiredSpeed, ref blocked, out _);
+    }
+
+    // WI-N6-01: the out parameter reports the object blocking the ground-footprint gate, if any,
+    // so the caller can attribute the stall. default means no footprint blocker was identified.
+    public void LocoUpdateMoveTowardsPosition(GameObject obj, in Vector3 goalPos, float onPathDistToGoal, float desiredSpeed, ref bool blocked, out ObjectId blocker)
+    {
         SetFlag(LocomotorFlags.MaintainPositionIsValid, false);
+        blocker = default;
 
         var bdt = obj.BodyModule.DamageState;
         var maxSpeed = GetMaxSpeedForCondition(bdt);
@@ -400,8 +409,17 @@ public sealed class Locomotor : IPersistableObject
             }
         }
 
-        var footprintBlocked = !obj.IsKindOf(ObjectKinds.Projectile) && !treatAsAirborne
-            && !GroundAheadFitsFootprint(obj, goalPos, desiredSpeed);
+        var footprintBlocked = false;
+        ObjectId footprintBlocker = default;
+        if (!obj.IsKindOf(ObjectKinds.Projectile) && !treatAsAirborne)
+        {
+            footprintBlocked = !GroundAheadFitsFootprint(obj, goalPos, desiredSpeed, out footprintBlocker);
+            if (footprintBlocked)
+            {
+                blocker = footprintBlocker;
+            }
+        }
+
         blocked |= footprintBlocked;
         if (blocked)
         {

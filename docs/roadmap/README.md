@@ -509,7 +509,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N3 - Shared-destination fields | `██████████` | 1 / 1 |
 | N4 - Off-thread order paths | `██████████` | 2 / 2 |
 | N5 - Scale verification | `██████████` | 1 / 1 |
-| N6 - Deadlock detection baseline | `░░░░░░░░░░` | 0 / 2 |
+| N6 - Deadlock detection baseline | `██████████` | 2 / 2 |
 | N7 - Path liveness | `░░░░░░░░░░` | 0 / 2 |
 | N8 - Blocked-unit resolution | `░░░░░░░░░░` | 0 / 2 |
 | N9 - Destination crowding | `░░░░░░░░░░` | 0 / 2 |
@@ -524,7 +524,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N18 - Group local router | `░░░░░░░░░░` | 0 / 3 |
 | N19 - Unit steering | `░░░░░░░░░░` | 0 / 2 |
 | N20 - Layered navigation verification | `░░░░░░░░░░` | 0 / 1 |
-| Track N total | `███░░░░░░░` | 11 / 39 |
+| Track N total | `███░░░░░░░` | 13 / 39 |
 
 ---
 

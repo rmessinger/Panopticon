@@ -26,6 +26,7 @@ public enum BuiltInScenario
     TerrainTextureBake,
     RoutingChoke,
     PathfindingLoad,
+    NavigationDeadlock,
 }
 
 
