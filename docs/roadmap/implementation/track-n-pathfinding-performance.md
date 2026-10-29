@@ -787,7 +787,36 @@ Delivery: phase staging branch `staging/track-n-passages`, numbered group PRs. S
 
 ## Confined passage queueing results
 
-Pending `WI-N11-01`.
+### WI-N11-01 results (2026-10-28, Release)
+
+Pure detection layer, no movement change: `PassageFinder.FindSpans` returns the narrow
+passages a route crosses, from the passability grid alone. Two overloads: the world entry
+maps a world-space route to cells through `Navigation.GetNodeAt` (null nodes skipped,
+consecutive duplicates merged) and reads the options; the grid core stays pure on `Graph`.
+
+- Cross-sections cast along the perpendicular octants (route octant +2 and +6; two octant
+  steps = 90 degrees), each ray capped at `MaxPassageWidthCells` (16). A ray reaching the cap
+  is open; open on either side means never a passage (one-sided walls and cliffs excluded).
+  Width = left run + right run + 1; pitch converts to cells via
+  `pitchCells = max(1, ceil(pitch / cellSize))`; a sample is in-span when closed on both
+  sides and width <= `PassageLaneLimit` (3) x pitchCells.
+- Spans merge across gaps of at most `PassageMergeCells` (2) route samples; the throat is the
+  first strictly-narrowest sample; lanes = max(1, floor(throatWidth / pitchCells)); the
+  corridor is the union of cross-section cells.
+- `CrossSectionCache` memoizes width per (cell, octant), null meaning an open cast, and
+  resets when the passability version changes. Counters live as interlocked statics on
+  `PassageFinder` and surface through `PathStatistics.PassageCasts` / `PassageCacheHits`.
+- Install-free tests (synthetic 16x16, 7/7): straight gap, diagonal gap, L-shaped corridor
+  each yield one span with expected throat and lane count; a route along a one-sided wall
+  yields none; two routes through the same gap at different offsets produce throats inside
+  each other's corridors; a rescan makes no new casts; a version change resets the cache.
+  Diagonal geometry note: 45-degree rays step the x+y sum by two, so single-cell wall bands
+  read width 1; the test uses solid half-planes (x+y <= 11 and x+y >= 17) which read width 3.
+- Guardrail AC verified: no movement code calls the finder; only `PathStatistics` (counter
+  read) and `CrossSectionCache` (counter increment) reference it. Existing navigation tests
+  pass unedited (Navigation filter 104/104).
+
+Artifacts: reports and logs under `/tmp/opencode/n11-01/` and `~/log/n11-01/`.
 
 ## Layered navigation (N15-N20)
 

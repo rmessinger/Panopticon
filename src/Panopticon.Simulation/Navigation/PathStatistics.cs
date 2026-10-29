@@ -68,6 +68,14 @@ public sealed class PathStatistics
     /// goal-histogram reset (WI-N3-01); a per-window gauge, not a cumulative counter.</summary>
     public long GoalHistogramMaxBucket { get; }
 
+    /// <summary>WI-N11-01 debug counter: perpendicular ray casts made by the passage finder.
+    /// Read from the PassageFinder statics at snapshot time.</summary>
+    public long PassageCasts { get; }
+
+    /// <summary>WI-N11-01 debug counter: cross-section cache hits inside the passage finder.
+    /// Read from the PassageFinder statics at snapshot time.</summary>
+    public long PassageCacheHits { get; }
+
     public PathStatistics(
         long unitRequests,
         long squadLeaderRequests,
@@ -83,7 +91,9 @@ public sealed class PathStatistics
         long reroutedFollowers,
         double workerSearchMs,
         long goalHistogramSearches,
-        long goalHistogramMaxBucket)
+        long goalHistogramMaxBucket,
+        long passageCasts,
+        long passageCacheHits)
     {
         UnitRequests = unitRequests;
         SquadLeaderRequests = squadLeaderRequests;
@@ -100,6 +110,8 @@ public sealed class PathStatistics
         WorkerSearchMs = workerSearchMs;
         GoalHistogramSearches = goalHistogramSearches;
         GoalHistogramMaxBucket = goalHistogramMaxBucket;
+        PassageCasts = passageCasts;
+        PassageCacheHits = passageCacheHits;
     }
 
     public long SynchronousRequests => UnitRequests + SquadLeaderRequests + BlockedFollowerRequests
@@ -227,5 +239,7 @@ internal sealed class PathStatisticsAccumulator
         Interlocked.Read(ref _reroutedFollowers),
         Interlocked.Read(ref _workerSearchTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency,
         Interlocked.Read(ref _goalHistogramSearches),
-        Interlocked.Read(ref _goalHistogramMaxBucket));
+        Interlocked.Read(ref _goalHistogramMaxBucket),
+        PassageFinder.Casts,
+        PassageFinder.CacheHits);
 }

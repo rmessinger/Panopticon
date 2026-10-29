@@ -125,4 +125,31 @@ public sealed class NavigationOptions
 
     /// <summary>WI-N9-01: Chebyshev bound in cells for the outward slot search.</summary>
     public int DestinationSlotCells { get; set; } = DefaultDestinationSlotCells;
+
+    /// <summary>Authored default for <see cref="PassageLaneLimit"/> (WI-N11-01).</summary>
+    public const int DefaultPassageLaneLimit = 3;
+
+    /// <summary>
+    /// WI-N11-01: a cross-section counts as a passage when its width is at most this many
+    /// pitches (a pitch is one unit's lane spacing).
+    /// </summary>
+    public int PassageLaneLimit { get; set; } = DefaultPassageLaneLimit;
+
+    /// <summary>Authored default for <see cref="MaxPassageWidthCells"/> (WI-N11-01).</summary>
+    public const int DefaultMaxPassageWidthCells = 16;
+
+    /// <summary>
+    /// WI-N11-01: cap for the perpendicular cross-section ray casts, in cells; a ray that
+    /// reaches the cap counts as open terrain, which is never a passage.
+    /// </summary>
+    public int MaxPassageWidthCells { get; set; } = DefaultMaxPassageWidthCells;
+
+    /// <summary>Authored default for <see cref="PassageMergeCells"/> (WI-N11-01).</summary>
+    public const int DefaultPassageMergeCells = 2;
+
+    /// <summary>
+    /// WI-N11-01: route-sample gaps up to this many cells are bridged when merging passage
+    /// spans, so a slightly wobbly route through one gap yields one span.
+    /// </summary>
+    public int PassageMergeCells { get; set; } = DefaultPassageMergeCells;
 }

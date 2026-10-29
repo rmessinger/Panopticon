@@ -515,7 +515,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N8 - Blocked-unit resolution | `██████████` | 2 / 2 |
 | N9 - Destination crowding | `██████████` | 2 / 2 |
 | N10 - Deadlock verification | `██████████` | 1 / 1 |
-| N11 - Passage detection and baseline | `░░░░░░░░░░` | 0 / 2 |
+| N11 - Passage detection and baseline | `█████░░░░░` | 1 / 2 |
 | N12 - Passage queues | `░░░░░░░░░░` | 0 / 2 |
 | N13 - Opposing flow and group entry | `░░░░░░░░░░` | 0 / 2 |
 | N14 - Passage verification | `░░░░░░░░░░` | 0 / 1 |
@@ -526,7 +526,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N19 - Unit steering | `░░░░░░░░░░` | 0 / 2 |
 | N20 - Layered navigation verification | `░░░░░░░░░░` | 0 / 1 |
 | N21 - Structure passability coverage | `██████████` | 1 / 1 |
-| Track N total | `█████░░░░░` | 21 / 40 |
+| Track N total | `██████░░░░` | 22 / 40 |
 
 ---
 
