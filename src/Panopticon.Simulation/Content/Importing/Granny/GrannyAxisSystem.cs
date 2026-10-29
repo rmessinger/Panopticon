@@ -83,12 +83,23 @@ internal sealed class GrannyAxisSystem
         return _fromEngine * matrix * _toEngine;
     }
 
+    // AoE3 DE files all report UnitsPerMeter 1.5625, but the art is authored at ~1.15
+    // units per meter. Anchors (file units): the standing musketeer spans 2.073 units
+    // (1.80 m with tricorn at 1.15, an implausible 1.33 m at 1.5625) and the hussar
+    // horse spans 2.620 units hoofs-to-ears, 2.757 nose-to-tail, 0.731 body width
+    // (2.28 / 2.40 / 0.64 m light-cavalry values at 1.15; no horse is 1.76 m
+    // nose-to-tail). Evidence recorded in the C10 deep dive.
+    private const float Aoe3MisreportedUnitsPerMeter = 1.5625f;
+
+    private const float Aoe3UnitsPerMeter = 1.15f;
+
     public static GrannyAxisSystem FromArtToolInfo(GrannyObject artToolInfo)
     {
         ArgumentNullException.ThrowIfNull(artToolInfo);
 
+        var fileUnitsPerMeter = artToolInfo.GetSingle("UnitsPerMeter") ?? 1.0f;
         return new GrannyAxisSystem(
-            artToolInfo.GetSingle("UnitsPerMeter") ?? 1.0f,
+            fileUnitsPerMeter == Aoe3MisreportedUnitsPerMeter ? Aoe3UnitsPerMeter : fileUnitsPerMeter,
             ReadVector3(artToolInfo, "Origin", Vector3.Zero),
             ReadVector3(artToolInfo, "RightVector", Vector3.UnitX),
             ReadVector3(artToolInfo, "UpVector", Vector3.UnitY),

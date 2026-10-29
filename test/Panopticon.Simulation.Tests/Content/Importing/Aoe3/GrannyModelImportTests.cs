@@ -104,7 +104,8 @@ public class GrannyModelImportTests
 
         AssertBindPoseIsConsistent(model);
         var (min, max) = ModelSpaceBounds(model);
-        AssertUprightPlausibleMeters(min, max, maxHeight: 2.0f);
+        // 1.8 m standing soldier corrected from the misreported 1.5625 units per meter.
+        AssertUprightPlausibleMeters(min, max, minHeight: 1.7f, maxHeight: 1.95f);
     }
 
     [Fact]
@@ -128,7 +129,8 @@ public class GrannyModelImportTests
 
         AssertBindPoseIsConsistent(model);
         var (min, max) = ModelSpaceBounds(model);
-        AssertUprightPlausibleMeters(min, max, maxHeight: 3.0f);
+        // Hoofs-to-ears ~2.28 m at the corrected 1.15 units per meter.
+        AssertUprightPlausibleMeters(min, max, minHeight: 2.0f, maxHeight: 2.5f);
     }
 
     [Fact]
@@ -250,10 +252,10 @@ public class GrannyModelImportTests
         return (min!.Value, max!.Value);
     }
 
-    private static void AssertUprightPlausibleMeters(Vector3 min, Vector3 max, float maxHeight)
+    private static void AssertUprightPlausibleMeters(Vector3 min, Vector3 max, float minHeight, float maxHeight)
     {
         Assert.True(min.Z > -0.5f && min.Z < 0.5f, $"grounded: min Z {min.Z}");
-        Assert.True(max.Z > 0.4f && max.Z < maxHeight, $"plausible height: max Z {max.Z} m");
+        Assert.True(max.Z > minHeight && max.Z < maxHeight, $"plausible height: max Z {max.Z} m");
         Assert.True(max.X - min.X < 4.0f && max.Y - min.Y < 4.0f, $"plausible footprint");
     }
 }
