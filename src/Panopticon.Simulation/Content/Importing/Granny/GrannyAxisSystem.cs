@@ -9,8 +9,9 @@ namespace Panopticon.Content.Importing.Granny;
 
 /// <summary>
 /// Engine-space basis change from a Granny file's ArtToolInfo: units-per-meter scale, origin
-/// subtraction, and the right/up/back basis. Applied to positions, directions, and matrices so
-/// imported geometry is upright and metric.
+/// subtraction, the right/up/back basis, and the Granny Y-up art space to Panopticon Z-up model
+/// space rotation. Applied to positions, directions, and matrices so imported geometry is
+/// upright and metric.
 /// </summary>
 internal sealed class GrannyAxisSystem
 {
@@ -44,7 +45,17 @@ internal sealed class GrannyAxisSystem
         Mirrors = determinant < 0.0f;
 
         var metersPerUnit = 1.0f / unitsPerMeter;
-        _toEngine = Matrix4x4.CreateScale(metersPerUnit) * basis;
+
+        // Granny art space is Y-up (Maya); Panopticon model space is Z-up with +X forward
+        // (GltfTransformConverter documents the same conversion for glTF). The 3-cycle
+        // (x, y, z) -> (z, x, y) maps art up onto engine up and has determinant +1, so it
+        // does not change Mirrors.
+        var yUpToZUp = new Matrix4x4(
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        _toEngine = Matrix4x4.CreateScale(metersPerUnit) * basis * yUpToZUp;
         _toEngine.Translation = Vector3.TransformNormal(-origin, _toEngine);
         _ = Matrix4x4.Invert(_toEngine, out _fromEngine);
     }

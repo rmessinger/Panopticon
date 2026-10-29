@@ -252,8 +252,8 @@ public class GrannyModelImportTests
 
     private static void AssertUprightPlausibleMeters(Vector3 min, Vector3 max, float maxHeight)
     {
-        Assert.True(min.Y > -0.5f && min.Y < 0.5f, $"grounded: min Y {min.Y}");
-        Assert.True(max.Y > 0.4f && max.Y < maxHeight, $"plausible height: max Y {max.Y} m");
-        Assert.True(max.X - min.X < 4.0f && max.Z - min.Z < 4.0f, $"plausible footprint");
+        Assert.True(min.Z > -0.5f && min.Z < 0.5f, $"grounded: min Z {min.Z}");
+        Assert.True(max.Z > 0.4f && max.Z < maxHeight, $"plausible height: max Z {max.Z} m");
+        Assert.True(max.X - min.X < 4.0f && max.Y - min.Y < 4.0f, $"plausible footprint");
     }
 }
