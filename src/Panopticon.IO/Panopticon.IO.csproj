@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Panopticon.FileFormats.Bar\Panopticon.FileFormats.Bar.csproj" />
       <ProjectReference Include="..\Panopticon.FileFormats.Big\Panopticon.FileFormats.Big.csproj" />
     </ItemGroup>
 

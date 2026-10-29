@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C10a-01` |
 | Roadmap phase | [Track C · C10a](../../track-c-external-assets.md): AoE3 DE archives and textures |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | none (C1 done) |
