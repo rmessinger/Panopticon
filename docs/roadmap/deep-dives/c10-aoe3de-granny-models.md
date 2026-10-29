@@ -76,7 +76,9 @@ from Maya scenes. The engine links Granny statically.
 Type trees name their fields, so files are self-describing: `Skeletons/Bones/ParentIndex/
 Transform/InverseWorldTransform`, `Meshes/PrimaryVertexData/TriTopologies/Groups/BoneBindings`,
 and the vertex layout `Position, Normal, Tangent, Binormal, DiffuseColor0, TextureCoordinates0,
-BoneWeights, BoneIndices`. Granny material and texture records reference source PNGs and are
+BoneWeights, BoneIndices` (struct member names; the `VertexComponentNames` strings differ,
+naming the same slots `UnnamedColor0` and `map1`). `InverseWorldTransform` is a `Real32` array
+of 16, not a Transform. Granny material and texture records reference source PNGs and are
 ignored in favor of `.material.XMB`.
 
 Skeletons are Biped style (`Bip01_Pelvis` through `Bip01_Prop1/2`). LODs are separate files
@@ -195,6 +197,26 @@ Recorded by the C10a Interactive tests against the reference install:
   3 DaConstant32f, 4 D3Constant32f), so the generic walk cannot follow the type tree into
   curve bodies. The reader exposes `Format`, `Degree`, and `CurveDataKind` and leaves the body
   opaque; real curve decoding belongs to `WI-C10c-02`.
+
+### C10b results
+
+Recorded by the C10b import and proof work against the reference install:
+
+- Musketeer imports at 23 bones, 1 sub-object, 1,197 vertices, 1,344 triangles, engine bounds
+  0.67 x 1.33 x 0.37 m (upright). Hussar horse imports at 32 bones, 3,978 vertices, 1,404
+  triangles in two groups with two materials (`mata`, `matb`).
+- Matrices are row-vector convention: local `R * T` chained as `local * world[parent]`;
+  `InverseWorldTransform` reads directly row-major. Every bone's inverse bind times its bind
+  world is identity within 1e-4.
+- Engine space is right-handed Z-up; the AoE3 art basis (Y-up, `Right = (-1, 0, 0)`, 1.5625
+  units per meter) is conjugated into it with the same 3-cycle the glTF converter uses.
+- W3D header bounding boxes carry exporter junk (inverted min/max on `AIRNGR-SKN`), so the
+  proof calibrates scale from the Ranger rest-pose skeleton height: 12.031 units for a 1.8 m
+  human gives 6.684 game units per meter.
+- Proof captures: musketeer and hussar horse stand textured beside the Generals Ranger with
+  feet aligned; the Oodle1 falconet fails naming file, section 0, and compression type
+  (`artifacts/proofs/aoe3-granny-proof`, evidence `aoe3-musketeer-beside-ranger-c10b-v1.png`
+  and `aoe3-horse-beside-ranger-c10b-v1.png` in the screenshot viewer).
 
 ## 8. Risks
 
