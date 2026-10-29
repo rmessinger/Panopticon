@@ -527,9 +527,9 @@ public sealed class GrannyFile
     // Curve data is a Granny user type: the exporter gives every curve variant
     // (DaK32fC32f, DaConstant32f, ...) the same DaK32fC32f-shaped definition,
     // and the CurveDataHeader Format byte selects the actual on-disk layout.
-    // The generic walk cannot follow the type tree into such bodies; the reader
-    // exposes the header fields and leaves the body opaque. Curve decoding is
-    // the animation importer's job (WI-C10c-02).
+    // The generic walk cannot follow the type tree into such bodies. For the
+    // corpus-dominant format 1 (DaK32fC32f) the reader exposes the knot and
+    // control lists; other formats stay header-opaque.
     private static bool IsCurveDefinition(GrannyStructDefinition definition)
     {
         return definition.Members.Count > 0
@@ -541,11 +541,41 @@ public sealed class GrannyFile
     {
         var position = (long)ValidateOffset(offset, "curve data");
         ValidateRange(position, 2, "curve data header");
+        var format = (uint)_buffer[position];
         var value = new GrannyObject();
-        value.Set("Format", (uint)_buffer[position]);
+        value.Set("Format", format);
         value.Set("Degree", (uint)_buffer[position + 1]);
         value.Set("CurveDataKind", definition.Members[0].Name!["CurveDataHeader_".Length..]);
+
+        // The shared definition lists [header inline, Padding, Knots RefArr, Controls RefArr].
+        // Only the DaK32fC32f layout (format 1) is verified against the corpus; other
+        // formats keep the body opaque and the constant-format controls stay unread until
+        // a file that needs them shows up.
+        if (definition.Members.Count >= 4 && format == 1)
+        {
+            var cursor = position + 4;
+            value.Set("Knots", UnwrapFloatList(ReadReferenceToArray(ref cursor, definition.Members[2])));
+            value.Set("Controls", UnwrapFloatList(ReadReferenceToArray(ref cursor, definition.Members[3])));
+        }
+
         return value;
+    }
+
+    private static float[] UnwrapFloatList(GrannyObject[] wrapperItems)
+    {
+        var values = new float[wrapperItems.Length];
+        for (var i = 0; i < wrapperItems.Length; i++)
+        {
+            foreach (var field in wrapperItems[i].Fields.Values)
+            {
+                if (field is float value)
+                {
+                    values[i] = value;
+                }
+            }
+        }
+
+        return values;
     }
 
     private GrannyObject[] ReadArrayOfReferences(ref long cursor, GrannyMemberDefinition member)
