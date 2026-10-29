@@ -1064,7 +1064,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     seed; the same seed yields the same composition; a spearman squad renders with distinct
     variants; a cavalry rider and horse play `CHARGE` on one clip clock; imposters and
     merged-variant rendering are left to B5.
-- [ ] C10a AoE3 DE archives and textures
+- [x] C10a AoE3 DE archives and textures
       ([deep dive](deep-dives/c10-aoe3de-granny-models.md)); cards `WI-C10a-01..03`.
   - AC: a read-only `BarFileSystem` reads all 42 `.bar` v6 tables exactly to end of file; `alz4`
     entries decompress to their recorded sizes; XMB decodes to an XML tree; `.ddt` BC1, BC2, BC3,

@@ -113,7 +113,8 @@ Textures live in `ArtUnitsTextures*.bar`, for example
 ## 6. References and licensing
 
 - Resource Manager (github.com/eBaeza/Resource-Manager, MIT): BAR v6, `alz4`, XMB, DDT. Usable
-  with credit.
+  with credit; the C10a readers were written against game data with this project as reference, no
+  code copied (RefPack precedent).
 - LSLib (github.com/Norbyte/lslib, MIT): type-tree-driven Granny v6/v7 reader. Its decompressor is
   a native C++/CLI component; C10d reviews its provenance before any port, and C10b does not
   depend on it.
@@ -154,6 +155,22 @@ last.
   `Category=Interactive`, like the EE2 tests.
 - `ImportedMesh.Indices` is `ushort`. A Granny mesh with more than 65,535 vertices is split per
   topology group, or rejected with file and mesh name if one group exceeds the limit.
+
+### C10a results
+
+Recorded by the C10a Interactive tests against the reference install:
+
+- All 42 `Game/` archives parse to exact end of table. Entry counts range from 4 (`Data/Fonts.bar`)
+  to 17,844 (`Sound/Sound.bar`). Compression flags seen: 0 stored, 1 `alz4`, 2 encrypted
+  (`Sound.bar` only, 16,463 entries; opening those throws with archive and entry path).
+- Header layout confirmed: u32 file count at `0x118`, reserved u32 at `0x11C`, u64 table offset at
+  `0x120`.
+- `Data\protoy.xml.XMB`: root `proto`, 2,673 `unit` elements (lowercase tag); Musketeer animfile
+  `units\infantry_ranged\musketeer\musketeer.xml`. Every `.XMB` in `Data.bar` (1,112 files)
+  decodes.
+- Musketeer `matA` textures: BC1, 10 mips, 1024x1024, mip 0 is 524,288 bytes, the last mip is
+  2 bytes with trailing padding. `musketeer_4age.ddt` is BC2 and `musketeer_4age_bump.ddt` is
+  BC3, both 64x64.
 
 ## 8. Risks
 
