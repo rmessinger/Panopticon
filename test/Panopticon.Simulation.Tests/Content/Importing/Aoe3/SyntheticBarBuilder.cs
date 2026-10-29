@@ -25,17 +25,22 @@ internal static class SyntheticBarBuilder
 
     internal static EntrySpec Alz4(string relativePath, byte[] decompressedPayload)
     {
-        var block = BuildLiteralOnlyLz4Block(decompressedPayload);
+        return new EntrySpec(relativePath, WrapInAlz4(decompressedPayload), (uint)decompressedPayload.Length, 1);
+    }
+
+    internal static byte[] WrapInAlz4(byte[] data)
+    {
+        var block = BuildLiteralOnlyLz4Block(data);
 
         using var payloadStream = new MemoryStream();
         using var payloadWriter = new BinaryWriter(payloadStream, Encoding.Unicode, leaveOpen: true);
         payloadWriter.Write(Encoding.ASCII.GetBytes("alz4"));
-        payloadWriter.Write((uint)decompressedPayload.Length);
+        payloadWriter.Write((uint)data.Length);
         payloadWriter.Write((uint)block.Length);
         payloadWriter.Write(1u);
         payloadWriter.Write(block);
 
-        return new EntrySpec(relativePath, payloadStream.ToArray(), (uint)decompressedPayload.Length, 1);
+        return payloadStream.ToArray();
     }
 
     internal static EntrySpec Flagged(string relativePath, byte[] storedPayload, uint decompressedSize, uint compressionFlag)

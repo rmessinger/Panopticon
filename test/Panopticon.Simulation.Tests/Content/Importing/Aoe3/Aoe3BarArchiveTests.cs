@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using System.Linq;
 using Panopticon.FileFormats.Bar;
-using Panopticon.IO;
 using Xunit;
 
 namespace Panopticon.Tests.Content.Importing.Aoe3;
@@ -17,31 +15,12 @@ public sealed class Aoe3BarArchiveTests
 {
     private const string MusketeerModelPath = @"Art\units\infantry_ranged\musketeer\musketeer_4age.gr2";
 
-    private static string GetGameDirectory()
-    {
-        var root = Environment.GetEnvironmentVariable("AOE3DE_PATH");
-        if (string.IsNullOrEmpty(root))
-        {
-            throw new InvalidOperationException(
-                "Interactive test requires AOE3DE_PATH pointing at an Age of Empires III DE install root (containing Game).");
-        }
-
-        var gameDirectory = Path.Combine(root, "Game");
-        if (!Directory.Exists(gameDirectory))
-        {
-            throw new InvalidOperationException(
-                $"Interactive test requires the AoE3 DE Game directory at '{gameDirectory}'.");
-        }
-
-        return gameDirectory;
-    }
-
     [Fact]
     public void AllArchivesParseToEntryTables()
     {
         var archiveCount = 0;
 
-        foreach (var archivePath in Directory.EnumerateFiles(GetGameDirectory(), "*.bar", SearchOption.AllDirectories))
+        foreach (var archivePath in Directory.EnumerateFiles(Aoe3Install.GetGameDirectory(), "*.bar", SearchOption.AllDirectories))
         {
             using var stream = File.OpenRead(archivePath);
             var archive = BarArchive.Read(stream);
@@ -56,7 +35,7 @@ public sealed class Aoe3BarArchiveTests
     [Fact]
     public void MusketeerModelOpensAtRecordedSize()
     {
-        using var fileSystem = new BarFileSystem(GetGameDirectory());
+        using var fileSystem = Aoe3Install.CreateFileSystem();
 
         var entry = fileSystem.GetFile(MusketeerModelPath);
 
