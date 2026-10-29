@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C10b-01` |
 | Roadmap phase | [Track C · C10b](../../track-c-external-assets.md): AoE3 DE static Granny models |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-C10a-01` (corpus access) |

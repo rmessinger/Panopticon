@@ -83,6 +83,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Panopticon.FileFormats.Nif", "Panopticon.FileFormats.Nif\Panopticon.FileFormats.Nif.csproj", "{48A7C6AA-0312-4C12-B544-C2B47EA724A7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.FileFormats.Bar", "Panopticon.FileFormats.Bar\Panopticon.FileFormats.Bar.csproj", "{6F2A1D38-9C4E-4B7A-8D5F-1E2B3C4D5E6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.FileFormats.Granny", "Panopticon.FileFormats.Granny\Panopticon.FileFormats.Granny.csproj", "{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Veldrid", "Veldrid\Veldrid.csproj", "{3347BF9A-692C-45E5-87A8-D6A9597734C7}"
 EndProject
@@ -532,6 +533,18 @@ Global
 		{6F2A1D38-9C4E-4B7A-8D5F-1E2B3C4D5E6F}.Release|x64.Build.0 = Release|Any CPU
 		{6F2A1D38-9C4E-4B7A-8D5F-1E2B3C4D5E6F}.Release|x86.ActiveCfg = Release|Any CPU
 		{6F2A1D38-9C4E-4B7A-8D5F-1E2B3C4D5E6F}.Release|x86.Build.0 = Release|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Debug|x64.Build.0 = Debug|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Debug|x86.Build.0 = Debug|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Release|x64.ActiveCfg = Release|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Release|x64.Build.0 = Release|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Release|x86.ActiveCfg = Release|Any CPU
+		{8D4B3F5A-0E6C-4D71-B283-3A5E6F7B8C91}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

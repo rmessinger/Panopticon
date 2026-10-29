@@ -172,6 +172,18 @@ Recorded by the C10a Interactive tests against the reference install:
   2 bytes with trailing padding. `musketeer_4age.ddt` is BC2 and `musketeer_4age_bump.ddt` is
   BC3, both 64x64.
 
+### C10b reader findings
+
+- `ArtUnits.bar` GR2 corpus: 4,942 files, 4,189 parsed uncompressed, 753 rejected compressed
+  (`GrannyCompressedSectionException`), 0 other failures.
+- 38 corpus files use the version 7 little-endian 32-bit pointer layout (distinct 16-byte
+  signatures); the reader supports both pointer widths. Compressed 32-bit files occur too.
+- Curve data is a Granny user type: every curve variant carries the same DaK32fC32f-shaped
+  type definition regardless of the `CurveDataHeader` Format byte (observed: 1 DaK32fC32f,
+  3 DaConstant32f, 4 D3Constant32f), so the generic walk cannot follow the type tree into
+  curve bodies. The reader exposes `Format`, `Degree`, and `CurveDataKind` and leaves the body
+  opaque; real curve decoding belongs to `WI-C10c-02`.
+
 ## 8. Risks
 
 - The generic Granny reader (64-bit pointer layout, fixup tables, type-tree marshalling) is the
