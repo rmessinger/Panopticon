@@ -218,6 +218,46 @@ Recorded by the C10b import and proof work against the reference install:
   (`artifacts/proofs/aoe3-granny-proof`, evidence `aoe3-musketeer-beside-ranger-c10b-v1.png`
   and `aoe3-horse-beside-ranger-c10b-v1.png` in the screenshot viewer).
 
+### C10c results
+
+Recorded by the C10c skin, animation, animfile, and proof work:
+
+- Art units are misreported corpus-wide: files declare 1.5625 units per meter, but the art is
+  authored near 1.15 units per meter (musketeer 2.073 units tall = 1.80 m standing; horse
+  nose-to-tail 2.757 units = 2.40 m, width 0.731 units = 0.63 m). `GrannyAxisSystem` substitutes
+  1.15 when a file declares 1.5625; other values pass through.
+- Skinning: vertex `BoneIndices` index the mesh `BoneBindings` list, not the skeleton; weights
+  sum to exactly 255. Musketeer 18 bindings, horse 27; aggregate-remap keeps the 4 largest
+  influences and renormalizes. Weight sums are 1 within 1e-3 and bind-pose skinning is identity
+  within 4e-6 m on both models.
+- Clip track names use Maya space separators where skeletons use underscores (`Bip01 Head` vs
+  `Bip01_Head`); targets normalize spaces to underscores.
+- Shared animation-library clips carry tracks beyond a single model's skeleton. Bound channels:
+  march_rifleman 88 of 96 (extras `Bip01_Ponytail1/11`), volley_standing_fire 92 of 128 (extras
+  `LAUNCHPOINT` spellings, `Bip01_L/R_Toe0`, `Ponytail1`), horse_idle_A 143 of 143 (none). The
+  proof drops extra-track channels before binding and reports them; binding then resolves every
+  remaining target with zero misses.
+- Animfile resolution: `protoy` names the animfile; the model component is `ModelComp` when
+  present, else the unit-named component, else the first component resolving to one model.
+  Tech variants may nest further logics; non-tech logics such as Destruction select their
+  undamaged last phase (`p99`). Weighted GrannyAnim variants pick the highest weight, first on
+  ties (horse idle: A and I both weight 40; A wins). Rider attachments resolve through includes
+  whose model component is named `ModelComp`, not the attachment name.
+- Default `matA` texture sets are intentionally desaturated for runtime player-color tinting,
+  which Panopticon does not implement; the grey render is expected. Pre-colored variant models
+  (redcoats, blue_guard, legionario, danish_musketeer) are all internally Oodle1-compressed, so
+  the red proof capture overlays `redcoats_age4.material.xmb` on the uncompressed musketeer mesh
+  through a zip file system (warm pixels 304 to 397, grey 333 to 140 on identical pixel counts).
+- Ranger calibration corrected: the visible `AIRNGR-SKN` mesh height is 14.61 units
+  (pixel-verified), not the 12.03-unit skeleton span that helmet and boot geometry extends past;
+  the proof now uses 14.61 units per 1.8 m human = 8.117 game units per meter.
+- Animated proof: march, volley, and idle clips sampled at 6 fixed times each; every frame
+  captured twice and byte-identical. Evidence in the viewer:
+  `aoe3-musketeer-march-c10c-v1.gif`, `aoe3-musketeer-volley-c10c-v1.gif`,
+  `aoe3-horse-idle-c10c-v1.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v3.png`,
+  `aoe3-redcoat-beside-ranger-c10c-v1.png`, `aoe3-horse-beside-ranger-c10c-v3.png`, and 18
+  per-frame PNGs under `frames/aoe3-animated-c10c-v1/`.
+
 ## 8. Risks
 
 - The generic Granny reader (64-bit pointer layout, fixup tables, type-tree marshalling) is the
