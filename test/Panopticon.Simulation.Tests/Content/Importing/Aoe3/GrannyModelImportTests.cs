@@ -94,13 +94,12 @@ public class GrannyModelImportTests
         Assert.Equal(4032, mesh.Indices.Count);
         Assert.Single(mesh.MeshParts);
         Assert.Equal(1344 * 3, (int)mesh.MeshParts[0].IndexCount);
-        Assert.False(mesh.IsSkinned);
+        // 18 bone bindings: the mesh imports skinned (WI-C10c-01), attached to the root bone.
+        Assert.True(mesh.IsSkinned);
+        Assert.Equal(0, model.SubObjects[0].ParentBoneIndex);
 
         var material = mesh.Materials[0];
         Assert.Equal("mata", material.Properties.Single(p => p.Name == "GrannyMaterialName").TextureName);
-
-        var boneNames = model.Skeleton.Bones.Select(b => b.Name).ToList();
-        Assert.Equal(boneNames.IndexOf("Bip01_Spine"), model.SubObjects[0].ParentBoneIndex);
 
         AssertBindPoseIsConsistent(model);
         var (min, max) = ModelSpaceBounds(model);
@@ -126,6 +125,7 @@ public class GrannyModelImportTests
         Assert.Equal(1332 * 3, (int)mesh.MeshParts[0].IndexCount);
         Assert.Equal(72 * 3, (int)mesh.MeshParts[1].IndexCount);
         Assert.Equal(2, mesh.Materials.Count);
+        Assert.True(mesh.IsSkinned);
 
         AssertBindPoseIsConsistent(model);
         var (min, max) = ModelSpaceBounds(model);
@@ -227,7 +227,11 @@ public class GrannyModelImportTests
 
         foreach (var subObject in model.SubObjects)
         {
-            var world = worlds[subObject.ParentBoneIndex];
+            // Rigid sub-objects carry parent-bone-local vertices; skinned sub-objects already
+            // live in skeleton-root bind (model) space.
+            var world = subObject.RenderObject is ImportedMesh { IsSkinned: true }
+                ? Matrix4x4.Identity
+                : worlds[subObject.ParentBoneIndex];
             if (subObject.RenderObject is not ImportedMesh mesh)
             {
                 continue;
