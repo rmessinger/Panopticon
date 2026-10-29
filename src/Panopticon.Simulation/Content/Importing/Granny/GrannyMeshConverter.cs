@@ -26,7 +26,8 @@ internal static class GrannyMeshConverter
         IReadOnlyDictionary<string, int> boneIndexByName,
         GrannyAxisSystem axes,
         string sourceKey,
-        int subObjectIndex)
+        int subObjectIndex,
+        Aoe3MaterialConverter materialConverter)
     {
         ArgumentNullException.ThrowIfNull(mesh);
 
@@ -45,6 +46,7 @@ internal static class GrannyMeshConverter
         var groups = ReadGroups(topology, sourceKey, meshName);
         var indices = ReadIndices(topology, sourceKey, meshName);
         var materialNames = ReadMaterialNames(mesh, sourceKey, meshName);
+        var materialFileKey = BuildMaterialFileKey(sourceKey, meshName);
 
         var parentBoneIndex = ResolveFirstBoundBone(
             mesh.GetObjects("BoneBindings"), skeleton, boneIndexByName, sourceKey, meshName);
@@ -106,7 +108,7 @@ internal static class GrannyMeshConverter
                 meshName, sourceKey, subObjectIndex, parentBoneIndex, mesh,
                 bakedPositions, normals, tangents,
                 hasTextureCoordinates ? textureCoordinates : null,
-                meshIndices, groups, 0, groups.Count, materialNames));
+                meshIndices, groups, 0, groups.Count, materialNames, materialConverter, materialFileKey));
             return subObjects;
         }
 
@@ -166,7 +168,7 @@ internal static class GrannyMeshConverter
                 groupPositions, groupNormals, groupTangents,
                 groupCoordinates,
                 groupIndices,
-                [group], 0, 1, materialNames));
+                [group], 0, 1, materialNames, materialConverter, materialFileKey));
         }
 
         return subObjects;
@@ -322,7 +324,9 @@ internal static class GrannyMeshConverter
         List<Group> groups,
         int groupStart,
         int groupCount,
-        List<string?> materialNames)
+        List<string?> materialNames,
+        Aoe3MaterialConverter materialConverter,
+        string materialFileKey)
     {
         var boneBindingCount = mesh.GetObjects("BoneBindings").Count;
 
@@ -338,7 +342,8 @@ internal static class GrannyMeshConverter
                     $"{group.MaterialIndex}, but only {materialNames.Count} bindings exist.");
             }
 
-            materials[g] = CreatePlaceholderMaterial(materialNames[group.MaterialIndex], boneBindingCount);
+            materials[g] = materialConverter.Convert(
+                materialNames[group.MaterialIndex], materialFileKey, meshName, boneBindingCount);
             meshParts[g] = new ImportedMeshPart(
                 textureCoordinates is null ? null : ExtractCoordinates(textureCoordinates),
                 textureCoordinates1: null,
@@ -403,22 +408,18 @@ internal static class GrannyMeshConverter
         return start;
     }
 
-    private static ImportedMaterial CreatePlaceholderMaterial(string? materialName, int boneBindingCount)
+    private static string BuildMaterialFileKey(string sourceKey, string meshName)
     {
-        var properties = new List<ImportedMaterialProperty>();
-        if (materialName is not null)
-        {
-            properties.Add(ImportedMaterialProperty.FromTextureName("GrannyMaterialName", materialName));
-        }
-
-        if (boneBindingCount > 1)
-        {
-            properties.Add(ImportedMaterialProperty.FromBool("RigidFirstBoneBinding", true));
-        }
-
-        return ImportedMaterial.CreatePbrMetallicRoughness(
-            new ImportedPbrMetallicRoughness(),
-            properties);
+        // Archive keys use backslashes; System.IO path helpers are separator-specific per OS,
+        // so the directory is split manually over both separators.
+        var lastSeparator = sourceKey.LastIndexOfAny(['\\', '/']);
+        var directory = lastSeparator >= 0 ? sourceKey[..lastSeparator] : string.Empty;
+        var baseName = meshName.EndsWith("Shape", StringComparison.OrdinalIgnoreCase)
+            ? meshName[..^"Shape".Length]
+            : meshName;
+        return string.IsNullOrEmpty(directory)
+            ? baseName + ".material.xmb"
+            : directory + "\\" + baseName + ".material.xmb";
     }
 
     internal static (AxisAlignedBoundingBox Box, BoundingSphere Sphere) ComputeBounds(Vector3[] positions)

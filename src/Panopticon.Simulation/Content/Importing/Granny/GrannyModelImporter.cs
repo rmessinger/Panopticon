@@ -19,6 +19,8 @@ internal sealed class GrannyModelImporter : IModelImporter
 {
     public string Id => "GR2";
 
+    public GrannyImportDiagnostics Diagnostics { get; } = new();
+
     public ImportedModel? ImportModel(string name, AssetImportContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -44,11 +46,12 @@ internal sealed class GrannyModelImporter : IModelImporter
             throw new InvalidDataException($"Granny model '{name}': the file contains no meshes.");
         }
 
+        var materialConverter = new Aoe3MaterialConverter(context, Diagnostics);
         var subObjects = new List<ImportedSubObject>();
         for (var i = 0; i < meshObjects.Count; i++)
         {
             subObjects.AddRange(GrannyMeshConverter.Convert(
-                meshObjects[i], skeleton, boneIndexByName, axes, name, i));
+                meshObjects[i], skeleton, boneIndexByName, axes, name, i, materialConverter));
         }
 
         return new ImportedModel(

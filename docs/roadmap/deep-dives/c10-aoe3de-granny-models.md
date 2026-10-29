@@ -90,8 +90,20 @@ mip offset and size pairs. Format codes: 1 BGRA, 4 BC1, 5 BC1 with alpha, 7 R8, 
 44,740 files, all `alz4` in the archive.
 
 `Render\materialdefs\default.materialdef.XMB` declares BaseColor (sRGB), Normals, Masks, and
-Details plus AO, roughness, and metallic range sliders. Open: the Masks channel layout, confirmed
-empirically in C10b.
+Details plus AO, roughness, and metallic range sliders. Unit models carry a sibling
+`.material.xmb` (mesh name minus `Shape`, same directory) whose `submaterial` elements are keyed
+by the Granny material name (`mata`, `matb`) and hold texture role overrides plus optional float
+slider overrides; override paths are unit-relative under `Art/` and resolve by appending `.ddt`.
+
+Masks channel layout, confirmed in C10b by decoding mip 0 of the musketeer and hussar horse
+textures: R = ambient occlusion, G = roughness, B = metallic, which is the glTF
+occlusion/roughness/metallic packing, so no channel swizzle is needed. Evidence: musketeer matA
+B is near-binary (97.9% black, 0.7% white); where B is set, G averages 121 (roughness about
+0.47, polished metal) against 191 (about 0.75) elsewhere; R averages 217 with a small dark tail
+(crevices). Horse matA and matB Masks match (B 99% black, R high, G mid-range; horse matA also
+overrides AO Intensity to 0.2). Slider overrides apply as factors: AO Intensity to occlusion
+strength, Metallic/Roughness Max to the PBR factors; min offsets and lift sliders are recorded
+as material properties only.
 
 ## 5. Unit binding and proof units
 
