@@ -11,7 +11,7 @@ using Panopticon.Scripting;
 
 namespace Panopticon.Logic.Object;
 
-public class AIUpdate : UpdateModule
+public class AIUpdate : UpdateModule, INavigationMovementSink
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -84,10 +84,6 @@ public class AIUpdate : UpdateModule
     private bool _randomlyOffsetMoodCheck;
     private ObjectId _repulsor1;
     private ObjectId _repulsor2;
-    private ObjectId _moveOutOfWay1;
-    private ObjectId _moveOutOfWay2;
-    private bool _gaveWayOnce;
-    private uint _frameAtLastGiveWay;
     private LocomotorGoalType _locomotorGoalType;
     private Vector3 _locomotorGoalData;
     private WhichTurretType _turretSyncFlag;
@@ -98,12 +94,35 @@ public class AIUpdate : UpdateModule
     public ObjectId IgnoredObstacleID => _ignoreObstacleId;
 
     /// <summary>
+    /// WI-X6-01: the extracted navigation half of this unit's AI. Owns the route, progress
+    /// tracking, pending async path requests, give-way, and local-repath state.
+    /// </summary>
+    // WI-X6-01: the unit's navigation state and logic, extracted from AIUpdate.
+    internal UnitNavigation Navigation { get; }
+
+    /// <summary>
     /// A list of positions along the path to the current target point. "Path" as in pathfinding, not waypoint path.
     /// </summary>
-    public List<Vector3> TargetPoints { get; set; }
+    public List<Vector3> TargetPoints => Navigation.TargetPoints;
 
     /// <summary>WI-N6-01: movement liveness tracking for the current order; detection only.</summary>
-    public MovementProgress Progress { get; } = new();
+    public MovementProgress Progress => Navigation.Progress;
+
+    // WI-X6-01: movement-effect sink for UnitNavigation. The two call shapes below match the
+    // pre-extraction sites exactly (SetModelConditionState vs ModelConditionFlags.Set).
+    public void SetMoving(bool moving)
+    {
+        if (moving)
+        {
+            GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+        }
+        else
+        {
+            GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+        }
+    }
+
+    public void SetSpeed(float speed) => GameObject.Speed = speed;
 
     public float CurrentLocomotorSpeed
     {
@@ -139,7 +158,7 @@ public class AIUpdate : UpdateModule
         _attackMoveCandidateFilter = IsAttackMoveCandidate;
         ModuleData = moduleData;
 
-        TargetPoints = new List<Vector3>();
+        Navigation = new UnitNavigation(gameObject, this);
 
         _locomotorSet = new LocomotorSet(gameObject, gameEngine);
         _currentLocomotorSetType = LocomotorSetType.Invalid;
@@ -201,153 +220,12 @@ public class AIUpdate : UpdateModule
 
     internal void AddTargetPoint(in Vector3 targetPoint)
     {
-        TargetPoints.Add(targetPoint);
-
-        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+        Navigation.AddTargetPoint(targetPoint);
     }
 
     internal void AppendPathToTargetPoint(in Vector3 targetPoint, PathRequestOrigin origin = PathRequestOrigin.Unit, bool asyncEligible = false)
     {
-        if (GameObject.Definition.KindOf == null)
-        {
-            return;
-        }
-
-        Progress.Reset();
-        ResetLocalRepath();
-
-        if (!GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft) && targetPoint != GameObject.Translation)
-        {
-            if (GameEngine.Navigation == null)
-            {
-                AddTargetPoint(targetPoint);
-                return;
-            }
-
-            // WI-N4-02: order-driven paths may compute on the async queue; workflow movement
-            // (scripts, dozer, supply, aircraft) passes asyncEligible false or opts out below.
-            if (asyncEligible && SupportsAsyncOrderPaths && GameEngine.Navigation.Options.AsyncOrderPaths)
-            {
-                RequestPathAsync(targetPoint);
-                return;
-            }
-
-            var start = GameObject.Translation;
-            var path = GameEngine.Navigation.CalculatePath(start, targetPoint, out var endIsPassable, origin);
-            if (path.Count == 0)
-            {
-                // WI-N7-01: the order produced no route; the unit settles instead of holding.
-                SettleNoRoute();
-                return;
-            }
-
-            path.RemoveAt(0);
-
-            TargetPoints.AddRange(path);
-            if (TargetPoints.Count > 0 && endIsPassable)
-            {
-                TargetPoints[TargetPoints.Count - 1] = targetPoint;
-            }
-
-            Logger.Debug("Set new target points: " + TargetPoints.Count);
-            GameObject.SetModelConditionState(ModelConditionFlag.Moving);
-        }
-        else
-        {
-            AddTargetPoint(targetPoint);
-        }
-    }
-
-    // WI-N4-01: pending async path request. Not persisted in save files; a load drops it, so a
-    // loaded unit re-issues movement through its next order.
-    private PathRequestHandle _pendingPathHandle;
-    private Vector3 _pendingPathTarget;
-
-    // WI-N8-01: blocked-unit resolver bookkeeping. Attempts reset when the unit progresses or
-    // takes a new order; at most one attempt fires per BlockedWaitFrames interval.
-    private const int NoLocalRepathAttempt = -1;
-    private int _localRepathAttempts;
-    private int _framesAtLastLocalRepathAttempt = NoLocalRepathAttempt;
-
-    /// <summary>
-    /// Card WI-N4-01: submits this unit's path onto the async queue. Cancels any pending request
-    /// first; the drain applies the completion on the logic thread with the same post-processing
-    /// as <see cref="AppendPathToTargetPoint"/> (drop the start point, land exactly on a passable
-    /// target, set the moving condition). Aircraft, degenerate, and no-navigation cases fall back
-    /// to the synchronous <see cref="AddTargetPoint"/>. Order-eligible callers reach this via
-    /// <see cref="NavigationOptions.AsyncOrderPaths"/> (WI-N4-02).
-    /// </summary>
-    internal void RequestPathAsync(Vector3 targetPoint)
-    {
-        CancelPendingPath();
-        Progress.Reset();
-        ResetLocalRepath();
-
-        if (GameObject.Definition.KindOf == null
-            || GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft)
-            || targetPoint == GameObject.Translation
-            || GameEngine.Navigation == null)
-        {
-            AddTargetPoint(targetPoint);
-            return;
-        }
-
-        _pendingPathTarget = targetPoint;
-        _pendingPathHandle = GameEngine.Navigation.SubmitPathRequest(
-            GameObject.Translation, targetPoint, GameObject, OnPendingPathCompleted);
-        Progress.RecordAwaitingPath();
-    }
-
-    private void OnPendingPathCompleted(PathRequestHandle handle)
-    {
-        _pendingPathHandle = null;
-
-        // WI-N7-01: a worker death surfaces as a Failed completion; the unit settles.
-        if (handle.Outcome == PathRequestOutcome.Failed)
-        {
-            SettleNoRoute();
-            return;
-        }
-
-        if (!handle.TryGetResult(out var waypoints, out var endIsPassable))
-        {
-            return;
-        }
-
-        if (waypoints.Count == 0)
-        {
-            SettleNoRoute();
-            return;
-        }
-
-        ApplyRoute(waypoints, endIsPassable, _pendingPathTarget);
-    }
-
-    private void ApplyRoute(IList<Vector3> waypoints, bool endIsPassable, Vector3 target)
-    {
-        TargetPoints.Clear();
-        for (var i = 1; i < waypoints.Count; i++)
-        {
-            TargetPoints.Add(waypoints[i]);
-        }
-
-        if (TargetPoints.Count > 0 && endIsPassable)
-        {
-            TargetPoints[^1] = target;
-        }
-
-        // WI-N6-01: an empty completion is a failed order; a route resumes progress tracking.
-        if (TargetPoints.Count == 0)
-        {
-            Progress.RecordNoRoute();
-        }
-        else
-        {
-            Progress.Reset();
-            ResetLocalRepath();
-        }
-
-        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
+        Navigation.AppendPathToTargetPoint(targetPoint, origin, asyncEligible, SupportsAsyncOrderPaths);
     }
 
     /// <summary>
@@ -357,23 +235,7 @@ public class AIUpdate : UpdateModule
     /// </summary>
     internal void SettleNoRoute()
     {
-        TargetPoints.Clear();
-        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
-        GameObject.Speed = 0;
-        Progress.RecordNoRoute();
-    }
-
-    /// <summary>
-    /// WI-N8-01: terminal goal-crowded state. The resolver exhausted its attempts with the
-    /// goal inside the crowd-arrival radius: the route and moving state are cleared and the
-    /// stall reason records GoalCrowded for attribution.
-    /// </summary>
-    internal void SettleGoalCrowded()
-    {
-        TargetPoints.Clear();
-        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
-        GameObject.Speed = 0;
-        Progress.RecordGoalCrowded();
+        Navigation.SettleNoRoute();
     }
 
     /// <summary>
@@ -386,238 +248,37 @@ public class AIUpdate : UpdateModule
     /// </summary>
     internal bool TryCrowdArrive(Panopticon.Navigation.Navigation navigation)
     {
-        var options = navigation.Options;
-        if (!options.BlockedUnitResolution && !options.DestinationSlots)
-        {
-            return false;
-        }
-
-        // Final approach only: every remaining waypoint sits inside the arrival disk around
-        // the goal (the strict last-segment test strands units whose route tail holds one
-        // intermediate waypoint inside the crowd).
-        if (TargetPoints.Count == 0)
-        {
-            return false;
-        }
-
-        var goal = TargetPoints[^1];
-        for (var i = 0; i < TargetPoints.Count - 1; i++)
-        {
-            var toWaypoint = TargetPoints[i] - goal;
-            if (toWaypoint.Vector2XY().Length() > options.CrowdArrivalRadius)
-            {
-                return false;
-            }
-        }
-
-        var blocker = GameObject.GameEngine.GameLogic.GetObjectById(Progress.BlockerId);
-        if (blocker == null || blocker.IsDestroyed || blocker.Owner != GameObject.Owner)
-        {
-            return false;
-        }
-
-        var blockerAi = blocker.AIUpdate;
-        if (blockerAi == null
-            || blockerAi.TargetPoints.Count > 0
-            || blocker.ModelConditionFlags.Get(ModelConditionFlag.Moving))
-        {
-            // Not an arrived friendly: moving, ordered, or not a unit.
-            return false;
-        }
-
-        var toBlocker = blocker.Translation - goal;
-        if (toBlocker.Vector2XY().Length() > options.CrowdArrivalRadius)
-        {
-            // The blocker stands away from this unit's goal: the goal is reachable.
-            return false;
-        }
-
-        TargetPoints.Clear();
-        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
-        GameObject.Speed = 0;
-        Progress.RecordCrowdArrived();
-        return true;
+        return Navigation.TryCrowdArrive(navigation);
     }
 
     /// <summary>
-    /// WI-N8-01: replaces the first <paramref name="supersededWaypoints"/> target points with
-    /// the local detour from the blocked-unit resolver; the detour rejoins the kept remainder.
+    /// Card WI-N4-01: submits this unit's path onto the async queue; see
+    /// <see cref="UnitNavigation.RequestPathAsync"/>. Order-eligible callers reach this via
+    /// <see cref="NavigationOptions.AsyncOrderPaths"/> (WI-N4-02).
     /// </summary>
-    internal void SpliceLocalDetour(IReadOnlyList<Vector3> detour, int supersededWaypoints)
+    internal void RequestPathAsync(Vector3 targetPoint)
     {
-        if (supersededWaypoints > 0)
-        {
-            TargetPoints.RemoveRange(0, supersededWaypoints);
-        }
-
-        TargetPoints.InsertRange(0, detour);
-        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
-    }
-
-    /// <summary>
-    /// Card WI-N8-02: asks this idle, arrived, or order-less unit to step out of
-    /// <paramref name="requester"/>'s way. Friendly requesters only, at most one sidestep per
-    /// BlockedWaitFrames window; the sidestep is the nearest free passable cell off the
-    /// requester's next segment. True when accepted.
-    /// </summary>
-    internal bool RequestGiveWay(GameObject requester, Panopticon.Navigation.Navigation navigation, in Vector2 segmentStart, in Vector2 segmentEnd)
-    {
-        if (requester.Owner != GameObject.Owner
-            || TargetPoints.Count > 0
-            || GameObject.ModelConditionFlags.Get(ModelConditionFlag.Moving)
-            || Progress.Reason != NavigationStallReason.None)
-        {
-            return false;
-        }
-
-        if (RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
-        {
-            return false;
-        }
-
-        var sidestep = GiveWayPlanner.FindSidestep(
-            GameObject,
-            requester,
-            navigation,
-            segmentStart,
-            segmentEnd,
-            navigation.Options.LocalRepathWindowCells,
-            resumePoint: null);
-        if (sidestep == null)
-        {
-            return false;
-        }
-
-        _moveOutOfWay1 = requester.Id;
-        AcceptSidestep(sidestep.Value);
-        return true;
-    }
-
-    /// <summary>
-    /// Card WI-N8-02: a mutually blocked unit with the higher object id yields by sidestepping
-    /// off <paramref name="other"/>'s next segment while keeping its route: the sidestep point
-    /// is inserted before the remaining waypoints.
-    /// </summary>
-    internal bool SidestepWhileKeepingRoute(GameObject other, Panopticon.Navigation.Navigation navigation, in Vector2 segmentStart, in Vector2 segmentEnd)
-    {
-        if (RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
-        {
-            return false;
-        }
-
-        // WI-N11-01: the resume leg back to the first remaining waypoint is validated with
-        // the approach leg, so the yield cannot splice a drive through impassable cells.
-        var sidestep = GiveWayPlanner.FindSidestep(
-            GameObject,
-            other,
-            navigation,
-            segmentStart,
-            segmentEnd,
-            navigation.Options.LocalRepathWindowCells,
-            TargetPoints.Count > 0 ? TargetPoints[0].Vector2XY() : null);
-        if (sidestep == null)
-        {
-            return false;
-        }
-
-        _moveOutOfWay1 = other.Id;
-        _gaveWayOnce = true;
-        _frameAtLastGiveWay = CurrentLogicFrame();
-        ResetLocalRepath();
-        Progress.Reset();
-        TargetPoints.Insert(0, sidestep.Value);
-        return true;
+        Navigation.RequestPathAsync(targetPoint);
     }
 
     /// <summary>True within the BlockedWaitFrames window after the last accepted sidestep.</summary>
     internal bool RecentlyGaveWay(int blockedWaitFrames)
     {
-        return _gaveWayOnce && CurrentLogicFrame() - _frameAtLastGiveWay < (uint)blockedWaitFrames;
-    }
-
-    private void AcceptSidestep(Vector3 sidestep)
-    {
-        _gaveWayOnce = true;
-        _frameAtLastGiveWay = CurrentLogicFrame();
-        ResetLocalRepath();
-        AddTargetPoint(sidestep);
-    }
-
-    private uint CurrentLogicFrame()
-    {
-        return (uint)(GameObject.GameEngine.Game.MapTime.TotalTime.TotalMilliseconds
-            / GameObject.GameEngine.MsPerLogicFrame);
-    }
-
-    /// <summary>
-    /// WI-N8-01: attempt cadence for the blocked-unit resolver. True when a new attempt may
-    /// fire now; false with <paramref name="gaveUp"/> true once the attempt budget is spent.
-    /// </summary>
-    internal bool TryBeginLocalRepathAttempt(int framesWithoutProgress, int blockedWaitFrames, int maxAttempts, out bool gaveUp)
-    {
-        if (_localRepathAttempts >= maxAttempts)
-        {
-            gaveUp = true;
-            return false;
-        }
-
-        if (_framesAtLastLocalRepathAttempt != NoLocalRepathAttempt
-            && framesWithoutProgress - _framesAtLastLocalRepathAttempt < blockedWaitFrames)
-        {
-            gaveUp = false;
-            return false;
-        }
-
-        _localRepathAttempts++;
-        _framesAtLastLocalRepathAttempt = framesWithoutProgress;
-        gaveUp = false;
-        return true;
+        return Navigation.RecentlyGaveWay(blockedWaitFrames);
     }
 
     internal void ResetLocalRepath()
     {
-        _localRepathAttempts = 0;
-        _framesAtLastLocalRepathAttempt = NoLocalRepathAttempt;
+        Navigation.ResetLocalRepath();
     }
 
     /// <summary>
-    /// WI-N7-01: pending-path watchdog. A pending async order path older than
-    /// <see cref="NavigationOptions.PendingPathTimeoutFrames"/> cancels and falls back to one
-    /// synchronous search; a failed fallback settles the unit. Called from <see cref="Update"/>
-    /// each tick while a handle is pending.
+    /// WI-N7-01: pending-path watchdog; see <see cref="UnitNavigation.CheckPendingPathTimeout"/>.
+    /// Called from <see cref="Update"/> each tick while a handle is pending.
     /// </summary>
     internal void CheckPendingPathTimeout()
     {
-        if (_pendingPathHandle == null)
-        {
-            return;
-        }
-
-        var navigation = GameEngine.Navigation;
-        if (navigation == null
-            || _pendingPathHandle.WaitedFrames <= navigation.Options.PendingPathTimeoutFrames)
-        {
-            return;
-        }
-
-        var target = _pendingPathTarget;
-        CancelPendingPath();
-
-        var path = navigation.CalculatePath(
-            GameObject.Translation, target, out var endIsPassable, PathRequestOrigin.Unit);
-        if (path.Count == 0)
-        {
-            SettleNoRoute();
-            return;
-        }
-
-        ApplyRoute(path, endIsPassable, target);
-    }
-
-    private void CancelPendingPath()
-    {
-        _pendingPathHandle?.Cancel();
-        _pendingPathHandle = null;
+        Navigation.CheckPendingPathTimeout();
     }
 
     /// <summary>
@@ -686,7 +347,7 @@ public class AIUpdate : UpdateModule
     internal void ResetMovementIntent()
     {
         // WI-N4-01: a new movement intent invalidates any pending async path.
-        CancelPendingPath();
+        Navigation.CancelPendingPath();
         _isAttackPath = false;
         _ignoreWeaponTargetForMovement = false;
     }
@@ -823,7 +484,7 @@ public class AIUpdate : UpdateModule
 
     public override UpdateSleepTime Update()
     {
-        if (_pendingPathHandle != null)
+        if (Navigation.HasPendingPath)
         {
             Progress.RecordAwaitingPath();
             CheckPendingPathTimeout();
@@ -921,7 +582,7 @@ public class AIUpdate : UpdateModule
                             && resolutionNav.Options.BlockedUnitResolution)
                         {
                             // WI-N8-01: bounded local repath around a non-progressing blocker.
-                            BlockedMovementResolver.TryResolve(GameObject, this, resolutionNav);
+                            BlockedMovementResolver.TryResolve(GameObject, Navigation, resolutionNav);
                         }
                     }
 
@@ -1100,8 +761,7 @@ public class AIUpdate : UpdateModule
         reader.PersistObjectId(ref _repulsor1);
         reader.PersistObjectId(ref _repulsor2);
 
-        reader.PersistObjectId(ref _moveOutOfWay1);
-        reader.PersistObjectId(ref _moveOutOfWay2);
+        Navigation.Persist(reader);
 
         reader.PersistObject(_locomotorSet);
 

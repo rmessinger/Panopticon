@@ -375,7 +375,7 @@ track document.
 | X3 - Cursor modernization | `░░░░░░░░░░` | 0 / 1 |
 | X4 - ReplaySketch TabControl shell | `░░░░░░░░░░` | 0 / 1 |
 | X5 - Render culling dispatch | `░░░░░░░░░░` | 0 / 1 |
-| X6 - AIUpdate navigation extraction | `░░░░░░░░░░` | 0 / 1 |
+| X6 - AIUpdate navigation extraction | `██████████` | 1 / 1 |
 
 Track X has no terminal completion target; this table covers authored phases only.
 

@@ -15,39 +15,41 @@ namespace Panopticon.Navigation;
 /// </summary>
 internal static class BlockedMovementResolver
 {
-    internal static void TryResolve(GameObject unit, AIUpdate aiUpdate, Navigation navigation)
+    // WI-X6-01: takes the unit's UnitNavigation instead of AIUpdate; the unit's GameObject
+    // covers identity, position, and owner.
+    internal static void TryResolve(GameObject unit, UnitNavigation unitNav, Navigation navigation)
     {
         var options = navigation.Options;
 
-        var blocker = unit.GameEngine.GameLogic.GetObjectById(aiUpdate.Progress.BlockerId);
+        var blocker = unit.GameEngine.GameLogic.GetObjectById(unitNav.Progress.BlockerId);
         if (blocker == null || blocker.IsDestroyed || LocalOccupancyWindow.IsAdvancing(blocker))
         {
             // A progressing blocker is queueing traffic; wait as today.
             return;
         }
 
-        if (TryGiveWay(unit, aiUpdate, blocker, navigation))
+        if (TryGiveWay(unit, unitNav, blocker, navigation))
         {
             // Give-way handled this step: a sidestep was accepted or one is already in flight.
             return;
         }
 
-        if (!aiUpdate.TryBeginLocalRepathAttempt(
-                aiUpdate.Progress.FramesWithoutProgress,
+        if (!unitNav.TryBeginLocalRepathAttempt(
+                unitNav.Progress.FramesWithoutProgress,
                 options.BlockedWaitFrames,
                 options.MaxResolutionAttempts,
                 out var gaveUp))
         {
-            if (gaveUp && WithinCrowdArrivalRadius(unit, aiUpdate, options.CrowdArrivalRadius))
+            if (gaveUp && WithinCrowdArrivalRadius(unit, unitNav, options.CrowdArrivalRadius))
             {
-                aiUpdate.SettleGoalCrowded();
+                unitNav.SettleGoalCrowded();
             }
 
             // Otherwise keep the route and stay reported.
             return;
         }
 
-        if (!TryFindRejoin(navigation, aiUpdate, unit, options.LocalRepathWindowCells, out var rejoin, out var superseded))
+        if (!TryFindRejoin(navigation, unitNav, unit, options.LocalRepathWindowCells, out var rejoin, out var superseded))
         {
             // The attempt is consumed; the unit keeps its route and stays reported.
             return;
@@ -65,18 +67,18 @@ internal static class BlockedMovementResolver
         if (detour.Count > 0
             && PathOptimizer.IsDirectLinePassable(navigation, unit.Translation.Vector2XY(), detour[0].Vector2XY()))
         {
-            aiUpdate.SpliceLocalDetour(detour, superseded);
+            unitNav.SpliceLocalDetour(detour, superseded);
         }
     }
 
-    private static bool WithinCrowdArrivalRadius(GameObject unit, AIUpdate aiUpdate, float crowdArrivalRadius)
+    private static bool WithinCrowdArrivalRadius(GameObject unit, UnitNavigation unitNav, float crowdArrivalRadius)
     {
-        if (aiUpdate.TargetPoints.Count == 0)
+        if (unitNav.TargetPoints.Count == 0)
         {
             return false;
         }
 
-        var toGoal = aiUpdate.TargetPoints[^1] - unit.Translation;
+        var toGoal = unitNav.TargetPoints[^1] - unit.Translation;
         var distance = toGoal.Vector2XY().Length();
         return distance <= crowdArrivalRadius;
     }
@@ -85,13 +87,10 @@ internal static class BlockedMovementResolver
     /// Card WI-N8-02: the give-way step. True means the resolution step is handled (wait);
     /// false falls through to the local repath.
     /// </summary>
-    private static bool TryGiveWay(GameObject unit, AIUpdate aiUpdate, GameObject blocker, Navigation navigation)
+    private static bool TryGiveWay(GameObject unit, UnitNavigation unitNav, GameObject blocker, Navigation navigation)
     {
         var blockerAi = blocker.AIUpdate;
 
-        // Mutual block: each records the other. Exactly one unit yields: the higher object id
-        // sidesteps off the lower unit's next segment; the lower waits for that to clear. A
-        // yield that cannot be planned falls through to the local repath instead of stalling.
         // Mutual block: each records the other. Exactly one unit yields: the higher object id
         // sidesteps off the lower unit's next segment; the lower waits for that to clear. A
         // yield that cannot be planned, or a wait that outlives a full give-way cycle without
@@ -100,14 +99,14 @@ internal static class BlockedMovementResolver
         {
             // The blocker's sidestep is not in flight and this wait has outlived a full
             // give-way cycle: stop waiting and detour instead.
-            var waitExpired = aiUpdate.Progress.FramesWithoutProgress >= 2 * navigation.Options.BlockedWaitFrames
+            var waitExpired = unitNav.Progress.FramesWithoutProgress >= 2 * navigation.Options.BlockedWaitFrames
                 && !blockerAi.RecentlyGaveWay(navigation.Options.BlockedWaitFrames);
             if (unit.Id.Index < blocker.Id.Index && !waitExpired)
             {
                 return true;
             }
 
-            if (aiUpdate.RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
+            if (unitNav.RecentlyGaveWay(navigation.Options.BlockedWaitFrames))
             {
                 // A sidestep is already in flight; let it clear the path.
                 return true;
@@ -115,7 +114,7 @@ internal static class BlockedMovementResolver
 
             if (unit.Id.Index > blocker.Id.Index
                 && blockerAi.TargetPoints.Count > 0
-                && aiUpdate.SidestepWhileKeepingRoute(
+                && unitNav.SidestepWhileKeepingRoute(
                     blocker,
                     navigation,
                     blocker.Translation.Vector2XY(),
@@ -137,16 +136,16 @@ internal static class BlockedMovementResolver
             return true;
         }
 
-        if (aiUpdate.TargetPoints.Count == 0)
+        if (unitNav.TargetPoints.Count == 0)
         {
             return false;
         }
 
-        return blockerAi.RequestGiveWay(
+        return blockerAi.Navigation.RequestGiveWay(
             unit,
             navigation,
             unit.Translation.Vector2XY(),
-            aiUpdate.TargetPoints[0].Vector2XY());
+            unitNav.TargetPoints[0].Vector2XY());
     }
 
     /// <summary>
@@ -157,7 +156,7 @@ internal static class BlockedMovementResolver
     /// </summary>
     private static bool TryFindRejoin(
         Navigation navigation,
-        AIUpdate aiUpdate,
+        UnitNavigation unitNav,
         GameObject unit,
         int windowCells,
         out Vector3 rejoin,
@@ -171,12 +170,12 @@ internal static class BlockedMovementResolver
             return false;
         }
 
-        var goal = aiUpdate.TargetPoints[^1];
+        var goal = unitNav.TargetPoints[^1];
         var maxX = Math.Min(navigation.Graph.Width - 1, unitNode.X + windowCells);
         var maxY = Math.Min(navigation.Graph.Height - 1, unitNode.Y + windowCells);
-        for (var i = 0; i < aiUpdate.TargetPoints.Count; i++)
+        for (var i = 0; i < unitNav.TargetPoints.Count; i++)
         {
-            var node = navigation.GetNodeAt(aiUpdate.TargetPoints[i]);
+            var node = navigation.GetNodeAt(unitNav.TargetPoints[i]);
             if (node == null)
             {
                 continue;
@@ -192,21 +191,21 @@ internal static class BlockedMovementResolver
                 Math.Clamp(node.X, Math.Max(0, unitNode.X - windowCells), maxX),
                 Math.Clamp(node.Y, Math.Max(0, unitNode.Y - windowCells), maxY));
             rejoin = navigation.GetNodeWorldPosition(clamped);
-            superseded = CountSupersededWaypoints(aiUpdate, goal, rejoin);
+            superseded = CountSupersededWaypoints(unitNav, goal, rejoin);
             return true;
         }
 
         rejoin = goal;
-        superseded = aiUpdate.TargetPoints.Count - 1;
+        superseded = unitNav.TargetPoints.Count - 1;
         return true;
     }
 
-    private static int CountSupersededWaypoints(AIUpdate aiUpdate, Vector3 goal, Vector3 rejoin)
+    private static int CountSupersededWaypoints(UnitNavigation unitNav, Vector3 goal, Vector3 rejoin)
     {
         var rejoinDistance = (goal - rejoin).Vector2XY().LengthSquared();
         var superseded = 0;
-        while (superseded < aiUpdate.TargetPoints.Count - 1
-            && (goal - aiUpdate.TargetPoints[superseded]).Vector2XY().LengthSquared() >= rejoinDistance)
+        while (superseded < unitNav.TargetPoints.Count - 1
+            && (goal - unitNav.TargetPoints[superseded]).Vector2XY().LengthSquared() >= rejoinDistance)
         {
             superseded++;
         }

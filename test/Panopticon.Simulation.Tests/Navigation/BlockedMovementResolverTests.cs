@@ -47,7 +47,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         ai.Progress.RecordMoveStep(100f, blockedByUnit: true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, blockedByUnit: true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, blockedByUnit: true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         var stats = navigation.Statistics;
         Assert.Equal(1, stats.BlockedRepathRequests - statsBefore.BlockedRepathRequests);
@@ -104,12 +104,12 @@ public class BlockedMovementResolverTests : MockedGameTest
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
         var afterFirst = navigation.Statistics.BlockedRepathRequests;
 
         // The very next frame is inside the cooldown: no second search.
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
         Assert.Equal(afterFirst, navigation.Statistics.BlockedRepathRequests);
 
         // A blocker that is itself advancing is waited out, never repathed around.
@@ -117,7 +117,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         blocker.ModelConditionFlags.Set(ModelConditionFlag.Moving, true);
         ai.ResetLocalRepath();
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
         Assert.Equal(afterFirst, navigation.Statistics.BlockedRepathRequests);
     }
 
@@ -143,12 +143,12 @@ public class BlockedMovementResolverTests : MockedGameTest
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         // Attempt budget exhausted: the next blocked wait settles the unit.
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         Assert.Empty(ai.TargetPoints);
         Assert.Equal(NavigationStallReason.GoalCrowded, ai.Progress.Reason);
@@ -176,12 +176,12 @@ public class BlockedMovementResolverTests : MockedGameTest
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
         var pointsAfterFirst = ai.TargetPoints.Count;
 
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
         ai.Progress.RecordMoveStep(100f, true, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         Assert.Equal(pointsAfterFirst, ai.TargetPoints.Count);
         Assert.Equal(goal, ai.TargetPoints[^1]);

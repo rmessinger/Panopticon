@@ -2093,5 +2093,5 @@ Dependency: M1. [Plan and card](implementation/track-x-x5-render-culling-dispatc
 
 Dependency: N11. [Plan and card](implementation/track-x-x6-aiupdate-navigation-extraction.md).
 
-- [ ] X6-1 Extract path request, route application, blocked-movement, and give-way logic from `AIUpdate` into `UnitNavigation` (`WI-X6-01`).
+- [x] X6-1 Extract path request, route application, blocked-movement, and give-way logic from `AIUpdate` into `UnitNavigation` (`WI-X6-01`).
   - AC: `AIUpdate` holds no navigation logic and `UnitNavigation` has no `AIUpdate` reference; load/persist order unchanged; `SeededRunTests`, golden baselines, and the seed 1 `NavigationDeadlock` report match pre-refactor output.
