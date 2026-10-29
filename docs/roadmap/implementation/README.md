@@ -311,6 +311,17 @@ The deep dive's phase split (section 7) is the plan; no separate plan file.
 | [c8-sage-family-w3d.md §7](../deep-dives/c8-sage-family-w3d.md#7-phase-split) | C8b | BFME-family static meshes (`WI-C8b-01`, `WI-C8b-02`, `WI-C8b-03`; `WI-C8b-04` after `WI-C8a-02`) |
 | [c8-sage-family-w3d.md §7](../deep-dives/c8-sage-family-w3d.md#7-phase-split) | C8c | BFME-family skinning and animation (`WI-C8c-01..03` in parallel after `WI-C8a-04`, then `WI-C8c-04`) |
 
+
+## Track C · C10a-C10c : AoE3 DE Granny models
+
+Source of truth: [c10-aoe3de-granny-models.md](../deep-dives/c10-aoe3de-granny-models.md) :
+[Architecture diagrams §9](../deep-dives/c10-aoe3de-granny-models.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10a | Archives, XMB, and DDT (`WI-C10a-01`, then `WI-C10a-02` and `WI-C10a-03` in parallel) |
+| [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10b | Static Granny models (`WI-C10b-01` after `WI-C10a-01`, then `WI-C10b-02..04`) |
+| [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10c | Skins, clips, and animfile resolution (`WI-C10c-01..03`, then `WI-C10c-04`) |
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

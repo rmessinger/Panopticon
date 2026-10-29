@@ -21,7 +21,7 @@ C10a supports:
 - `.bar` version 6 archives under `Game/`, exposed as a read-only, case-insensitive `FileSystem`;
 - entry compression flag 0 (stored) and 1 (`alz4`: LZ4 block);
 - `.XMB` binary XML (`X1`, `XR` version 8) decoded to an XML tree;
-- `.ddt` (`RTS3`) textures passed through as BC1, BC2, BC3, BGRA, or R8 images.
+- `.ddt` (`RTS3`) textures in BC1, BC2, BC3, BGRA, or R8, decoded to RGBA for C3 (section 7).
 
 C10b supports:
 
@@ -122,12 +122,37 @@ Textures live in `ArtUnitsTextures*.bar`, for example
 
 ## 7. Phase split
 
-| Phase | Deliverable | Proof |
-|---|---|---|
-| C10a | `BarFileSystem`, LZ4, XMB, DDT passthrough | All 42 archives enumerate; musketeer textures decode with recorded sizes |
-| C10b | Generic uncompressed GR2 reader, static meshes, materials on C3 PBR | Musketeer and hussar horse render textured beside a Generals Ranger |
-| C10c | Skins, float-curve clips, animfile resolution with variants and attachments | Musketeer march and volley clips and hussar idles bind and capture deterministically |
-| C10d | Oodle1 and BitKnit2 section decompression after license review | Falconet imports and plays `falconet_limber` |
+| Phase | Deliverable | Proof | Cards |
+|---|---|---|---|
+| C10a | `BarFileSystem`, LZ4, XMB, DDT decode | All 42 archives enumerate; musketeer textures decode with recorded sizes | [`WI-C10a-01`](../agent/cards/WI-C10a-01-bar-archive-file-system.md), [`WI-C10a-02`](../agent/cards/WI-C10a-02-xmb-binary-xml-decoder.md), [`WI-C10a-03`](../agent/cards/WI-C10a-03-ddt-texture-decode.md) |
+| C10b | Generic uncompressed GR2 reader, static meshes, materials on C3 PBR | Musketeer and hussar horse render textured beside a Generals Ranger | [`WI-C10b-01`](../agent/cards/WI-C10b-01-granny-container-reader.md), [`WI-C10b-02`](../agent/cards/WI-C10b-02-granny-static-model-import.md), [`WI-C10b-03`](../agent/cards/WI-C10b-03-aoe3-material-mapping.md), [`WI-C10b-04`](../agent/cards/WI-C10b-04-aoe3-static-proof.md) |
+| C10c | Skins, float-curve clips, animfile resolution with variants and attachments | Musketeer march and volley clips and hussar idles bind and capture deterministically | [`WI-C10c-01`](../agent/cards/WI-C10c-01-granny-skin-import.md), [`WI-C10c-02`](../agent/cards/WI-C10c-02-granny-animation-import.md), [`WI-C10c-03`](../agent/cards/WI-C10c-03-aoe3-animfile-resolver.md), [`WI-C10c-04`](../agent/cards/WI-C10c-04-aoe3-animated-proof.md) |
+| C10d | Oodle1 and BitKnit2 section decompression after license review | Falconet imports and plays `falconet_limber` | none until the review in section 6 |
+
+Card order: `WI-C10a-01` first; `WI-C10a-02`, `WI-C10a-03`, and `WI-C10b-01` in parallel after it;
+`WI-C10b-02`, then `WI-C10b-03` (also after `WI-C10a-02` and `WI-C10a-03`), then `WI-C10b-04`.
+`WI-C10c-01` and `WI-C10c-02` after `WI-C10b-02`; `WI-C10c-03` after `WI-C10a-02`; `WI-C10c-04`
+last.
+
+### Implementation decisions
+
+- Two format projects, no engine dependency: `Panopticon.FileFormats.Bar` (archive table, `alz4`,
+  XMB, DDT header and mips) and `Panopticon.FileFormats.Granny` (container, type tree, generic
+  objects). `BarFileSystem` lives in `Panopticon.IO` beside `BigFileSystem`.
+- LZ4 block decoding is an in-repo decoder in `Panopticon.FileFormats.Bar`, matching the in-repo
+  RefPack precedent; no package is added.
+- DDT reaches C3 through `ImportedImageDecoder`: an `RTS3` magic branch decodes the base mip to
+  RGBA with `DdsBlockDecoder` and lets the materializer regenerate mips. No GPU-side
+  pre-installation as in the EE2 texcache path, because C3 PBR bindings resolve textures through
+  `ImportedTextureMaterializer`.
+- The Granny reader is generic: it walks the type tree into `GrannyObject` field maps and the
+  importer reads fields by name. No per-struct hand layouts.
+- Importer ids `GR2` (model and animation). Asset keys are archive paths, for example
+  `Art\units\infantry_ranged\musketeer\musketeer_4age.gr2`.
+- Install discovery: `AOE3DE_PATH` names the install root that holds `Game/`. Tests that need it are
+  `Category=Interactive`, like the EE2 tests.
+- `ImportedMesh.Indices` is `ushort`. A Granny mesh with more than 65,535 vertices is split per
+  topology group, or rejected with file and mesh name if one group exceeds the limit.
 
 ## 8. Risks
 
@@ -138,6 +163,246 @@ Textures live in `ArtUnitsTextures*.bar`, for example
 
 ## 9. Architecture diagrams
 
-`†` Placeholder. Class and sequence diagrams grounded in the C1 importer seam, the C3 materializer,
-and the new BAR, XMB, and GR2 readers are required before the first C10 source-edit card is marked
-`Ready`.
+Types marked new are added by C10 cards; the rest exist today.
+
+```mermaid
+classDiagram
+  class FileSystem {
+    GetFile(path) FileSystemEntry
+    GetFilesInDirectory(path, pattern, option)
+  }
+  class BigFileSystem
+  class CompositeFileSystem
+  class BarFileSystem {
+    new
+    BarFileSystem(gameDirectory)
+    GetFile(path) FileSystemEntry
+  }
+  class BarArchive {
+    new
+    Read(stream) BarArchive
+    Entries
+  }
+  class BarEntry {
+    new
+    Path
+    Offset
+    StoredSize
+    DecompressedSize
+    Compression
+  }
+  class Lz4BlockDecoder {
+    new
+    Decode(source, destination)$
+  }
+  class XmbDocument {
+    new
+    Read(stream) XDocument$
+  }
+  class DdtFile {
+    new
+    Read(stream) DdtFile$
+    Format
+    Mips
+  }
+  FileSystem <|-- BigFileSystem
+  FileSystem <|-- CompositeFileSystem
+  FileSystem <|-- BarFileSystem
+  BarFileSystem --> BarArchive : one per .bar
+  BarArchive --> BarEntry
+  BarFileSystem ..> Lz4BlockDecoder : alz4 entries
+
+  class GrannyFile {
+    new
+    Read(stream) GrannyFile$
+    Root GrannyObject
+    Sections
+  }
+  class GrannySection {
+    new
+    Compression
+    Data
+    Relocations
+  }
+  class GrannyTypeTree {
+    new
+    Fields
+  }
+  class GrannyObject {
+    new
+    Get(fieldName)
+    GetArray(fieldName)
+  }
+  class GrannyCompressedSectionException {
+    new
+    FilePath
+    SectionIndex
+    Compression
+  }
+  GrannyFile --> GrannySection
+  GrannyFile --> GrannyTypeTree
+  GrannyFile --> GrannyObject
+  GrannyFile ..> GrannyCompressedSectionException : Oodle1, BitKnit2
+
+  class IModelImporter
+  class IAnimationImporter
+  class AssetImportContext {
+    FileSystem
+  }
+  class GrannyModelImporter {
+    new
+    Id GR2
+    ImportModel(name, context)
+    ImportSkeleton(name, context)
+  }
+  class GrannyAnimationImporter {
+    new
+    Id GR2
+    ImportAnimation(name, context)
+  }
+  class GrannyMeshConverter {
+    new
+    Convert(mesh, skeleton, axes) ImportedMesh
+  }
+  class GrannyAxisSystem {
+    new
+    FromArtToolInfo(info)$
+  }
+  class Aoe3MaterialConverter {
+    new
+    Convert(materialXmb, context) ImportedMaterial
+  }
+  class Aoe3AnimfileResolver {
+    new
+    Resolve(protoUnit, techs, context) Aoe3UnitVisual
+  }
+  class Aoe3UnitVisual {
+    new
+    ModelPath
+    Clips
+    Attachments
+  }
+  IModelImporter <|.. GrannyModelImporter
+  IAnimationImporter <|.. GrannyAnimationImporter
+  GrannyModelImporter --> GrannyFile
+  GrannyAnimationImporter --> GrannyFile
+  GrannyModelImporter --> GrannyMeshConverter
+  GrannyModelImporter --> GrannyAxisSystem
+  GrannyMeshConverter --> Aoe3MaterialConverter
+  Aoe3MaterialConverter --> XmbDocument
+  Aoe3AnimfileResolver --> XmbDocument
+  Aoe3AnimfileResolver --> Aoe3UnitVisual
+  GrannyModelImporter --> AssetImportContext
+
+  class ImportedImageDecoder {
+    Decode(source, fileSystem) DecodedImportedImage
+    DecodeDdt(stream) new
+  }
+  class DdsBlockDecoder {
+    DecodeBaseMip(mip, format)$
+  }
+  class ImportedTextureMaterializer
+  class ImportedModelMaterializer {
+    MaterializeModel(imported, context)$
+  }
+  ImportedImageDecoder --> DdtFile : RTS3 magic
+  ImportedImageDecoder --> DdsBlockDecoder : BC1, BC2, BC3
+  ImportedTextureMaterializer --> ImportedImageDecoder
+  ImportedModelMaterializer --> ImportedTextureMaterializer
+
+  class Aoe3GrannyProofScenario {
+    new
+    Run(installation, config, reporter)$
+  }
+  class StandaloneModelCapture {
+    Capture(...)$
+  }
+  Aoe3GrannyProofScenario --> BarFileSystem
+  Aoe3GrannyProofScenario --> Aoe3AnimfileResolver
+  Aoe3GrannyProofScenario --> GrannyModelImporter
+  Aoe3GrannyProofScenario --> GrannyAnimationImporter
+  Aoe3GrannyProofScenario --> ImportedModelMaterializer
+  Aoe3GrannyProofScenario --> StandaloneModelCapture
+```
+
+Static import of one model (C10b):
+
+```mermaid
+sequenceDiagram
+  participant S as Aoe3GrannyProofScenario
+  participant FS as BarFileSystem
+  participant MI as GrannyModelImporter
+  participant GF as GrannyFile
+  participant MC as GrannyMeshConverter
+  participant AM as Aoe3MaterialConverter
+  participant MM as ImportedModelMaterializer
+  participant TM as ImportedTextureMaterializer
+  participant ID as ImportedImageDecoder
+  S->>FS: new BarFileSystem(AOE3DE_PATH/Game)
+  S->>MI: ImportModel(gr2 path, AssetImportContext(FS))
+  MI->>FS: GetFile(path).Open()
+  FS-->>MI: stored or alz4-decoded bytes
+  MI->>GF: Read(stream)
+  alt any section compressed
+    GF-->>MI: GrannyCompressedSectionException(file, section, type)
+    MI-->>S: rethrow with model key
+  else uncompressed
+    GF-->>MI: Root object (ArtToolInfo, Skeletons, Meshes, Models)
+    MI->>MI: GrannyAxisSystem from ArtToolInfo
+    loop every mesh
+      MI->>MC: Convert(mesh, skeleton, axes)
+      MC->>AM: material name to .material.XMB path
+      AM->>FS: GetFile(material.XMB)
+      AM-->>MC: PBR ImportedMaterial, DDT virtual paths
+    end
+    MI-->>S: ImportedModel
+  end
+  S->>MM: MaterializeModel(imported, loadContext)
+  MM->>TM: GetTexture(VirtualPath .ddt)
+  TM->>ID: Decode(source)
+  ID-->>TM: RGBA base mip from DdsBlockDecoder
+  MM-->>S: Model
+```
+
+Animated unit from protoy (C10c):
+
+```mermaid
+sequenceDiagram
+  participant S as Aoe3GrannyProofScenario
+  participant AR as Aoe3AnimfileResolver
+  participant X as XmbDocument
+  participant MI as GrannyModelImporter
+  participant AI as GrannyAnimationImporter
+  participant MM as ImportedModelMaterializer
+  participant CAP as StandaloneModelCapture
+  S->>AR: Resolve(Musketeer, age 4 techs, context)
+  AR->>X: Read(Data\protoy.xml.XMB)
+  AR->>X: Read(animfile .xml.XMB)
+  AR-->>S: model path, clip paths by anim name, attachments
+  S->>MI: ImportModel(model path)
+  MI-->>S: ImportedModel with four-influence skins
+  S->>AI: ImportAnimation(march_rifleman)
+  AI-->>S: ImportedAnimation with BoneName targets
+  S->>MM: MaterializeModel(imported)
+  S->>CAP: Capture frames at fixed times
+  CAP-->>S: PNGs, missing-target count 0
+```
+
+## Appendix: grounding
+
+| Fact | Location |
+|---|---|
+| Importer seams | `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs`, `IAnimationImporter.cs` |
+| Import context holds a `FileSystem` | `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs:18` |
+| File system base and archive precedent | `src/Panopticon.IO/FileSystem.cs:3`, `BigFileSystem.cs:5`, `CompositeFileSystem.cs:3` |
+| Four bone indices and weights per vertex | `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs:28`-`:42` |
+| 16-bit indices | `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs:20` |
+| PBR material factory | `ImportedMaterial.CreatePbrMetallicRoughness`, `ImportedMaterial.cs:121`; `ImportedPbrMetallicRoughness.cs` |
+| Bone-name animation targets | `ImportedAnimationTarget.CreateBoneName`, `ImportedAnimationTarget.cs:71` |
+| Image decode rejects DDS, decodes PNG, JPEG, TGA | `src/Panopticon.Simulation/Content/Loaders/ImportedImageDecoder.cs:24`, `:64`-`:90` |
+| CPU BC decoder | `src/Panopticon.Simulation/Data/Dds/DdsBlockDecoder.cs:20` |
+| Materializer | `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs:27` |
+| NIF importer and proof precedent | `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs:21`, `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs:313` |
+| Capture helper | `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:42` |
+| Interactive install-env test precedent | `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs:17`, `:27` |
+| In-repo decompressor precedent | `src/Panopticon.FileFormats.RefPack/` |
