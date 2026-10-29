@@ -774,7 +774,7 @@ Source of truth: [deep-dives/n-confined-passage-queueing.md](../deep-dives/n-con
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
 | [`WI-N11-01`](../agent/cards/WI-N11-01-passage-finder.md) | N11 | Passage finder and cross-section cache | N11-1 | Ready |
-| [`WI-N11-02`](../agent/cards/WI-N11-02-passage-cases-and-baseline.md) | N11 | Passage cases and option-off baseline | N11-2 | Blocked |
+| [`WI-N11-02`](../agent/cards/WI-N11-02-passage-cases-and-baseline.md) | N11 | Passage cases and option-off baseline | N11-2 | Done |
 | [`WI-N12-01`](../agent/cards/WI-N12-01-passage-coordinator-and-queue.md) | N12 | Passage coordinator, queue order, and lane path | N12-1 | Blocked |
 | [`WI-N12-02`](../agent/cards/WI-N12-02-passage-hold-and-release-movement.md) | N12 | Passage hold, release, and route splice | N12-2 | Blocked |
 | [`WI-N13-01`](../agent/cards/WI-N13-01-opposing-flow-arbitration.md) | N13 | Opposing flow arbitration | N13-1 | Blocked |
@@ -817,6 +817,44 @@ consecutive duplicates merged) and reads the options; the grid core stays pure o
   pass unedited (Navigation filter 104/104).
 
 Artifacts: reports and logs under `/tmp/opencode/n11-01/` and `~/log/n11-01/`.
+
+### WI-N11-02 baseline (2026-10-28, Release, seed 1, options off, budget 3600)
+
+Five passage cases joined the NavigationDeadlock scenario (planner, setups, per-case
+detection at order time over each unit's route, mouth-jam metric). Movement code is
+untouched: the finder runs beside the loop, options all off.
+
+| Case | Settled | Cycles | Mouth jam | Detected passages (throat, width, lanes) |
+| --- | --- | --- | --- | --- |
+| passage-column-40 | 0 / 40 | 1 | 1 unit, 3257 frames | 3 spans, terrain slots at (158,110-122), width 1, lanes 1 |
+| passage-converge-2x20 | 3 / 40 | 1 | 14 units, 3567 frames | 6 spans, widths 1-7, lanes 1-3 at infantry pitch |
+| passage-mixed-30 | 6 / 30 | 4 | 0 | 1 span (187,161), width 3, lanes 1-2 mixed pitch |
+| passage-opposed-1lane | 0 / 20 | 1 | 6 units, 3488 frames | 1 span (170,170), width 9, lanes 2 |
+| passage-squad-12 | 6 / 12 | 1 | 0 | none (route crosses no confined feature) |
+| corridor-opposed-20 (reuse) | 0 / 40 | 2 | 0 | 2 spans, terrain slots (158,122) and (182,210), lanes 1 |
+
+Old six cases: settled counts, stall reasons, and termination match the option-off
+baselines within documented run-to-run variance (radius settles 2-4, corridor cycles 1-7,
+async settle frame 92-93); head-on 0/2, queue 0/10, async 6/6 hold exactly.
+
+Geometry findings recorded as section 3 revisions, per the card:
+
+- Wall gaps built from 80-unit power-plant footprints at 80 spacing quantize to openings
+  of roughly 90 units (one wall center skipped, gapWidth <= 20) or 160 units (two skipped).
+  At tank pitch (~4 cells) these read 2 and 4 lanes. The 120-unit gap the deep dive
+  assumed is not realizable; the one-tank-lane target is unreachable from these
+  footprints, so passage-opposed-1lane was built at gapWidth 20 and its expectation
+  revised to at most 2 lanes, with reason.
+- Routes through the wall detour around the wall's east end rather than threading the
+  nominal gap: the power-plant colliders seal it tightly. Every detected span on these
+  maps is an incidental alpine-assault terrain slot east of the wall (world x 1400-1900).
+  The w1 slots are true single-file features; w3-w7 slots read 2-3 lanes at infantry
+  pitch. N12 case tuning should either narrow the wall span so detours stop paying off or
+  place terrain-anchored slots deliberately.
+
+Artifacts: `/tmp/opencode/n11-02/nd-baseline.json` (all 11 cases), `nd-passage.json`,
+`nd-opposed.json`, logs `~/log/n11-02/`. GIF evidence: 5 cases under
+`navdeadlock-<case>-N11-v1.gif` plus annotated frames on the share.
 
 ## Layered navigation (N15-N20)
 

@@ -11,7 +11,7 @@ namespace Panopticon.Tests.Tools.TestHarness;
 public class NavigationDeadlockPlannerTests
 {
     [Fact]
-    public void BuildCases_ListsTheSixDeepDiveCasesInOrder()
+    public void BuildCases_ListsAllElevenCasesInOrder()
     {
         var cases = NavigationDeadlockCasePlanner.BuildCases();
 
@@ -24,6 +24,11 @@ public class NavigationDeadlockPlannerTests
             NavigationDeadlockCasePlanner.QueueBehindIdle,
             NavigationDeadlockCasePlanner.AsyncNoRoute,
             NavigationDeadlockCasePlanner.SquadOffsetRetrace,
+            NavigationDeadlockCasePlanner.PassageColumn40,
+            NavigationDeadlockCasePlanner.PassageConverge2x20,
+            NavigationDeadlockCasePlanner.PassageMixed30,
+            NavigationDeadlockCasePlanner.PassageOpposed1Lane,
+            NavigationDeadlockCasePlanner.PassageSquad12,
         ], names);
         Assert.All(cases, plan => Assert.False(string.IsNullOrWhiteSpace(plan.Mechanism)));
     }
@@ -76,6 +81,9 @@ public class NavigationDeadlockPlannerTests
             ImpassableRetracePoints: 0,
             ReroutedFollowers: 0,
             BlockedRepaths: 0,
+            DetectedPassages: [],
+            MouthJamUnits: 0,
+            MouthJamFrames: 0,
             MechanismConfirmed: true,
             MechanismNote: "2 mutually blocked records, 1 wait-for cycle(s), max 120 frames without progress.",
             StallRecords: records,

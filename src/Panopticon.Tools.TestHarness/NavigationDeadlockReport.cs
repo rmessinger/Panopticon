@@ -7,6 +7,9 @@ using System.Text.Json;
 
 namespace Panopticon.Tools.TestHarness;
 
+/// <summary>One passage detected on an ordered route at order time (WI-N11-02).</summary>
+public sealed record PassageDetection(int ThroatX, int ThroatY, int WidthCells, int Lanes);
+
 /// <summary>Per-case outcome of a <c>NavigationDeadlock</c> run (WI-N6-02).</summary>
 public sealed record NavigationDeadlockCaseResult(
     string Name,
@@ -25,6 +28,9 @@ public sealed record NavigationDeadlockCaseResult(
     int ImpassableRetracePoints,
     long ReroutedFollowers,
     long BlockedRepaths,
+    IReadOnlyList<PassageDetection> DetectedPassages,
+    int MouthJamUnits,
+    int MouthJamFrames,
     bool MechanismConfirmed,
     string MechanismNote,
     IReadOnlyList<NavigationStallRecord> StallRecords,

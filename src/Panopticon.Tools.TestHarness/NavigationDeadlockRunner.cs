@@ -31,6 +31,7 @@ public static class NavigationDeadlockRunner
     private const string DefaultMapPath = "maps/alpine assault/alpine assault.map";
     private const string DefaultReportPath = "artifacts/navigation-deadlock/navigation-deadlock.json";
     private const string UnitDefinitionName = "AmericaTankCrusader";
+    private const string InfantryDefinitionName = "AmericaInfantryRanger";
     private const string WallDefinitionName = "AmericaPowerPlant";
 
     // Wall geometry mirrors RoutingChokeRunner: the wall runs along X at WallY with a gap at
@@ -198,10 +199,14 @@ public static class NavigationDeadlockRunner
         }
 
         var unitDefinition = game.AssetStore.ObjectDefinitions.GetByName(UnitDefinitionName);
+        var infantryDefinition = game.AssetStore.ObjectDefinitions.GetByName(InfantryDefinitionName);
         var wallDefinition = game.AssetStore.ObjectDefinitions.GetByName(WallDefinitionName);
-        if (unitDefinition == null || wallDefinition == null)
+        if (unitDefinition == null || wallDefinition == null || infantryDefinition == null)
         {
-            reporter.Error($"Unknown object definition '{(unitDefinition == null ? UnitDefinitionName : WallDefinitionName)}'.");
+            var missing = unitDefinition == null ? UnitDefinitionName
+                : wallDefinition == null ? WallDefinitionName
+                : InfantryDefinitionName;
+            reporter.Error($"Unknown object definition '{missing}'.");
             return null;
         }
 
@@ -221,6 +226,16 @@ public static class NavigationDeadlockRunner
             NavigationDeadlockCasePlanner.AsyncNoRoute => SetupAsyncNoRoute(
                 game, unitDefinition, wallDefinition, owner, neutral, navigation, orderProcessor, reporter),
             NavigationDeadlockCasePlanner.SquadOffsetRetrace => SetupSquadOffsetRetrace(
+                game, unitDefinition, wallDefinition, owner, neutral, navigation),
+            NavigationDeadlockCasePlanner.PassageColumn40 => SetupPassageColumn40(
+                game, unitDefinition, wallDefinition, owner, neutral, orderProcessor),
+            NavigationDeadlockCasePlanner.PassageConverge2x20 => SetupPassageConverge(
+                game, unitDefinition, wallDefinition, owner, neutral, orderProcessor),
+            NavigationDeadlockCasePlanner.PassageMixed30 => SetupPassageMixed(
+                game, unitDefinition, infantryDefinition, wallDefinition, owner, neutral, orderProcessor),
+            NavigationDeadlockCasePlanner.PassageOpposed1Lane => SetupPassageOpposedOneLane(
+                game, unitDefinition, wallDefinition, owner, neutral, orderProcessor),
+            NavigationDeadlockCasePlanner.PassageSquad12 => SetupPassageSquad(
                 game, unitDefinition, wallDefinition, owner, neutral, navigation),
             _ => null,
         };
@@ -252,6 +267,32 @@ public static class NavigationDeadlockRunner
         var statsBefore = navigation.Statistics;
 
         setup.IssueOrders();
+
+        // WI-N11-02: passage detection at order time. Options stay off; the finder is pure.
+        var detectedPassages = new List<PassageDetection>();
+        var passageEntries = new List<Vector3>();
+        var passageHoldRadius = 0.0f;
+        var passageCache = new CrossSectionCache(navigation.PassabilityVersion);
+        foreach (var unit in setup.OrderedUnits)
+        {
+            var route = new List<Vector3> { unit.Translation };
+            route.AddRange(unit.AIUpdate.TargetPoints);
+            if (route.Count < 2)
+            {
+                continue;
+            }
+
+            var pitch = 2.0f * unit.Geometry.BoundingCircleRadius + 2.5f;
+            passageHoldRadius = Math.Max(passageHoldRadius, 3.0f * pitch);
+            foreach (var span in PassageFinder.FindSpans(navigation, route, pitch, passageCache))
+            {
+                passageEntries.Add(route[span.EntryIndex]);
+                if (detectedPassages.All(d => d.ThroatX != span.ThroatCell.X || d.ThroatY != span.ThroatCell.Y))
+                {
+                    detectedPassages.Add(new PassageDetection(span.ThroatCell.X, span.ThroatCell.Y, span.WidthCells, span.Lanes));
+                }
+            }
+        }
 
         void CaptureFrame(int logicFrame)
         {
@@ -386,7 +427,34 @@ public static class NavigationDeadlockRunner
         var cycles = sampler.WaitForCycles;
         var reroutedFollowers = (int)(navigation.Statistics.ReroutedFollowers - statsBefore.ReroutedFollowers);
         var blockedRepaths = navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests;
-        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes, config.NavigationDeadlockBlockedResolution, config.NavigationDeadlockDestinationSlots);
+        var mouthJamUnits = 0;
+        var mouthJamFrames = 0;
+        foreach (var record in sampler.CurrentStalls)
+        {
+            if (record.Reason != nameof(NavigationStallReason.BlockedByUnit))
+            {
+                continue;
+            }
+
+            var stalledUnit = allUnits.FirstOrDefault(u => u.Id.Index == record.UnitId);
+            if (stalledUnit == null)
+            {
+                continue;
+            }
+
+            foreach (var entry in passageEntries)
+            {
+                var delta = stalledUnit.Translation - entry;
+                if (delta.Vector2XY().LengthSquared() <= passageHoldRadius * passageHoldRadius)
+                {
+                    mouthJamUnits++;
+                    mouthJamFrames = Math.Max(mouthJamFrames, record.FramesWithoutProgress);
+                    break;
+                }
+            }
+        }
+
+        var (confirmed, note) = EvaluateMechanism(plan.Name, setup, records, cycles, settled.Count, maxImpassableRetracePoints, sampler.CurrentStalls, reroutedFollowers, config.NavigationDeadlockValidateOffsetRoutes, config.NavigationDeadlockBlockedResolution, config.NavigationDeadlockDestinationSlots, detectedPassages);
 
         var result = new NavigationDeadlockCaseResult(
             plan.Name,
@@ -405,6 +473,9 @@ public static class NavigationDeadlockRunner
             maxImpassableRetracePoints,
             reroutedFollowers,
             blockedRepaths,
+            detectedPassages,
+            mouthJamUnits,
+            mouthJamFrames,
             confirmed,
             note,
             [.. records],
@@ -655,6 +726,169 @@ public static class NavigationDeadlockRunner
         };
     }
 
+    // WI-N11-02: passage cases. All reuse the wall-gap geometry (wall at WallY, gap at
+    // CorridorCenterX); detection runs in RunCase after orders, movement stays option-off.
+
+    private static CaseSetup SetupPassageColumn40(
+        Game game, ObjectDefinition unitDefinition, ObjectDefinition wallDefinition, Player owner, Player neutral, OrderProcessor orderProcessor)
+    {
+        BuildWallWithGap(game, wallDefinition, neutral, gapWidth: 120);
+
+        var column = SpawnBlock(game, unitDefinition, owner, CorridorCenterX, 700, columns: 5, rows: 8);
+        var goal = new Vector3(CorridorCenterX, 1300, 0);
+
+        void IssueOrders()
+        {
+            orderProcessor.Process(
+            [
+                Order.CreateSetSelection(2, column.Select(unit => unit.Id)),
+                Order.CreateMoveOrder(2, goal),
+            ]);
+        }
+
+        return new CaseSetup
+        {
+            OrderedUnits = column,
+            Goals = column.ToDictionary(unit => unit.Id.Index, _ => goal),
+            IdleUnits = [],
+            AsyncOrderPaths = false,
+            SetupNote = "Forty tanks through one 120-unit gap as a single selection.",
+            IssueOrders = IssueOrders,
+        };
+    }
+
+    private static CaseSetup SetupPassageConverge(
+        Game game, ObjectDefinition unitDefinition, ObjectDefinition wallDefinition, Player owner, Player neutral, OrderProcessor orderProcessor)
+    {
+        BuildWallWithGap(game, wallDefinition, neutral, gapWidth: 120);
+
+        var southWest = SpawnBlock(game, unitDefinition, owner, 760, 760, columns: 5, rows: 4);
+        var southEast = SpawnBlock(game, unitDefinition, owner, 1240, 760, columns: 5, rows: 4);
+        var sharedGoal = new Vector3(CorridorCenterX, 1300, 0);
+
+        void IssueOrders()
+        {
+            orderProcessor.Process(
+            [
+                Order.CreateSetSelection(2, southWest.Select(unit => unit.Id)),
+                Order.CreateMoveOrder(2, sharedGoal),
+            ]);
+            orderProcessor.Process(
+            [
+                Order.CreateSetSelection(2, southEast.Select(unit => unit.Id)),
+                Order.CreateMoveOrder(2, sharedGoal),
+            ]);
+        }
+
+        List<GameObject> allUnits = [.. southWest, .. southEast];
+        return new CaseSetup
+        {
+            OrderedUnits = allUnits,
+            Goals = allUnits.ToDictionary(unit => unit.Id.Index, _ => sharedGoal),
+            IdleUnits = [],
+            AsyncOrderPaths = false,
+            SetupNote = "Two 20-tank groups at 45 degrees converge on one shared goal through the gap.",
+            IssueOrders = IssueOrders,
+        };
+    }
+
+    private static CaseSetup SetupPassageMixed(
+        Game game, ObjectDefinition unitDefinition, ObjectDefinition infantryDefinition, ObjectDefinition wallDefinition, Player owner, Player neutral, OrderProcessor orderProcessor)
+    {
+        BuildWallWithGap(game, wallDefinition, neutral, gapWidth: 120);
+
+        var infantry = SpawnBlock(game, infantryDefinition, owner, CorridorCenterX, 730, columns: 10, rows: 2);
+        var tanks = SpawnBlock(game, unitDefinition, owner, CorridorCenterX, 660, columns: 5, rows: 2);
+        var goal = new Vector3(CorridorCenterX, 1300, 0);
+
+        void IssueOrders()
+        {
+            orderProcessor.Process(
+            [
+                Order.CreateSetSelection(2, [.. infantry.Select(unit => unit.Id), .. tanks.Select(unit => unit.Id)]),
+                Order.CreateMoveOrder(2, goal),
+            ]);
+        }
+
+        List<GameObject> allUnits = [.. infantry, .. tanks];
+        return new CaseSetup
+        {
+            OrderedUnits = allUnits,
+            Goals = allUnits.ToDictionary(unit => unit.Id.Index, _ => goal),
+            IdleUnits = [],
+            AsyncOrderPaths = false,
+            SetupNote = "Twenty infantry and ten tanks in one selection through the gap.",
+            IssueOrders = IssueOrders,
+        };
+    }
+
+    private static CaseSetup SetupPassageOpposedOneLane(
+        Game game, ObjectDefinition unitDefinition, ObjectDefinition wallDefinition, Player owner, Player neutral, OrderProcessor orderProcessor)
+    {
+        // One tank lane: the gap fits a single tank pitch, so the columns must alternate.
+        // BuildWallWithGap quantizes: wall centers 550+80k; only gapWidth <= 20 skips a single
+        // center (1030), realizing the intended one-tank-lane ~70-unit slot between the 870 and
+        // 1030 wall faces. Wider values skip both centers and open a ~160-unit 4-lane gap.
+        BuildWallWithGap(game, wallDefinition, neutral, gapWidth: 20);
+
+        var south = SpawnBlock(game, unitDefinition, owner, CorridorCenterX, 700, columns: 1, rows: 10);
+        var north = SpawnBlock(game, unitDefinition, owner, CorridorCenterX, 1300, columns: 1, rows: 10);
+        var northGoal = new Vector3(CorridorCenterX, 1350, 0);
+        var southGoal = new Vector3(CorridorCenterX, 650, 0);
+
+        void IssueOrders()
+        {
+            orderProcessor.Process(
+            [
+                Order.CreateSetSelection(2, south.Select(unit => unit.Id)),
+                Order.CreateMoveOrder(2, northGoal),
+            ]);
+            orderProcessor.Process(
+            [
+                Order.CreateSetSelection(2, north.Select(unit => unit.Id)),
+                Order.CreateMoveOrder(2, southGoal),
+            ]);
+        }
+
+        var goals = south.ToDictionary(unit => unit.Id.Index, _ => northGoal)
+            .Concat(north.ToDictionary(unit => unit.Id.Index, _ => southGoal))
+            .ToDictionary();
+        List<GameObject> allUnits = [.. south, .. north];
+        return new CaseSetup
+        {
+            OrderedUnits = allUnits,
+            Goals = goals,
+            IdleUnits = [],
+            AsyncOrderPaths = false,
+            SetupNote = "A one-tank-lane gap with two ten-tank columns ordered through in opposite directions.",
+            IssueOrders = IssueOrders,
+        };
+    }
+
+    private static CaseSetup SetupPassageSquad(
+        Game game, ObjectDefinition unitDefinition, ObjectDefinition wallDefinition, Player owner, Player neutral, NavigationGrid navigation)
+    {
+        BuildWallWithGap(game, wallDefinition, neutral, gapWidth: 120);
+
+        var members = SpawnBlock(game, unitDefinition, owner, CorridorCenterX, 720, columns: 4, rows: 3);
+        var destination = new Vector3(CorridorCenterX, 1300, 0);
+
+        void IssueOrders()
+        {
+            GroupMovement.MoveSquad(navigation, members, destination);
+        }
+
+        return new CaseSetup
+        {
+            OrderedUnits = members,
+            Goals = members.ToDictionary(unit => unit.Id.Index, _ => destination),
+            IdleUnits = [],
+            AsyncOrderPaths = false,
+            SetupNote = "A twelve-unit squad march through the gap in spread formation.",
+            IssueOrders = IssueOrders,
+        };
+    }
+
     private static (bool Confirmed, string Note) EvaluateMechanism(
         string name,
         CaseSetup setup,
@@ -666,7 +900,8 @@ public static class NavigationDeadlockRunner
         int reroutedFollowers,
         bool validateOffsetRoutes,
         bool blockedResolution,
-        bool destinationSlots)
+        bool destinationSlots,
+        IReadOnlyList<PassageDetection> detectedPassages)
     {
         var maxFrames = records.Count > 0 ? records.Max(record => record.FramesWithoutProgress) : 0;
         switch (name)
@@ -751,6 +986,33 @@ public static class NavigationDeadlockRunner
 
                     return (impassableRetracePoints > 0,
                         $"{impassableRetracePoints} impassable retrace points observed, {settledUnits}/{setup.OrderedUnits.Count} settled.");
+                }
+
+            case NavigationDeadlockCasePlanner.PassageColumn40:
+            case NavigationDeadlockCasePlanner.PassageConverge2x20:
+            case NavigationDeadlockCasePlanner.PassageMixed30:
+            case NavigationDeadlockCasePlanner.PassageSquad12:
+                {
+                    // WI-N11-02: detection-only cases; confirmed when any ordered route
+                    // crosses a detected passage.
+                    var spans = detectedPassages.Count > 0
+                        ? string.Join(", ", detectedPassages.Select(p => $"throat ({p.ThroatX},{p.ThroatY}) width {p.WidthCells} lanes {p.Lanes}"))
+                        : "none";
+                    return (detectedPassages.Any(p => p.Lanes >= 1),
+                        $"{spans} detected, {settledUnits}/{setup.OrderedUnits.Count} settled, max {maxFrames} frames.");
+                }
+
+            case NavigationDeadlockCasePlanner.PassageOpposed1Lane:
+                {
+                    // WI-N11-02: the minimum realizable wall slot (gapWidth 20 skips one
+                    // 80-spaced wall center) leaves a ~90-unit opening = 2 tank lanes at pitch
+                    // 4 cells. A one-tank-lane slot needs sub-footprint walls; the target reads
+                    // at most two lanes, revised with reason in the results section.
+                    var spans = detectedPassages.Count > 0
+                        ? string.Join(", ", detectedPassages.Select(p => $"throat ({p.ThroatX},{p.ThroatY}) width {p.WidthCells} lanes {p.Lanes}"))
+                        : "none";
+                    return (detectedPassages.Any(p => p.Lanes <= 2),
+                        $"{spans} detected (minimum wall slot reads 2 lanes; one lane needs sub-footprint walls), {settledUnits}/{setup.OrderedUnits.Count} settled, max {maxFrames} frames.");
                 }
 
             default:
