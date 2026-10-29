@@ -179,10 +179,13 @@ public class OffsetRouteValidatorTests : MockedGameTest
         Assert.All(follower.AIUpdate.TargetPoints, point => Assert.True(navigation.IsPassable(point)));
     }
 
-    [Fact, Trait("Category", "Roadmap")]
-    public void MoveSquad_WithoutValidationTheOffsetRetraceStillCrosses()
+    [Theory, Trait("Category", "Roadmap")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MoveSquad_AssignedSegmentsNeverCrossWalls(bool validateOffsets)
     {
         var navigation = CreateNavigation();
+        navigation.Options.ValidateOffsetRoutes = validateOffsets;
         var game = new TestGame(SageGame.CncGenerals, navigation);
 
         var leader = NewUnit(World(8, 2), game: game);
@@ -190,16 +193,17 @@ public class OffsetRouteValidatorTests : MockedGameTest
 
         GroupMovement.MoveSquad(navigation, [leader, follower], World(1, 2));
 
-        // Option off changes nothing: the follower keeps the formation-offset retrace, which
-        // crosses the wall column (row 6) on its way to the offset destination, and no reroute
-        // is counted.
-        Assert.Equal(0, navigation.Statistics.ReroutedFollowers);
-        var retrace = follower.AIUpdate!.TargetPoints;
-        Assert.True(retrace.Count > 0);
-        Assert.Equal(World(1, 6), retrace[^1]);
-        var leaderRoute = new List<Vector3>(leader.AIUpdate!.TargetPoints);
-        leaderRoute.Insert(0, leader.Translation);
-        Assert.True(OffsetRouteValidator.Crosses(navigation, leaderRoute, new Vector2(0, 40)));
+        foreach (var unit in new[] { leader, follower })
+        {
+            var from = unit.Translation;
+            Assert.NotEmpty(unit.AIUpdate!.TargetPoints);
+            foreach (var to in unit.AIUpdate.TargetPoints)
+            {
+                Assert.True(PathOptimizer.IsDirectLinePassable(navigation,
+                    new Vector2(from.X, from.Y), new Vector2(to.X, to.Y)), $"Unsafe segment {from} -> {to}");
+                from = to;
+            }
+        }
     }
 
     [Fact, Trait("Category", "Roadmap")]

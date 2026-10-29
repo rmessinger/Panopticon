@@ -31,7 +31,7 @@ public class GroupMovementTests : MockedGameTest
     [Fact, Trait("Category", "Roadmap")]
     public void SquadMove_IssuesOneRequestAndAssignsFormationOffsets()
     {
-        var (navigation, _, start, end) = CreateNavigation();
+        var (navigation, _, start, end) = CreateOpenNavigation();
         // Nearest member to the destination becomes the leader; placed so that choice is unique.
         var leader = NewUnit(start + new Vector3(1, 1, 0));
         var followers = new[]
@@ -268,7 +268,7 @@ public class GroupMovementTests : MockedGameTest
     [Fact, Trait("Category", "Roadmap")]
     public void MoveUnits_GroupMovesOnSharesOneSearchPerCluster()
     {
-        var (navigation, heightMap, start, end) = CreateNavigation();
+        var (navigation, heightMap, start, end) = CreateOpenNavigation();
         navigation.Options.GroupSelectionMoves = true;
         navigation.Options.SelectionClusterCells = 20;
 
@@ -484,6 +484,15 @@ public class GroupMovementTests : MockedGameTest
                 throw new TimeoutException($"async path drain timed out; outstanding {navigation.AsyncPathOutstanding}");
             }
         }
+    }
+
+    private static (NavigationClass Navigation, HeightMap HeightMap, Vector3 Start, Vector3 End) CreateOpenNavigation()
+    {
+        // Sharing and exact formation offsets require unobstructed connecting segments.
+        var tiles = BlendTileData.Create(16, 16);
+        var heightMap = new HeightMap(HeightMapData.Create(0, new ushort[16, 16]));
+        return (new NavigationClass(tiles, heightMap), heightMap,
+            heightMap.GetPosition(1, 1), heightMap.GetPosition(14, 14));
     }
 
     private (NavigationClass Navigation, HeightMap HeightMap, Vector3 Start, Vector3 End) CreateNavigation()

@@ -820,6 +820,9 @@ Artifacts: reports and logs under `/tmp/opencode/n11-01/` and `~/log/n11-01/`.
 
 ### WI-N11-02 baseline (2026-10-28, Release, seed 1, options off, budget 3600)
 
+Historical baseline, superseded for squad route safety by the correction below. The v1
+squad capture contains structure clipping; its waypoint-only counter did not detect it.
+
 Five passage cases joined the NavigationDeadlock scenario (planner, setups, per-case
 detection at order time over each unit's route, mouth-jam metric). Movement code is
 untouched: the finder runs beside the loop, options all off.
@@ -855,6 +858,37 @@ Geometry findings recorded as section 3 revisions, per the card:
 Artifacts: `/tmp/opencode/n11-02/nd-baseline.json` (all 11 cases), `nd-passage.json`,
 `nd-opposed.json`, logs `~/log/n11-02/`. GIF evidence: 5 cases under
 `navdeadlock-<case>-N11-v1.gif` plus annotated frames on the share.
+
+### Squad structure-crossing correction (2026-10-29)
+
+`GroupMovement` now checks follower assignment segments regardless of `ValidateOffsetRoutes`.
+Unsafe translated routes use a safe leader-route assignment or an individual search. A
+blocked-slot landing also checks the replacement tail. No option defaults changed.
+
+`NavigationDeadlock` adds `impassableAssignedSegments` (issued route segments) and
+`impassableMovementSteps` (actual consecutive logic-tick positions). These walk the
+passability grid along each segment, rather than checking waypoint endpoints alone.
+They measure centerline grid crossings, not swept-footprint clearance.
+
+Passage-squad-12, Release, seed 1, budget 3600:
+
+| Build | ValidateOffsetRoutes | Unsafe assigned segments | Impassable movement steps |
+|---|---|---|---|
+| Before correction | false | 3 | 293 |
+| Before correction | true | 0 | 0 |
+| After correction | false | 0 | 0 |
+| After correction | true | 0 | 0 |
+
+Both corrected runs reroute 3 followers and settle 4/12 units. Structure crossing is
+corrected; crowd settlement remains unresolved. The synthetic regression checks every
+assigned segment with both option settings. Exact-offset sharing tests now use open
+terrain, since preserving an offset through an obstacle is not a valid sharing contract.
+
+Evidence: `navdeadlock-passage-squad-12-N11-v2.gif`, default options, budget 2400, with
+42 annotated frames. The contact sheet and representative full-size frames were reviewed;
+no traversal through the structure row was observed. The v1 capture is retained as failing
+evidence, not a validated result. Reports and review contact sheet:
+`/tmp/opencode/n11-squad-correction/`. Logs: `~/log/n11-squad-correction/`.
 
 ## Layered navigation (N15-N20)
 

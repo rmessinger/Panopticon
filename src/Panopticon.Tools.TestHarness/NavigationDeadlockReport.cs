@@ -34,7 +34,12 @@ public sealed record NavigationDeadlockCaseResult(
     bool MechanismConfirmed,
     string MechanismNote,
     IReadOnlyList<NavigationStallRecord> StallRecords,
-    IReadOnlyList<NavigationWaitForCycle> WaitForCyclesAtEnd);
+    IReadOnlyList<NavigationWaitForCycle> WaitForCyclesAtEnd)
+{
+    public int ImpassableAssignedSegments { get; init; }
+
+    public int ImpassableMovementSteps { get; init; }
+}
 
 /// <summary>Report of a <c>NavigationDeadlock</c> run (WI-N6-02).</summary>
 public sealed record NavigationDeadlockReport(
@@ -95,6 +100,7 @@ public sealed record NavigationDeadlockReport(
                 .GroupBy(record => record.Reason)
                 .Select(group => $"{group.Key}={group.Count()}");
             writer.WriteLine($"{result.Name}: {string.Join(", ", reasons)} stalls; {result.MechanismNote}");
+            writer.WriteLine($"  Impassable assigned segments: {result.ImpassableAssignedSegments}; impassable movement steps: {result.ImpassableMovementSteps}.");
         }
     }
 }

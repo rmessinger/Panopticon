@@ -268,6 +268,10 @@ public static class NavigationDeadlockRunner
 
         setup.IssueOrders();
 
+        var impassableAssignedSegments = CountImpassableAssignedSegments(navigation, setup.OrderedUnits);
+        var impassableMovementSteps = 0;
+        var previousPositions = setup.OrderedUnits.ToDictionary(unit => unit.Id.Index, unit => unit.Translation);
+
         // WI-N11-02: passage detection at order time. Options stay off; the finder is pure.
         var detectedPassages = new List<PassageDetection>();
         var passageEntries = new List<Vector3>();
@@ -355,6 +359,18 @@ public static class NavigationDeadlockRunner
                 maxTickPathSpanMs = Math.Max(maxTickPathSpanMs, currentTickPathSpanMs);
 
                 sampler.Sample((uint)framesRun, allUnits);
+
+                foreach (var unit in setup.OrderedUnits)
+                {
+                    var previous = previousPositions[unit.Id.Index];
+                    if (previous != unit.Translation
+                        && !PathOptimizer.IsDirectLinePassable(navigation, previous.Vector2XY(), unit.Translation.Vector2XY()))
+                    {
+                        impassableMovementSteps++;
+                    }
+
+                    previousPositions[unit.Id.Index] = unit.Translation;
+                }
 
                 if (captureDirectory != null && (framesRun + 1) % Math.Max(1, config.NavigationDeadlockCaptureStride) == 0)
                 {
@@ -479,7 +495,11 @@ public static class NavigationDeadlockRunner
             confirmed,
             note,
             [.. records],
-            [.. cycles]);
+            [.. cycles])
+        {
+            ImpassableAssignedSegments = impassableAssignedSegments,
+            ImpassableMovementSteps = impassableMovementSteps,
+        };
 
         reporter.Info(
             $"NavigationDeadlock {plan.Name}: {settled.Count}/{setup.OrderedUnits.Count} settled"
@@ -1020,6 +1040,26 @@ public static class NavigationDeadlockRunner
                     return (false, "Unknown case.");
                 }
         }
+    }
+
+    private static int CountImpassableAssignedSegments(NavigationGrid navigation, IReadOnlyList<GameObject> units)
+    {
+        var count = 0;
+        foreach (var unit in units)
+        {
+            var from = unit.Translation;
+            foreach (var to in unit.AIUpdate.TargetPoints)
+            {
+                if (!PathOptimizer.IsDirectLinePassable(navigation, from.Vector2XY(), to.Vector2XY()))
+                {
+                    count++;
+                }
+
+                from = to;
+            }
+        }
+
+        return count;
     }
 
     private static int CountImpassableRetracePoints(NavigationGrid navigation, IReadOnlyList<GameObject> units)

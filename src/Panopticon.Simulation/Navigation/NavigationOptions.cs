@@ -58,8 +58,8 @@ public sealed class NavigationOptions
     /// When true, squad followers validate their formation-offset retrace route against
     /// impassable cells (WI-N7-02): a follower whose offset route crosses an impassable cell
     /// lands on the leader route near the destination through the bounded ring search, or falls
-    /// back to its own search when no landing exists. Default false; the retrace behavior is
-    /// unchanged until the operator flips it.
+    /// back to its own search when no landing exists. Default false. Assigned follower segments
+    /// are always checked for impassable crossings, independently of this additional check.
     /// </summary>
     public bool ValidateOffsetRoutes { get; set; }
 
