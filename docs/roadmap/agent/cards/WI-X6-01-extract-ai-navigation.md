@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X6-01` |
 | Roadmap phase | [X6](../../track-x-fixes-tweaks.md): AIUpdate navigation extraction |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `refactor` |
 | Effort | `M` |
 | Prerequisites | `WI-N11-01` (the Track N stack must be merged first, so the extraction does not rebase over N6 to N11 edits) |

@@ -50,13 +50,13 @@ public class GiveWayTests : MockedGameTest
         DriveBlocked(higherAi, lower.Id);
 
         // The lower id waits: nothing changes for it.
-        BlockedMovementResolver.TryResolve(lower, lowerAi, navigation);
+        BlockedMovementResolver.TryResolve(lower, lowerAi.Navigation, navigation);
         Assert.Single(lowerAi.TargetPoints);
         Assert.Equal(World(8, 2), lowerAi.TargetPoints[0]);
         Assert.Equal(0, navigation.Statistics.BlockedRepathRequests);
 
         // The higher id sidesteps off the lower unit's segment while keeping its route.
-        BlockedMovementResolver.TryResolve(higher, higherAi, navigation);
+        BlockedMovementResolver.TryResolve(higher, higherAi.Navigation, navigation);
         Assert.Equal(2, higherAi.TargetPoints.Count);
         var sidestep = higherAi.TargetPoints[0];
         Assert.NotEqual(World(8, 2), sidestep);
@@ -91,7 +91,7 @@ public class GiveWayTests : MockedGameTest
         DriveBlocked(ai, blocker.Id);
 
         var statsBefore = navigation.Statistics;
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         Assert.Equal(0, navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests);
         Assert.Equal(4, ai.TargetPoints.Count);
@@ -122,13 +122,13 @@ public class GiveWayTests : MockedGameTest
         var ai = unit.AIUpdate!;
         ai.TargetPoints.Add(World(1, 2));
         DriveBlocked(ai, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
         Assert.Single(blocker.AIUpdate!.TargetPoints);
 
         // Inside the wait window the in-flight sidestep is waited out: no second move,
         // no cascade, and no repath is spent.
         DriveBlocked(ai, blocker.Id);
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
         Assert.Single(blocker.AIUpdate!.TargetPoints);
         Assert.Equal(0, navigation.Statistics.BlockedRepathRequests);
     }
@@ -154,7 +154,7 @@ public class GiveWayTests : MockedGameTest
         DriveBlocked(ai, blocker.Id);
 
         var statsBefore = navigation.Statistics;
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         Assert.Empty(blocker.AIUpdate!.TargetPoints);
         Assert.Equal(1, navigation.Statistics.BlockedRepathRequests - statsBefore.BlockedRepathRequests);
@@ -181,7 +181,7 @@ public class GiveWayTests : MockedGameTest
         DriveBlocked(ai, blocker.Id);
 
         var statsBefore = navigation.Statistics;
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         // The busy blocker keeps its own single order; the requester detours instead.
         Assert.Single(blocker.AIUpdate!.TargetPoints);
@@ -230,7 +230,7 @@ public class GiveWayTests : MockedGameTest
         DriveBlocked(ai, blocker.Id);
 
         var statsBefore = navigation.Statistics;
-        BlockedMovementResolver.TryResolve(unit, ai, navigation);
+        BlockedMovementResolver.TryResolve(unit, ai.Navigation, navigation);
 
         // No sidestep was spliced onto the walled-in blocker; the requester repaths instead.
         Assert.Empty(blocker.AIUpdate!.TargetPoints);
