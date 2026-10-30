@@ -269,20 +269,39 @@ Recorded by the C10c skin, animation, animfile, and proof work:
   which Panopticon does not implement; the grey render is expected. Pre-colored variant models
   (redcoats, blue_guard, legionario, danish_musketeer) are all internally Oodle1-compressed, so
   the red proof capture overlays `redcoats_age4.material.xmb` on the uncompressed musketeer mesh
-  through a zip file system (warm pixels 304 to 397, grey 333 to 140 on identical pixel counts).
+  through a zip file system.
+- Color pipeline (corrected after the published captures rendered near-black): the standalone
+  capture target is B8G8R8A8_UNorm and the Linear preset defers the sRGB transfer to an output
+  pass that never runs for standalone captures, so PNGs held raw linear values.
+  `FrameCapturer.CaptureToPng` now takes `encodeSrgb` (piecewise 12.92 l / 1.055 * l^(1/2.4) -
+  0.055), passed when the colour space mode is Linear. The Masks texture's R channel is a bimodal
+  selection/tint mask (musketeer 41.6% of pixels at 255), not ambient occlusion; the Occlusion
+  binding was removed and MetallicRoughness (G/B) stays raw with factors 1 until the packing is
+  verified against the original engine. AoE3 'Lift'/'Max' sliders are engine remaps, not glTF
+  factors; they are recorded as `Aoe3Slider_*` material properties. The redcoat capture now
+  measures mean (95,62,50), 74% warm pixels, matching the DDT albedo statistics (102,66,55).
+- Clip unit scales disagree across files: march_rifleman.gr2 declares 0.6152 units per meter
+  against the model's 1.5625, a ratio of exactly 2.54 (cm per inch), which stretched clip
+  translations 2.54x and elongated the animated march. `GrannyAnimationImporter` self-calibrates:
+  a median of bind-translation to clip-translation ratios over matched tracks (march: 0.535 over
+  20 bones, recorded as a diagnostic note) scales clip engine translations before offset
+  composition. Horse idle and volley declare consistent scales and need no correction. This
+  mismatch also weakens the earlier 1.5625-to-1.15 substitution, which breaks the exact 2.54
+  relation; that substitution stays flagged for review against an original-game reference.
 - Ranger calibration corrected: the visible `AIRNGR-SKN` mesh height is 14.61 units
   (pixel-verified), not the 12.03-unit skeleton span that helmet and boot geometry extends past;
   the proof now uses 14.61 units per 1.8 m human = 8.117 game units per meter.
-- Animated proof (re-captured after the corrections above; the v1 GIFs and v3 stills are
+- Animated proof (re-captured after the corrections above; earlier GIFs and stills are
   superseded and retained only as history): march, volley, and idle clips sampled at 6 fixed
   times each; every frame captured twice and byte-identical; GIF frame timing follows each
-  clip's duration. Vision review: coherent marching cycle, volley arm sequence, and a
-  near-static standing idle that matches the clip data (the idle is subtle by content: head,
-  neck, and legs hold within ~1 degree, tail moves). Evidence in the viewer:
-  `aoe3-musketeer-march-c10c-v4.gif`, `aoe3-musketeer-volley-c10c-v4.gif`,
-  `aoe3-horse-idle-c10c-v4.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v4.png`,
-  `aoe3-redcoat-beside-ranger-c10c-v2.png`, `aoe3-horse-beside-ranger-c10c-v4.png`, and 18
-  per-frame PNGs under `frames/aoe3-animated-c10c-v2/`. Known cosmetic remainder: imported
+  clip's duration. Vision review: coherent marching cycle with bind-consistent head proportions
+  (height/width 1.1-1.2 versus 1.1 bind; 1.6-1.8 before the unit-scale fix), a volley arm
+  sequence, and a near-static standing idle that matches the clip data (the idle is subtle by
+  content: head, neck, and legs hold within ~1 degree, tail moves). Evidence in the viewer:
+  `aoe3-musketeer-march-c10c-v5.gif`, `aoe3-musketeer-volley-c10c-v5.gif`,
+  `aoe3-horse-idle-c10c-v5.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v5.png`,
+  `aoe3-redcoat-beside-ranger-c10c-v3.png`, `aoe3-horse-beside-ranger-c10c-v5.png`, and 18
+  per-frame PNGs under `frames/aoe3-animated-c10c-v3/`. Known cosmetic remainder: imported
   figures stand ~60 px lower than the Ranger in the pair captures (offset perspective, ground
   plane not drawn), and the musketeer renders ~0.9x the Ranger's projected height.
 
