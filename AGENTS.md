@@ -71,6 +71,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 ### Validation
 
+* Before opening or updating a PR, when the `panopticon` MCP server is available, push the branch, call `refresh()`, and run `start_test_run(ref=<branch>)`. Report the run under PR `Validation`; see `MCP server (panopticon)`. Documentation-only changes do not require a test run.
 * Code after a closing brace starts on the next line (another closing brace or punctuation may stay adjacent); property patterns (`is { } x`) are exempt. Enforced by `scripts/check_brace_newline.py` in CI alongside `dotnet format` (see `docs/coding-style.md` rule 18).
 * Argument validation is one line: BCL `ThrowIf*` without a message, `Panopticon.Ensure` with one; conditions neither helper expresses keep a braced `if` throw (see `docs/coding-style.md` rule 19). CA1510/CA1511/CA1512 warnings enforce the helper forms.
 * Screenshot capture and sharing recipes (3D headless captures, windowed runs under Xvfb + llvmpipe, synthetic hover for tooltips, the shared viewer) live in `docs/screenshots.md`. Amend that file when a new capability or limitation is found instead of re-deriving the method.
@@ -83,6 +84,16 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 * P6b validates unit archetypes via the P0 harness: 6 archetypes (infantry/vehicle/aircraft/builder/support/superweapon), full contract (produce/move/attack/all weapon modes/all special abilities/die), USA reference units, unimplemented handlers surface as explicit failures.
 * ReplaySketch validation: logic stays in `.Core` (tested headlessly by `ReplaySketch.Tests` + P0-5 run-and-assert); UI lives in the Avalonia front-end and stays a thin shell behind injectable seams; agents follow `ReplaySketch.Avalonia/AGENTS.md` (P0-1b/1c/7).
+
+### MCP server (panopticon)
+
+* When available, the `panopticon` MCP server reads a repository mirror at pushed refs and runs tests. Local uncommitted work is not visible. Mirror lag is up to 5 minutes; call `refresh()` after pushing. Server availability is not required on other hosts or cloud agents.
+* Prefer `get_card`, `card_status`, and `latest_in_stack` for card Status, prerequisites, and stack position. Use `list_branches` for branch heads, `read_file` / `grep` with `ref` for pushed-branch inspection, `find_symbol` for C# declarations and signatures, and `find_diagrams` for Mermaid blocks. Read tools with a `ref` parameter default to `origin/main`; inspect the returned SHA and fetch time.
+* `start_test_run(ref, filter)` runs `dotnet test src` at a pushed commit, with default filter `Category!=Interactive`. It returns a `run_id` immediately. One run is allowed host-wide; if rejected, use the reported active `run_id` or wait, never retry in a loop. Poll `get_test_run` every 30 to 60 seconds; a warm-cache full run takes about 4 minutes. `list_test_runs` lists recent runs.
+* Failure classification compares TRX `testName` verbatim against `test/known-failures.json` at the tested ref. PR `Validation` sections cite the run id, totals, and `new_failures` (or none). Report `manifest_not_executed` as untested, not resolved. Status `error` with `test_host_crash` means truncated totals: rerun or report the error, never count it as a pass.
+* `suspected_deviation` follows the determinism policy in `Validation`. Confirm `resolved_known` entries represent actual fixes before removing them from `test/known-failures.json` in the same PR. Adding manifest entries requires operator approval.
+* TRX and logs live under `/home/rmessinger/dev/reidtv/data/panopticon-mcp/runs/<run_id>/` and are pruned automatically. Outside the host, quote `get_test_run` output instead of assuming artifact access.
+* Local `dotnet test` remains the inner-loop tool; the MCP run is the pre-PR check for code changes.
 
 ### Environment
 
