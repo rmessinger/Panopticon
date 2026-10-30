@@ -29,6 +29,19 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
 
     public ImportedAnimation? ImportAnimation(string name, AssetImportContext context)
     {
+        // Granny clips store absolute local transforms, but the runtime animation contract
+        // composes channels as offsets on the bind pose; converting requires the target
+        // skeleton's bind, so the skeleton-less overload cannot produce honest channels.
+        throw new InvalidDataException(
+            $"Granny animation '{name}': import requires the target model's skeleton " +
+            "(use the ImportAnimation overload that passes it) to convert absolute clip locals " +
+            "into bind-relative offsets.");
+    }
+
+    public ImportedAnimation? ImportAnimation(string name, AssetImportContext context, ImportedSkeleton targetSkeleton)
+    {
+        ArgumentNullException.ThrowIfNull(targetSkeleton);
+
         if (string.IsNullOrEmpty(name))
         {
             return null;
@@ -87,12 +100,33 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
             : IdentityAxes;
 
         var channels = new List<ImportedAnimationChannel>();
+        var bindLocals = BuildBindLocals(targetSkeleton);
         foreach (var trackGroup in animation.GetObjects("TrackGroups"))
         {
-            ImportTrackGroup(trackGroup, name, axes, durationSeconds, timeStepSeconds, channels);
+            ImportTrackGroup(trackGroup, name, axes, durationSeconds, timeStepSeconds, bindLocals, channels);
         }
 
         return new ImportedAnimation(name, TimeSpan.FromSeconds(durationSeconds), channels);
+    }
+
+    /// <summary>
+    /// Engine-space bind locals by normalized bone name. Clip tracks carry absolute local
+    /// transforms authored against the same rig; the runtime composes animation channels as
+    /// offsets on the bind pose (AnimatedOffset * bind), so channels must carry
+    /// animatedLocal * bind⁻¹.
+    /// </summary>
+    private static Dictionary<string, Matrix4x4> BuildBindLocals(ImportedSkeleton skeleton)
+    {
+        var binds = new Dictionary<string, Matrix4x4>(skeleton.Bones.Count, StringComparer.Ordinal);
+        foreach (var bone in skeleton.Bones)
+        {
+            var local = Matrix4x4.CreateScale(bone.BindScale)
+                * Matrix4x4.CreateFromQuaternion(bone.BindRotation)
+                * Matrix4x4.CreateTranslation(bone.BindTranslation);
+            binds[bone.Name.Replace(' ', '_')] = local;
+        }
+
+        return binds;
     }
 
     private void ImportTrackGroup(
@@ -101,6 +135,7 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         GrannyAxisSystem axes,
         float durationSeconds,
         float timeStepSeconds,
+        Dictionary<string, Matrix4x4> bindLocals,
         List<ImportedAnimationChannel> channels)
     {
         foreach (var track in trackGroup.GetObjects("TransformTracks"))
@@ -123,7 +158,7 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
             }
 
             var times = SampleTimes(durationSeconds, timeStepSeconds, sourceKey, trackName);
-            ImportTrack(trackName, position, orientation, scaleShear, axes, times, channels);
+            ImportTrack(trackName, position, orientation, scaleShear, axes, bindLocals, times, channels);
         }
     }
 
@@ -152,23 +187,42 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         GrannyCurve? orientation,
         GrannyCurve? scaleShear,
         GrannyAxisSystem axes,
+        Dictionary<string, Matrix4x4> bindLocals,
         float[] times,
         List<ImportedAnimationChannel> channels)
     {
         // Skeleton bone names use underscores where some clip track names keep the Maya
         // space separator ("Bip01 Head" vs "Bip01_Head").
-        var target = ImportedAnimationTarget.CreateBoneName(trackName.Replace(' ', '_'));
+        var normalizedTrackName = trackName.Replace(' ', '_');
+        var target = ImportedAnimationTarget.CreateBoneName(normalizedTrackName);
 
         var translations = new List<ImportedKeyframe>(times.Length);
         var rotations = new List<ImportedKeyframe>(times.Length);
         var scales = new List<ImportedKeyframe>(times.Length);
         var hasNonUniformScale = false;
 
+        // The runtime composes channels as offsets on the bind local; without a bind for
+        // this track (bone absent from the target skeleton) channels would mis-compose,
+        // so tracks without a bind carry the identity offset and are reported.
+        var hasBind = bindLocals.TryGetValue(normalizedTrackName, out var bindLocal);
+        if (!hasBind)
+        {
+            Diagnostics.Warn(
+                $"Granny track '{trackName}' has no bone in the target skeleton; it binds to nothing.");
+        }
+
         foreach (var time in times)
         {
             var fileLocal = BuildFileLocalTransform(position, orientation, scaleShear, time);
             var engineLocal = axes.ToEngineMatrix(fileLocal);
-            Matrix4x4.Decompose(engineLocal, out var scale, out var rotation, out var translation);
+
+            var channelLocal = engineLocal;
+            if (hasBind && Matrix4x4.Invert(bindLocal, out var inverseBind))
+            {
+                channelLocal = engineLocal * inverseBind;
+            }
+
+            Matrix4x4.Decompose(channelLocal, out var scale, out var rotation, out var translation);
 
             if (position is not null)
             {

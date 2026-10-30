@@ -30,7 +30,8 @@ internal sealed record StandaloneCaptureCamera(
 internal sealed record StandaloneCaptureOptions(
     StandaloneCaptureCamera? Camera = null,
     Settings.WorldLighting? Lighting = null,
-    Mathematics.ColorRgbaF? Background = null);
+    Mathematics.ColorRgbaF? Background = null,
+    Mathematics.AxisAlignedBoundingBox? CameraFitBounds = null);
 
 /// <summary>
 /// Renders one already-materialized runtime <see cref="Model"/> to a PNG without the ImGui-based
@@ -117,13 +118,23 @@ internal static class StandaloneModelCapture
         }
 
         // Fit the camera to the union of the transformed subject bounds, not raw model bounds.
-        var points = new List<Vector3>();
-        foreach (var subject in subjects)
+        // An explicit CameraFitBounds replaces the rest-pose-derived bounds, for subjects whose
+        // rendered pose (animation, morphs) departs from the rest pose the default fit sees.
+        AxisAlignedBoundingBox enclosingBounds;
+        if (options?.CameraFitBounds is { } fitBounds)
         {
-            AddTransformedCorners(points, ComputeEnclosingBoundingBox(subject.Model), subject.WorldMatrix);
+            enclosingBounds = fitBounds;
         }
+        else
+        {
+            var points = new List<Vector3>();
+            foreach (var subject in subjects)
+            {
+                AddTransformedCorners(points, ComputeEnclosingBoundingBox(subject.Model), subject.WorldMatrix);
+            }
 
-        var enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(points);
+            enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(points);
+        }
 
         var (cameraTarget, cameraDistance) = FitCamera(enclosingBounds);
 
@@ -285,7 +296,12 @@ internal static class StandaloneModelCapture
                 continue;
             }
 
-            var world = modelInstance.AbsoluteBoneTransforms[model.SubObjects[i].Bone.Index];
+            // Mirror ModelMesh.BuildRenderList's world selection: skinned meshes render at
+            // the model world matrix (bone transforms reach them through the skinning
+            // buffer), rigid meshes at their attached bone's absolute transform.
+            var world = model.SubObjects[i].RenderObject is ModelMesh { Skinned: true }
+                ? modelInstance.GetWorldMatrix()
+                : modelInstance.AbsoluteBoneTransforms[model.SubObjects[i].Bone.Index];
             meshInstance.RenderItemConstantsBufferVS.Value.World = world;
             meshInstance.RenderItemConstantsBufferVS.Update(game.GraphicsDevice);
         }

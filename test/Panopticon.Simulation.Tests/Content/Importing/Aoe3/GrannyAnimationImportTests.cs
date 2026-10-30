@@ -33,7 +33,7 @@ public class GrannyAnimationImportTests
         var importer = new GrannyAnimationImporter();
         using var fileSystem = new MemoryFileSystem();
 
-        Assert.Null(importer.ImportAnimation("missing.gr2", new AssetImportContext(fileSystem, language: null)));
+        Assert.Null(importer.ImportAnimation("missing.gr2", new AssetImportContext(fileSystem, language: null), CreateSkeleton()));
     }
 
     [Fact]
@@ -42,7 +42,18 @@ public class GrannyAnimationImportTests
         var importer = new GrannyAnimationImporter();
         using var fileSystem = new MemoryFileSystem();
 
-        Assert.Null(importer.ImportAnimation(string.Empty, new AssetImportContext(fileSystem, language: null)));
+        Assert.Null(importer.ImportAnimation(string.Empty, new AssetImportContext(fileSystem, language: null), CreateSkeleton()));
+    }
+
+    /// <summary>
+    /// A skeleton whose single bone carries the identity bind, so absolute-clip-to-offset
+    /// conversion is the identity and channel values equal the sampled file values.
+    /// </summary>
+    private static ImportedSkeleton CreateSkeleton()
+    {
+        return new ImportedSkeleton(
+            "TestSkeleton",
+            [new ImportedBone("Bip01_Test", -1, Vector3.Zero, Quaternion.Identity)]);
     }
 
     [Fact]
@@ -58,7 +69,7 @@ public class GrannyAnimationImportTests
         using var fileSystem = new MemoryFileSystem();
         fileSystem.AddFile("clip.gr2", SyntheticGrannyBuilder.BuildAnimationClip());
 
-        var animation = importer.ImportAnimation("clip.gr2", new AssetImportContext(fileSystem, language: null));
+        var animation = importer.ImportAnimation("clip.gr2", new AssetImportContext(fileSystem, language: null), CreateSkeleton());
 
         Assert.NotNull(animation);
         Assert.Equal("clip.gr2", animation!.Name);
@@ -75,13 +86,16 @@ public class GrannyAnimationImportTests
         }
 
         var translationZ = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.TranslationZ);
-        // File-space +Y motion maps to engine +Z (identity axes, Y-up to Z-up cycle); the
-        // curve rises 0..4 m over 1 s, so sampling 0..1 s at 0.25 s steps walks 0..4 m.
+        // File-space +Y motion maps to engine +Z (identity axes, Y-up to Z-up cycle). The
+        // curve is a quadratic B-spline with controls (0,2,0),(0,2t,0)-style rise 0..4 m
+        // over knots 0/0.5/1: De Boor over the full clamped vector lags the control
+        // polygon mid-span and hits the middle control at the middle knot, so sampling
+        // 0..1 s at 0.25 s steps walks 0/0.25/1/2.25/4 m.
         Assert.Equal(5, translationZ.Keyframes.Count);
         Assert.Equal(0f, translationZ.Keyframes[0].FloatValue, 3);
-        Assert.Equal(1f, translationZ.Keyframes[1].FloatValue, 3);
-        Assert.Equal(2f, translationZ.Keyframes[2].FloatValue, 3);
-        Assert.Equal(3f, translationZ.Keyframes[3].FloatValue, 3);
+        Assert.Equal(0.25f, translationZ.Keyframes[1].FloatValue, 3);
+        Assert.Equal(1f, translationZ.Keyframes[2].FloatValue, 3);
+        Assert.Equal(2.25f, translationZ.Keyframes[3].FloatValue, 3);
         Assert.Equal(4f, translationZ.Keyframes[4].FloatValue, 3);
         Assert.Equal(TimeSpan.FromSeconds(0.75), translationZ.Keyframes[3].Time);
 
@@ -95,6 +109,61 @@ public class GrannyAnimationImportTests
     }
 
     [Fact]
+    public void AbsoluteClipMatchingBindConvertsToIdentityOffsets()
+    {
+        // Granny clips store absolute local transforms. A clip whose sampled poses equal
+        // the bone's bind must convert to identity offsets: channels near zero/identity,
+        // keeping the runtime's offset-on-bind composition at the bind pose.
+        var importer = new GrannyAnimationImporter();
+        using var fileSystem = new MemoryFileSystem();
+        var bindRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
+        var bindTranslation = new Vector3(1f, 2f, 3f);
+        fileSystem.AddFile(
+            "clip.gr2",
+            SyntheticGrannyBuilder.BuildAnimationClip(
+                [
+                    bindTranslation.X, bindTranslation.Y, bindTranslation.Z,
+                    bindTranslation.X, bindTranslation.Y, bindTranslation.Z,
+                    bindTranslation.X, bindTranslation.Y, bindTranslation.Z,
+                ],
+                [bindRotation.X, bindRotation.Y, bindRotation.Z, bindRotation.W]));
+
+        // Bone bind fields are engine space (GrannySkeletonConverter output): derive them
+        // from the file-space pose through the same axis conversion the clip samples take.
+        var axes = new GrannyAxisSystem(1f, Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
+        var engineBind = axes.ToEngineMatrix(
+            Matrix4x4.CreateFromQuaternion(bindRotation) * Matrix4x4.CreateTranslation(bindTranslation));
+        Matrix4x4.Decompose(engineBind, out _, out var engineBindRotation, out var engineBindTranslation);
+
+        var animation = importer.ImportAnimation(
+            "clip.gr2",
+            new AssetImportContext(fileSystem, language: null),
+            new ImportedSkeleton(
+                "TestSkeleton",
+                [new ImportedBone("Bip01_Test", -1, engineBindTranslation, engineBindRotation)]));
+
+        Assert.NotNull(animation);
+        Assert.Empty(importer.Diagnostics.Warnings);
+        Assert.Equal(4, animation!.Channels.Count);
+        foreach (var channel in animation.Channels)
+        {
+            if (channel.ChannelType == ImportedAnimationChannelType.Quaternion)
+            {
+                Assert.All(
+                    channel.Keyframes,
+                    keyframe => Assert.Equal(
+                        0f, MathF.Abs(Quaternion.Dot(keyframe.QuaternionValue, Quaternion.Identity) - 1f), 4));
+            }
+            else
+            {
+                Assert.All(
+                    channel.Keyframes,
+                    keyframe => Assert.Equal(0f, keyframe.FloatValue, 3));
+            }
+        }
+    }
+
+    [Fact]
     public void CompressedClipFailsWithKeySectionAndType()
     {
         var importer = new GrannyAnimationImporter();
@@ -102,7 +171,7 @@ public class GrannyAnimationImportTests
         fileSystem.AddFile("clip.gr2", SyntheticGrannyBuilder.BuildWithCompressedSection(2));
 
         var exception = Assert.Throws<InvalidDataException>(
-            () => importer.ImportAnimation("clip.gr2", new AssetImportContext(fileSystem, language: null)));
+            () => importer.ImportAnimation("clip.gr2", new AssetImportContext(fileSystem, language: null), CreateSkeleton()));
 
         Assert.Contains("clip.gr2", exception.Message);
         Assert.Contains("section 0", exception.Message);
@@ -131,7 +200,7 @@ public class GrannyAnimationImportTests
         var context = new AssetImportContext(fileSystem, language: null);
 
         var model = modelImporter.ImportModel(MusketeerPath, context);
-        var animation = animationImporter.ImportAnimation(clipPath, context);
+        var animation = animationImporter.ImportAnimation(clipPath, context, model!.Skeleton);
 
         Assert.NotNull(animation);
         Assert.NotNull(model);
@@ -156,9 +225,21 @@ public class GrannyAnimationImportTests
         var extras = channelTargets.Where(name => !boneNames.Contains(name)).OrderBy(name => name).ToList();
         _output.WriteLine($"clip targets beyond the model skeleton: {string.Join(", ", extras)}");
 
+        // Tracks beyond the skeleton bind to nothing and warn by design; those warnings quote
+        // the raw track name (spaces intact), so match extras either way they are spelled.
+        var unmatchedWarnings = animationImporter.Diagnostics.Warnings
+            .Where(w => w.StartsWith("Granny track ", StringComparison.Ordinal)
+                && w.Contains("has no bone in the target skeleton", StringComparison.Ordinal))
+            .ToList();
+        Assert.All(unmatchedWarnings, w => Assert.Contains(
+            extras,
+            extra => w.Contains(extra, StringComparison.Ordinal)
+                || w.Contains(extra.Replace('_', ' '), StringComparison.Ordinal)));
+        Assert.Equal(extras.Count, unmatchedWarnings.Count);
+        Assert.Equal(animationImporter.Diagnostics.Warnings.Count, unmatchedWarnings.Count);
+
         var animatedBones = channelTargets.Count;
         Assert.Equal(expectedTracks, animatedBones);
-        Assert.Empty(animationImporter.Diagnostics.Warnings);
 
         _output.WriteLine(
             $"{clipPath}: {animation.Channels.Count} channels over {animatedBones} bones, " +

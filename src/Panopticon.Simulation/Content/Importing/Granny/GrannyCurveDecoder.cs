@@ -9,20 +9,25 @@ namespace Panopticon.Content.Importing.Granny;
 
 /// <summary>
 /// Samples one Granny animation curve. AoE3 clips store every animated channel as a
-/// CurveDataHeader_DaK32fC32f keyframe list: one control per knot, where the
+/// CurveDataHeader_DaK32fC32f B-spline: one control per knot, where the
 /// controls-per-knot ratio selects the component layout (3 position, 4 rotation,
-/// 9 scale-shear). Values between knots interpolate linearly (rotation via slerp).
-/// Constant formats (3, 4, 5) carry a single control set repeated for all time.
+/// 9 scale-shear). Evaluation is De Boor's algorithm at the header degree (the corpus
+/// uses quadratic), blending component values linearly; knots and controls are B-spline
+/// parameters, not keyframe times and on-curve values, and clamped files repeat the
+/// boundary controls so clamping knot indices to the array bounds is exact at both ends.
+/// Rotations blend linearly and normalize (controls ship unit-length). Constant formats
+/// (3, 4, 5) carry a single control set repeated for all time.
 /// </summary>
 internal sealed class GrannyCurve
 {
     public const uint FormatDaK32fC32f = 1;
 
-    public GrannyCurve(float[] knots, float[] controls, int components)
+    public GrannyCurve(float[] knots, float[] controls, int components, int degree = 2)
     {
         Knots = knots;
         Controls = controls;
         Components = components;
+        Degree = degree;
     }
 
     public float[] Knots { get; }
@@ -30,6 +35,8 @@ internal sealed class GrannyCurve
     public float[] Controls { get; }
 
     public int Components { get; }
+
+    public int Degree { get; }
 
     public bool IsConstant
     {
@@ -78,7 +85,7 @@ internal sealed class GrannyCurve
                 $"{controls.Length} controls over {knots.Length} knots, matching no known component layout.");
         }
 
-        return new GrannyCurve(knots, controls, components);
+        return new GrannyCurve(knots, controls, components, (int)curve.GetUInt32("Degree").GetValueOrDefault(2));
     }
 
     private static float[] ToFloats(object? array)
@@ -88,31 +95,13 @@ internal sealed class GrannyCurve
 
     public Vector3 SamplePosition(float time)
     {
-        if (Knots.Length == 1)
-        {
-            return new Vector3(Controls[0], Controls[1], Controls[2]);
-        }
-
-        var (index, alpha) = FindSpan(time);
-        var from = new Vector3(Controls[index * Components], Controls[index * Components + 1], Controls[index * Components + 2]);
-        var to = new Vector3(
-            Controls[(index + 1) * Components],
-            Controls[(index + 1) * Components + 1],
-            Controls[(index + 1) * Components + 2]);
-        return Vector3.Lerp(from, to, alpha);
+        return new Vector3(BlendAt(time, 0), BlendAt(time, 1), BlendAt(time, 2));
     }
 
     public Quaternion SampleQuaternion(float time)
     {
-        if (Knots.Length == 1)
-        {
-            return Quaternion.Normalize(ReadQuaternion(0));
-        }
-
-        var (index, alpha) = FindSpan(time);
-        var from = ReadQuaternion(index);
-        var to = ReadQuaternion(index + 1);
-        return Quaternion.Normalize(Quaternion.Slerp(from, to, alpha));
+        return Quaternion.Normalize(new Quaternion(
+            BlendAt(time, 0), BlendAt(time, 1), BlendAt(time, 2), BlendAt(time, 3)));
     }
 
     /// <summary>
@@ -120,54 +109,90 @@ internal sealed class GrannyCurve
     /// </summary>
     public float[] SampleScaleShear(float time)
     {
-        if (Knots.Length == 1)
-        {
-            var single = new float[Components];
-            Array.Copy(Controls, single, Components);
-            return single;
-        }
-
-        var (index, alpha) = FindSpan(time);
         var values = new float[Components];
         for (var c = 0; c < Components; c++)
         {
-            values[c] = Controls[index * Components + c] +
-                (Controls[(index + 1) * Components + c] - Controls[index * Components + c]) * alpha;
+            values[c] = BlendAt(time, c);
         }
 
         return values;
     }
 
-    private Quaternion ReadQuaternion(int knotIndex)
-    {
-        return new Quaternion(
-            Controls[knotIndex * Components],
-            Controls[knotIndex * Components + 1],
-            Controls[knotIndex * Components + 2],
-            Controls[knotIndex * Components + 3]);
-    }
-
     /// <summary>
-    /// Locates the knot span covering the time and the blend factor within it. Times before
-    /// the first knot snap to it; times past the last knot clamp to the final span.
+    /// One B-spline component at the given time, via De Boor's algorithm over the full
+    /// clamped knot vector implied by the compact Granny array (head and tail knots
+    /// duplicated to degree+1 multiplicity), so the curve hits the first and last
+    /// controls exactly at the knot range ends and stays inside the control hull.
+    /// Falls back to the boundary control outside the knot range and to the single
+    /// control of constant curves.
     /// </summary>
-    private (int Index, float Alpha) FindSpan(float time)
+    private float BlendAt(float time, int component)
     {
-        if (time <= Knots[0])
+        var knotCount = Knots.Length;
+        if (knotCount == 1)
         {
-            return (0, 0f);
+            return Controls[component];
         }
 
-        for (var i = 1; i < Knots.Length; i++)
+        if (time <= Knots[0])
         {
-            if (time <= Knots[i])
+            return Controls[component];
+        }
+
+        if (time >= Knots[knotCount - 1])
+        {
+            return Controls[(knotCount - 1) * Components + component];
+        }
+
+        var degree = Math.Clamp(Degree, 1, knotCount - 1);
+
+        // Span: largest k in [degree, knotCount-1] with KnotAt(k) <= time.
+        var span = degree;
+        for (var k = degree; k < knotCount; k++)
+        {
+            if (KnotAt(k) <= time)
             {
-                var span = Knots[i] - Knots[i - 1];
-                var alpha = span > 0 ? (time - Knots[i - 1]) / span : 0f;
-                return (i - 1, alpha);
+                span = k;
+            }
+            else
+            {
+                break;
             }
         }
 
-        return (Knots.Length - 2, 1f);
+        var count = degree + 1;
+        Span<float> values = stackalloc float[count];
+        for (var j = 0; j < count; j++)
+        {
+            values[j] = Controls[(j + span - degree) * Components + component];
+        }
+
+        for (var r = 1; r <= degree; r++)
+        {
+            for (var j = degree; j >= r; j--)
+            {
+                var knotLeft = KnotAt(j + span - degree);
+                var knotRight = KnotAt(j + 1 + span - r);
+                var denominator = knotRight - knotLeft;
+                var alpha = denominator > 0f ? (time - knotLeft) / denominator : 0f;
+                values[j] = values[j - 1] + (values[j] - values[j - 1]) * alpha;
+            }
+        }
+
+        return values[degree];
+
+        // Knot of the full clamped vector at the given index: the first two entries
+        // repeat Knots[0], indices 2..knotCount map to Knots[1..], the tail repeats
+        // the last knot.
+        float KnotAt(int index)
+        {
+            if (index < 2)
+            {
+                return Knots[0];
+            }
+
+            return index <= knotCount ? Knots[index - 1] : Knots[knotCount - 1];
+        }
     }
+
 }

@@ -70,6 +70,18 @@ internal static class SyntheticGrannyBuilder
     /// </summary>
     public static byte[] BuildAnimationClip()
     {
+        return BuildAnimationClip(
+            [0f, 0f, 0f, 0f, 2f, 0f, 0f, 4f, 0f],
+            [0f, 0f, 0f, 1f]);
+    }
+
+    /// <summary>
+    /// Builds the same clip with caller-supplied curve controls: position controls are
+    /// interleaved X/Y/Z triplets over knots 0/0.5/1, orientation controls are one
+    /// constant X/Y/Z/W quaternion over a single knot.
+    /// </summary>
+    public static byte[] BuildAnimationClip(float[] positionControls, float[] orientationControls)
+    {
         const int pointerSize = 8;
         const int memberSize = 44;
         var buffer = new List<byte>(4096);
@@ -242,8 +254,8 @@ internal static class SyntheticGrannyBuilder
         relocations.Add(((uint)emptyControlsOffset, (uint)buffer.Count));
 
         var positionCurveOffset = AddCurveObject(
-            1, 2, [0f, 0.5f, 1f], [0f, 0f, 0f, 0f, 2f, 0f, 0f, 4f, 0f]);
-        var orientationCurveOffset = AddCurveObject(1, 2, [0f], [0f, 0f, 0f, 1f]);
+            1, 2, [0f, 0.5f, 1f], positionControls);
+        var orientationCurveOffset = AddCurveObject(1, 2, [0f], orientationControls);
 
         // Track object: name, flags, three inline curve wrappers (type ref + object ref).
         var trackObjectOffset = buffer.Count;

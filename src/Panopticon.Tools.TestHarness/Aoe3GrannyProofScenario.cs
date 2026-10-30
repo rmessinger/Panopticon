@@ -130,7 +130,7 @@ public static class Aoe3GrannyProofScenario
 
         var captures = new List<(string FileName, string Check)>();
 
-        var musketeerModel = CaptureBesideRanger(
+        var (musketeerModel, musketeerImported) = CaptureBesideRanger(
             game,
             ranger,
             unitsPerMeter,
@@ -163,7 +163,7 @@ public static class Aoe3GrannyProofScenario
             "on the musketeer_4age material key through a zip file system");
         captures.Add(("redcoat-beside-ranger.png", "see above"));
 
-        var horseModel = CaptureBesideRanger(
+        var (horseModel, horseImported) = CaptureBesideRanger(
             game,
             ranger,
             unitsPerMeter,
@@ -206,21 +206,22 @@ public static class Aoe3GrannyProofScenario
             return 5;
         }
 
-        var animatedPlans = new List<(string DisplayName, string AnimName, Model Model)>
+        var animatedPlans = new List<(string DisplayName, string AnimName, Model Model, ImportedModel Imported)>
         {
-            ("musketeer-march", "Volley_walk", musketeerModel),
-            ("musketeer-volley", "Volley_standing_attack", musketeerModel),
-            ("horse-idle", "Idle", horseModel),
+            ("musketeer-march", "Volley_walk", musketeerModel, musketeerImported),
+            ("musketeer-volley", "Volley_standing_attack", musketeerModel, musketeerImported),
+            ("horse-idle", "Idle", horseModel, horseImported),
         };
 
         var animatedSummaries = new List<(string DisplayName, string Summary)>();
-        foreach (var (displayName, animName, model) in animatedPlans)
+        foreach (var (displayName, animName, model, importedModel) in animatedPlans)
         {
             var clipKey = (displayName.StartsWith("horse", StringComparison.Ordinal) ? hussarVisual : musketeerVisual)
                 .ClipsByAnimName[animName];
             var (ok, summary) = CaptureAnimatedClip(
                 game,
                 model,
+                importedModel,
                 displayName,
                 animName,
                 clipKey,
@@ -275,7 +276,7 @@ public static class Aoe3GrannyProofScenario
         return new AssetImportContext(new CompositeFileSystem(zipFileSystem, barFileSystem), language: null);
     }
 
-    private static Model CaptureBesideRanger(
+    private static (Model Model, ImportedModel Imported) CaptureBesideRanger(
         Game game,
         Model ranger,
         float unitsPerMeter,
@@ -336,12 +337,13 @@ public static class Aoe3GrannyProofScenario
             options);
 
         reporter.Info($"Captured {outputFileName}");
-        return model;
+        return (model, imported);
     }
 
     private static (bool Ok, string Summary) CaptureAnimatedClip(
         Game game,
         Model model,
+        ImportedModel importedModel,
         string displayName,
         string animName,
         string clipKey,
@@ -352,7 +354,7 @@ public static class Aoe3GrannyProofScenario
         ITestHarnessReporter reporter,
         string outputDirectory)
     {
-        var imported = animationImporter.ImportAnimation(clipKey, importContext);
+        var imported = animationImporter.ImportAnimation(clipKey, importContext, importedModel.Skeleton);
         if (imported is null)
         {
             reporter.Error($"Animation import returned null for '{clipKey}'.");
@@ -393,9 +395,16 @@ public static class Aoe3GrannyProofScenario
         Directory.CreateDirectory(framesDirectory);
 
         var world = Matrix4x4.CreateScale(unitsPerMeter);
-        var options = new StandaloneCaptureOptions(
-            Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f));
         var durationSeconds = (float)imported.Duration.TotalSeconds;
+        var sampleSeconds = FrameFractions.Select(fraction => durationSeconds * fraction).ToArray();
+
+        // The default camera fit sees the rest pose; animated poses (and march root motion)
+        // leave those bounds. Fit instead to the union of CPU-skinned deformed bounds at the
+        // exact frame times captured below, mirroring the GPU skinning formula.
+        var fitBounds = ComputeAnimatedFitBounds(model, importedModel, animation, sampleSeconds, world, loadContext);
+        var options = new StandaloneCaptureOptions(
+            Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f),
+            CameraFitBounds: fitBounds);
 
         StandaloneModelCapture.Capture(
             game,
@@ -445,6 +454,70 @@ public static class Aoe3GrannyProofScenario
         return (true,
             $"{boundChannels.Count} channels bound, {extraChannels} extra tracks dropped, " +
             $"{FrameFractions.Length} frames captured twice byte-identical");
+    }
+
+    /// <summary>
+    /// Union of world-space vertex bounds across the sampled clip times, computed by
+    /// CPU skinning with the same inverse-bind-times-relative matrices the GPU upload
+    /// uses. Rigid sub-objects (positions baked into parent-bone space) transform by
+    /// the animated parent bone alone; skinned sub-objects blend their influences and
+    /// then take the instance world matrix.
+    /// </summary>
+    private static AxisAlignedBoundingBox ComputeAnimatedFitBounds(
+        Model model,
+        ImportedModel importedModel,
+        ModelAnimation animation,
+        float[] sampleSeconds,
+        Matrix4x4 world,
+        AssetLoadContext loadContext)
+    {
+        var min = new Vector3(float.MaxValue);
+        var max = new Vector3(float.MinValue);
+        var bones = model.BoneHierarchy.Bones;
+
+        foreach (var seconds in sampleSeconds)
+        {
+            using var instance = model.CreateInstance(loadContext);
+            PlayToTime(instance, animation, seconds);
+            instance.Update(TimeInterval.Zero);
+
+            var relative = instance.RelativeBoneTransforms;
+            for (var i = 0; i < model.SubObjects.Length && i < importedModel.SubObjects.Count; i++)
+            {
+                if (importedModel.SubObjects[i].RenderObject is not ImportedMesh mesh)
+                {
+                    continue;
+                }
+
+                var boneIndex = model.SubObjects[i].Bone.Index;
+                if (mesh.IsSkinned)
+                {
+                    foreach (var vertex in mesh.Vertices)
+                    {
+                        var deformed =
+                            Vector3.Transform(vertex.Position, bones[vertex.BoneIndex0].InverseBindMatrix * relative[vertex.BoneIndex0]) * vertex.BoneWeight0
+                            + Vector3.Transform(vertex.Position, bones[vertex.BoneIndex1].InverseBindMatrix * relative[vertex.BoneIndex1]) * vertex.BoneWeight1
+                            + Vector3.Transform(vertex.Position, bones[vertex.BoneIndex2].InverseBindMatrix * relative[vertex.BoneIndex2]) * vertex.BoneWeight2
+                            + Vector3.Transform(vertex.Position, bones[vertex.BoneIndex3].InverseBindMatrix * relative[vertex.BoneIndex3]) * vertex.BoneWeight3;
+                        var position = Vector3.Transform(deformed, world);
+                        min = Vector3.Min(min, position);
+                        max = Vector3.Max(max, position);
+                    }
+                }
+                else
+                {
+                    var rigid = relative[boneIndex] * world;
+                    foreach (var vertex in mesh.Vertices)
+                    {
+                        var position = Vector3.Transform(vertex.Position, rigid);
+                        min = Vector3.Min(min, position);
+                        max = Vector3.Max(max, position);
+                    }
+                }
+            }
+        }
+
+        return new AxisAlignedBoundingBox(min, max);
     }
 
     private static void PlayToTime(ModelInstance instance, ModelAnimation animation, float seconds)
