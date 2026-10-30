@@ -32,18 +32,17 @@ public class StandaloneModelCaptureTests
     }
 
     [Fact]
-    public void OrthographicComparison_ProjectsCommonGroundAndEqualHeightsAtAnyDepth()
+    public void PerspectiveComparison_ProjectsCommonGroundAndEqualHeightsAtMatchedDepth()
     {
         var camera = new Panopticon.Graphics.Cameras.Camera(() => new Veldrid.Viewport(0, 0, 512, 512, 0, 1))
         {
-            OrthographicHeight = 30f,
             NearPlaneDistance = 0.1f,
         };
-        camera.SetLookAt(new Vector3(0, -100, 10), new Vector3(0, 0, 10), Vector3.UnitZ);
-        var leftFoot = camera.WorldToScreenPoint(new Vector3(-10, -5, 0));
-        var rightFoot = camera.WorldToScreenPoint(new Vector3(10, 5, 0));
-        var leftHead = camera.WorldToScreenPoint(new Vector3(-10, -5, 15));
-        var rightHead = camera.WorldToScreenPoint(new Vector3(10, 5, 15));
+        camera.SetLookAt(new Vector3(0, -100, 60), new Vector3(0, 0, 10), Vector3.UnitZ);
+        var leftFoot = camera.WorldToScreenPoint(new Vector3(-10, 0, 0));
+        var rightFoot = camera.WorldToScreenPoint(new Vector3(10, 0, 0));
+        var leftHead = camera.WorldToScreenPoint(new Vector3(-10, 0, 15));
+        var rightHead = camera.WorldToScreenPoint(new Vector3(10, 0, 15));
 
         Assert.Equal(leftFoot.Y, rightFoot.Y, 4);
         Assert.Equal(leftFoot.Y - leftHead.Y, rightFoot.Y - rightHead.Y, 4);

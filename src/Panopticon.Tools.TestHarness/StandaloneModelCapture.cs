@@ -94,7 +94,7 @@ internal static class StandaloneModelCapture
             options);
     }
 
-    /// <summary>Bind-pose comparison: common ground, equal depth, unchanged scale, no foreshortening.</summary>
+    /// <summary>Bind-pose comparison: common ground, matched foot depth, unchanged scale.</summary>
     public static void CaptureGroundedPair(
         Game game,
         Model primaryModel,
@@ -106,12 +106,14 @@ internal static class StandaloneModelCapture
         StandaloneCaptureOptions? options = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(primaryScale);
-        var primaryBounds = ComputeGeometryBounds(game, primaryModel);
-        var referenceBounds = ComputeGeometryBounds(game, referenceModel);
+        var primaryBounds = ComputeGeometryBounds(game, primaryModel, out var primaryFootDepth);
+        var referenceBounds = ComputeGeometryBounds(game, referenceModel, out var referenceFootDepth);
         var scaled = AxisAlignedBoundingBox.Transform(primaryBounds, Matrix4x4.CreateScale(primaryScale));
         var gap = MathF.Max(scaled.Max.Z - scaled.Min.Z, referenceBounds.Max.Z - referenceBounds.Min.Z) * 0.3f;
         var referenceWorld = GroundTransform(referenceBounds, 1f, -(referenceBounds.Max.X - referenceBounds.Min.X + gap) / 2f);
         var primaryWorld = GroundTransform(primaryBounds, primaryScale, (scaled.Max.X - scaled.Min.X + gap) / 2f);
+        referenceWorld.Translation += new Vector3(0, referenceBounds.GetCenter().Y - referenceFootDepth, 0);
+        primaryWorld.Translation += new Vector3(0, (primaryBounds.GetCenter().Y - primaryFootDepth) * primaryScale, 0);
         CapturePair(game, primaryModel, primaryWorld, referenceModel, referenceWorld,
             loadContext, outputPath, viewportSize,
             (options ?? new StandaloneCaptureOptions()) with
@@ -123,7 +125,7 @@ internal static class StandaloneModelCapture
             });
     }
 
-    private static AxisAlignedBoundingBox ComputeGeometryBounds(Game game, Model model)
+    private static AxisAlignedBoundingBox ComputeGeometryBounds(Game game, Model model, out float footDepth)
     {
         var points = new List<Vector3>();
         var bones = model.BoneHierarchy.Bones;
@@ -180,7 +182,18 @@ internal static class StandaloneModelCapture
             throw new InvalidDataException($"Model '{model.Name}' has no visible mesh geometry to ground.");
         }
 
-        return AxisAlignedBoundingBox.CreateFromPoints(points);
+        var bounds = AxisAlignedBoundingBox.CreateFromPoints(points);
+        var footBand = (bounds.Max.Z - bounds.Min.Z) * 0.01f;
+        footDepth = float.PositiveInfinity;
+        foreach (var point in points)
+        {
+            if (point.Z <= bounds.Min.Z + footBand)
+            {
+                footDepth = MathF.Min(footDepth, point.Y);
+            }
+        }
+
+        return bounds;
 
         Vector3 Skin(Vector3 position, uint index, float weight)
         {
@@ -305,13 +318,6 @@ internal static class StandaloneModelCapture
             // The default near plane (one terrain tile, 10 units) clips sub-10-unit models
             // such as unit-scale glTF fixtures; tighten it for diagnostic framing.
             scene.Camera.NearPlaneDistance = MathF.Max((enclosingBounds.Max - enclosingBounds.Min).Length() / 100f, 0.05f);
-
-            if (options?.GroundComparison == true)
-            {
-                var span = enclosingBounds.Max - enclosingBounds.Min;
-                scene.Camera.OrthographicHeight = MathF.Max(span.Z, span.X * height / width) * 1.2f;
-                scene.Camera.SetLookAt(cameraTarget - Vector3.UnitY * cameraDistance, cameraTarget, Vector3.UnitZ);
-            }
 
             renderPipeline.Execute(new RenderContext
             {
