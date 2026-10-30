@@ -12,9 +12,9 @@ namespace Panopticon.Navigation;
 /// per squad and followers retrace it at their formation offsets (position relative to the leader
 /// when the order was issued), so path requests scale with squad count rather than unit count.
 /// A follower whose offset destination is impassable falls back to its own path request.
-/// WI-N11-01: with <see cref="NavigationOptions.ValidateOffsetRoutes"/> the driven legs of every
-/// assignment (offset retrace, landing tail, reroute first leg) must stay on passable cells;
-/// unclear assignments reroute onto the leader route or pay for their own search.
+/// Follower assignments must keep their driven segments on passable cells regardless of
+/// <see cref="NavigationOptions.ValidateOffsetRoutes"/>. Unsafe offsets reroute onto the leader
+/// route or pay for their own search; the option adds the offset-retrace check.
 /// </summary>
 public static class GroupMovement
 {
@@ -161,9 +161,9 @@ public static class GroupMovement
             var validationOn = navigation.Options.ValidateOffsetRoutes;
             var crossesOffsetRoute = validationOn
                 && OffsetRouteValidator.Crosses(navigation, path, offset);
+            // Segment safety is not optional: passable endpoints can straddle a structure.
             var offsetRouteUsable = !crossesOffsetRoute
-                && (!validationOn
-                    || AssignedLegsAreClear(navigation, member.Translation, path, offset, null, endIsPassable, destination));
+                && AssignedLegsAreClear(navigation, member.Translation, path, offset, null, endIsPassable, destination);
 
             if (offsetRouteUsable && offsetDestinationPassable)
             {
@@ -192,7 +192,9 @@ public static class GroupMovement
                         destinationNode,
                         navigation.Options.MaxLandingRadiusCells,
                         out var blockedLandingPosition,
-                        out var blockedRingDistance))
+                        out var blockedRingDistance)
+                    && AssignedLegsAreClear(
+                        navigation, member.Translation, path, offset, blockedLandingPosition, false, destination))
                 {
                     LandedFollowerCount++;
                     navigation.AddLandedFollower();

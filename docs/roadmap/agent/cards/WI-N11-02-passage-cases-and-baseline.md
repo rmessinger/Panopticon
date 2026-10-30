@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N11-02` |
 | Roadmap phase | [N11](../../track-n-pathfinding-performance.md): Passage detection and baseline |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-N11-01`, `WI-N6-02` |

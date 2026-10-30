@@ -169,13 +169,15 @@ squad-offset-retrace capture):
 3. Squad assignment legs in `GroupMovement.AssignSquadMembers` had the same endpoint-only hole:
    a follower with an impassable formation slot kept the offset waypoints (validation never ran),
    and a rerouted follower drove an unvalidated first leg from its position to the leader route.
-   With `ValidateOffsetRoutes` on, every driven leg of an assignment (offset retrace, reroute
+    Every driven follower leg of an assignment (offset retrace, reroute
    first leg, landing tail) must pass `IsDirectLinePassable`; unclear assignments reroute onto
    the leader route or fall back to their own search. Impassable slots take the crossing reroute
    like any other blocked retrace.
 
-Follower offset retraces remain behind `ValidateOffsetRoutes`; the N10 verdict stands. The grid
-stays the only structure barrier: the swept-footprint gate remains unit-units by design.
+`ValidateOffsetRoutes` still gates the additional offset-retrace check, not segment safety.
+The [squad correction results](../implementation/track-n-pathfinding-performance.md#squad-structure-crossing-correction-2026-10-29)
+record the option-off clipping regression and replacement capture. The grid stays the only
+structure barrier: the swept-footprint gate remains unit-units by design.
 
 ## 5. Decisions
 

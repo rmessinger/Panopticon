@@ -11,7 +11,7 @@ namespace Panopticon.Tests.Tools.TestHarness;
 public class NavigationDeadlockPlannerTests
 {
     [Fact]
-    public void BuildCases_ListsTheSixDeepDiveCasesInOrder()
+    public void BuildCases_ListsAllElevenCasesInOrder()
     {
         var cases = NavigationDeadlockCasePlanner.BuildCases();
 
@@ -24,6 +24,11 @@ public class NavigationDeadlockPlannerTests
             NavigationDeadlockCasePlanner.QueueBehindIdle,
             NavigationDeadlockCasePlanner.AsyncNoRoute,
             NavigationDeadlockCasePlanner.SquadOffsetRetrace,
+            NavigationDeadlockCasePlanner.PassageColumn40,
+            NavigationDeadlockCasePlanner.PassageConverge2x20,
+            NavigationDeadlockCasePlanner.PassageMixed30,
+            NavigationDeadlockCasePlanner.PassageOpposed1Lane,
+            NavigationDeadlockCasePlanner.PassageSquad12,
         ], names);
         Assert.All(cases, plan => Assert.False(string.IsNullOrWhiteSpace(plan.Mechanism)));
     }
@@ -76,10 +81,17 @@ public class NavigationDeadlockPlannerTests
             ImpassableRetracePoints: 0,
             ReroutedFollowers: 0,
             BlockedRepaths: 0,
+            DetectedPassages: [],
+            MouthJamUnits: 0,
+            MouthJamFrames: 0,
             MechanismConfirmed: true,
             MechanismNote: "2 mutually blocked records, 1 wait-for cycle(s), max 120 frames without progress.",
             StallRecords: records,
-            WaitForCyclesAtEnd: cycles);
+            WaitForCyclesAtEnd: cycles)
+        {
+            ImpassableAssignedSegments = 3,
+            ImpassableMovementSteps = 293,
+        };
         var report = new NavigationDeadlockReport(
             NavigationDeadlockReport.CurrentSchemaVersion,
             "maps/alpine assault/alpine assault.map",
@@ -103,6 +115,8 @@ public class NavigationDeadlockPlannerTests
             var caseElement = root.GetProperty("cases")[0];
             Assert.Equal(NavigationDeadlockCasePlanner.HeadOnPair, caseElement.GetProperty("name").GetString());
             Assert.Equal(3600, caseElement.GetProperty("framesRun").GetInt32());
+            Assert.Equal(3, caseElement.GetProperty("impassableAssignedSegments").GetInt32());
+            Assert.Equal(293, caseElement.GetProperty("impassableMovementSteps").GetInt32());
             Assert.Equal("BudgetEnded", caseElement.GetProperty("terminationReason").GetString());
             Assert.True(caseElement.GetProperty("mechanismConfirmed").GetBoolean());
             var stall = caseElement.GetProperty("stallRecords")[0];

@@ -774,7 +774,7 @@ Source of truth: [deep-dives/n-confined-passage-queueing.md](../deep-dives/n-con
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
 | [`WI-N11-01`](../agent/cards/WI-N11-01-passage-finder.md) | N11 | Passage finder and cross-section cache | N11-1 | Ready |
-| [`WI-N11-02`](../agent/cards/WI-N11-02-passage-cases-and-baseline.md) | N11 | Passage cases and option-off baseline | N11-2 | Blocked |
+| [`WI-N11-02`](../agent/cards/WI-N11-02-passage-cases-and-baseline.md) | N11 | Passage cases and option-off baseline | N11-2 | Done |
 | [`WI-N12-01`](../agent/cards/WI-N12-01-passage-coordinator-and-queue.md) | N12 | Passage coordinator, queue order, and lane path | N12-1 | Blocked |
 | [`WI-N12-02`](../agent/cards/WI-N12-02-passage-hold-and-release-movement.md) | N12 | Passage hold, release, and route splice | N12-2 | Blocked |
 | [`WI-N13-01`](../agent/cards/WI-N13-01-opposing-flow-arbitration.md) | N13 | Opposing flow arbitration | N13-1 | Blocked |
@@ -787,7 +787,108 @@ Delivery: phase staging branch `staging/track-n-passages`, numbered group PRs. S
 
 ## Confined passage queueing results
 
-Pending `WI-N11-01`.
+### WI-N11-01 results (2026-10-28, Release)
+
+Pure detection layer, no movement change: `PassageFinder.FindSpans` returns the narrow
+passages a route crosses, from the passability grid alone. Two overloads: the world entry
+maps a world-space route to cells through `Navigation.GetNodeAt` (null nodes skipped,
+consecutive duplicates merged) and reads the options; the grid core stays pure on `Graph`.
+
+- Cross-sections cast along the perpendicular octants (route octant +2 and +6; two octant
+  steps = 90 degrees), each ray capped at `MaxPassageWidthCells` (16). A ray reaching the cap
+  is open; open on either side means never a passage (one-sided walls and cliffs excluded).
+  Width = left run + right run + 1; pitch converts to cells via
+  `pitchCells = max(1, ceil(pitch / cellSize))`; a sample is in-span when closed on both
+  sides and width <= `PassageLaneLimit` (3) x pitchCells.
+- Spans merge across gaps of at most `PassageMergeCells` (2) route samples; the throat is the
+  first strictly-narrowest sample; lanes = max(1, floor(throatWidth / pitchCells)); the
+  corridor is the union of cross-section cells.
+- `CrossSectionCache` memoizes width per (cell, octant), null meaning an open cast, and
+  resets when the passability version changes. Counters live as interlocked statics on
+  `PassageFinder` and surface through `PathStatistics.PassageCasts` / `PassageCacheHits`.
+- Install-free tests (synthetic 16x16, 7/7): straight gap, diagonal gap, L-shaped corridor
+  each yield one span with expected throat and lane count; a route along a one-sided wall
+  yields none; two routes through the same gap at different offsets produce throats inside
+  each other's corridors; a rescan makes no new casts; a version change resets the cache.
+  Diagonal geometry note: 45-degree rays step the x+y sum by two, so single-cell wall bands
+  read width 1; the test uses solid half-planes (x+y <= 11 and x+y >= 17) which read width 3.
+- Guardrail AC verified: no movement code calls the finder; only `PathStatistics` (counter
+  read) and `CrossSectionCache` (counter increment) reference it. Existing navigation tests
+  pass unedited (Navigation filter 104/104).
+
+Artifacts: reports and logs under `/tmp/opencode/n11-01/` and `~/log/n11-01/`.
+
+### WI-N11-02 baseline (2026-10-28, Release, seed 1, options off, budget 3600)
+
+Historical baseline, superseded for squad route safety by the correction below. The v1
+squad capture contains structure clipping; its waypoint-only counter did not detect it.
+
+Five passage cases joined the NavigationDeadlock scenario (planner, setups, per-case
+detection at order time over each unit's route, mouth-jam metric). Movement code is
+untouched: the finder runs beside the loop, options all off.
+
+| Case | Settled | Cycles | Mouth jam | Detected passages (throat, width, lanes) |
+| --- | --- | --- | --- | --- |
+| passage-column-40 | 0 / 40 | 1 | 1 unit, 3257 frames | 3 spans, terrain slots at (158,110-122), width 1, lanes 1 |
+| passage-converge-2x20 | 3 / 40 | 1 | 14 units, 3567 frames | 6 spans, widths 1-7, lanes 1-3 at infantry pitch |
+| passage-mixed-30 | 6 / 30 | 4 | 0 | 1 span (187,161), width 3, lanes 1-2 mixed pitch |
+| passage-opposed-1lane | 0 / 20 | 1 | 6 units, 3488 frames | 1 span (170,170), width 9, lanes 2 |
+| passage-squad-12 | 6 / 12 | 1 | 0 | none (route crosses no confined feature) |
+| corridor-opposed-20 (reuse) | 0 / 40 | 2 | 0 | 2 spans, terrain slots (158,122) and (182,210), lanes 1 |
+
+Old six cases: settled counts, stall reasons, and termination match the option-off
+baselines within documented run-to-run variance (radius settles 2-4, corridor cycles 1-7,
+async settle frame 92-93); head-on 0/2, queue 0/10, async 6/6 hold exactly.
+
+Geometry findings recorded as section 3 revisions, per the card:
+
+- Wall gaps built from 80-unit power-plant footprints at 80 spacing quantize to openings
+  of roughly 90 units (one wall center skipped, gapWidth <= 20) or 160 units (two skipped).
+  At tank pitch (~4 cells) these read 2 and 4 lanes. The 120-unit gap the deep dive
+  assumed is not realizable; the one-tank-lane target is unreachable from these
+  footprints, so passage-opposed-1lane was built at gapWidth 20 and its expectation
+  revised to at most 2 lanes, with reason.
+- Routes through the wall detour around the wall's east end rather than threading the
+  nominal gap: the power-plant colliders seal it tightly. Every detected span on these
+  maps is an incidental alpine-assault terrain slot east of the wall (world x 1400-1900).
+  The w1 slots are true single-file features; w3-w7 slots read 2-3 lanes at infantry
+  pitch. N12 case tuning should either narrow the wall span so detours stop paying off or
+  place terrain-anchored slots deliberately.
+
+Artifacts: `/tmp/opencode/n11-02/nd-baseline.json` (all 11 cases), `nd-passage.json`,
+`nd-opposed.json`, logs `~/log/n11-02/`. GIF evidence: 5 cases under
+`navdeadlock-<case>-N11-v1.gif` plus annotated frames on the share.
+
+### Squad structure-crossing correction (2026-10-29)
+
+`GroupMovement` now checks follower assignment segments regardless of `ValidateOffsetRoutes`.
+Unsafe translated routes use a safe leader-route assignment or an individual search. A
+blocked-slot landing also checks the replacement tail. No option defaults changed.
+
+`NavigationDeadlock` adds `impassableAssignedSegments` (issued route segments) and
+`impassableMovementSteps` (actual consecutive logic-tick positions). These walk the
+passability grid along each segment, rather than checking waypoint endpoints alone.
+They measure centerline grid crossings, not swept-footprint clearance.
+
+Passage-squad-12, Release, seed 1, budget 3600:
+
+| Build | ValidateOffsetRoutes | Unsafe assigned segments | Impassable movement steps |
+|---|---|---|---|
+| Before correction | false | 3 | 293 |
+| Before correction | true | 0 | 0 |
+| After correction | false | 0 | 0 |
+| After correction | true | 0 | 0 |
+
+Both corrected runs reroute 3 followers and settle 4/12 units. Structure crossing is
+corrected; crowd settlement remains unresolved. The synthetic regression checks every
+assigned segment with both option settings. Exact-offset sharing tests now use open
+terrain, since preserving an offset through an obstacle is not a valid sharing contract.
+
+Evidence: `navdeadlock-passage-squad-12-N11-v2.gif`, default options, budget 2400, with
+42 annotated frames. The contact sheet and representative full-size frames were reviewed;
+no traversal through the structure row was observed. The v1 capture is retained as failing
+evidence, not a validated result. Reports and review contact sheet:
+`/tmp/opencode/n11-squad-correction/`. Logs: `~/log/n11-squad-correction/`.
 
 ## Layered navigation (N15-N20)
 

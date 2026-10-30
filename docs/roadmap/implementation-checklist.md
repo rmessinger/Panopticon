@@ -1954,10 +1954,10 @@ Design: [deadlock deep dive](deep-dives/n-navigation-deadlocks.md).
 
 ### N11: Passage detection and baseline
 Design: [passage deep dive](deep-dives/n-confined-passage-queueing.md).
-- [ ] N11-1 Passage finder and cross-section cache. (`WI-N11-01`)
+- [x] N11-1 Passage finder and cross-section cache. (`WI-N11-01`)
   - AC: synthetic gaps and corridors return one span with the expected throat and lanes; one-sided
     walls return none; repeated scans hit the cache.
-- [ ] N11-2 Passage cases and option-off baseline. (`WI-N11-02`)
+- [x] N11-2 Passage cases and option-off baseline. (`WI-N11-02`)
   - AC: five passage cases detect their gaps and record settle frames, mouth jams, cycles, and
     retrace points; movement unchanged.
 

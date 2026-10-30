@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-N11-01` |
 | Roadmap phase | [N11](../../track-n-pathfinding-performance.md): Passage detection and baseline |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | None (N5 done) |
