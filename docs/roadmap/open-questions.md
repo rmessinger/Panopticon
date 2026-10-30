@@ -223,6 +223,11 @@
   Installer repack extraction depends on patched third-party tools and installer passwords, so it
   stays out of the roadmap. See the [deep dive](deep-dives/c11-rise-of-legends-models.md#2-install-and-packaging).
   Affects [C11a](track-c-external-assets.md).
+- Total War: SHOGUN 2 models. Decision (2026-10-29): SHOGUN 2 is its own phase group, C12, not
+  part of C9. Its `PFHs` packs, `RMV2` versions 0 to 2, `VMPF` parts, and version 1 clips share no
+  binary layout with THREE KINGDOMS, so only the pack project and the LZ4 decoder are shared. See
+  the [deep dive](deep-dives/c12-total-war-shogun2-models.md#9-phase-split). Affects
+  [C9a](track-c-external-assets.md) and [C12a-C12c](track-c-external-assets.md).
 - Large-map ceiling & compatibility. Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; Panopticon may extend/replace the `.map` format and need not stay loadable in the

@@ -158,6 +158,9 @@ The exact lancer-cavalry `man_variant` row is confirmed in C9d.
 | C9c | Skeleton import, version 7 clips, tables and fragments | Spearman and horse clips bind with no missing targets and capture deterministically |
 | C9d | Variant composer, unit-binding chain, rider and mount pairing | A seeded spearman squad and one cavalry rider render with distinct variants and play `CHARGE` |
 
+The pack project is shared with [C12a](c12-total-war-shogun2-models.md#9-phase-split), which adds the
+SHOGUN 2 `PFHs` header variant.
+
 ## 10. Risks
 
 - Composite soldiers: a soldier is about ten parts, so per-soldier assembly cost must stay out of

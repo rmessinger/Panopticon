@@ -45,6 +45,9 @@
 | C11a. Rise of Legends archives | Locate an installed game directory and expose its WAR-BUILDER `.big` archives as a read-only file system; see the [deep dive](deep-dives/c11-rise-of-legends-models.md). Installer repacks are not read. | 83 archives enumerate, and the proof models resolve with their recorded sizes. | Not started | C1 |
 | C11b. Rise of Legends static BH3 models | Read the chunk container and import `.bh3` meshes with rigid per-bone skinning and DDS materials on C3 PBR; see the [deep dive](deep-dives/c11-rise-of-legends-models.md). Unknown chunks are skipped with a diagnostic. | Assassin, Zeke, and Jaguar Knight render textured with team color beside a Generals Ranger. | Not started | C11a, C3 |
 | C11c. Rise of Legends animation and binding | Add blended weights, `.bha` clips as C1 TRS channels, and stance, LOD, and attachment binding from the unit XML; see the [deep dive](deep-dives/c11-rise-of-legends-models.md). | Assassin and Jaguar Knight idle and walk stances bind with no missing targets and capture deterministically. | Not started | C11b, C2, C4d |
+| C12a. Total War: SHOGUN 2 packs | Add the `PFHs` header variant with LZ4 block entries to the C9 pack file system, and a DB table reader for the unit-binding subset with schemas ported from RPFM; see the [deep dive](deep-dives/c12-total-war-shogun2-models.md). | All packs enumerate with the recorded counts, every compressed entry decodes to its recorded size, and the yari ashigaru proof unit resolves through the DB and its `.unit_variant` files. | Not started | C1 |
+| C12b. SHOGUN 2 static models and parts | Import `RMV2` version 0 to 2 static models and `VMPF` version 3 soldier and horse parts in bind pose, with Complete Edition base colour, MRA, normal, and colour-mask maps on C3 PBR; see the [deep dive](deep-dives/c12-total-war-shogun2-models.md). | A castle gate piece, the Armstrong gun, an ashigaru head, and a horse body render textured beside a Generals Ranger, and other versions fail with context. | Not started | C12a, C3 |
+| C12c. SHOGUN 2 animation and composite soldiers | Import version 1 clips with their embedded bone tables, `VMPF` skins, animation tables and fragments, and seeded `.unit_variant` composition; see the [deep dive](deep-dives/c12-total-war-shogun2-models.md). | A seeded yari ashigaru squad renders with distinct variants and plays `yari_charge`, and the horse plays an idle, with no missing targets and deterministic captures. | Not started | C12b, C2, C4d |
 
 ## Phase resources
 
@@ -76,6 +79,7 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 | C9a-C9d | [`c9-total-war-3k-models.md`](deep-dives/c9-total-war-3k-models.md) | [Architecture diagrams](deep-dives/c9-total-war-3k-models.md#11-architecture-diagrams) `†` | — |
 | C10a-C10d | [`c10-aoe3de-granny-models.md`](deep-dives/c10-aoe3de-granny-models.md) | [Architecture diagrams](deep-dives/c10-aoe3de-granny-models.md#9-architecture-diagrams) | [`WI-C10a-01`](agent/cards/WI-C10a-01-bar-archive-file-system.md) to [`WI-C10c-04`](agent/cards/WI-C10c-04-aoe3-animated-proof.md); C10d none until its review |
 | C11a-C11c | [`c11-rise-of-legends-models.md`](deep-dives/c11-rise-of-legends-models.md) | [Architecture diagrams](deep-dives/c11-rise-of-legends-models.md#8-architecture-diagrams) `†` | — |
+| C12a-C12c | [`c12-total-war-shogun2-models.md`](deep-dives/c12-total-war-shogun2-models.md) | [Architecture diagrams](deep-dives/c12-total-war-shogun2-models.md#11-architecture-diagrams) `†` | — |
 
 ## Cross-track dependencies
 
@@ -94,3 +98,6 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 - C9 through C11 add Total War: THREE KINGDOMS, Age of Empires III: DE, and Rise of Legends under
   the C7 boundary. C9 composite soldiers and LODs feed [B5](track-b-scale.md) and
   [Track M](track-m-mass-battle.md); C9d stops at composition, and rendering at scale stays B5.
+- C12 adds Total War: SHOGUN 2 Complete Edition under the same boundary. It shares the C9 pack
+  project and the C10a LZ4 decoder, whichever lands first, but no model or clip reader, and feeds
+  B5 and Track M the same way as C9.

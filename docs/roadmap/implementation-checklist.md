@@ -1141,6 +1141,26 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     output; `.bha` clips resample to C1 TRS channels with the key time unit recorded; stance, LOD,
     and attachment binding come from the unit XML; Assassin and Jaguar Knight idle and walk stances
     bind with no missing targets and capture deterministically.
+- [ ] C12a Total War: SHOGUN 2 packs
+      ([deep dive](deep-dives/c12-total-war-shogun2-models.md)).
+  - AC: the shared pack file system reads every `PFHs` index exactly to end of file with the
+    recorded per-pack counts and case-insensitive paths; LZ4 block entries decode to their recorded
+    sizes; unknown pack types and flags fail with pack and path; the DB reader resolves the yari
+    ashigaru unit and the columns leading to its animation table are recorded.
+- [ ] C12b SHOGUN 2 static models and parts
+      ([deep dive](deep-dives/c12-total-war-shogun2-models.md)).
+  - AC: `RMV2` version 0 to 2 mesh headers and vertex formats are recorded and import through C1;
+    `VMPF` version 3 parts import in bind pose; base colour, MRA, normal, and colour-mask maps land
+    on C3 PBR with the MRA channel order and normal swizzle recorded; captures place a castle gate
+    piece, the Armstrong gun, an ashigaru head, and a horse body beside a Generals Ranger; other
+    versions fail with context.
+- [ ] C12c SHOGUN 2 animation and composite soldiers
+      ([deep dive](deep-dives/c12-total-war-shogun2-models.md)).
+  - AC: version 1 clips import their embedded bone tables as runtime hierarchies and their frames
+    as C1 TRS channels; `VMPF` skins import with up to four influences; animation tables and
+    fragments resolve slots to clips; `.unit_variant` slots compose one model per seed, and the
+    same seed yields the same composition; a yari ashigaru squad and the horse bind with no missing
+    targets and capture deterministically.
 
 ## Track D: Gameplay Content Expansion
 

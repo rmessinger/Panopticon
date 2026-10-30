@@ -252,6 +252,9 @@ mindmap
       C11a Rise of Legends archives ⮕
       C11b Rise of Legends static BH3 models ⮕
       C11c Rise of Legends animation ⮕
+      C12a SHOGUN 2 packs ⮕
+      C12b SHOGUN 2 static models and parts ⮕
+      C12c SHOGUN 2 animation and soldiers ⮕
     D. Gameplay content expansion
       D1 Tech tree prerequisite graph ⮕
       D2 Era and age progression ⮕
@@ -487,6 +490,7 @@ flowchart LR
     C9A["C9a TW3K packs"]
     C10A["C10a AoE3 DE archives"]
     C11A["C11a Rise of Legends archives"]
+    C12A["C12a SHOGUN 2 packs"]
     D2["D2 Era and age progression"]
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
@@ -505,6 +509,7 @@ flowchart LR
     C9B["C9b TW3K static RMV2 parts"]
     C10B["C10b AoE3 DE static Granny models"]
     C11B["C11b Rise of Legends static BH3 models"]
+    C12B["C12b SHOGUN 2 static models and parts"]
     D3["D3 External content ingestion"]
     F1["F1 Terrain deformation data model"]
     F4["F4 Physics engine integration"]
@@ -572,6 +577,7 @@ flowchart LR
     C9C["C9c TW3K skeletons and animation"]
     C10C["C10c AoE3 DE skinned animation"]
     C11C["C11c Rise of Legends animation"]
+    C12C["C12c SHOGUN 2 animation and soldiers"]
     F8["F8 Authoring & validation tooling"]
     W3A["W3a Sedan 1870"]
     W4["W4 Command & logistics experiment"]
@@ -838,6 +844,12 @@ flowchart LR
   C11B --> C11C
   C2 --> C11C
   C4D --> C11C
+  C1 --> C12A
+  C12A --> C12B
+  C3 --> C12B
+  C12B --> C12C
+  C2 --> C12C
+  C4D --> C12C
   C9C --> C9D
   C10B --> C10D
   F2 --> F8
@@ -914,7 +926,7 @@ flowchart LR
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
-  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C,C8A,C8B,C8C,C9A,C9B,C9C,C9D,C10A,C10B,C10C,C10D,C11A,C11B,C11C trackC;
+  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C,C8A,C8B,C8C,C9A,C9B,C9C,C9D,C10A,C10B,C10C,C10D,C11A,C11B,C11C,C12A,C12B,C12C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11 trackG;
   class H1,H2,H2A,H2B,H3,H4,H5,H6,H7 trackH;

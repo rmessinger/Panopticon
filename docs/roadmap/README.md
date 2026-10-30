@@ -218,6 +218,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/c9-total-war-3k-models.md`](deep-dives/c9-total-war-3k-models.md) | Track C phases C9a-C9d - Total War: THREE KINGDOMS packs, RMV2 parts, version 7 animation, and composite soldiers. |
 | [`deep-dives/c10-aoe3de-granny-models.md`](deep-dives/c10-aoe3de-granny-models.md) | Track C phases C10a-C10d - Age of Empires III: DE `.bar` archives, XMB, DDT, and Granny `.gr2` models and animation. |
 | [`deep-dives/c11-rise-of-legends-models.md`](deep-dives/c11-rise-of-legends-models.md) | Track C phases C11a-C11c - Rise of Legends WAR-BUILDER archives, BH3 models, and BHA animation. |
+| [`deep-dives/c12-total-war-shogun2-models.md`](deep-dives/c12-total-war-shogun2-models.md) | Track C phases C12a-C12c - Total War: SHOGUN 2 `PFHs` packs with LZ4, RMV2 v0-v2 and `VMPF` parts, version 1 animation, and `.unit_variant` soldiers. |
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 | [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
@@ -269,7 +270,8 @@ track document.
   BFME-family W3D (corpus, shader-material meshes, skinning and animation) · C9a-C9d Total War:
   THREE KINGDOMS (packs, RMV2 parts, animation, composite soldiers) · C10a-C10d AoE3 DE (archives,
   static Granny models, skinned animation, deferred Granny decompression) · C11a-C11c Rise of
-  Legends (archives, BH3 models, BHA animation).
+  Legends (archives, BH3 models, BHA animation) · C12a-C12c Total War: SHOGUN 2 (packs, static
+  models and parts, animation and composite soldiers).
 - [Track D - Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
   prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
   ingestion (ModCollector + Track C) · D4 reference non-SAGE scenario. Depends on Track P
@@ -405,7 +407,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | Track A - Foundations | `██████▌░░░` | 14 / 22 |
 | Track B - Scale | `█░░░░░░░░░` | 1 / 44 |
-| Track C - External Assets | `██▊░░░░░░░` | 9 / 32 |
+| Track C - External Assets | `██▌░░░░░░░` | 9 / 35 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
 
