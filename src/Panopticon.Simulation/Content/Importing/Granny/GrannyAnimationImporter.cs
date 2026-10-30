@@ -101,9 +101,10 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
 
         var channels = new List<ImportedAnimationChannel>();
         var bindLocals = BuildBindLocals(targetSkeleton);
+        var unitScale = ComputeUnitScale(animation, name, axes, bindLocals);
         foreach (var trackGroup in animation.GetObjects("TrackGroups"))
         {
-            ImportTrackGroup(trackGroup, name, axes, durationSeconds, timeStepSeconds, bindLocals, channels);
+            ImportTrackGroup(trackGroup, name, axes, durationSeconds, timeStepSeconds, bindLocals, unitScale, channels);
         }
 
         return new ImportedAnimation(name, TimeSpan.FromSeconds(durationSeconds), channels);
@@ -129,6 +130,76 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         return binds;
     }
 
+    /// <summary>
+    /// Clip files and model files in the AoE3 corpus disagree about their unit scale: the
+    /// musketeer model declares 1.5625 units per meter while shared library clips such as
+    /// march_rifleman declare 0.6152 (the same unit expressed 2.54x smaller). Converting each
+    /// file through its own declared scale would stretch clip translations 2.54x relative to
+    /// the model's binds. The correction factor is therefore derived from the files
+    /// themselves: the median ratio of matched bones' bind translation length to the clip's
+    /// first-sample translation length, both in engine space.
+    /// </summary>
+    private float ComputeUnitScale(
+        GrannyObject animation, string sourceKey, GrannyAxisSystem axes, Dictionary<string, Matrix4x4> bindLocals)
+    {
+        var ratios = new List<float>();
+        foreach (var trackGroup in animation.GetObjects("TrackGroups"))
+        {
+            foreach (var track in trackGroup.GetObjects("TransformTracks"))
+            {
+                var trackName = track.GetString("Name");
+                var position = GrannyCurve.FromWrapper(
+                    track.GetObject("PositionCurve"), sourceKey, trackName ?? "?", "PositionCurve");
+                if (trackName is null || position is null)
+                {
+                    continue;
+                }
+
+                if (!bindLocals.TryGetValue(trackName.Replace(' ', '_'), out var bindLocal))
+                {
+                    continue;
+                }
+
+                var bindLength = bindLocal.Translation.Length();
+                var clipLength = axes.ToEngineMatrix(
+                    Matrix4x4.CreateTranslation(position.SamplePosition(0f))).Translation.Length();
+                if (bindLength < 1e-4f || clipLength < 1e-4f)
+                {
+                    continue;
+                }
+
+                ratios.Add(bindLength / clipLength);
+            }
+        }
+
+        // The mismatch is file-global (units per meter declared per file), so a single
+        // matched bind/clip pair is sufficient evidence; more pairs only harden the median
+        // against an unusual first pose.
+        if (ratios.Count == 0)
+        {
+            return 1f;
+        }
+
+        ratios.Sort();
+        var median = ratios[ratios.Count / 2];
+        if (median is < 0.05f or > 20f)
+        {
+            Diagnostics.Warn(
+                $"Granny animation '{sourceKey}': derived unit scale {median:0.###} is outside a sane range; " +
+                "keeping the declared scale.");
+            return 1f;
+        }
+
+        if (MathF.Abs(median - 1f) > 0.01f)
+        {
+            Diagnostics.Info(
+                $"Granny animation '{sourceKey}': clip unit scale corrected by {median:0.###} " +
+                $"({ratios.Count} matched bones) to match the target skeleton.");
+        }
+
+        return median;
+    }
+
     private void ImportTrackGroup(
         GrannyObject trackGroup,
         string sourceKey,
@@ -136,6 +207,7 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         float durationSeconds,
         float timeStepSeconds,
         Dictionary<string, Matrix4x4> bindLocals,
+        float unitScale,
         List<ImportedAnimationChannel> channels)
     {
         foreach (var track in trackGroup.GetObjects("TransformTracks"))
@@ -158,7 +230,7 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
             }
 
             var times = SampleTimes(durationSeconds, timeStepSeconds, sourceKey, trackName);
-            ImportTrack(trackName, position, orientation, scaleShear, axes, bindLocals, times, channels);
+            ImportTrack(trackName, position, orientation, scaleShear, axes, bindLocals, unitScale, times, channels);
         }
     }
 
@@ -188,6 +260,7 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         GrannyCurve? scaleShear,
         GrannyAxisSystem axes,
         Dictionary<string, Matrix4x4> bindLocals,
+        float unitScale,
         float[] times,
         List<ImportedAnimationChannel> channels)
     {
@@ -215,6 +288,10 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         {
             var fileLocal = BuildFileLocalTransform(position, orientation, scaleShear, time);
             var engineLocal = axes.ToEngineMatrix(fileLocal);
+
+            // Clip files may declare a different unit scale than the model (see ComputeUnitScale);
+            // translations are re-expressed in the target skeleton's scale before offset composition.
+            engineLocal.Translation *= unitScale;
 
             var channelLocal = engineLocal;
             if (hasBind && Matrix4x4.Invert(bindLocal, out var inverseBind))

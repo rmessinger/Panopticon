@@ -57,11 +57,13 @@ public static class FrameCapturer
 
     /// <summary>
     /// Captures <paramref name="source"/> and writes it to <paramref name="path"/> as a PNG.
+    /// When <paramref name="encodeSrgb"/> is set, the source holds linear-light values (a scene
+    /// target captured before the output pass's sRGB transfer) and the transfer is applied here.
     /// </summary>
-    public static void CaptureToPng(GraphicsDevice graphicsDevice, Texture source, string path)
+    public static void CaptureToPng(GraphicsDevice graphicsDevice, Texture source, string path, bool encodeSrgb = false)
     {
         var frame = Capture(graphicsDevice, source);
-        using var image = ToImage(frame);
+        using var image = ToImage(frame, encodeSrgb);
         image.SaveAsPng(path);
     }
 
@@ -69,6 +71,16 @@ public static class FrameCapturer
     /// Converts a captured frame's raw pixels into an RGBA image, normalizing BGRA sources.
     /// </summary>
     public static Image<Rgba32> ToImage(CapturedFrame frame)
+    {
+        return ToImage(frame, encodeSrgb: false);
+    }
+
+    /// <summary>
+    /// Converts a captured frame's raw pixels into an RGBA image, normalizing BGRA sources.
+    /// <paramref name="encodeSrgb"/> applies the linear-to-sRGB transfer to RGB channels,
+    /// mirroring the output pass for captures of the linear scene target.
+    /// </summary>
+    public static Image<Rgba32> ToImage(CapturedFrame frame, bool encodeSrgb)
     {
         var image = new Image<Rgba32>(frame.Width, frame.Height);
         var isBgra = frame.Format is PixelFormat.B8_G8_R8_A8_UNorm
@@ -82,13 +94,28 @@ public static class FrameCapturer
             for (var x = 0; x < frame.Width; x++)
             {
                 var i = y * stride + x * 4;
-                row[x] = isBgra
-                    ? new Rgba32(r: pixels[i + 2], g: pixels[i + 1], b: pixels[i], a: pixels[i + 3])
-                    : new Rgba32(r: pixels[i], g: pixels[i + 1], b: pixels[i + 2], a: pixels[i + 3]);
+                var r = pixels[isBgra ? i + 2 : i];
+                var g = pixels[i + 1];
+                var b = pixels[isBgra ? i : i + 2];
+                if (encodeSrgb)
+                {
+                    r = EncodeSrgb(r);
+                    g = EncodeSrgb(g);
+                    b = EncodeSrgb(b);
+                }
+
+                row[x] = new Rgba32(r, g, b, pixels[i + 3]);
             }
         }
 
         return image;
+    }
+
+    private static byte EncodeSrgb(byte value)
+    {
+        var linear = value / 255f;
+        var encoded = linear <= 0.0031308f ? 12.92f * linear : 1.055f * MathF.Pow(linear, 1f / 2.4f) - 0.055f;
+        return (byte)Math.Clamp(encoded * 255f + 0.5f, 0f, 255f);
     }
 
     private static int GetBytesPerPixel(PixelFormat format) => format switch

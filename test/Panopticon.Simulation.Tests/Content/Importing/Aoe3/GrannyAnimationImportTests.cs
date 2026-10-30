@@ -164,6 +164,61 @@ public class GrannyAnimationImportTests
     }
 
     [Fact]
+    public void ClipUnitScaleMismatchIsCalibratedAgainstTheSkeleton()
+    {
+        // AoE3 clips and models disagree about units per meter (1.5625 vs 0.6152, exactly
+        // 2.54). The importer derives the ratio from matched bind/clip translations and
+        // rescales clip translations, so a clip 2x larger than the skeleton still yields
+        // identity offsets.
+        var importer = new GrannyAnimationImporter();
+        using var fileSystem = new MemoryFileSystem();
+        var bindRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
+        var bindTranslation = new Vector3(1f, 2f, 3f);
+        fileSystem.AddFile(
+            "clip.gr2",
+            SyntheticGrannyBuilder.BuildAnimationClip(
+                [
+                    2f * bindTranslation.X, 2f * bindTranslation.Y, 2f * bindTranslation.Z,
+                    2f * bindTranslation.X, 2f * bindTranslation.Y, 2f * bindTranslation.Z,
+                    2f * bindTranslation.X, 2f * bindTranslation.Y, 2f * bindTranslation.Z,
+                ],
+                [bindRotation.X, bindRotation.Y, bindRotation.Z, bindRotation.W]));
+
+        var axes = new GrannyAxisSystem(1f, Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
+        var engineBind = axes.ToEngineMatrix(
+            Matrix4x4.CreateFromQuaternion(bindRotation) * Matrix4x4.CreateTranslation(bindTranslation));
+        Matrix4x4.Decompose(engineBind, out _, out var engineBindRotation, out var engineBindTranslation);
+
+        var animation = importer.ImportAnimation(
+            "clip.gr2",
+            new AssetImportContext(fileSystem, language: null),
+            new ImportedSkeleton(
+                "TestSkeleton",
+                [new ImportedBone("Bip01_Test", -1, engineBindTranslation, engineBindRotation)]));
+
+        Assert.NotNull(animation);
+        Assert.Empty(importer.Diagnostics.Warnings);
+        Assert.Contains(importer.Diagnostics.Notes, note => note.Contains("0.5"));
+        Assert.Equal(4, animation!.Channels.Count);
+        foreach (var channel in animation.Channels)
+        {
+            if (channel.ChannelType == ImportedAnimationChannelType.Quaternion)
+            {
+                Assert.All(
+                    channel.Keyframes,
+                    keyframe => Assert.Equal(
+                        0f, MathF.Abs(Quaternion.Dot(keyframe.QuaternionValue, Quaternion.Identity) - 1f), 4));
+            }
+            else
+            {
+                Assert.All(
+                    channel.Keyframes,
+                    keyframe => Assert.Equal(0f, keyframe.FloatValue, 3));
+            }
+        }
+    }
+
+    [Fact]
     public void CompressedClipFailsWithKeySectionAndType()
     {
         var importer = new GrannyAnimationImporter();

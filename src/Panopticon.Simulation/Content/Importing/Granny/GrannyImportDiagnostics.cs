@@ -11,11 +11,19 @@ namespace Panopticon.Content.Importing.Granny;
 internal sealed class GrannyImportDiagnostics
 {
     private readonly List<string> _warnings = [];
+    private readonly List<string> _notes = [];
 
     public IReadOnlyList<string> Warnings => _warnings;
+
+    public IReadOnlyList<string> Notes => _notes;
 
     public void Warn(string message)
     {
         _warnings.Add(message);
+    }
+
+    public void Info(string message)
+    {
+        _notes.Add(message);
     }
 }

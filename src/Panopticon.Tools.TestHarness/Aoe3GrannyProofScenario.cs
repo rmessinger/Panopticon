@@ -354,6 +354,10 @@ public static class Aoe3GrannyProofScenario
         ITestHarnessReporter reporter,
         string outputDirectory)
     {
+        // Diagnostics accumulate on the importer across calls; report only this call's
+        // entries so each clip's log section shows its own warnings and unit-scale notes.
+        var warningCount = animationImporter.Diagnostics.Warnings.Count;
+        var noteCount = animationImporter.Diagnostics.Notes.Count;
         var imported = animationImporter.ImportAnimation(clipKey, importContext, importedModel.Skeleton);
         if (imported is null)
         {
@@ -361,9 +365,14 @@ public static class Aoe3GrannyProofScenario
             return (false, $"import failed for '{clipKey}'");
         }
 
-        foreach (var warning in animationImporter.Diagnostics.Warnings)
+        foreach (var warning in animationImporter.Diagnostics.Warnings.Skip(warningCount))
         {
             reporter.Info($"Import warning for '{clipKey}': {warning}");
+        }
+
+        foreach (var note in animationImporter.Diagnostics.Notes.Skip(noteCount))
+        {
+            reporter.Info($"Import note for '{clipKey}': {note}");
         }
 
         // Shared animation-library clips carry tracks for bones beyond a given model's

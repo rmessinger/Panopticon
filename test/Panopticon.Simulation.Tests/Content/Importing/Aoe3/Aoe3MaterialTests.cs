@@ -85,9 +85,10 @@ public sealed class Aoe3MaterialTests
         Assert.Equal(
             "Art/units/t/mata_masks.ddt",
             payload.MetallicRoughnessTexture!.ImageSource.VirtualPath);
-        Assert.Equal(
-            "Art/units/t/mata_masks.ddt",
-            payload.OcclusionTexture!.ImageSource.VirtualPath);
+        // The Masks R channel is a bimodal selection/tint mask, not ambient occlusion; the
+        // occlusion binding stays unbound until the packing is verified against the
+        // original engine. AO Intensity is still captured as the strength for that day.
+        Assert.Null(payload.OcclusionTexture);
         Assert.Equal(0.2f, payload.OcclusionStrength);
         Assert.Equal(1.0f, payload.MetallicFactor);
         Assert.Equal(1.0f, payload.RoughnessFactor);
@@ -170,8 +171,10 @@ public sealed class Aoe3MaterialTests
     }
 
     [Fact]
-    public void RangeSliderOverridesApplyAsFactors()
+    public void RangeSlidersAreRecordedWithoutScalingFactors()
     {
+        // 'Roughness Max'/'Metallic Max' are engine remap sliders, not glTF factors; the
+        // raw texture drives the model and the slider values are recorded as properties.
         var document = BuildMaterialDocument("mata", "default",
             Texture("BaseColor", @"units\t\mata_basecolor"),
             Texture("Normals", @"units\t\mata_normals"),
@@ -187,13 +190,15 @@ public sealed class Aoe3MaterialTests
 
         var material = converter.Convert("mata", @"Art\units\t\m.material.xmb", "mShape", 1);
 
-        Assert.Equal(0.5f, material.PbrMetallicRoughness!.RoughnessFactor);
-        Assert.Equal(0.25f, material.PbrMetallicRoughness.MetallicFactor);
+        Assert.Equal(1.0f, material.PbrMetallicRoughness!.RoughnessFactor);
+        Assert.Equal(1.0f, material.PbrMetallicRoughness.MetallicFactor);
+        Assert.Equal(0.5f, material.FloatPropertyValue("Aoe3Slider_Roughness Max"));
+        Assert.Equal(0.25f, material.FloatPropertyValue("Aoe3Slider_Metallic Max"));
     }
 
     [Fact]
     [Trait("Category", "Interactive")]
-    public void MusketeerMaterialsBindFourDdtTextures()
+    public void MusketeerMaterialsBindDdtTextures()
     {
         var fileSystem = Aoe3Install.CreateFileSystem();
         var context = new AssetImportContext(fileSystem, language: null);
@@ -213,9 +218,8 @@ public sealed class Aoe3MaterialTests
         Assert.EndsWith(
             "musketeer_4age_matA_Masks.ddt",
             payload.MetallicRoughnessTexture!.ImageSource.VirtualPath);
-        Assert.Equal(
-            payload.MetallicRoughnessTexture!.ImageSource.VirtualPath,
-            payload.OcclusionTexture!.ImageSource.VirtualPath);
+        // Masks R is a selection/tint mask, not occlusion; the binding stays unbound.
+        Assert.Null(payload.OcclusionTexture);
         Assert.Equal("mata", mesh.Materials[0].PropertyValue("GrannyMaterialName"));
         Assert.Equal("default", mesh.Materials[0].PropertyValue("Aoe3Materialdef"));
     }

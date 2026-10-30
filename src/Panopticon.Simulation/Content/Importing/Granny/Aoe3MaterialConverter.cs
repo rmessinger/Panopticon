@@ -158,7 +158,12 @@ internal sealed class Aoe3MaterialConverter
         var baseColor = Bind("BaseColor", "base color", ImportedTextureRole.BaseColor);
         var normals = Bind("Normals", "normal", ImportedTextureRole.Normal);
         var masks = Bind("Masks", "masks", ImportedTextureRole.MetallicRoughness);
-        var masksOcclusion = masks is null ? null : Bind("Masks", "masks", ImportedTextureRole.Occlusion);
+
+        // The Masks texture's R channel is bimodal (selection/tint mask), not ambient
+        // occlusion; binding it as occlusion darkened coats by the R value. Until the
+        // packing is verified against the original engine, only G/B (roughness/metallic)
+        // are bound and occlusion stays unbound.
+        var masksOcclusion = null as ImportedTextureBinding;
         if (textures.TryGetValue("Details", out var details))
         {
             properties.Add(ImportedMaterialProperty.FromTextureName("Aoe3DetailsTexture", details));
@@ -174,8 +179,8 @@ internal sealed class Aoe3MaterialConverter
 
         var payload = new ImportedPbrMetallicRoughness(
             baseColorTexture: baseColor,
-            metallicFactor: metallicMax > 0f ? metallicMax : 1f,
-            roughnessFactor: roughnessMax > 0f ? roughnessMax : 1f,
+            metallicFactor: 1f,
+            roughnessFactor: 1f,
             metallicRoughnessTexture: masks,
             normalTexture: normals,
             occlusionTexture: masksOcclusion,
