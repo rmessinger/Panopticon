@@ -1,0 +1,62 @@
+[
+  {
+    "test": "Panopticon, Tests, Data, InstallationLocator, SteamLocatorTests, FindInstallations FindsGeneralsOnThisMachine",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Missing Steam-discoverable Generals installation; Assert.NotEmpty() Failure: Collection was empty",
+    "tracking": "TF-01"
+  },
+  {
+    "test": "Panopticon.Tests.Data.Ani.CurFileTests.CanReadAniCursors",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Missing installed .cur corpus; System.Exception : No files were found matching file extension .cur",
+    "tracking": "TF-02"
+  },
+  {
+    "test": "Panopticon.Tests.Data.Map.BseFileTests.CanRoundtripBases",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Missing installed .bse corpus; System.Exception : No files were found matching file extension .bse",
+    "tracking": "TF-03"
+  },
+  {
+    "test": "Panopticon.Tests.Data.Wnd.WndFileTests.CanReadWndFiles",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "System.NullReferenceException : Object reference not set to an instance of an object.",
+    "tracking": "TF-04"
+  },
+  {
+    "test": "Panopticon.Tests.Data.Scb.ScbFileTests.CanRoundtripScbFiles",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Assert.Equal() Failure: Values differ Expected: 6915 Actual:   6908",
+    "tracking": "TF-05"
+  },
+  {
+    "test": "Panopticon.Tests.Data.Map.MapFileTests.CanRoundtripMaps",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Assert.Equal() Failure: Values differ Expected: 2908861 Actual:   2908978",
+    "tracking": "TF-06"
+  },
+  {
+    "test": "Panopticon.Tests.Logic.Object.Behaviors.ParkingPlaceBehaviorTests.ParkingPlaceBehavior_ReportLanding",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Assert.Equal() Failure: Values differ Expected: -1 Actual:   0",
+    "tracking": "TF-07"
+  },
+  {
+    "test": "Panopticon.Tests.Tools.ReplaySketch.P2ScenarioMatrixTests.Matrix_AllCells_AIPlaysLegalGame",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "System.ArgumentOutOfRangeException : Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')",
+    "tracking": "TF-08"
+  },
+  {
+    "test": "Panopticon, Tests, FX.TerrainScorchDataTests, InstalledMaps RecordScorchProducers",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Missing heavyfire-preview map prerequisite (broken corpus symlink); System.IO.FileNotFoundException : Could not find file '/home/rmessinger/dev/Command and Conquer Generals/maps/heavyfire-preview/heavyfire-preview.map'.",
+    "tracking": "TF-09"
+  },
+  {
+    "test": "Panopticon, Tests, Tools, ReplaySketch, P6cSpecialPowerTests, HijackerUpdate HijacksEnemyVehicleOnContact",
+    "since": "82b280417f53f039914611930c1aa039d2fd9b3d",
+    "reason": "Assert.Equal() Failure: Values differ",
+    "tracking": "TF-10"
+  }
+]

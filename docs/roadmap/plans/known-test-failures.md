@@ -27,6 +27,17 @@ Test paths below are relative to `test/Panopticon.Simulation.Tests/`.
 | TF-07 | `Logic/Object/Behaviors/ParkingPlaceBehaviorTests.ParkingPlaceBehavior_ReportLanding` | Third landing clearance returns runway 0 instead of -1 while both landing slots are occupied. | Runway reservation and release semantics in `ParkingPlaceBehaviour`; distinguish fixture assumptions from a behavior defect. |
 | TF-08 | `Tools/ReplaySketch/P2ScenarioMatrixTests.Matrix_AllCells_AIPlaysLegalGame` | Replay parser indexes the final element of an empty chunk list. | Empty replay export from the matrix scenario and `ReplayFile`'s empty-stream contract. AI assertions have not yet been reached. |
 
+Additional failures observed at baseline commit `82b280417f53f039914611930c1aa039d2fd9b3d` (2026-10-30), both reproduced in isolation:
+
+| ID | Test | Recorded symptom | Investigation target |
+|---|---|---|---|
+| TF-09 | `FX/TerrainScorchDataTests.InstalledMaps_RecordScorchProducers` | Missing `maps/heavyfire-preview/heavyfire-preview.map`. | Broken installed-corpus symlink to `/tmp/opencode/m0-maps/Command & Conquer Generals/Maps/heavyfire/heavyfire.map`; prerequisite-blocked on this host. |
+| TF-10 | `Tools/ReplaySketch/P6cSpecialPowerTests.HijackerUpdate_HijacksEnemyVehicleOnContact` | Vehicle owner remains USA (player 2), expected GLA (player 4), after 300 movement frames. | Contact-hijack movement and ownership transfer; cause unconfirmed. |
+
+## Machine-readable baseline
+
+[`test/known-failures.json`](../../../test/known-failures.json) is the machine-readable baseline, derived from baseline TRX runs. Test names match TRX `UnitTestResult.testName` values verbatim, including runner-specific display formatting. This document remains the remediation plan.
+
 ## Execution order
 
 ### 1. Establish a reproducible baseline
