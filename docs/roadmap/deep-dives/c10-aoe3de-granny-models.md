@@ -237,6 +237,28 @@ Recorded by the C10c skin, animation, animfile, and proof work:
   `LAUNCHPOINT` spellings, `Bip01_L/R_Toe0`, `Ponytail1`), horse_idle_A 143 of 143 (none). The
   proof drops extra-track channels before binding and reports them; binding then resolves every
   remaining target with zero misses.
+- Curve semantics (corrected after the first animated proof was found wrong): format-1
+  `DaK32fC32f` curves are B-splines at the header degree (quadratic corpus-wide), not linear
+  keyframe lists; knots are a clamped knot vector and controls form the control polygon. The
+  decoder evaluates De Boor over the full clamped vector (first and last controls hit exactly,
+  values stay in the control hull); a linear-lerp read of knots-as-times misshapes mid-clip.
+- Channel composition (corrected with it): Granny clips store absolute local transforms per
+  track, while the runtime composes channels as offsets on the bone bind (`AnimatedOffset *
+  bind`). Feeding absolutes directly double-composed the bind and catastrophically splayed the
+  meshes. `GrannyAnimationImporter.ImportAnimation(name, context, targetSkeleton)` converts each
+  sampled local to `engineLocal * inverse(bindLocal)` against the target skeleton; the
+  parameterless GR2 overload throws, since a targetless absolute clip cannot convert. Clips
+  embed no skeleton of their own, so the caller supplies the model's.
+- Visual corrections found by reviewing the published evidence (the first animated proof and the
+  v3 stills were wrong): multi-influence vertices collapsed toward the origin because
+  `in_Position1`/`in_Normal1` fell back to zero when a source has no W3D secondary position
+  (fallback is now the primary position); standalone captures double-transformed skinned meshes
+  by uploading `AbsoluteBoneTransforms` where `ModelMesh.BuildRenderList` uses the world matrix;
+  and the capture camera fitted rest-pose bounds, cropping animated poses (captures can now pass
+  explicit `CameraFitBounds`; the proof computes CPU-skinned bounds across the sampled times).
+- The musket, hats, and backpack the animfile lists are attachments (separate models bound
+  `bone_gun` -> `Bip01 Prop1` etc.); the body meshes carry no weapon geometry, so their absence
+  from the proof renders is expected, not a defect.
 - Animfile resolution: `protoy` names the animfile; the model component is `ModelComp` when
   present, else the unit-named component, else the first component resolving to one model.
   Tech variants may nest further logics; non-tech logics such as Destruction select their
@@ -251,12 +273,18 @@ Recorded by the C10c skin, animation, animfile, and proof work:
 - Ranger calibration corrected: the visible `AIRNGR-SKN` mesh height is 14.61 units
   (pixel-verified), not the 12.03-unit skeleton span that helmet and boot geometry extends past;
   the proof now uses 14.61 units per 1.8 m human = 8.117 game units per meter.
-- Animated proof: march, volley, and idle clips sampled at 6 fixed times each; every frame
-  captured twice and byte-identical. Evidence in the viewer:
-  `aoe3-musketeer-march-c10c-v1.gif`, `aoe3-musketeer-volley-c10c-v1.gif`,
-  `aoe3-horse-idle-c10c-v1.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v3.png`,
-  `aoe3-redcoat-beside-ranger-c10c-v1.png`, `aoe3-horse-beside-ranger-c10c-v3.png`, and 18
-  per-frame PNGs under `frames/aoe3-animated-c10c-v1/`.
+- Animated proof (re-captured after the corrections above; the v1 GIFs and v3 stills are
+  superseded and retained only as history): march, volley, and idle clips sampled at 6 fixed
+  times each; every frame captured twice and byte-identical; GIF frame timing follows each
+  clip's duration. Vision review: coherent marching cycle, volley arm sequence, and a
+  near-static standing idle that matches the clip data (the idle is subtle by content: head,
+  neck, and legs hold within ~1 degree, tail moves). Evidence in the viewer:
+  `aoe3-musketeer-march-c10c-v4.gif`, `aoe3-musketeer-volley-c10c-v4.gif`,
+  `aoe3-horse-idle-c10c-v4.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v4.png`,
+  `aoe3-redcoat-beside-ranger-c10c-v2.png`, `aoe3-horse-beside-ranger-c10c-v4.png`, and 18
+  per-frame PNGs under `frames/aoe3-animated-c10c-v2/`. Known cosmetic remainder: imported
+  figures stand ~60 px lower than the Ranger in the pair captures (offset perspective, ground
+  plane not drawn), and the musketeer renders ~0.9x the Ranger's projected height.
 
 ## 8. Risks
 
