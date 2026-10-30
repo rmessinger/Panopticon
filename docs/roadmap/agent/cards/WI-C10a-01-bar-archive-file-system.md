@@ -22,16 +22,17 @@ A read-only, case-insensitive `BarFileSystem` exposes every entry of the `.bar` 
 
 ## Steps
 
-1. Add project `src/Panopticon.FileFormats.Bar` (nullable enabled, references `Panopticon.FileFormats`), add it to `Panopticon.sln`, and reference it from `Panopticon.IO`.
+1. Add project `src/Panopticon.FileFormats.Bar` (nullable enabled, references `Panopticon.FileFormats` and `Panopticon.FileFormats.Lz4`), add it to `Panopticon.sln`, and reference it from `Panopticon.IO`.
 2. Add `BarArchive.Read(stream)` and `BarEntry`: `ESPN` magic, version 6, `0x44332211`, checksum, file count, u64 table offset at `0x120`; per entry offset, decompressed, stored, and padded sizes, UTF-16LE path, compression flag. Unknown versions and magics throw with path and offset.
-3. Add `Lz4BlockDecoder.Decode(ReadOnlySpan<byte>, Span<byte>)` (raw LZ4 block format) and the `alz4` wrapper (magic, decompressed size, compressed size, version 1). Output length must equal the recorded size.
+3. Add `Lz4BlockDecoder.Decode(ReadOnlySpan<byte>, Span<byte>)` (raw LZ4 block format) in a new `src/Panopticon.FileFormats.Lz4` project, unless `WI-C12a-01` already created it, and the `alz4` wrapper (magic, decompressed size, compressed size, version 1). Output length must equal the recorded size.
 4. Add `BarFileSystem : FileSystem` over every `*.bar` under the given directory, keyed by `Art\...`-style relative paths normalized with `FileSystem.NormalizeFilePath`. Flag 0 opens a bounded stream; flag 1 decodes `alz4` into a memory stream; flag 2 (encrypted, `Sound.bar`) and unknown flags throw with archive and entry path on `Open`.
 5. Add install-free tests with a synthetic archive (stored, `alz4`, encrypted entries) and LZ4 vectors including overlapping matches.
 6. Add an Interactive test `Aoe3BarArchiveTests` that reads all 42 tables exactly to end of file and opens `Art\units\infantry_ranged\musketeer\musketeer_4age.gr2` at its recorded size.
 
 ## Files likely to change
 
-- `src/Panopticon.FileFormats.Bar/` (new: `BarArchive.cs`, `BarEntry.cs`, `BarCompression.cs`, `Lz4BlockDecoder.cs`, `Alz4.cs`)
+- `src/Panopticon.FileFormats.Bar/` (new: `BarArchive.cs`, `BarEntry.cs`, `BarCompression.cs`, `Alz4.cs`)
+- `src/Panopticon.FileFormats.Lz4/Lz4BlockDecoder.cs` (new, unless `WI-C12a-01` landed)
 - `src/Panopticon.IO/BarFileSystem.cs` (new), `Panopticon.IO.csproj`, `Panopticon.sln`
 - `test/Panopticon.Simulation.Tests/Content/Importing/Aoe3/` (new tests), test `.csproj` reference
 

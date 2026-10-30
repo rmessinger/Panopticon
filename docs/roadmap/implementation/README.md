@@ -322,6 +322,17 @@ Source of truth: [c10-aoe3de-granny-models.md](../deep-dives/c10-aoe3de-granny-m
 | [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10a | Archives, XMB, and DDT (`WI-C10a-01`, then `WI-C10a-02` and `WI-C10a-03` in parallel) |
 | [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10b | Static Granny models (`WI-C10b-01` after `WI-C10a-01`, then `WI-C10b-02..04`) |
 | [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10c | Skins, clips, and animfile resolution (`WI-C10c-01..03`, then `WI-C10c-04`) |
+
+## Track C · C12a-C12c : SHOGUN 2 models
+
+Source of truth: [c12-total-war-shogun2-models.md](../deep-dives/c12-total-war-shogun2-models.md) :
+[Architecture diagrams §11](../deep-dives/c12-total-war-shogun2-models.md#11-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [c12-total-war-shogun2-models.md §9](../deep-dives/c12-total-war-shogun2-models.md#9-phase-split) | C12a | Packs, LZ4, and DB tables (`WI-C12a-01`, then `WI-C12a-02`) |
+| [c12-total-war-shogun2-models.md §9](../deep-dives/c12-total-war-shogun2-models.md#9-phase-split) | C12b | Static models and parts (`WI-C12b-02` in parallel with C12a; `WI-C12b-01` after `WI-C12a-01`, then `WI-C12b-03..05`) |
+| [c12-total-war-shogun2-models.md §9](../deep-dives/c12-total-war-shogun2-models.md#9-phase-split) | C12c | Clips, skins, composition, and tables (`WI-C12c-01` after `WI-C12a-01`, then `WI-C12c-02..05`, then `WI-C12c-06`) |
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

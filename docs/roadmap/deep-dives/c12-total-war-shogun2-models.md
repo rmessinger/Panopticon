@@ -156,15 +156,47 @@ separate skeleton files exist.
 
 ## 9. Phase split
 
-| Phase | Deliverable | Proof |
-|---|---|---|
-| C12a | `PFHs` variant of the C9 pack file system with LZ4 entries, DB reader for section 6 | All packs enumerate with section 2 counts; every compressed entry decodes to its size; proof unit rows resolve |
-| C12b | RMV2 v0-v2 static models, `VMPF` v3 parts in bind pose, Complete Edition texture sets on C3 PBR | Castle gate piece, Armstrong gun, ashigaru head, and horse body render textured beside a Generals Ranger |
-| C12c | Version 1 clips with embedded skeletons, `VMPF` skins, `.unit_variant` composition, tables and fragments | A seeded yari ashigaru squad renders with distinct variants and plays `yari_charge`; the horse plays an idle |
+| Phase | Deliverable | Proof | Cards |
+|---|---|---|---|
+| C12a | `PFHs` variant of the shared pack file system with LZ4 entries, DB reader for section 6 | All packs enumerate with section 2 counts; every compressed entry decodes to its size; proof unit rows resolve | [`WI-C12a-01`](../agent/cards/WI-C12a-01-pack-file-system.md), [`WI-C12a-02`](../agent/cards/WI-C12a-02-db-table-reader.md) |
+| C12b | RMV2 v0-v2 static models, `VMPF` v3 parts in bind pose, Complete Edition texture sets on C3 PBR | Castle gate piece, Armstrong gun, ashigaru head, and horse body render textured beside a Generals Ranger | [`WI-C12b-01`](../agent/cards/WI-C12b-01-mesh-layout-investigation.md), [`WI-C12b-02`](../agent/cards/WI-C12b-02-dds-dx10-bc7-decode.md), [`WI-C12b-03`](../agent/cards/WI-C12b-03-rmv2-static-import.md), [`WI-C12b-04`](../agent/cards/WI-C12b-04-part-import-and-materials.md), [`WI-C12b-05`](../agent/cards/WI-C12b-05-static-proof.md) |
+| C12c | Version 1 clips with embedded skeletons, `VMPF` skins, `.unit_variant` composition, tables and fragments | A seeded yari ashigaru squad renders with distinct variants and plays `yari_charge`; the horse plays an idle | [`WI-C12c-01`](../agent/cards/WI-C12c-01-anim-frame-investigation.md), [`WI-C12c-02`](../agent/cards/WI-C12c-02-anim-import.md), [`WI-C12c-03`](../agent/cards/WI-C12c-03-part-skin-import.md), [`WI-C12c-04`](../agent/cards/WI-C12c-04-unit-variant-composer.md), [`WI-C12c-05`](../agent/cards/WI-C12c-05-animation-table-resolver.md), [`WI-C12c-06`](../agent/cards/WI-C12c-06-animated-proof.md) |
 
-Shared code: C9a and C12a share one pack project with a header variant per magic. Whichever phase
-lands first creates it; the other adds its variant. C12a also adds the LZ4 block decoder, shared
-with [C10a](c10-aoe3de-granny-models.md) when C10a lands first.
+Card order: `WI-C12a-01` and `WI-C12b-02` first, in parallel. `WI-C12a-02` and `WI-C12b-01` after
+`WI-C12a-01`. `WI-C12b-03` after `WI-C12b-01`; `WI-C12b-04` after `WI-C12b-02` and `WI-C12b-03`;
+`WI-C12b-05` last in C12b. `WI-C12c-01` after `WI-C12a-01`; `WI-C12c-02` after `WI-C12c-01`;
+`WI-C12c-03` after `WI-C12b-04` and `WI-C12c-02`; `WI-C12c-04` after `WI-C12c-03`; `WI-C12c-05`
+after `WI-C12a-02` and `WI-C12c-02`; `WI-C12c-06` last.
+
+### Implementation decisions
+
+- Shared pack project: `Panopticon.FileFormats.Pack` holds `PackFile` with one header variant per
+  magic (`PFHs` here, `PFH5` added by [C9a](c9-total-war-3k-models.md#9-phase-split)) and the DB
+  table reader, which takes a caller-supplied schema. `PackFileSystem` lives in `Panopticon.IO`
+  beside `BigFileSystem`. Whichever of C9a and C12a lands first creates both.
+- LZ4: one in-repo `Lz4BlockDecoder` in a new `Panopticon.FileFormats.Lz4` project, shared with
+  C10a `alz4` entries. Whichever of C10a and C12a lands first creates it. No package is added.
+- SHOGUN 2 readers live in `Panopticon.FileFormats.Shogun2`: `Rmv2File` (versions 0 to 2),
+  `VmpfFile`, `VrntFile`, `AnimFile`, the DB schema subset, and the animation-table and fragment
+  text parsers. No engine dependency.
+- Importers: `Rmv2ModelImporter` (id `RMV2`, models and parts) and `Shogun2AnimationImporter` (id
+  `ANIM`). Asset keys are pack paths, for example
+  `variantmodels\unitparts\japan\heads\ashigaru\mesh.variant_part_mesh`.
+- Textures: `DdsFile` gains the `DX10` extended header, and `DdsBlockDecoder` gains BC7. The
+  `ImportedImageDecoder` DDS branch decodes the base mip to RGBA for imported sources and lets the
+  materializer regenerate mips, the same route as C10a DDT. W3D textures keep their GPU path.
+- MRA maps: if `WI-C12b-01` confirms an order other than the glTF layout (roughness in G, metal in
+  B, occlusion in R), `WI-C12b-04` adds a channel remap applied after decode, not a converted copy
+  in the pack.
+- Colour masks: recorded, not tinted. Parts render untinted, as C9 does, until faction tint
+  semantics are settled.
+- Composition: `Shogun2UnitVariantComposer` picks slot choices with a seeded `System.Random` keyed
+  by unit key, role, and soldier index, then merges parts into one `ImportedModel` on the clip
+  skeleton. Composition runs once per soldier, never per frame.
+- Install discovery: `SHOGUN2_PATH` names the install root that holds `data/`. Tests that need it
+  are `Category=Interactive`, like the EE2 and AoE3 tests.
+- `ImportedMesh.Indices` is `ushort`: an RMV2 or `VMPF` mesh over 65,535 vertices fails with file and
+  mesh name; no SHOGUN 2 split rule is needed unless the investigation finds one.
 
 ## 10. Risks
 
@@ -175,6 +207,250 @@ with [C10a](c10-aoe3de-granny-models.md) when C10a lands first.
 
 ## 11. Architecture diagrams
 
-`†` Placeholder. Class and sequence diagrams grounded in the C1 importer seam, the C3 materializer,
-the shared pack reader, and the new RMV2, `VMPF`, and clip readers are required before the first
-C12 source-edit card is marked `Ready`.
+Types marked new are added by C12 cards (or by C9a and C10a if they land first); the rest exist
+today.
+
+```mermaid
+classDiagram
+  class FileSystem {
+    GetFile(path) FileSystemEntry
+    GetFilesInDirectory(path, pattern, option)
+  }
+  class BigFileSystem
+  class PackFileSystem {
+    new
+    PackFileSystem(dataDirectory)
+    GetFile(path) FileSystemEntry
+  }
+  class PackFile {
+    new
+    Read(stream, path) PackFile$
+    Variant
+    Entries
+  }
+  class PackEntry {
+    new
+    Path
+    Offset
+    UncompressedSize
+    StoredSize
+  }
+  class Lz4BlockDecoder {
+    new
+    Decode(source, destination)$
+  }
+  class DbTable {
+    new
+    Read(stream, schema) DbTable$
+    Rows
+  }
+  class Shogun2DbSchema {
+    new
+    Units
+    BattleEntities
+    MountVariants
+    UnitStatsLand
+  }
+  FileSystem <|-- BigFileSystem
+  FileSystem <|-- PackFileSystem
+  PackFileSystem --> PackFile : one per .pack
+  PackFile --> PackEntry
+  PackFileSystem ..> Lz4BlockDecoder : flag 0x20 entries
+  DbTable ..> Shogun2DbSchema
+
+  class Rmv2File {
+    new
+    Read(stream) Rmv2File$
+    Version
+    Lods
+  }
+  class VmpfFile {
+    new
+    Read(stream) VmpfFile$
+    Vertices
+    Influences
+  }
+  class VrntFile {
+    new
+    Read(stream) VrntFile$
+    Slots
+  }
+  class AnimFile {
+    new
+    Read(stream) AnimFile$
+    FrameRate
+    Bones
+    Frames
+  }
+  class AnimationTableSet {
+    new
+    Parse(text) AnimationTableSet$
+  }
+  class FragmentFile {
+    new
+    Parse(text) FragmentFile$
+  }
+
+  class IModelImporter
+  class IAnimationImporter
+  class AssetImportContext {
+    FileSystem
+  }
+  class Rmv2ModelImporter {
+    new
+    Id RMV2
+    ImportModel(name, context)
+    ImportSkeleton(name, context)
+  }
+  class Shogun2AnimationImporter {
+    new
+    Id ANIM
+    ImportAnimation(name, context)
+  }
+  class Shogun2MaterialConverter {
+    new
+    Convert(textureDirectory, context) ImportedMaterial
+  }
+  class Shogun2UnitVariantComposer {
+    new
+    Compose(variantPath, skeleton, seed, context) ImportedModel
+  }
+  class Shogun2AnimationResolver {
+    new
+    Resolve(unitKey, slot, context) Shogun2ClipChoice
+  }
+  IModelImporter <|.. Rmv2ModelImporter
+  IAnimationImporter <|.. Shogun2AnimationImporter
+  Rmv2ModelImporter --> Rmv2File
+  Rmv2ModelImporter --> VmpfFile
+  Rmv2ModelImporter --> Shogun2MaterialConverter
+  Rmv2ModelImporter --> AssetImportContext
+  Shogun2AnimationImporter --> AnimFile
+  Shogun2UnitVariantComposer --> VrntFile
+  Shogun2UnitVariantComposer --> Rmv2ModelImporter
+  Shogun2AnimationResolver --> DbTable
+  Shogun2AnimationResolver --> AnimationTableSet
+  Shogun2AnimationResolver --> FragmentFile
+
+  class ImportedImageDecoder {
+    Decode(source, fileSystem) DecodedImportedImage
+  }
+  class DdsFile {
+    FromStream(stream) DdsFile$
+    Dx10Header new
+  }
+  class DdsBlockDecoder {
+    DecodeBaseMip(mip, format)$
+    DecodeBc7 new
+  }
+  class ImportedTextureMaterializer
+  class ImportedModelMaterializer {
+    MaterializeModel(imported, context)$
+  }
+  Shogun2MaterialConverter ..> ImportedImageDecoder : DDS virtual paths
+  ImportedImageDecoder --> DdsFile : DDS magic, imported sources
+  ImportedImageDecoder --> DdsBlockDecoder : BC1, BC3, BC7
+  ImportedTextureMaterializer --> ImportedImageDecoder
+  ImportedModelMaterializer --> ImportedTextureMaterializer
+
+  class Shogun2ProofScenario {
+    new
+    Run(installation, config, reporter)$
+  }
+  class StandaloneModelCapture {
+    Capture(...)$
+  }
+  Shogun2ProofScenario --> PackFileSystem
+  Shogun2ProofScenario --> Rmv2ModelImporter
+  Shogun2ProofScenario --> Shogun2UnitVariantComposer
+  Shogun2ProofScenario --> Shogun2AnimationResolver
+  Shogun2ProofScenario --> Shogun2AnimationImporter
+  Shogun2ProofScenario --> ImportedModelMaterializer
+  Shogun2ProofScenario --> StandaloneModelCapture
+```
+
+Static import of one model or part (C12b):
+
+```mermaid
+sequenceDiagram
+  participant S as Shogun2ProofScenario
+  participant FS as PackFileSystem
+  participant MI as Rmv2ModelImporter
+  participant R as Rmv2File or VmpfFile
+  participant MC as Shogun2MaterialConverter
+  participant MM as ImportedModelMaterializer
+  participant TM as ImportedTextureMaterializer
+  participant ID as ImportedImageDecoder
+  S->>FS: new PackFileSystem(SHOGUN2_PATH/data)
+  S->>MI: ImportModel(pack path, AssetImportContext(FS))
+  MI->>FS: GetFile(path).Open()
+  FS-->>MI: raw or LZ4-decoded bytes
+  MI->>R: Read(stream)
+  alt unsupported version or signature
+    R-->>MI: InvalidDataException(version)
+    MI-->>S: rethrow with pack path
+  else RMV2 v0-v2 or VMPF v3
+    R-->>MI: LODs, meshes, vertices, texture directory
+    loop every mesh of LOD 0
+      MI->>MC: Convert(texture directory, context)
+      MC->>FS: probe texture_basecolor, _mra, _normal, _diffuse
+      MC-->>MI: PBR ImportedMaterial with DDS virtual paths
+    end
+    MI-->>S: ImportedModel
+  end
+  S->>MM: MaterializeModel(imported, loadContext)
+  MM->>TM: GetTexture(VirtualPath .dds)
+  TM->>ID: Decode(source)
+  ID-->>TM: RGBA base mip, MRA remapped if needed
+  MM-->>S: Model
+```
+
+Composite animated soldier (C12c):
+
+```mermaid
+sequenceDiagram
+  participant S as Shogun2ProofScenario
+  participant AR as Shogun2AnimationResolver
+  participant DB as DbTable
+  participant AI as Shogun2AnimationImporter
+  participant VC as Shogun2UnitVariantComposer
+  participant MI as Rmv2ModelImporter
+  participant MM as ImportedModelMaterializer
+  participant CAP as StandaloneModelCapture
+  S->>AR: Resolve(ashigaru_inf_yari_ashigaru, charge slot, context)
+  AR->>DB: units and battle_entities rows
+  AR->>AR: animation_tables.txt to table, fragment slot to weighted clips
+  AR-->>S: clip paths, skeleton type
+  S->>AI: ImportSkeleton and ImportAnimation(yari_charge.anim)
+  AI-->>S: ImportedSkeleton from bone table, ImportedAnimation with BoneName targets
+  loop every soldier index
+    S->>VC: Compose(soldier.unit_variant, skeleton, seed, context)
+    VC->>MI: ImportModel(part per slot choice)
+    MI-->>VC: skinned part
+    VC-->>S: merged ImportedModel
+    S->>MM: MaterializeModel(merged)
+  end
+  S->>CAP: Capture frames at fixed times
+  CAP-->>S: PNGs, missing-target count 0
+```
+
+## Appendix: grounding
+
+| Fact | Location |
+|---|---|
+| Importer seams | `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs:10`, `IAnimationImporter.cs:10` |
+| Format id to importer mapping, glTF only today | `src/Panopticon.Simulation/Content/Importing/ExternalFormatFactory.cs:13` |
+| Import context holds a `FileSystem` | `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs:18` |
+| File system base and archive precedent | `src/Panopticon.IO/FileSystem.cs:3`, `BigFileSystem.cs:5` |
+| Four bone indices and weights per vertex | `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs:28`-`:42` |
+| 16-bit indices | `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs:20` |
+| House-colour flag on imported meshes | `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs:30` |
+| PBR material with metallic-roughness, normal, occlusion bindings | `src/Panopticon.Simulation/Content/Importing/ImportedPbrMetallicRoughness.cs:21` |
+| Image decode rejects DDS for imported sources | `src/Panopticon.Simulation/Content/Loaders/ImportedImageDecoder.cs:64` |
+| DDS formats: BC1-BC3, RG8, RGBA8, RGBA16F; FourCC `DXT1/3/5` only, no `DX10` header | `src/Panopticon.Simulation/Data/Dds/DdsImageFormat.cs:3`, `DdsFile.cs:209`-`:226` |
+| CPU BC decoder, no BC7 | `src/Panopticon.Simulation/Data/Dds/DdsBlockDecoder.cs:24`-`:26` |
+| Materializer and mip regeneration | `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs:27`, `ImportedTextureMaterializer.cs:141` |
+| Capture helper | `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:42` |
+| Proof scenario precedent | `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs:18` (`Ee2NifProof`) |
+| Interactive install-env test precedent | `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs:17`, `:27` |
+| In-repo decompressor precedent | `src/Panopticon.FileFormats.RefPack/` |

@@ -79,7 +79,7 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 | C9a-C9d | [`c9-total-war-3k-models.md`](deep-dives/c9-total-war-3k-models.md) | [Architecture diagrams](deep-dives/c9-total-war-3k-models.md#11-architecture-diagrams) `†` | — |
 | C10a-C10d | [`c10-aoe3de-granny-models.md`](deep-dives/c10-aoe3de-granny-models.md) | [Architecture diagrams](deep-dives/c10-aoe3de-granny-models.md#9-architecture-diagrams) | [`WI-C10a-01`](agent/cards/WI-C10a-01-bar-archive-file-system.md) to [`WI-C10c-04`](agent/cards/WI-C10c-04-aoe3-animated-proof.md); C10d none until its review |
 | C11a-C11c | [`c11-rise-of-legends-models.md`](deep-dives/c11-rise-of-legends-models.md) | [Architecture diagrams](deep-dives/c11-rise-of-legends-models.md#8-architecture-diagrams) `†` | — |
-| C12a-C12c | [`c12-total-war-shogun2-models.md`](deep-dives/c12-total-war-shogun2-models.md) | [Architecture diagrams](deep-dives/c12-total-war-shogun2-models.md#11-architecture-diagrams) `†` | — |
+| C12a-C12c | [`c12-total-war-shogun2-models.md`](deep-dives/c12-total-war-shogun2-models.md) | [Architecture diagrams](deep-dives/c12-total-war-shogun2-models.md#11-architecture-diagrams) | [`WI-C12a-01`](agent/cards/WI-C12a-01-pack-file-system.md) to [`WI-C12c-06`](agent/cards/WI-C12c-06-animated-proof.md) |
 
 ## Cross-track dependencies
 

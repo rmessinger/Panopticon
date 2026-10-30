@@ -139,8 +139,9 @@ last.
 - Two format projects, no engine dependency: `Panopticon.FileFormats.Bar` (archive table, `alz4`,
   XMB, DDT header and mips) and `Panopticon.FileFormats.Granny` (container, type tree, generic
   objects). `BarFileSystem` lives in `Panopticon.IO` beside `BigFileSystem`.
-- LZ4 block decoding is an in-repo decoder in `Panopticon.FileFormats.Bar`, matching the in-repo
-  RefPack precedent; no package is added.
+- LZ4 block decoding is an in-repo decoder in a `Panopticon.FileFormats.Lz4` project, matching the
+  in-repo RefPack precedent and shared with [C12a](c12-total-war-shogun2-models.md#9-phase-split)
+  packs; whichever phase lands first creates it. No package is added.
 - DDT reaches C3 through `ImportedImageDecoder`: an `RTS3` magic branch decodes the base mip to
   RGBA with `DdsBlockDecoder` and lets the materializer regenerate mips. No GPU-side
   pre-installation as in the EE2 texcache path, because C3 PBR bindings resolve textures through
