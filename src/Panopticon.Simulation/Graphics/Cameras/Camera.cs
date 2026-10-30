@@ -17,6 +17,23 @@ public sealed class Camera
     private Matrix4x4 _world, _projection;
 
     private float _fieldOfView = MathUtility.ToRadians(50);
+    private float? _orthographicHeight;
+
+    /// <summary>Visible vertical span for orthographic projection; null keeps perspective.</summary>
+    public float? OrthographicHeight
+    {
+        get => _orthographicHeight;
+        set
+        {
+            if (value.HasValue)
+            {
+                ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value.Value);
+            }
+
+            _orthographicHeight = value;
+            UpdateProjection();
+        }
+    }
 
     /// <summary>
     /// Gets or sets a value that represents the camera's field of view in radians.
@@ -137,6 +154,13 @@ public sealed class Camera
 
     private void CreateProjection(out Matrix4x4 projection)
     {
+        if (_orthographicHeight is { } height)
+        {
+            projection = Matrix4x4.CreateOrthographic(
+                height * Viewport.Width / Viewport.Height, height, NearPlaneDistance, FarPlaneDistance);
+            return;
+        }
+
         projection = Matrix4x4.CreatePerspectiveFieldOfView(
             GetVerticalFieldOfView(), Viewport.Width / Viewport.Height,
             NearPlaneDistance, FarPlaneDistance);

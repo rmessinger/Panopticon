@@ -61,10 +61,6 @@ public static class Aoe3GrannyProofScenario
     // honest reference for placing models beside each other.
     private const float RangerVisibleHeightUnits = 14.61f;
 
-    // Fixed X separation between the Ranger (at the origin) and each AoE3 model; wide
-    // enough that both silhouettes stay separate in the fitted camera frame.
-    private const float SideOffsetUnits = 30f;
-
     // Sample fractions spread across each clip; deterministic set for the double capture.
     private static readonly float[] FrameFractions = [0.15f, 0.3f, 0.45f, 0.6f, 0.75f, 0.9f];
 
@@ -544,14 +540,6 @@ public static class Aoe3GrannyProofScenario
 
         var model = ImportedModelMaterializer.MaterializeModel(imported, loadContext);
 
-        var modelBounds = StandaloneModelCapture.ComputeEnclosingBoundingBox(model);
-
-        // Both models stand on the world ground plane; the AoE3 model is scaled from
-        // meters into Generals units and offset to a fixed spot beside the Ranger.
-        var scale = unitsPerMeter;
-        var offset = new Vector3(SideOffsetUnits, 0f, -modelBounds.Min.Z * scale);
-        var rangerWorld = Matrix4x4.Identity;
-        var modelWorld = Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(offset);
         var options = new StandaloneCaptureOptions(
             Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f));
 
@@ -559,23 +547,21 @@ public static class Aoe3GrannyProofScenario
 
         // First execution of a material pipeline variant after device creation is unstable
         // (see Ee2NifProof); warm the pair once before the real capture.
-        StandaloneModelCapture.CapturePair(
+        StandaloneModelCapture.CaptureGroundedPair(
             game,
             model,
-            modelWorld,
+            unitsPerMeter,
             ranger,
-            rangerWorld,
             loadContext,
             Path.Combine(Path.GetTempPath(), $"aoe3-granny-proof-warmup-{outputFileName}"),
             new Size(CaptureSize, CaptureSize),
             options);
 
-        StandaloneModelCapture.CapturePair(
+        StandaloneModelCapture.CaptureGroundedPair(
             game,
             model,
-            modelWorld,
+            unitsPerMeter,
             ranger,
-            rangerWorld,
             loadContext,
             outputPath,
             new Size(CaptureSize, CaptureSize),

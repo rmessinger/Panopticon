@@ -323,13 +323,16 @@ Recorded by the C10c skin, animation, animfile, and proof work:
   (Oodle1-compressed) mesh; it proves the colour pipeline, not per-region mapping, which
   resolves when C10d unlocks the real variant models. Evidence in the viewer:
   `aoe3-musketeer-march-c10c-v6.gif`, `aoe3-musketeer-volley-c10c-v6.gif`,
-  `aoe3-horse-idle-c10c-v6.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v6.png`,
-  `aoe3-redcoat-beside-ranger-c10c-v4.png`, `aoe3-horse-beside-ranger-c10c-v6.png`, debug
+  `aoe3-horse-idle-c10c-v6.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v7.png`,
+  `aoe3-redcoat-beside-ranger-c10c-v5.png`, `aoe3-horse-beside-ranger-c10c-v7.png`, debug
   views `aoe3-musketeer-albedo-debug-v1.png` (three-view sheet) and
   `aoe3-redcoat-albedo-debug-v1.png`, and 18 per-frame PNGs under
-  `frames/aoe3-animated-c10c-v4/`. Known cosmetic remainder: imported figures stand ~60 px
-  lower than the Ranger in the pair captures (offset perspective, ground plane not drawn), and
-  the musketeer renders ~0.9x the Ranger's projected height.
+  `frames/aoe3-animated-c10c-v4/`. Corrected comparison stills use mesh-grounded pairs and a
+  level orthographic camera with a shared baseline (see `docs/screenshots.md`). Earlier
+  comparisons grounded only the import using authored bounds; Ranger collision bounds also
+  extended below its visible feet. Both subjects now share world Z = 0 without changing
+  scales. The musketeer and Ranger have near-equal rendered heights; physical scale remains
+  empirically calibrated rather than independently verified.
 
 ## 8. Risks
 
