@@ -642,9 +642,11 @@ internal static class GrannyMeshConverter
 
     private static Vector2? ReadTextureCoordinates(GrannyObject vertex)
     {
+        // Granny stores DCC-convention UVs (origin bottom-left, v up); texture rows run
+        // top-first, so v is flipped on import (LSLib's exporter does the same by default).
         if (vertex.GetArray("TextureCoordinates0") is float[] coordinates && coordinates.Length >= 2)
         {
-            return new Vector2(coordinates[0], coordinates[1]);
+            return new Vector2(coordinates[0], 1f - coordinates[1]);
         }
 
         return null;

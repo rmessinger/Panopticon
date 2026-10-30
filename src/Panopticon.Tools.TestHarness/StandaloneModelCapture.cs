@@ -216,11 +216,10 @@ internal static class StandaloneModelCapture
                 Scene3D = scene,
             });
 
-            // The scene target holds linear-light values under the linear colour preset (the
-            // sRGB transfer normally happens in the output pass, which standalone captures
-            // bypass); apply the same transfer here so captures match what would be presented.
-            var encodeSrgb = game.GraphicsSettings.ColourSpaceMode == ColourSpaceMode.Linear;
-            FrameCapturer.CaptureToPng(game.GraphicsDevice, renderTarget.ColorTarget, outputPath, encodeSrgb);
+            // Execute's output pass already applies the sRGB transfer into the capture
+            // target (verified: a (0.2, 0.4, 0.9) clear colour captures as (124, 170, 243)),
+            // so the PNG holds display-ready values.
+            FrameCapturer.CaptureToPng(game.GraphicsDevice, renderTarget.ColorTarget, outputPath);
         }
         finally
         {

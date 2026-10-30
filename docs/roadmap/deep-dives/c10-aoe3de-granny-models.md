@@ -265,21 +265,39 @@ Recorded by the C10c skin, animation, animfile, and proof work:
   undamaged last phase (`p99`). Weighted GrannyAnim variants pick the highest weight, first on
   ties (horse idle: A and I both weight 40; A wins). Rider attachments resolve through includes
   whose model component is named `ModelComp`, not the attachment name.
-- Default `matA` texture sets are intentionally desaturated for runtime player-color tinting,
-  which Panopticon does not implement; the grey render is expected. Pre-colored variant models
-  (redcoats, blue_guard, legionario, danish_musketeer) are all internally Oodle1-compressed, so
-  the red proof capture overlays `redcoats_age4.material.xmb` on the uncompressed musketeer mesh
-  through a zip file system.
-- Color pipeline (corrected after the published captures rendered near-black): the standalone
-  capture target is B8G8R8A8_UNorm and the Linear preset defers the sRGB transfer to an output
-  pass that never runs for standalone captures, so PNGs held raw linear values.
-  `FrameCapturer.CaptureToPng` now takes `encodeSrgb` (piecewise 12.92 l / 1.055 * l^(1/2.4) -
-  0.055), passed when the colour space mode is Linear. The Masks texture's R channel is a bimodal
-  selection/tint mask (musketeer 41.6% of pixels at 255), not ambient occlusion; the Occlusion
-  binding was removed and MetallicRoughness (G/B) stays raw with factors 1 until the packing is
-  verified against the original engine. AoE3 'Lift'/'Max' sliders are engine remaps, not glTF
-  factors; they are recorded as `Aoe3Slider_*` material properties. The redcoat capture now
-  measures mean (95,62,50), 74% warm pixels, matching the DDT albedo statistics (102,66,55).
+- Default `matA` texture sets are desaturated where the engine applies runtime player-color
+  tinting (confirmed by the modding reference: BaseColor carries the desaturated player-color
+  areas and the Details mask marks them); Panopticon does not tint, so the grey render is
+  expected. Pre-colored variant models (redcoats, blue_guard, legionario, danish_musketeer)
+  are all internally Oodle1-compressed, so the red proof capture overlays
+  `redcoats_age4.material.xmb` on the uncompressed musketeer mesh through a zip file system.
+- Color pipeline (corrected twice; the second review found the first fix wrong): standalone
+  captures run through `RenderPipeline.Execute`, which ends in the output sRGB pass, so PNGs
+  were always display-encoded (numeric proof: a (0.2, 0.4, 0.9) clear captures as
+  (124, 170, 243)); an interim frame-wide encodeSrgb double-encoded and was reverted. Masks
+  pack ORM (R = ambient occlusion, G = roughness, B = metallic; AoE3 DE modding reference),
+  confirmed by measured R histograms (graded, AO-like: musketeer 68% in the top eighth,
+  redcoat 34% near zero plus 45% high), so the Masks texture binds both MetallicRoughness
+  and Occlusion. Materials that omit `AO Intensity` get 0.2 (the corpus's only explicit
+  value, from the horse's `mata`); full strength crushes coats whose R is mostly dark. The
+  'Lift'/'Max' sliders are engine channel remaps, not glTF factors; they are recorded as
+  `Aoe3Slider_*` material properties. The Details texture is a player-color mask (the
+  reference guide describes it marking where the engine tints player color; editor practice
+  paints it black to remove tinting). Lit captures stay dim because the default lighting rig
+  is dim (ambient 0.3 + 0.7 directional; the native Ranger reads (47,47,55) through it); the
+  unlit albedo debug views carry the colour proof: redcoat albedo mean (120,87,55), 71% warm,
+  matching the DDT statistics (102,66,55), musketeer (155,146,140).
+- Texture orientation (found by vision-reviewed debug views after textures still misassigned):
+  GR2 stores DCC-convention UVs (origin bottom-left, v up); every consumer flips V. LSLib's
+  GR2 exporter defaults `FlipUVs = true` and writes `1 - v`; W3D and glTF sources are already
+  v-down and pass through verbatim. `GrannyMeshConverter.ReadTextureCoordinates` now returns
+  `(u, 1 - v)`. The flip's absence produced coherent but cross-assigned atlas regions (cloth
+  folds across the face, leather on sleeves, sideways insignia); after the fix the unlit
+  albedo views show the face, upright buttons and chevrons, and leather confined to the
+  backpack. A tangent-frame fix landed alongside: Granny meshes ship tangents but no
+  binormals, so the zero binormal degenerated every normal-mapped TBN; the materializer now
+  regenerates the tangent frame when either component is missing, keeping provided source
+  tangents (orthonormalized) and deriving handedness from the UV gradients.
 - Clip unit scales disagree across files: march_rifleman.gr2 declares 0.6152 units per meter
   against the model's 1.5625, a ratio of exactly 2.54 (cm per inch), which stretched clip
   translations 2.54x and elongated the animated march. `GrannyAnimationImporter` self-calibrates:
@@ -297,13 +315,21 @@ Recorded by the C10c skin, animation, animfile, and proof work:
   clip's duration. Vision review: coherent marching cycle with bind-consistent head proportions
   (height/width 1.1-1.2 versus 1.1 bind; 1.6-1.8 before the unit-scale fix), a volley arm
   sequence, and a near-static standing idle that matches the clip data (the idle is subtle by
-  content: head, neck, and legs hold within ~1 degree, tail moves). Evidence in the viewer:
-  `aoe3-musketeer-march-c10c-v5.gif`, `aoe3-musketeer-volley-c10c-v5.gif`,
-  `aoe3-horse-idle-c10c-v5.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v5.png`,
-  `aoe3-redcoat-beside-ranger-c10c-v3.png`, `aoe3-horse-beside-ranger-c10c-v5.png`, and 18
-  per-frame PNGs under `frames/aoe3-animated-c10c-v3/`. Known cosmetic remainder: imported
-  figures stand ~60 px lower than the Ranger in the pair captures (offset perspective, ground
-  plane not drawn), and the musketeer renders ~0.9x the Ranger's projected height.
+  content: head, neck, and legs hold within ~1 degree, tail moves). Texture correspondence is
+  proven by unlit albedo debug views (musketeer front/right/back, redcoat) beside UV-checker,
+  normal-only, and masks views. The redcoat albedo view additionally shows region-level
+  misassignment (cloth on the face, sideways insignia): inherent to the overlay proof, which
+  textures the musketeer mesh with an atlas authored for the redcoat variant's own
+  (Oodle1-compressed) mesh; it proves the colour pipeline, not per-region mapping, which
+  resolves when C10d unlocks the real variant models. Evidence in the viewer:
+  `aoe3-musketeer-march-c10c-v6.gif`, `aoe3-musketeer-volley-c10c-v6.gif`,
+  `aoe3-horse-idle-c10c-v6.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v6.png`,
+  `aoe3-redcoat-beside-ranger-c10c-v4.png`, `aoe3-horse-beside-ranger-c10c-v6.png`, debug
+  views `aoe3-musketeer-albedo-debug-v1.png` (three-view sheet) and
+  `aoe3-redcoat-albedo-debug-v1.png`, and 18 per-frame PNGs under
+  `frames/aoe3-animated-c10c-v4/`. Known cosmetic remainder: imported figures stand ~60 px
+  lower than the Ranger in the pair captures (offset perspective, ground plane not drawn), and
+  the musketeer renders ~0.9x the Ranger's projected height.
 
 ## 8. Risks
 

@@ -85,10 +85,11 @@ public sealed class Aoe3MaterialTests
         Assert.Equal(
             "Art/units/t/mata_masks.ddt",
             payload.MetallicRoughnessTexture!.ImageSource.VirtualPath);
-        // The Masks R channel is a bimodal selection/tint mask, not ambient occlusion; the
-        // occlusion binding stays unbound until the packing is verified against the
-        // original engine. AO Intensity is still captured as the strength for that day.
-        Assert.Null(payload.OcclusionTexture);
+        // Masks pack ORM (R = AO, G = roughness, B = metallic), so the masks texture is
+        // bound under both the MetallicRoughness and Occlusion roles.
+        Assert.Equal(
+            "Art/units/t/mata_masks.ddt",
+            payload.OcclusionTexture!.ImageSource.VirtualPath);
         Assert.Equal(0.2f, payload.OcclusionStrength);
         Assert.Equal(1.0f, payload.MetallicFactor);
         Assert.Equal(1.0f, payload.RoughnessFactor);
@@ -218,8 +219,10 @@ public sealed class Aoe3MaterialTests
         Assert.EndsWith(
             "musketeer_4age_matA_Masks.ddt",
             payload.MetallicRoughnessTexture!.ImageSource.VirtualPath);
-        // Masks R is a selection/tint mask, not occlusion; the binding stays unbound.
-        Assert.Null(payload.OcclusionTexture);
+        // Masks pack ORM, so the masks texture also serves occlusion (R channel).
+        Assert.EndsWith(
+            "musketeer_4age_matA_Masks.ddt",
+            payload.OcclusionTexture!.ImageSource.VirtualPath);
         Assert.Equal("mata", mesh.Materials[0].PropertyValue("GrannyMaterialName"));
         Assert.Equal("default", mesh.Materials[0].PropertyValue("Aoe3Materialdef"));
     }
@@ -244,7 +247,8 @@ public sealed class Aoe3MaterialTests
         var mata = materials[0].PbrMetallicRoughness!;
         var matb = materials[1].PbrMetallicRoughness!;
         Assert.Equal(0.2f, mata.OcclusionStrength);
-        Assert.Equal(1.0f, matb.OcclusionStrength);
+        // matb omits AO Intensity; the converter substitutes the corpus default (0.2).
+        Assert.Equal(0.2f, matb.OcclusionStrength);
         Assert.Equal("default_cutout", materials[0].PropertyValue("Aoe3Materialdef"));
         Assert.Equal("default_cutout", materials[1].PropertyValue("Aoe3Materialdef"));
         Assert.EndsWith("light_cavalry_age4_horse_mata_masks.ddt", mata.MetallicRoughnessTexture!.ImageSource.VirtualPath);

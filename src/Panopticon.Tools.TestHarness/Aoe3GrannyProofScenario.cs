@@ -9,11 +9,14 @@ using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.Granny;
 using Panopticon.Content.Loaders;
 using Panopticon.Data;
+using Panopticon.Data.Map;
 using Panopticon.Graphics;
 using Panopticon.Graphics.Animation;
+using Panopticon.Graphics.Shaders;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
+using Panopticon.Settings;
 using Veldrid;
 
 namespace Panopticon.Tools.TestHarness;
@@ -146,12 +149,13 @@ public static class Aoe3GrannyProofScenario
             "so a mottled grey uniform is the expected render");
         captures.Add(("musketeer-beside-ranger.png", "see above"));
 
+        var redcoatImportContext = CreateRedcoatImportContext(barFileSystem, reporter);
         _ = CaptureBesideRanger(
             game,
             ranger,
             unitsPerMeter,
             loadContext,
-            CreateRedcoatImportContext(barFileSystem, reporter),
+            redcoatImportContext,
             new GrannyModelImporter(),
             reporter,
             outputDirectory,
@@ -205,6 +209,8 @@ public static class Aoe3GrannyProofScenario
             reporter.Error($"Falconet '{FalconetKey}' imported without failing despite compressed sections.");
             return 5;
         }
+
+        CaptureDebugViews(game, loadContext, importContext, redcoatImportContext, importer, reporter, outputDirectory);
 
         var animatedPlans = new List<(string DisplayName, string AnimName, Model Model, ImportedModel Imported)>
         {
@@ -274,6 +280,245 @@ public static class Aoe3GrannyProofScenario
         reporter.Info($"Redcoat material overlay written to {zipPath}.");
         var zipFileSystem = new ZipFileSystem(zipPath);
         return new AssetImportContext(new CompositeFileSystem(zipFileSystem, barFileSystem), language: null);
+    }
+
+    /// <summary>
+    /// Captures diagnostic material views of the musketeer at 1024 px: unlit albedo (texture
+    /// detail without lighting), a UV debug pattern (island layout, orientation, mirroring),
+    /// normal-only shading (verifies the tangent frame), and the Masks texture displayed as
+    /// colour (channel structure). Development evidence for texture-pipeline verification.
+    /// </summary>
+    private static void CaptureDebugViews(
+        Game game,
+        AssetLoadContext loadContext,
+        AssetImportContext importContext,
+        AssetImportContext redcoatImportContext,
+        GrannyModelImporter importer,
+        ITestHarnessReporter reporter,
+        string outputDirectory)
+    {
+        var debugDirectory = Path.Combine(outputDirectory, "debug");
+        Directory.CreateDirectory(debugDirectory);
+
+        var imported = importer.ImportModel(MusketeerKey, importContext)
+            ?? throw new InvalidOperationException($"AoE3 import returned null for '{MusketeerKey}'.");
+
+        var size = new Size(1024, 1024);
+        var background = new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f);
+        var views = new (string Suffix, float Yaw)[]
+        {
+            ("front", 0f),
+            ("right", MathF.PI / 2f),
+            ("back", MathF.PI),
+        };
+
+        var albedoModel = ImportedModelMaterializer.MaterializeModel(imported, loadContext);
+        var unlit = new StandaloneCaptureOptions(Background: background, Lighting: CreateUnlitLighting());
+        foreach (var (suffix, yaw) in views)
+        {
+            StandaloneModelCapture.Capture(
+                game,
+                albedoModel,
+                loadContext,
+                Path.Combine(Path.GetTempPath(), $"aoe3-granny-proof-warmup-albedo-{suffix}.png"),
+                size,
+                worldMatrix: Matrix4x4.CreateRotationZ(yaw),
+                options: unlit);
+            StandaloneModelCapture.Capture(
+                game,
+                albedoModel,
+                loadContext,
+                Path.Combine(debugDirectory, $"albedo-{suffix}.png"),
+                size,
+                worldMatrix: Matrix4x4.CreateRotationZ(yaw),
+                options: unlit);
+        }
+
+        reporter.Info("Debug albedo views captured (full ambient, no directional light): coat, face, and chevrons should read like the decoded atlas.");
+
+        var redcoatImported = importer.ImportModel(MusketeerKey, redcoatImportContext)
+            ?? throw new InvalidOperationException($"AoE3 import returned null for '{MusketeerKey}' (redcoat overlay).");
+        var redcoatAlbedoModel = ImportedModelMaterializer.MaterializeModel(redcoatImported, loadContext);
+        StandaloneModelCapture.Capture(
+            game,
+            redcoatAlbedoModel,
+            loadContext,
+            Path.Combine(Path.GetTempPath(), "aoe3-granny-proof-warmup-albedo-redcoat.png"),
+            size,
+            options: unlit);
+        StandaloneModelCapture.Capture(
+            game,
+            redcoatAlbedoModel,
+            loadContext,
+            Path.Combine(debugDirectory, "albedo-redcoat.png"),
+            size,
+            options: unlit);
+        reporter.Info("Debug redcoat albedo view captured (unlit): the overlaid redcoats_age4 material should read as a red coat.");
+
+        var debugPattern = EncodeUvDebugPng();
+        var checkerModel = ImportedModelMaterializer.MaterializeModel(
+            CloneWithMaterials(imported, payload => new ImportedPbrMetallicRoughness(
+                baseColorTexture: DebugBinding(payload, debugPattern, ImportedTextureRole.BaseColor),
+                metallicFactor: 0f,
+                roughnessFactor: 1f,
+                alphaMode: payload.AlphaMode,
+                alphaCutoff: payload.AlphaCutoff,
+                doubleSided: payload.DoubleSided)),
+            loadContext);
+        StandaloneModelCapture.Capture(
+            game,
+            checkerModel,
+            loadContext,
+            Path.Combine(debugDirectory, "uv-pattern-front.png"),
+            size,
+            options: new StandaloneCaptureOptions(Background: background));
+        reporter.Info("Debug UV pattern view captured: checker reads texture-space orientation, gradients expose stretching and mirrored islands.");
+
+        var normalModel = ImportedModelMaterializer.MaterializeModel(
+            CloneWithMaterials(imported, payload => new ImportedPbrMetallicRoughness(
+                normalTexture: payload.NormalTexture,
+                normalScale: payload.NormalScale,
+                metallicFactor: 0f,
+                roughnessFactor: 1f,
+                alphaMode: payload.AlphaMode,
+                alphaCutoff: payload.AlphaCutoff,
+                doubleSided: payload.DoubleSided)),
+            loadContext);
+        StandaloneModelCapture.Capture(
+            game,
+            normalModel,
+            loadContext,
+            Path.Combine(debugDirectory, "normal-front.png"),
+            size,
+            options: new StandaloneCaptureOptions(Background: background));
+        reporter.Info("Debug normal-only view captured (white albedo, default lighting): smooth cloth shading verifies the tangent frame.");
+
+        var masksModel = ImportedModelMaterializer.MaterializeModel(
+            CloneWithMaterials(imported, payload => new ImportedPbrMetallicRoughness(
+                baseColorTexture: payload.MetallicRoughnessTexture is { } masks
+                    ? new ImportedTextureBinding(masks.ImageSource, masks.UvSet, masks.Sampler, ImportedTextureRole.BaseColor)
+                    : null,
+                metallicFactor: 0f,
+                roughnessFactor: 1f,
+                alphaMode: payload.AlphaMode,
+                alphaCutoff: payload.AlphaCutoff,
+                doubleSided: payload.DoubleSided)),
+            loadContext);
+        StandaloneModelCapture.Capture(
+            game,
+            masksModel,
+            loadContext,
+            Path.Combine(debugDirectory, "masks-front.png"),
+            size,
+            options: new StandaloneCaptureOptions(Background: background));
+        reporter.Info("Debug Masks view captured (displayed as colour; BaseColor uploads sRGB-decode the data texture, so hue shifts but channel structure is readable).");
+    }
+
+    /// <summary>
+    /// Full ambient and no directional light: the PBR ambient term carries the albedo
+    /// unmodified, so captures show the raw BaseColor texture.
+    /// </summary>
+    private static WorldLighting CreateUnlitLighting()
+    {
+        var lights = new GlobalShaderResources.LightingConfiguration
+        {
+            Light0 = new GlobalShaderResources.Light
+            {
+                Ambient = Vector3.One,
+                Direction = Vector3.UnitZ,
+                Color = Vector3.Zero,
+            },
+        };
+
+        return new WorldLighting(
+            new Dictionary<TimeOfDay, LightSettings> { { TimeOfDay.Morning, new LightSettings(lights, lights) } },
+            TimeOfDay.Morning);
+    }
+
+    private static ImportedTextureBinding DebugBinding(
+        ImportedPbrMetallicRoughness payload,
+        byte[] pngBytes,
+        ImportedTextureRole role)
+    {
+        return new ImportedTextureBinding(
+            ImportedImageSource.CreateEmbeddedBytes(pngBytes, "image/png", $"debug-{role}"),
+            payload.BaseColorTexture?.UvSet ?? 0,
+            new ImportedSampler(),
+            role);
+    }
+
+    private static ImportedModel CloneWithMaterials(
+        ImportedModel model,
+        Func<ImportedPbrMetallicRoughness, ImportedPbrMetallicRoughness> transform)
+    {
+        var subObjects = new List<ImportedSubObject>();
+        foreach (var subObject in model.SubObjects)
+        {
+            if (subObject.RenderObject is not ImportedMesh mesh)
+            {
+                subObjects.Add(subObject);
+                continue;
+            }
+
+            var materials = mesh.Materials
+                .Select(material => material.PbrMetallicRoughness is { } payload
+                    ? new ImportedMaterial(
+                        material.ShaderFamily,
+                        material.CullMode,
+                        material.DepthWriteEnabled,
+                        material.DepthComparison,
+                        material.BlendEnabled,
+                        material.SourceBlendFactor,
+                        material.DestinationColorBlendFactor,
+                        material.DestinationAlphaBlendFactor,
+                        fixedFunctionShading: null,
+                        properties: material.Properties,
+                        pbrMetallicRoughness: transform(payload))
+                    : material)
+                .ToArray();
+            var clonedMesh = new ImportedMesh(
+                mesh.Vertices,
+                mesh.Indices,
+                mesh.BoundingBox,
+                mesh.BoundingSphere,
+                mesh.Hidden,
+                mesh.CameraOriented,
+                mesh.HasHouseColor,
+                mesh.IsSkinned,
+                materials,
+                mesh.MeshParts,
+                mesh.PrimitiveId,
+                mesh.MorphTargetSets);
+            subObjects.Add(new ImportedSubObject(subObject.FullName, subObject.DisplayName, subObject.ParentBoneIndex, clonedMesh));
+        }
+
+        return new ImportedModel(
+            model.Name,
+            model.Skeleton,
+            subObjects,
+            ImportedSkeletonOrigin.Embedded,
+            [.. model.EnabledFeatureGates]);
+    }
+
+    /// <summary>
+    /// 256x256 UV debug pattern: 32 px two-tone checker in red (texture-space grid), a
+    /// horizontal gradient in green (u), and a vertical gradient in blue (v).
+    /// </summary>
+    private static byte[] EncodeUvDebugPng()
+    {
+        using var image = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(256, 256);
+        for (var y = 0; y < 256; y++)
+        {
+            for (var x = 0; x < 256; x++)
+            {
+                var checker = (x / 32 + y / 32) % 2 == 0 ? 40 : 220;
+                image[x, y] = new SixLabors.ImageSharp.PixelFormats.Rgba32((byte)checker, (byte)x, (byte)y, 255);
+            }
+        }
+
+        using var stream = new MemoryStream();
+        image.Save(stream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+        return stream.ToArray();
     }
 
     private static (Model Model, ImportedModel Imported) CaptureBesideRanger(

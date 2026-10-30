@@ -159,11 +159,12 @@ internal sealed class Aoe3MaterialConverter
         var normals = Bind("Normals", "normal", ImportedTextureRole.Normal);
         var masks = Bind("Masks", "masks", ImportedTextureRole.MetallicRoughness);
 
-        // The Masks texture's R channel is bimodal (selection/tint mask), not ambient
-        // occlusion; binding it as occlusion darkened coats by the R value. Until the
-        // packing is verified against the original engine, only G/B (roughness/metallic)
-        // are bound and occlusion stays unbound.
-        var masksOcclusion = null as ImportedTextureBinding;
+        // Masks pack ORM: R = ambient occlusion, G = roughness, B = metallic (AoE3 DE
+        // modding reference; the measured R histograms are graded and AO-like). The same
+        // texture is re-bound under the occlusion role so the renderer reads its R channel.
+        var masksOcclusion = masks is null
+            ? null
+            : new ImportedTextureBinding(masks.ImageSource, masks.UvSet, masks.Sampler, ImportedTextureRole.Occlusion);
         if (textures.TryGetValue("Details", out var details))
         {
             properties.Add(ImportedMaterialProperty.FromTextureName("Aoe3DetailsTexture", details));
@@ -177,6 +178,11 @@ internal sealed class Aoe3MaterialConverter
             properties.Add(ImportedMaterialProperty.FromFloat("Aoe3Slider_" + name, value));
         }
 
+        // Materials that omit AO Intensity (musketeer, redcoats) use the corpus's only
+        // explicit value (0.2, light_cavalry_age4_horse mata); the engine default is
+        // unverified, and full strength crushes coats whose R channel is mostly dark.
+        const float DefaultAoIntensity = 0.2f;
+
         var payload = new ImportedPbrMetallicRoughness(
             baseColorTexture: baseColor,
             metallicFactor: 1f,
@@ -184,7 +190,7 @@ internal sealed class Aoe3MaterialConverter
             metallicRoughnessTexture: masks,
             normalTexture: normals,
             occlusionTexture: masksOcclusion,
-            occlusionStrength: aoIntensity > 0f ? aoIntensity : 1f);
+            occlusionStrength: aoIntensity > 0f ? aoIntensity : DefaultAoIntensity);
 
         return ImportedMaterial.CreatePbrMetallicRoughness(payload, properties);
     }

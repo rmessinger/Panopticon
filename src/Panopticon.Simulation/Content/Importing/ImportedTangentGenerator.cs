@@ -8,10 +8,10 @@ namespace Panopticon.Content.Importing;
 
 /// <summary>
 /// Deterministic CPU tangent generation for normal-mapped imported meshes that provide indexed
-/// triangles, normals, and the selected UV sets but omit tangents. Accumulates Lengyel
-/// triangle contributions in stable index order, orthonormalizes each tangent against its
-/// normal, and derives a handed binormal so mirrored UVs keep their handedness. Returns a new
-/// immutable mesh; caller-owned data is never mutated. Failures throw contextual
+/// triangles, normals, and the selected UV sets but omit tangents or binormals. Accumulates
+/// Lengyel triangle contributions in stable index order, keeps provided source tangents
+/// (orthonormalized), and derives a handed binormal so mirrored UVs keep their handedness.
+/// Returns a new immutable mesh; caller-owned data is never mutated. Failures throw contextual
 /// <see cref="NotSupportedException"/> rather than disabling normal mapping.
 /// </summary>
 internal static class ImportedTangentGenerator
@@ -99,21 +99,28 @@ internal static class ImportedTangentGenerator
                 continue;
             }
 
-            var tangentSum = tangentSums[v];
-            if (tangentSum.LengthSquared() < ZeroLengthEpsilon)
-            {
-                throw new NotSupportedException(
-                    $"Vertex {v} accumulated a zero-length tangent; UV gradients cancel out or inputs are degenerate.");
-            }
-
             var normal = vertex.Normal;
             if (!float.IsFinite(normal.X))
             {
                 throw new NotSupportedException($"Vertex {v} has a non-finite normal.");
             }
 
+            // Keep a provided source tangent (Granny ships tangents but no binormals);
+            // otherwise derive one from the accumulated UV gradients.
+            var rawTangent = vertex.Tangent;
+            if (rawTangent is null)
+            {
+                if (tangentSums[v].LengthSquared() < ZeroLengthEpsilon)
+                {
+                    throw new NotSupportedException(
+                        $"Vertex {v} accumulated a zero-length tangent; UV gradients cancel out or inputs are degenerate.");
+                }
+
+                rawTangent = tangentSums[v];
+            }
+
             // Gram-Schmidt orthonormalization against the source normal.
-            var tangent = Vector3.Normalize(tangentSum - normal * Vector3.Dot(normal, tangentSum));
+            var tangent = Vector3.Normalize(rawTangent.Value - normal * Vector3.Dot(normal, rawTangent.Value));
 
             // Handedness from the accumulated bitangent keeps mirrored UV regions consistent.
             var handedness = Vector3.Dot(Vector3.Cross(normal, tangent), bitangentSums[v]) < 0.0f ? -1.0f : 1.0f;
