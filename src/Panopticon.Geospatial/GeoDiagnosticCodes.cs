@@ -18,6 +18,10 @@ public static class GeoDiagnosticCodes
 
     public const string ParseFailure = "GEO-PAR-001";
 
+    public const string ParseUnsupportedKmlElement = "GEO-PAR-002";
+
+    public const string ParseKmlLimitExceeded = "GEO-PAR-003";
+
     public const string CoordinatesFailure = "GEO-CRD-001";
 
     public const string CoordinatesUnsupportedCrs = "GEO-CRD-002";
