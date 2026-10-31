@@ -7,7 +7,7 @@
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-B4b-03` |
+| Prerequisites | `WI-B4b-02`, `WI-B4b-03` |
 | Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
