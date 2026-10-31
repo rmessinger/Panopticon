@@ -1,3 +1,5 @@
+#nullable enable
+
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Readers;
 using Xunit;
