@@ -23,7 +23,7 @@ Add `Panopticon.Geospatial.Preview` converting a payload or chunk-aligned crop i
 ## Steps
 
 1. Create `src/Panopticon.Geospatial.Preview` referencing `Panopticon.Geospatial` and `Panopticon.Simulation`; add it to the solution and the test project references.
-2. Add `GeneratedMapPreviewBuilder.Build(payload, textureMap, crop)`: assemble lattice points for the crop, quantize `round(gameZ / 0.0390625)` minus the crop minimum, clamp to `ushort`, report clamped count and quantization loss.
+2. Add `GeneratedMapPreviewBuilder.Build(payload, textureMap, crop)`: assemble lattice points for the crop, quantize `round((gameZ - cropMinimumGameZ) / 0.0390625)`, clamp to `ushort`, report clamped count, quantization loss, and coordinate offsets per deep dive §6.1.
 3. Paint `BlendTileData` textures from `textureMap` (palette name to Generals terrain texture), set passability from masks, add waypoints from mapped Waypoint features.
 4. Reject crops that exceed a configurable resident-cell limit with a diagnostic.
 5. Add `test/Panopticon.Geospatial.Tests/Preview/GeneratedMapPreviewBuilderTests.cs` using the WI-B4b-18 synthetic payload.
@@ -36,7 +36,7 @@ Add `Panopticon.Geospatial.Preview` converting a payload or chunk-aligned crop i
 
 ## Acceptance criteria
 
-- [ ] A synthetic payload builds a `MapFile` whose heights match payload heights within one quantum.
+- [ ] A synthetic payload builds a `MapFile` whose heights, after restoring the reported Z offset, match payload heights within one quantum.
 - [ ] Impassable mask cells are impassable in `BlendTileData`.
 - [ ] The built map survives `WriteTo` and read-back.
 - [ ] Standard validation passes.
