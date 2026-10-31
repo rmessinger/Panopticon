@@ -151,6 +151,7 @@ Dependencies (see the B4b dependency Decision in [open-questions.md](../open-que
 | Projection | in-house WGS84 Transverse Mercator (Krüger series, order 6); no projection package |
 | PNG encoding | existing `SixLabors.ImageSharp` |
 | KML/KMZ | `System.Xml` and `System.IO.Compression` |
+| Polygon overlay | `NetTopologySuite` 2.6.0 (CPU-only, BSD-3), private to `FeatureClipper`; robust rectangle clipping that preserves holes and disconnected parts |
 
 Both stay behind `IGeospatialRasterReader` and `ICoordinateTransformer`, so either can be
 replaced without changing the generation pipeline. All code lives in the CPU-only
