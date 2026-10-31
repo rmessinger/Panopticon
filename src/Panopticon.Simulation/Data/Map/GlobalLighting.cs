@@ -35,8 +35,9 @@ public sealed class GlobalLighting : Asset
     /// <summary>
     /// WI-A5-28: a writable default for new maps. Version 6 keeps the chunk minimal: no
     /// Unknown bytes (7 to 11) and no NoCloudFactor (8+), and each configuration carries
-    /// only terrain and object lights (infantry lights arrive at version 7). Engine-playable
-    /// lighting values are WI-A5-35 scope.
+    /// only terrain and object lights (infantry lights arrive at version 7). Lights stay
+    /// zero-valued; lit generated maps use <see cref="CreateForGeneratedMap"/> instead.
+    /// Per-time-of-day theming is WI-A5-35 scope.
     /// </summary>
     internal static GlobalLighting Create() => new()
     {
@@ -50,6 +51,35 @@ public sealed class GlobalLighting : Asset
             [TimeOfDay.Night] = GlobalLightingConfiguration.Create(),
         },
     };
+
+    /// <summary>
+    /// Neutral daylight for generated maps. Downward light directions match Lighting.h;
+    /// ambient fill keeps back-facing slopes visible. Per-time-of-day theming is A5-35 scope.
+    /// </summary>
+    internal static GlobalLighting CreateForGeneratedMap()
+    {
+        var sun = GlobalLight.Create(
+            new Vector3(0.38f, 0.38f, 0.38f),
+            new Vector3(0.52f, 0.51f, 0.49f),
+            Vector3.Normalize(new Vector3(0.50f, 0.35f, -0.79f)));
+        var fill = GlobalLight.Create(
+            new Vector3(0.04f, 0.04f, 0.04f),
+            new Vector3(0.08f, 0.08f, 0.08f),
+            Vector3.Normalize(new Vector3(-0.55f, -0.40f, -0.73f)));
+
+        return new GlobalLighting
+        {
+            Version = 6,
+            Time = TimeOfDay.Morning,
+            LightingConfigurations = new Dictionary<TimeOfDay, GlobalLightingConfiguration>
+            {
+                [TimeOfDay.Morning] = GlobalLightingConfiguration.CreateLit(sun, fill),
+                [TimeOfDay.Afternoon] = GlobalLightingConfiguration.CreateLit(sun, fill),
+                [TimeOfDay.Evening] = GlobalLightingConfiguration.CreateLit(sun, fill),
+                [TimeOfDay.Night] = GlobalLightingConfiguration.CreateLit(sun, fill),
+            },
+        };
+    }
 
     internal static GlobalLighting Parse(BinaryReader reader, MapParseContext context)
     {

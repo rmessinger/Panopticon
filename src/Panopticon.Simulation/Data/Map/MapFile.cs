@@ -217,8 +217,9 @@ public class MapFile
     /// <summary>
     /// Builds a complete playable map from an elevation grid (border included: playable
     /// + 2*borderWidth + 1 samples per side). Heights serialize 16-bit, sides are the
-    /// two-slot America/GLA skirmish set, and each slot gets a start waypoint inside the
-    /// playable bounds.
+    /// two-slot America/GLA skirmish set, each slot gets a start waypoint inside the
+    /// playable bounds, and lighting is neutral daylight visible in the engine under
+    /// every time of day (WI-B4b-22).
     /// </summary>
     public static MapFile CreateFromHeights(ushort[,] heights, uint borderWidth, string textureName = BlendTileData.DefaultTextureName)
     {
@@ -239,7 +240,7 @@ public class MapFile
             WorldInfo = WorldInfo.Create(),
             SidesList = SidesList.CreateSkirmish(SkirmishFactions),
             ObjectsList = new ObjectsList(),
-            GlobalLighting = GlobalLighting.Create(),
+            GlobalLighting = GlobalLighting.CreateForGeneratedMap(),
             WaypointsList = WaypointsList.Create(),
         };
 
