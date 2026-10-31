@@ -1,0 +1,69 @@
+GeographicLib TransverseMercator.cpp notice and license
+========================================================
+
+TransverseMercatorProjection.cs ports expressions from the following source
+file; its copyright notice and license are reproduced below verbatim.
+
+Source: https://github.com/geographiclib/geographiclib/blob/main/src/TransverseMercator.cpp
+
+/**
+ * \file TransverseMercator.cpp
+ * \brief Implementation for GeographicLib::TransverseMercator class
+ *
+ * Copyright (c) Charles Karney (2008-2023) <karney@alum.mit.edu> and licensed
+ * under the MIT/X11 License.  For more information, see
+ * https://geographiclib.sourceforge.io/
+ *
+ * This implementation follows closely JHS 154, ETRS89 -
+ * j&auml;rjestelm&auml;&auml;n liittyv&auml;t karttaprojektiot,
+ * tasokoordinaatistot ja karttalehtijako</a> (Map projections, plane
+ * coordinates, and map sheet index for ETRS89), published by JUHTA, Finnish
+ * Geodetic Institute, and the National Land Survey of Finland (2006).
+ *
+ * The relevant section is available as the 2008 PDF file
+ * http://docs.jhs-suositukset.fi/jhs-suositukset/JHS154/JHS154_liite1.pdf
+ *
+ * This is a straight transcription of the formulas in this paper with the
+ * following exceptions:
+ *  - use of 6th order series instead of 4th order series.  This reduces the
+ *    error to about 5nm for the UTM range of coordinates (instead of 200nm),
+ *    with a speed penalty of only 1%;
+ *  - use Newton's method instead of plain iteration to solve for latitude in
+ *    terms of isometric latitude in the Reverse method;
+ *  - use of Horner's representation for evaluating polynomials and Clenshaw's
+ *    method for summing trigonometric series;
+ *  - several modifications of the formulas to improve the numerical accuracy;
+ *  - evaluating the convergence and scale using the expression for the
+ *    projection or its inverse.
+ *
+ * If the preprocessor variable GEOGRAPHICLIB_TRANSVERSEMERCATOR_ORDER is set
+ * to an integer between 4 and 8, then this specifies the order of the series
+ * used for the forward and reverse transformations.  The default value is 6.
+ * (The series accurate to 12th order is given in \ref tmseries.)
+ **********************************************************************/
+
+License text from https://github.com/geographiclib/geographiclib/blob/main/LICENSE.txt
+
+The MIT License (MIT).
+
+Copyright (c) 2008-2025, Charles Karney
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.

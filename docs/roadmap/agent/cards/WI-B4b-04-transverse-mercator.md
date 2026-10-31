@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-04` |
 | Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-4 coordinate normalization |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-01`, `WI-B4b-03` |
@@ -33,11 +33,11 @@ Implement the Krüger-series (order 6) WGS84 Transverse Mercator forward, invers
 
 ## Acceptance criteria
 
-- [ ] Forward then inverse round-trips within 1 mm over lon ±5 degrees from the central meridian and lat -80..84.
-- [ ] Northing of (45 N, central meridian) with k0 1 and FN 0 is 4984944.378 m within 1 mm.
-- [ ] Eiffel Tower (48.85826 N, 2.29451 E) in UTM 31N is within 5 m of E 448252, N 5411933.
-- [ ] `ScaleFactor` on the central meridian equals k0 within 1e-12.
-- [ ] Standard validation passes.
+- [x] Forward then inverse round-trips within 1 mm over lon ±5 degrees from the central meridian and lat -80..84 (worst 3.2e-9 m).
+- [x] Northing of (45 N, central meridian) with k0 1 and FN 0 is 4984944.378 m within 1 mm.
+- [x] Eiffel Tower (48.85826 N, 2.29451 E) in UTM 31N is within 5 m of E 448252.59, N 5411939.34 (GeographicLib GeoConvert 2.5.2 anchor).
+- [x] `ScaleFactor` on the central meridian equals k0 within 1e-12 (worst 3.3e-16).
+- [x] Standard validation passes: 20/20 projection facts, 195/195 geospatial tests with `Category!=Interactive`, `dotnet format` and brace check clean.
 
 ## Validation commands
 
