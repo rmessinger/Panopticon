@@ -23,6 +23,14 @@ Layout:
 cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
 ```
 
+## Model height comparisons
+
+`StandaloneModelCapture.CaptureGroundedPair` grounds both bind-pose meshes at world Z = 0,
+matches their foot depth, and preserves the supplied scales. Grounding uses rendered mesh vertices
+with the renderer's skinning transforms, not culling or non-rendered collision bounds.
+The angled perspective camera preserves surface detail. A projected world-ground line
+marks the shared baseline. `CapturePair` remains available for arbitrary world transforms.
+
 ## macOS reference screenshots
 
 Operator screenshots: `~/OneDrive/Screenshots (MacOS)/`. Select the most recently modified

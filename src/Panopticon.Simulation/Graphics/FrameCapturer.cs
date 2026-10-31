@@ -82,9 +82,11 @@ public static class FrameCapturer
             for (var x = 0; x < frame.Width; x++)
             {
                 var i = y * stride + x * 4;
-                row[x] = isBgra
-                    ? new Rgba32(r: pixels[i + 2], g: pixels[i + 1], b: pixels[i], a: pixels[i + 3])
-                    : new Rgba32(r: pixels[i], g: pixels[i + 1], b: pixels[i + 2], a: pixels[i + 3]);
+                var r = pixels[isBgra ? i + 2 : i];
+                var g = pixels[i + 1];
+                var b = pixels[isBgra ? i : i + 2];
+
+                row[x] = new Rgba32(r, g, b, pixels[i + 3]);
             }
         }
 

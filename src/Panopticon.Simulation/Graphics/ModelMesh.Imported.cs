@@ -36,7 +36,7 @@ partial class ModelMesh
         Hidden = importedMesh.Hidden;
         CameraOriented = importedMesh.CameraOriented;
 
-        var vertices = CreateVertices(importedMesh);
+        var vertices = CreateVertices(importedMesh.Vertices);
 
         if (importedMesh.MorphTargetSets.Count > 0)
         {
@@ -57,20 +57,23 @@ partial class ModelMesh
             importedMesh.HasHouseColor);
     }
 
-    private static MeshShaderResources.MeshVertex.Basic[] CreateVertices(ImportedMesh importedMesh)
+    // Internal for the Position1/Normal1 fallback regression test (secondary-position skinning).
+    internal static MeshShaderResources.MeshVertex.Basic[] CreateVertices(IReadOnlyList<ImportedVertex> vertices)
     {
-        var vertices = new MeshShaderResources.MeshVertex.Basic[importedMesh.Vertices.Count];
+        var verticesOut = new MeshShaderResources.MeshVertex.Basic[vertices.Count];
 
-        for (var i = 0; i < vertices.Length; i++)
+        for (var i = 0; i < verticesOut.Length; i++)
         {
-            var importedVertex = importedMesh.Vertices[i];
+            var importedVertex = vertices[i];
 
-            vertices[i] = new MeshShaderResources.MeshVertex.Basic
+            verticesOut[i] = new MeshShaderResources.MeshVertex.Basic
             {
                 Position0 = importedVertex.Position,
-                Position1 = importedVertex.SecondaryPosition ?? Vector3.Zero,
+                // The second influence evaluates in_Position1 (W3D two-position skinning);
+                // sources without a secondary position deform at the primary position.
+                Position1 = importedVertex.SecondaryPosition ?? importedVertex.Position,
                 Normal0 = importedVertex.Normal,
-                Normal1 = importedVertex.SecondaryNormal ?? Vector3.Zero,
+                Normal1 = importedVertex.SecondaryNormal ?? importedVertex.Normal,
                 Tangent = importedVertex.Tangent ?? Vector3.Zero,
                 Binormal = importedVertex.Binormal ?? Vector3.Zero,
                 BoneIndex0 = importedVertex.BoneIndex0,
@@ -84,7 +87,7 @@ partial class ModelMesh
             };
         }
 
-        return vertices;
+        return verticesOut;
     }
 
     private Material CreatePbrMaterial(

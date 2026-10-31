@@ -218,6 +218,122 @@ Recorded by the C10b import and proof work against the reference install:
   (`artifacts/proofs/aoe3-granny-proof`, evidence `aoe3-musketeer-beside-ranger-c10b-v1.png`
   and `aoe3-horse-beside-ranger-c10b-v1.png` in the screenshot viewer).
 
+### C10c results
+
+Recorded by the C10c skin, animation, animfile, and proof work:
+
+- Art units are misreported corpus-wide: files declare 1.5625 units per meter, but the art is
+  authored near 1.15 units per meter (musketeer 2.073 units tall = 1.80 m standing; horse
+  nose-to-tail 2.757 units = 2.40 m, width 0.731 units = 0.63 m). `GrannyAxisSystem` substitutes
+  1.15 when a file declares 1.5625; other values pass through.
+- Skinning: vertex `BoneIndices` index the mesh `BoneBindings` list, not the skeleton; weights
+  sum to exactly 255. Musketeer 18 bindings, horse 27; aggregate-remap keeps the 4 largest
+  influences and renormalizes. Weight sums are 1 within 1e-3 and bind-pose skinning is identity
+  within 4e-6 m on both models.
+- Clip track names use Maya space separators where skeletons use underscores (`Bip01 Head` vs
+  `Bip01_Head`); targets normalize spaces to underscores.
+- Shared animation-library clips carry tracks beyond a single model's skeleton. Bound channels:
+  march_rifleman 88 of 96 (extras `Bip01_Ponytail1/11`), volley_standing_fire 92 of 128 (extras
+  `LAUNCHPOINT` spellings, `Bip01_L/R_Toe0`, `Ponytail1`), horse_idle_A 143 of 143 (none). The
+  proof drops extra-track channels before binding and reports them; binding then resolves every
+  remaining target with zero misses.
+- Curve semantics (corrected after the first animated proof was found wrong): format-1
+  `DaK32fC32f` curves are B-splines at the header degree (quadratic corpus-wide), not linear
+  keyframe lists; knots are a clamped knot vector and controls form the control polygon. The
+  decoder evaluates De Boor over the full clamped vector (first and last controls hit exactly,
+  values stay in the control hull); a linear-lerp read of knots-as-times misshapes mid-clip.
+- Channel composition (corrected with it): Granny clips store absolute local transforms per
+  track, while the runtime composes channels as offsets on the bone bind (`AnimatedOffset *
+  bind`). Feeding absolutes directly double-composed the bind and catastrophically splayed the
+  meshes. `GrannyAnimationImporter.ImportAnimation(name, context, targetSkeleton)` converts each
+  sampled local to `engineLocal * inverse(bindLocal)` against the target skeleton; the
+  parameterless GR2 overload throws, since a targetless absolute clip cannot convert. Clips
+  embed no skeleton of their own, so the caller supplies the model's.
+- Visual corrections found by reviewing the published evidence (the first animated proof and the
+  v3 stills were wrong): multi-influence vertices collapsed toward the origin because
+  `in_Position1`/`in_Normal1` fell back to zero when a source has no W3D secondary position
+  (fallback is now the primary position); standalone captures double-transformed skinned meshes
+  by uploading `AbsoluteBoneTransforms` where `ModelMesh.BuildRenderList` uses the world matrix;
+  and the capture camera fitted rest-pose bounds, cropping animated poses (captures can now pass
+  explicit `CameraFitBounds`; the proof computes CPU-skinned bounds across the sampled times).
+- The musket, hats, and backpack the animfile lists are attachments (separate models bound
+  `bone_gun` -> `Bip01 Prop1` etc.); the body meshes carry no weapon geometry, so their absence
+  from the proof renders is expected, not a defect.
+- Animfile resolution: `protoy` names the animfile; the model component is `ModelComp` when
+  present, else the unit-named component, else the first component resolving to one model.
+  Tech variants may nest further logics; non-tech logics such as Destruction select their
+  undamaged last phase (`p99`). Weighted GrannyAnim variants pick the highest weight, first on
+  ties (horse idle: A and I both weight 40; A wins). Rider attachments resolve through includes
+  whose model component is named `ModelComp`, not the attachment name.
+- Default `matA` texture sets are desaturated where the engine applies runtime player-color
+  tinting (confirmed by the modding reference: BaseColor carries the desaturated player-color
+  areas and the Details mask marks them); Panopticon does not tint, so the grey render is
+  expected. Pre-colored variant models (redcoats, blue_guard, legionario, danish_musketeer)
+  are all internally Oodle1-compressed, so the red proof capture overlays
+  `redcoats_age4.material.xmb` on the uncompressed musketeer mesh through a zip file system.
+- Color pipeline (corrected twice; the second review found the first fix wrong): standalone
+  captures run through `RenderPipeline.Execute`, which ends in the output sRGB pass, so PNGs
+  were always display-encoded (numeric proof: a (0.2, 0.4, 0.9) clear captures as
+  (124, 170, 243)); an interim frame-wide encodeSrgb double-encoded and was reverted. Masks
+  pack ORM (R = ambient occlusion, G = roughness, B = metallic; AoE3 DE modding reference),
+  confirmed by measured R histograms (graded, AO-like: musketeer 68% in the top eighth,
+  redcoat 34% near zero plus 45% high), so the Masks texture binds both MetallicRoughness
+  and Occlusion. Materials that omit `AO Intensity` get 0.2 (the corpus's only explicit
+  value, from the horse's `mata`); full strength crushes coats whose R is mostly dark. The
+  'Lift'/'Max' sliders are engine channel remaps, not glTF factors; they are recorded as
+  `Aoe3Slider_*` material properties. The Details texture is a player-color mask (the
+  reference guide describes it marking where the engine tints player color; editor practice
+  paints it black to remove tinting). Lit captures stay dim because the default lighting rig
+  is dim (ambient 0.3 + 0.7 directional; the native Ranger reads (47,47,55) through it); the
+  unlit albedo debug views carry the colour proof: redcoat albedo mean (120,87,55), 71% warm,
+  matching the DDT statistics (102,66,55), musketeer (155,146,140).
+- Texture orientation (found by vision-reviewed debug views after textures still misassigned):
+  GR2 stores DCC-convention UVs (origin bottom-left, v up); every consumer flips V. LSLib's
+  GR2 exporter defaults `FlipUVs = true` and writes `1 - v`; W3D and glTF sources are already
+  v-down and pass through verbatim. `GrannyMeshConverter.ReadTextureCoordinates` now returns
+  `(u, 1 - v)`. The flip's absence produced coherent but cross-assigned atlas regions (cloth
+  folds across the face, leather on sleeves, sideways insignia); after the fix the unlit
+  albedo views show the face, upright buttons and chevrons, and leather confined to the
+  backpack. A tangent-frame fix landed alongside: Granny meshes ship tangents but no
+  binormals, so the zero binormal degenerated every normal-mapped TBN; the materializer now
+  regenerates the tangent frame when either component is missing, keeping provided source
+  tangents (orthonormalized) and deriving handedness from the UV gradients.
+- Clip unit scales disagree across files: march_rifleman.gr2 declares 0.6152 units per meter
+  against the model's 1.5625, a ratio of exactly 2.54 (cm per inch), which stretched clip
+  translations 2.54x and elongated the animated march. `GrannyAnimationImporter` self-calibrates:
+  a median of bind-translation to clip-translation ratios over matched tracks (march: 0.535 over
+  20 bones, recorded as a diagnostic note) scales clip engine translations before offset
+  composition. Horse idle and volley declare consistent scales and need no correction. This
+  mismatch also weakens the earlier 1.5625-to-1.15 substitution, which breaks the exact 2.54
+  relation; that substitution stays flagged for review against an original-game reference.
+- Ranger calibration corrected: the visible `AIRNGR-SKN` mesh height is 14.61 units
+  (pixel-verified), not the 12.03-unit skeleton span that helmet and boot geometry extends past;
+  the proof now uses 14.61 units per 1.8 m human = 8.117 game units per meter.
+- Animated proof (re-captured after the corrections above; earlier GIFs and stills are
+  superseded and retained only as history): march, volley, and idle clips sampled at 6 fixed
+  times each; every frame captured twice and byte-identical; GIF frame timing follows each
+  clip's duration. Vision review: coherent marching cycle with bind-consistent head proportions
+  (height/width 1.1-1.2 versus 1.1 bind; 1.6-1.8 before the unit-scale fix), a volley arm
+  sequence, and a near-static standing idle that matches the clip data (the idle is subtle by
+  content: head, neck, and legs hold within ~1 degree, tail moves). Texture correspondence is
+  proven by unlit albedo debug views (musketeer front/right/back, redcoat) beside UV-checker,
+  normal-only, and masks views. The redcoat albedo view additionally shows region-level
+  misassignment (cloth on the face, sideways insignia): inherent to the overlay proof, which
+  textures the musketeer mesh with an atlas authored for the redcoat variant's own
+  (Oodle1-compressed) mesh; it proves the colour pipeline, not per-region mapping, which
+  resolves when C10d unlocks the real variant models. Evidence in the viewer:
+  `aoe3-musketeer-march-c10c-v6.gif`, `aoe3-musketeer-volley-c10c-v6.gif`,
+  `aoe3-horse-idle-c10c-v6.gif`, stills `aoe3-musketeer-beside-ranger-c10c-v8.png`,
+  `aoe3-redcoat-beside-ranger-c10c-v6.png`, `aoe3-horse-beside-ranger-c10c-v8.png`, debug
+  views `aoe3-musketeer-albedo-debug-v1.png` (three-view sheet) and
+  `aoe3-redcoat-albedo-debug-v1.png`, and 18 per-frame PNGs under
+  `frames/aoe3-animated-c10c-v4/`. Corrected comparison stills use mesh-grounded pairs and a
+  angled perspective camera with matched foot depth and a shared baseline (see `docs/screenshots.md`). Earlier
+  comparisons grounded only the import using authored bounds; Ranger collision bounds also
+  extended below its visible feet. Both subjects now share world Z = 0 without changing
+  scales. The musketeer and Ranger have near-equal rendered heights; physical scale remains
+  empirically calibrated rather than independently verified.
+
 ## 8. Risks
 
 - The generic Granny reader (64-bit pointer layout, fixup tables, type-tree marshalling) is the

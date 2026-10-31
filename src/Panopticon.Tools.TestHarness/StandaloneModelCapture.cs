@@ -30,7 +30,9 @@ internal sealed record StandaloneCaptureCamera(
 internal sealed record StandaloneCaptureOptions(
     StandaloneCaptureCamera? Camera = null,
     Settings.WorldLighting? Lighting = null,
-    Mathematics.ColorRgbaF? Background = null);
+    Mathematics.ColorRgbaF? Background = null,
+    Mathematics.AxisAlignedBoundingBox? CameraFitBounds = null,
+    bool GroundComparison = false);
 
 /// <summary>
 /// Renders one already-materialized runtime <see cref="Model"/> to a PNG without the ImGui-based
@@ -92,6 +94,121 @@ internal static class StandaloneModelCapture
             options);
     }
 
+    /// <summary>Bind-pose comparison: common ground, matched foot depth, unchanged scale.</summary>
+    public static void CaptureGroundedPair(
+        Game game,
+        Model primaryModel,
+        float primaryScale,
+        Model referenceModel,
+        AssetLoadContext loadContext,
+        string outputPath,
+        in Size viewportSize,
+        StandaloneCaptureOptions? options = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(primaryScale);
+        var primaryBounds = ComputeGeometryBounds(game, primaryModel, out var primaryFootDepth);
+        var referenceBounds = ComputeGeometryBounds(game, referenceModel, out var referenceFootDepth);
+        var scaled = AxisAlignedBoundingBox.Transform(primaryBounds, Matrix4x4.CreateScale(primaryScale));
+        var gap = MathF.Max(scaled.Max.Z - scaled.Min.Z, referenceBounds.Max.Z - referenceBounds.Min.Z) * 0.3f;
+        var referenceWorld = GroundTransform(referenceBounds, 1f, -(referenceBounds.Max.X - referenceBounds.Min.X + gap) / 2f);
+        var primaryWorld = GroundTransform(primaryBounds, primaryScale, (scaled.Max.X - scaled.Min.X + gap) / 2f);
+        referenceWorld.Translation += new Vector3(0, referenceBounds.GetCenter().Y - referenceFootDepth, 0);
+        primaryWorld.Translation += new Vector3(0, (primaryBounds.GetCenter().Y - primaryFootDepth) * primaryScale, 0);
+        CapturePair(game, primaryModel, primaryWorld, referenceModel, referenceWorld,
+            loadContext, outputPath, viewportSize,
+            (options ?? new StandaloneCaptureOptions()) with
+            {
+                GroundComparison = true,
+                CameraFitBounds = AxisAlignedBoundingBox.CreateMerged(
+                    AxisAlignedBoundingBox.Transform(primaryBounds, primaryWorld),
+                    AxisAlignedBoundingBox.Transform(referenceBounds, referenceWorld)),
+            });
+    }
+
+    private static AxisAlignedBoundingBox ComputeGeometryBounds(Game game, Model model, out float footDepth)
+    {
+        var points = new List<Vector3>();
+        var bones = model.BoneHierarchy.Bones;
+        var worlds = new Matrix4x4[bones.Length];
+        for (var i = 0; i < bones.Length; i++)
+        {
+            worlds[i] = bones[i].Transform.Matrix * (bones[i].Parent is { } parent ? worlds[parent.Index] : Matrix4x4.Identity);
+        }
+
+        foreach (var subObject in model.SubObjects)
+        {
+            if (subObject.RenderObject.Hidden)
+            {
+                continue;
+            }
+
+            if (subObject.RenderObject is not ModelMesh mesh)
+            {
+                continue;
+            }
+
+            // Read back only for diagnostic captures; authored culling bounds can extend below the feet.
+            var device = game.GraphicsDevice;
+            using var staging = device.ResourceFactory.CreateBuffer(new BufferDescription(mesh.VertexBuffer.SizeInBytes, BufferUsage.Staging));
+            using var commands = device.ResourceFactory.CreateCommandList();
+            commands.Begin();
+            commands.CopyBuffer(mesh.VertexBuffer, 0, staging, 0, mesh.VertexBuffer.SizeInBytes);
+            commands.End();
+            device.SubmitCommands(commands);
+            device.WaitForIdle();
+            var vertices = device.Map<MeshShaderResources.MeshVertex.Basic>(staging, MapMode.Read);
+            try
+            {
+                for (uint i = 0; i < vertices.Count; i++)
+                {
+                    var vertex = vertices[i];
+                    var position = mesh.Skinned
+                        ? Skin(vertex.Position0, vertex.BoneIndex0, vertex.BoneWeight0)
+                            + Skin(vertex.Position1, vertex.BoneIndex1, vertex.BoneWeight1)
+                            + Skin(vertex.Position0, vertex.BoneIndex2, vertex.BoneWeight2)
+                            + Skin(vertex.Position0, vertex.BoneIndex3, vertex.BoneWeight3)
+                        : Vector3.Transform(vertex.Position0, worlds[subObject.Bone.Index]);
+                    points.Add(position);
+                }
+            }
+            finally
+            {
+                device.Unmap(staging);
+            }
+        }
+
+        if (points.Count == 0)
+        {
+            throw new InvalidDataException($"Model '{model.Name}' has no visible mesh geometry to ground.");
+        }
+
+        var bounds = AxisAlignedBoundingBox.CreateFromPoints(points);
+        var footBand = (bounds.Max.Z - bounds.Min.Z) * 0.01f;
+        footDepth = float.PositiveInfinity;
+        foreach (var point in points)
+        {
+            if (point.Z <= bounds.Min.Z + footBand)
+            {
+                footDepth = MathF.Min(footDepth, point.Y);
+            }
+        }
+
+        return bounds;
+
+        Vector3 Skin(Vector3 position, uint index, float weight)
+        {
+            return weight == 0f ? Vector3.Zero : Vector3.Transform(position, bones[index].InverseBindMatrix * worlds[index]) * weight;
+        }
+    }
+
+    internal static Matrix4x4 GroundTransform(in AxisAlignedBoundingBox bounds, float scale, float centerX)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(scale);
+        var center = bounds.GetCenter() * scale;
+        return Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(
+            centerX - center.X, -center.Y, -bounds.Min.Z * scale);
+    }
+
     private static void CaptureCore(
         Game game,
         AssetLoadContext loadContext,
@@ -117,13 +234,23 @@ internal static class StandaloneModelCapture
         }
 
         // Fit the camera to the union of the transformed subject bounds, not raw model bounds.
-        var points = new List<Vector3>();
-        foreach (var subject in subjects)
+        // An explicit CameraFitBounds replaces the rest-pose-derived bounds, for subjects whose
+        // rendered pose (animation, morphs) departs from the rest pose the default fit sees.
+        AxisAlignedBoundingBox enclosingBounds;
+        if (options?.CameraFitBounds is { } fitBounds)
         {
-            AddTransformedCorners(points, ComputeEnclosingBoundingBox(subject.Model), subject.WorldMatrix);
+            enclosingBounds = fitBounds;
         }
+        else
+        {
+            var points = new List<Vector3>();
+            foreach (var subject in subjects)
+            {
+                AddTransformedCorners(points, ComputeEnclosingBoundingBox(subject.Model), subject.WorldMatrix);
+            }
 
-        var enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(points);
+            enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(points);
+        }
 
         var (cameraTarget, cameraDistance) = FitCamera(enclosingBounds);
 
@@ -205,7 +332,24 @@ internal static class StandaloneModelCapture
                 Scene3D = scene,
             });
 
+            // Execute's output pass already applies the sRGB transfer into the capture
+            // target (verified: a (0.2, 0.4, 0.9) clear colour captures as (124, 170, 243)),
+            // so the PNG holds display-ready values.
             FrameCapturer.CaptureToPng(game.GraphicsDevice, renderTarget.ColorTarget, outputPath);
+            if (options?.GroundComparison == true)
+            {
+                // Project the real world ground, rather than aligning silhouettes after rendering.
+                var ground = scene.Camera.WorldToScreenPoint(Vector3.Zero);
+                using var image = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba32>(outputPath);
+                var y = Math.Clamp((int)MathF.Round(ground.Y), 0, image.Height - 1);
+                for (var x = 0; x < image.Width; x++)
+                {
+                    image[x, y] = new SixLabors.ImageSharp.PixelFormats.Rgba32(230, 230, 230, 255);
+                }
+
+                using var output = File.Create(outputPath);
+                image.Save(output, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+            }
         }
         finally
         {
@@ -285,7 +429,12 @@ internal static class StandaloneModelCapture
                 continue;
             }
 
-            var world = modelInstance.AbsoluteBoneTransforms[model.SubObjects[i].Bone.Index];
+            // Mirror ModelMesh.BuildRenderList's world selection: skinned meshes render at
+            // the model world matrix (bone transforms reach them through the skinning
+            // buffer), rigid meshes at their attached bone's absolute transform.
+            var world = model.SubObjects[i].RenderObject is ModelMesh { Skinned: true }
+                ? modelInstance.GetWorldMatrix()
+                : modelInstance.AbsoluteBoneTransforms[model.SubObjects[i].Bone.Index];
             meshInstance.RenderItemConstantsBufferVS.Value.World = world;
             meshInstance.RenderItemConstantsBufferVS.Update(game.GraphicsDevice);
         }
@@ -311,10 +460,7 @@ internal static class StandaloneModelCapture
     }
 
     /// <summary>
-    /// Merged sub-object bounds over accumulated rest-pose bone worlds; mirrors ModelView's
-    /// enclosing-bounds computation for a freshly updated instance. Bones are ordered parent
-    /// before child, so index order accumulates the full chain; sub-object bounds are
-    /// bone-local.
+    /// Rest bounds follow rendering: skinned bounds are model-space; rigid bounds are bone-local.
     /// </summary>
     internal static AxisAlignedBoundingBox ComputeEnclosingBoundingBox(Model model)
     {
@@ -334,7 +480,9 @@ internal static class StandaloneModelCapture
         {
             var transformedBoundingBox = AxisAlignedBoundingBox.Transform(
                 subObject.RenderObject.BoundingBox,
-                boneWorlds[subObject.Bone.Index]);
+                subObject.RenderObject is ModelMesh { Skinned: true }
+                    ? Matrix4x4.Identity
+                    : boneWorlds[subObject.Bone.Index]);
 
             if (first)
             {

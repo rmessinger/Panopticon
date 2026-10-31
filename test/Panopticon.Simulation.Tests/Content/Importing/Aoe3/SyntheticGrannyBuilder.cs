@@ -61,6 +61,264 @@ internal static class SyntheticGrannyBuilder
         return file;
     }
 
+    /// <summary>
+    /// Builds a synthetic GR2 carrying one animation: one track group with one transform
+    /// track ("Bip01 Test") animating position (three knots, linear in file +Y) with a
+    /// constant identity rotation and an empty scale-shear curve. Timing: duration 1 s,
+    /// time step 0.25 s. No ArtToolInfo, so the import runs through the identity axis
+    /// system (file Y maps to engine Z).
+    /// </summary>
+    public static byte[] BuildAnimationClip()
+    {
+        return BuildAnimationClip(
+            [0f, 0f, 0f, 0f, 2f, 0f, 0f, 4f, 0f],
+            [0f, 0f, 0f, 1f]);
+    }
+
+    /// <summary>
+    /// Builds the same clip with caller-supplied curve controls: position controls are
+    /// interleaved X/Y/Z triplets over knots 0/0.5/1, orientation controls are one
+    /// constant X/Y/Z/W quaternion over a single knot.
+    /// </summary>
+    public static byte[] BuildAnimationClip(float[] positionControls, float[] orientationControls)
+    {
+        const int pointerSize = 8;
+        const int memberSize = 44;
+        var buffer = new List<byte>(4096);
+        var relocations = new List<(uint Position, uint TargetOffset)>();
+
+        // Offset 0 is the null pointer sentinel.
+        buffer.Add(0);
+
+        void AddUInt32(uint value)
+        {
+            buffer.AddRange(BitConverter.GetBytes(value));
+        }
+
+        void AddInt16(short value)
+        {
+            buffer.AddRange(BitConverter.GetBytes(value));
+        }
+
+        void AddSingle(float value)
+        {
+            buffer.AddRange(BitConverter.GetBytes(value));
+        }
+
+        long AddString(string value)
+        {
+            var offset = buffer.Count;
+            buffer.AddRange(Encoding.UTF8.GetBytes(value));
+            buffer.Add(0);
+            return offset;
+        }
+
+        void AddPointer(long targetOffset)
+        {
+            var position = buffer.Count;
+            buffer.AddRange(BitConverter.GetBytes(0UL));
+            relocations.Add(((uint)position, (uint)targetOffset));
+        }
+
+        long AddMemberPlaceholder()
+        {
+            var offset = buffer.Count;
+            for (var i = 0; i < memberSize; i++)
+            {
+                buffer.Add(0);
+            }
+
+            return offset;
+        }
+
+        void WriteMemberAt(long memberOffset, int type, long nameOffset, long referencedTypeOffset, uint arraySize)
+        {
+            WriteMember(buffer, memberSize, pointerSize, memberOffset, type, nameOffset, referencedTypeOffset, arraySize);
+        }
+
+        // Member type ids: 1 Inline, 3 ReferenceToArray, 4 ArrayOfReferences, 5 VariantReference,
+        // 8 String, 10 Real32, 12 UInt8, 15 Int16, 19 Int32.
+        var animationsName = AddString("Animations");
+        var clipNameData = AddString("synthetic clip");
+        var animName = AddString("Name");
+        var durationName = AddString("Duration");
+        var timeStepName = AddString("TimeStep");
+        var trackGroupsName = AddString("TrackGroups");
+        var transformTracksName = AddString("TransformTracks");
+        var flagsName = AddString("Flags");
+        var positionCurveName = AddString("PositionCurve");
+        var orientationCurveName = AddString("OrientationCurve");
+        var scaleShearCurveName = AddString("ScaleShearCurve");
+        var curveDataName = AddString("CurveData");
+        var curveHeaderName = AddString("CurveDataHeader_DaK32fC32f");
+        var formatName = AddString("Format");
+        var degreeName = AddString("Degree");
+        var paddingName = AddString("Padding");
+        var knotsName = AddString("Knots");
+        var controlsName = AddString("Controls");
+        var real32Name = AddString("Real32");
+        var trackNameData = AddString("Bip01 Test");
+
+        // Definitions.
+        var real32DefinitionOffset = buffer.Count;
+        var real32Member = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var curveHeaderDefinitionOffset = buffer.Count;
+        var formatMember = AddMemberPlaceholder();
+        var degreeMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var curveDefinitionOffset = buffer.Count;
+        var curveInlineHeaderMember = AddMemberPlaceholder();
+        var curvePaddingMember = AddMemberPlaceholder();
+        var curveKnotsMember = AddMemberPlaceholder();
+        var curveControlsMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var curveWrapperDefinitionOffset = buffer.Count;
+        var wrapperCurveDataMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var trackDefinitionOffset = buffer.Count;
+        var trackNameMember = AddMemberPlaceholder();
+        var trackFlagsMember = AddMemberPlaceholder();
+        var trackPositionMember = AddMemberPlaceholder();
+        var trackOrientationMember = AddMemberPlaceholder();
+        var trackScaleShearMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var trackGroupDefinitionOffset = buffer.Count;
+        var groupNameMember = AddMemberPlaceholder();
+        var groupTracksMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var animationDefinitionOffset = buffer.Count;
+        var animationNameMember = AddMemberPlaceholder();
+        var animationDurationMember = AddMemberPlaceholder();
+        var animationTimeStepMember = AddMemberPlaceholder();
+        var animationTrackGroupsMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        var rootDefinitionOffset = buffer.Count;
+        var rootAnimationsMember = AddMemberPlaceholder();
+        AddTerminator(buffer, memberSize);
+
+        long AddCurveObject(uint format, uint degree, float[] knots, float[] controls)
+        {
+            var offset = buffer.Count;
+            buffer.Add((byte)format);
+            buffer.Add((byte)degree);
+            AddInt16(0);
+            AddUInt32((uint)knots.Length);
+
+            // Reference-to-array headers point at packed single-float wrapper structs.
+            long WriteFloatItems(float[] values)
+            {
+                var itemsOffset = buffer.Count;
+                foreach (var value in values)
+                {
+                    AddSingle(value);
+                }
+
+                return itemsOffset;
+            }
+
+            // The knot items are appended after both headers, so the header offsets are
+            // back-filled once the item positions are known.
+            var knotHeaderOffset = buffer.Count;
+            buffer.AddRange(BitConverter.GetBytes(0UL));
+            AddUInt32((uint)controls.Length);
+            var controlHeaderOffset = buffer.Count;
+            buffer.AddRange(BitConverter.GetBytes(0UL));
+            var knotItemsOffset = WriteFloatItems(knots);
+            var controlItemsOffset = WriteFloatItems(controls);
+            relocations.Add(((uint)knotHeaderOffset, (uint)knotItemsOffset));
+            relocations.Add(((uint)controlHeaderOffset, (uint)controlItemsOffset));
+            return offset;
+        }
+
+        // Curve objects. Position: knots 0/0.5/1, values (0,2t,0). Orientation: constant
+        // identity. Scale-shear: format 1 with no knots or controls (unanimated).
+        var emptyCurveOffset = buffer.Count;
+        buffer.Add(1);
+        buffer.Add(2);
+        AddInt16(0);
+        AddUInt32(0);
+        var emptyKnotsOffset = buffer.Count;
+        buffer.AddRange(BitConverter.GetBytes(0UL));
+        AddUInt32(0);
+        var emptyControlsOffset = buffer.Count;
+        buffer.AddRange(BitConverter.GetBytes(0UL));
+        relocations.Add(((uint)emptyKnotsOffset, (uint)buffer.Count));
+        relocations.Add(((uint)emptyControlsOffset, (uint)buffer.Count));
+
+        var positionCurveOffset = AddCurveObject(
+            1, 2, [0f, 0.5f, 1f], positionControls);
+        var orientationCurveOffset = AddCurveObject(1, 2, [0f], orientationControls);
+
+        // Track object: name, flags, three inline curve wrappers (type ref + object ref).
+        var trackObjectOffset = buffer.Count;
+        AddPointer(trackNameData);
+        AddUInt32(0);
+        AddPointer(curveDefinitionOffset);
+        AddPointer(positionCurveOffset);
+        AddPointer(curveDefinitionOffset);
+        AddPointer(orientationCurveOffset);
+        AddPointer(curveDefinitionOffset);
+        AddPointer(emptyCurveOffset);
+
+        // Track group: name and a reference-to-array over the single track.
+        var trackGroupObjectOffset = buffer.Count;
+        AddPointer(clipNameData);
+        AddUInt32(1);
+        AddPointer(trackObjectOffset);
+
+        // Animation: name, timing, and an array-of-references over the track group.
+        var trackGroupReferencesOffset = buffer.Count;
+        AddPointer(trackGroupObjectOffset);
+        var animationObjectOffset = buffer.Count;
+        AddPointer(clipNameData);
+        AddSingle(1f);
+        AddSingle(0.25f);
+        AddUInt32(1);
+        AddPointer(trackGroupReferencesOffset);
+
+        // Root: a reference-to-array over the animation.
+        var rootObjectOffset = buffer.Count;
+        AddUInt32(1);
+        AddPointer(animationObjectOffset);
+
+        // Member back-fill.
+        WriteMemberAt(real32Member, 10, real32Name, 0, 0);
+        WriteMemberAt(formatMember, 12, formatName, 0, 0);
+        WriteMemberAt(degreeMember, 12, degreeName, 0, 0);
+        WriteMemberAt(curveInlineHeaderMember, 1, curveHeaderName, curveHeaderDefinitionOffset, 0);
+        WriteMemberAt(curvePaddingMember, 15, paddingName, 0, 0);
+        WriteMemberAt(curveKnotsMember, 3, knotsName, real32DefinitionOffset, 0);
+        WriteMemberAt(curveControlsMember, 3, controlsName, real32DefinitionOffset, 0);
+        WriteMemberAt(wrapperCurveDataMember, 5, curveDataName, 0, 0);
+        WriteMemberAt(trackNameMember, 8, animName, 0, 0);
+        WriteMemberAt(trackFlagsMember, 19, flagsName, 0, 0);
+        WriteMemberAt(trackPositionMember, 1, positionCurveName, curveWrapperDefinitionOffset, 0);
+        WriteMemberAt(trackOrientationMember, 1, orientationCurveName, curveWrapperDefinitionOffset, 0);
+        WriteMemberAt(trackScaleShearMember, 1, scaleShearCurveName, curveWrapperDefinitionOffset, 0);
+        WriteMemberAt(groupNameMember, 8, animName, 0, 0);
+        WriteMemberAt(groupTracksMember, 3, transformTracksName, trackDefinitionOffset, 0);
+        WriteMemberAt(animationNameMember, 8, animName, 0, 0);
+        WriteMemberAt(animationDurationMember, 10, durationName, 0, 0);
+        WriteMemberAt(animationTimeStepMember, 10, timeStepName, 0, 0);
+        WriteMemberAt(animationTrackGroupsMember, 4, trackGroupsName, trackGroupDefinitionOffset, 0);
+        WriteMemberAt(rootAnimationsMember, 3, animationsName, animationDefinitionOffset, 0);
+
+        return AssembleFile(
+            Signature,
+            buffer.ToArray(),
+            relocations,
+            rootDefinitionOffset,
+            rootObjectOffset);
+    }
+
     private static byte[] Build(int pointerSize)
     {
         var memberSize = pointerSize == 4 ? 36 : 44;

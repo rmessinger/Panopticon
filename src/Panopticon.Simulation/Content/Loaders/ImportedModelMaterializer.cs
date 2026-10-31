@@ -78,8 +78,8 @@ internal static class ImportedModelMaterializer
 
     private static bool NeedsTangentGeneration(ImportedMesh mesh)
     {
-        // Only normal-mapped PBR parts that omit tangents need generation; W3D meshes and
-        // meshes with imported tangents pass through untouched.
+        // Only normal-mapped PBR parts that omit part of the tangent frame need generation;
+        // W3D meshes and meshes with imported tangents and binormals pass through untouched.
         foreach (var part in mesh.MeshParts)
         {
             var payload = mesh.Materials[part.MaterialIndex].PbrMetallicRoughness;
@@ -88,7 +88,7 @@ internal static class ImportedModelMaterializer
                 continue;
             }
 
-            if (mesh.Vertices[0].Tangent is null)
+            if (mesh.Vertices[0].Tangent is null || mesh.Vertices[0].Binormal is null)
             {
                 return true;
             }

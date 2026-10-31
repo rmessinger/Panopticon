@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Panopticon.FileFormats.Granny;
 using Panopticon.Mathematics;
@@ -10,8 +11,10 @@ using Panopticon.Mathematics;
 namespace Panopticon.Content.Importing.Granny;
 
 /// <summary>
-/// Converts a Granny Mesh into rigid <see cref="ImportedMesh"/> sub-objects in engine space.
-/// C10b binds the whole mesh to its first bone binding; skinning arrives with WI-C10c-01.
+/// Converts a Granny Mesh into <see cref="ImportedMesh"/> sub-objects in engine space.
+/// Meshes with more than one bone binding import skinned (WI-C10c-01): vertices stay in
+/// skeleton-root bind space with up to four normalized influences, attached to bone 0 like
+/// the NIF skin path. Single-binding meshes keep the rigid C10b path, baked into their bone.
 /// Vertex components are located by struct member name (Position, Normal, Tangent, Binormal,
 /// DiffuseColor0, TextureCoordinates0); the VertexComponentNames list uses DCC set names that
 /// can differ (e.g. map1, UnnamedColor0).
@@ -48,14 +51,30 @@ internal static class GrannyMeshConverter
         var materialNames = ReadMaterialNames(mesh, sourceKey, meshName);
         var materialFileKey = BuildMaterialFileKey(sourceKey, meshName);
 
-        var parentBoneIndex = ResolveFirstBoundBone(
-            mesh.GetObjects("BoneBindings"), skeleton, boneIndexByName, sourceKey, meshName);
+        var boneBindings = mesh.GetObjects("BoneBindings");
+        var isSkinned = boneBindings.Count > 1;
+        int[]? bindingToSkeleton = null;
+        int parentBoneIndex;
+        if (isSkinned)
+        {
+            // Skinned vertices live in skeleton-root bind space and attach to bone 0, like the
+            // NIF skin path; the rigid bake below only applies to single-binding meshes.
+            parentBoneIndex = 0;
+            bindingToSkeleton = MapBindingsToSkeletonIndices(
+                boneBindings, boneIndexByName, sourceKey, meshName);
+        }
+        else
+        {
+            parentBoneIndex = ResolveFirstBoundBone(boneBindings, skeleton, boneIndexByName, sourceKey, meshName);
+        }
 
         var positions = new Vector3[vertexObjects.Count];
         var normals = new Vector3[vertexObjects.Count];
         var tangents = new Vector3?[vertexObjects.Count];
         var textureCoordinates = new Vector2?[vertexObjects.Count];
         var hasTextureCoordinates = false;
+        var skinBoneIndices = isSkinned ? new byte[vertexObjects.Count * 4] : null;
+        var skinWeights = isSkinned ? new float[vertexObjects.Count * 4] : null;
 
         for (var i = 0; i < vertexObjects.Count; i++)
         {
@@ -79,20 +98,40 @@ internal static class GrannyMeshConverter
                 textureCoordinates[i] = uv;
                 hasTextureCoordinates = true;
             }
+
+            if (skinBoneIndices is not null && skinWeights is not null && bindingToSkeleton is not null)
+            {
+                var influences = AggregateInfluences(
+                    bindingToSkeleton,
+                    ReadInfluenceArray(vertex.Get("BoneIndices"), 4, sourceKey, meshName, i, "BoneIndices"),
+                    ReadInfluenceArray(vertex.Get("BoneWeights"), 4, sourceKey, meshName, i, "BoneWeights"),
+                    bindingToSkeleton[0]);
+                skinBoneIndices[i * 4 + 0] = (byte)influences.BoneIndex0;
+                skinBoneIndices[i * 4 + 1] = (byte)influences.BoneIndex1;
+                skinBoneIndices[i * 4 + 2] = (byte)influences.BoneIndex2;
+                skinBoneIndices[i * 4 + 3] = (byte)influences.BoneIndex3;
+                skinWeights[i * 4 + 0] = influences.Weight0;
+                skinWeights[i * 4 + 1] = influences.Weight1;
+                skinWeights[i * 4 + 2] = influences.Weight2;
+                skinWeights[i * 4 + 3] = influences.Weight3;
+            }
         }
 
         // Rigid binding: geometry rides the first bound bone, so vertices are baked into that
-        // bone's local space through its inverse bind matrix.
-        var boneInverseBind = skeleton.Bones[parentBoneIndex].InverseBindMatrix;
-        var bakedPositions = new Vector3[vertexObjects.Count];
-        for (var i = 0; i < vertexObjects.Count; i++)
+        // bone's local space through its inverse bind matrix. Skinned vertices keep their
+        // skeleton-root bind-space coordinates.
+        if (!isSkinned)
         {
-            bakedPositions[i] = Vector3.Transform(positions[i], boneInverseBind);
-            normals[i] = Vector3.Normalize(Vector3.TransformNormal(normals[i], boneInverseBind));
-
-            if (tangents[i] is { } tangent)
+            var boneInverseBind = skeleton.Bones[parentBoneIndex].InverseBindMatrix;
+            for (var i = 0; i < vertexObjects.Count; i++)
             {
-                tangents[i] = Vector3.Normalize(Vector3.TransformNormal(tangent, boneInverseBind));
+                positions[i] = Vector3.Transform(positions[i], boneInverseBind);
+                normals[i] = Vector3.Normalize(Vector3.TransformNormal(normals[i], boneInverseBind));
+
+                if (tangents[i] is { } tangent)
+                {
+                    tangents[i] = Vector3.Normalize(Vector3.TransformNormal(tangent, boneInverseBind));
+                }
             }
         }
 
@@ -106,9 +145,10 @@ internal static class GrannyMeshConverter
             var meshIndices = BuildIndexBuffer(indices, groups, 0, groups.Count, reverseWinding);
             subObjects.Add(CreateSubObject(
                 meshName, sourceKey, subObjectIndex, parentBoneIndex, mesh,
-                bakedPositions, normals, tangents,
+                positions, normals, tangents,
                 hasTextureCoordinates ? textureCoordinates : null,
-                meshIndices, groups, 0, groups.Count, materialNames, materialConverter, materialFileKey));
+                meshIndices, groups, 0, groups.Count, materialNames, materialConverter, materialFileKey,
+                isSkinned, skinBoneIndices, skinWeights));
             return subObjects;
         }
 
@@ -140,16 +180,28 @@ internal static class GrannyMeshConverter
             var groupNormals = new Vector3[groupVertexCount];
             var groupTangents = new Vector3?[groupVertexCount];
             Vector2?[]? groupCoordinates = hasTextureCoordinates ? new Vector2?[groupVertexCount] : null;
+            var groupSkinBoneIndices = isSkinned ? new byte[groupVertexCount * 4] : null;
+            var groupSkinWeights = isSkinned ? new float[groupVertexCount * 4] : null;
 
             foreach (var (sourceIndex, targetIndex) in remap)
             {
-                groupPositions[targetIndex] = bakedPositions[sourceIndex];
+                groupPositions[targetIndex] = positions[sourceIndex];
                 groupNormals[targetIndex] = normals[sourceIndex];
                 groupTangents[targetIndex] = tangents[sourceIndex];
 
                 if (groupCoordinates is not null)
                 {
                     groupCoordinates[targetIndex] = textureCoordinates[sourceIndex];
+                }
+
+                if (groupSkinBoneIndices is not null && groupSkinWeights is not null
+                    && skinBoneIndices is not null && skinWeights is not null)
+                {
+                    for (var c = 0; c < 4; c++)
+                    {
+                        groupSkinBoneIndices[targetIndex * 4 + c] = skinBoneIndices[sourceIndex * 4 + c];
+                        groupSkinWeights[targetIndex * 4 + c] = skinWeights[sourceIndex * 4 + c];
+                    }
                 }
             }
 
@@ -168,7 +220,8 @@ internal static class GrannyMeshConverter
                 groupPositions, groupNormals, groupTangents,
                 groupCoordinates,
                 groupIndices,
-                [group], 0, 1, materialNames, materialConverter, materialFileKey));
+                [group], 0, 1, materialNames, materialConverter, materialFileKey,
+                isSkinned, groupSkinBoneIndices, groupSkinWeights));
         }
 
         return subObjects;
@@ -280,6 +333,107 @@ internal static class GrannyMeshConverter
         return boneIndex;
     }
 
+    /// <summary>
+    /// Maps mesh bone-binding positions to skeleton bone indices. Vertex BoneIndices reference
+    /// the binding list, not the skeleton, so every binding must resolve.
+    /// </summary>
+    private static int[] MapBindingsToSkeletonIndices(
+        IReadOnlyList<GrannyObject> boneBindings,
+        IReadOnlyDictionary<string, int> boneIndexByName,
+        string sourceKey,
+        string meshName)
+    {
+        var map = new int[boneBindings.Count];
+        for (var i = 0; i < boneBindings.Count; i++)
+        {
+            var boneName = boneBindings[i].GetString("BoneName");
+            if (boneName is null || !boneIndexByName.TryGetValue(boneName, out var boneIndex))
+            {
+                throw new InvalidDataException(
+                    $"Granny file '{sourceKey}': mesh '{meshName}' bone binding {i} " +
+                    $"('{boneName ?? "unnamed"}') has no matching skeleton bone.");
+            }
+
+            map[i] = boneIndex;
+        }
+
+        return map;
+    }
+
+    internal readonly record struct VertexInfluences(
+        int BoneIndex0, float Weight0,
+        int BoneIndex1, float Weight1,
+        int BoneIndex2, float Weight2,
+        int BoneIndex3, float Weight3);
+
+    /// <summary>
+    /// Aggregates raw four-slot influences onto skeleton bones: file vertices can repeat a
+    /// binding across slots, zero weights are dropped, at most four bones are kept (largest
+    /// first), and the kept weights are renormalized to sum to one. All-zero vertices fall
+    /// back to a full weight on the first bound bone.
+    /// </summary>
+    internal static VertexInfluences AggregateInfluences(
+        int[] bindingToSkeleton,
+        byte[] boneIndices,
+        byte[] boneWeights,
+        int fallbackBoneIndex)
+    {
+        Dictionary<int, float> weightsByBone = new();
+        for (var s = 0; s < boneIndices.Length && s < boneWeights.Length; s++)
+        {
+            if (boneWeights[s] == 0)
+            {
+                continue;
+            }
+
+            var binding = boneIndices[s];
+            if (binding >= bindingToSkeleton.Length)
+            {
+                continue;
+            }
+
+            var bone = bindingToSkeleton[binding];
+            weightsByBone.TryGetValue(bone, out var accumulated);
+            weightsByBone[bone] = accumulated + boneWeights[s] / 255f;
+        }
+
+        if (weightsByBone.Count == 0)
+        {
+            return new VertexInfluences(fallbackBoneIndex, 1f, 0, 0, 0, 0, 0, 0);
+        }
+
+        var kept = weightsByBone.OrderByDescending(pair => pair.Value)
+            .ThenBy(pair => pair.Key)
+            .Take(4)
+            .ToArray();
+        var total = kept.Sum(pair => pair.Value);
+
+        var result = new VertexInfluences(
+            kept[0].Key, kept[0].Value / total,
+            kept.Length > 1 ? kept[1].Key : 0, kept.Length > 1 ? kept[1].Value / total : 0,
+            kept.Length > 2 ? kept[2].Key : 0, kept.Length > 2 ? kept[2].Value / total : 0,
+            kept.Length > 3 ? kept[3].Key : 0, kept.Length > 3 ? kept[3].Value / total : 0);
+        return result;
+    }
+
+    private static byte[] ReadInfluenceArray(
+        object? value,
+        int expectedLength,
+        string sourceKey,
+        string meshName,
+        int vertexIndex,
+        string component)
+    {
+        if (value is byte[] array && array.Length >= expectedLength)
+        {
+            return array;
+        }
+
+        throw new InvalidDataException(
+            $"Granny file '{sourceKey}': mesh '{meshName}' vertex {vertexIndex} has no usable " +
+            $"{component} component for skinning.");
+    }
+
     private static ushort[] BuildIndexBuffer(
         int[] indices,
         List<Group> groups,
@@ -326,7 +480,10 @@ internal static class GrannyMeshConverter
         int groupCount,
         List<string?> materialNames,
         Aoe3MaterialConverter materialConverter,
-        string materialFileKey)
+        string materialFileKey,
+        bool isSkinned,
+        byte[]? skinBoneIndices,
+        float[]? skinWeights)
     {
         var boneBindingCount = mesh.GetObjects("BoneBindings").Count;
 
@@ -356,7 +513,25 @@ internal static class GrannyMeshConverter
         var vertices = new ImportedVertex[positions.Length];
         for (var i = 0; i < positions.Length; i++)
         {
-            vertices[i] = new ImportedVertex(positions[i], normals[i], tangent: tangents[i]);
+            if (isSkinned && skinBoneIndices is not null && skinWeights is not null)
+            {
+                vertices[i] = new ImportedVertex(
+                    positions[i],
+                    normals[i],
+                    tangent: tangents[i],
+                    boneIndex0: skinBoneIndices[i * 4 + 0],
+                    boneWeight0: skinWeights[i * 4 + 0],
+                    boneIndex1: skinBoneIndices[i * 4 + 1],
+                    boneWeight1: skinWeights[i * 4 + 1],
+                    boneIndex2: skinBoneIndices[i * 4 + 2],
+                    boneWeight2: skinWeights[i * 4 + 2],
+                    boneIndex3: skinBoneIndices[i * 4 + 3],
+                    boneWeight3: skinWeights[i * 4 + 3]);
+            }
+            else
+            {
+                vertices[i] = new ImportedVertex(positions[i], normals[i], tangent: tangents[i]);
+            }
         }
 
         var (box, sphere) = ComputeBounds(positions);
@@ -369,7 +544,7 @@ internal static class GrannyMeshConverter
             hidden: false,
             cameraOriented: false,
             hasHouseColor: false,
-            isSkinned: false,
+            isSkinned,
             materials,
             meshParts,
             primitiveId: meshName);
@@ -467,9 +642,11 @@ internal static class GrannyMeshConverter
 
     private static Vector2? ReadTextureCoordinates(GrannyObject vertex)
     {
+        // Granny stores DCC-convention UVs (origin bottom-left, v up); texture rows run
+        // top-first, so v is flipped on import (LSLib's exporter does the same by default).
         if (vertex.GetArray("TextureCoordinates0") is float[] coordinates && coordinates.Length >= 2)
         {
-            return new Vector2(coordinates[0], coordinates[1]);
+            return new Vector2(coordinates[0], 1f - coordinates[1]);
         }
 
         return null;

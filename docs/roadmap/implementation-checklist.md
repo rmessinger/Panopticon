@@ -1076,7 +1076,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     horse meshes, bind poses, and `.material.XMB` maps import through C1 and C3 with the Masks
     layout recorded; `ArtToolInfo` axes and units normalize to engine space; captures place both
     beside a Generals Ranger; compressed sections fail with file, section, and compression type.
-- [ ] C10c AoE3 DE skinned animation
+- [x] C10c AoE3 DE skinned animation
       ([deep dive](deep-dives/c10-aoe3de-granny-models.md)); cards `WI-C10c-01..04`.
   - AC: bone bindings import as up to four-influence skins; `DaK32fC32f` transform tracks resample
     to C1 TRS channels and other curve codecs fail with context; animfile XML resolves models,

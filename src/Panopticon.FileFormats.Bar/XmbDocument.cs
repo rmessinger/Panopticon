@@ -19,6 +19,15 @@ public static class XmbDocument
     {
         ArgumentNullException.ThrowIfNull(stream);
 
+        // Zip-backed entry streams are forward-only; the decoder needs Length and seek.
+        if (!stream.CanSeek)
+        {
+            var seekable = new MemoryStream();
+            stream.CopyTo(seekable);
+            seekable.Position = 0;
+            stream = seekable;
+        }
+
         if (Alz4.IsAlz4(stream))
         {
             var compressed = new byte[stream.Length - stream.Position];

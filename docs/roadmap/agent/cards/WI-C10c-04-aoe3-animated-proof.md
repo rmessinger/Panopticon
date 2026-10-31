@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C10c-04` |
 | Roadmap phase | [Track C · C10c](../../track-c-external-assets.md): AoE3 DE skinned animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C10c-01`, `WI-C10c-02`, `WI-C10c-03`, `WI-C10b-04` |
