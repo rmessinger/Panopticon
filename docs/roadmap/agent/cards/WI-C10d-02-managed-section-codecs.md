@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C10d-02` |
 | Roadmap phase | [Track C · C10d](../../track-c-external-assets.md) |
-| Status | `In progress` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `L` |
 | Prerequisites | `WI-C10d-01` |
@@ -39,11 +39,11 @@ Decode compression types 2 and 4 in managed code with exact output sizes and bou
 
 ## Acceptance criteria
 
-- [ ] Both codecs run without native libraries on Linux.
-- [ ] Synthetic valid streams decode to known bytes; malformed streams fail contextually.
-- [ ] Output lengths and backreference ranges are validated.
-- [ ] Independent decoder comparison passes on available compressed sections.
-- [ ] Required attribution is retained; no proprietary SDK material is used.
+- [x] Both codecs run without native libraries on Linux.
+- [x] Synthetic valid streams decode to known bytes; malformed streams fail contextually.
+- [x] Output lengths and backreference ranges are validated.
+- [x] Independent decoder comparison passes on available compressed sections.
+- [x] Required attribution is retained; no proprietary SDK material is used.
 
 ## Validation
 
@@ -58,3 +58,8 @@ stop on suspected determinism deviations.
 ## On completion
 
 Set Status to `Done`, record validation, and append a dated `.exchange` entry.
+
+Validation: 27 codec tests pass, including independent section-output hashes, malformed
+streams, bounded padding, and termination cases. Oodle1 output matches blendergranny;
+24 BitKnit2 sections from six files match pybg3. `dotnet build src` passes with existing
+nullable warnings. Attribution and pinned reference revisions are in `CODEC-NOTICES.md`.
