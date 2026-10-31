@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-16` |
 | Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-6 vector semantics |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-12` and `WI-B4b-15` |

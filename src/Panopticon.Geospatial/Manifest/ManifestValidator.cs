@@ -489,6 +489,11 @@ internal static class ManifestValidator
                 context.ValueInvalid($"{field}.attribute must be a non-empty attribute name.");
             }
 
+            if (rule.Value is not null && rule.Attribute is null)
+            {
+                context.ValueInvalid($"{field}.value requires {field}.attribute; a value can only match through an attribute.");
+            }
+
             var sourceId = NormalizeOptional(rule.SourceId);
             if (sourceId is not null)
             {
@@ -569,6 +574,16 @@ internal static class ManifestValidator
             {
                 context.ValueInvalid(
                     $"{field}.target '{ManifestTokens.Kebab(rule.Target.Value)}' is not valid for geometry '{ManifestTokens.Kebab(rule.Geometry.Value)}'.");
+            }
+
+            if (rule.Attribute is not null && string.IsNullOrWhiteSpace(rule.Attribute))
+            {
+                context.ValueInvalid($"{field}.attribute must be a non-empty attribute name.");
+            }
+
+            if (rule.Value is not null && rule.Attribute is null)
+            {
+                context.ValueInvalid($"{field}.value requires {field}.attribute; a value can only match through an attribute.");
             }
 
             if (rule.Target == ManifestFeatureTarget.Object)
