@@ -22,6 +22,12 @@ public static class GeoDiagnosticCodes
 
     public const string CoordinatesUnsupportedCrs = "GEO-CRD-002";
 
+    public const string CoordinatesScaleError = "GEO-CRD-003";
+
+    public const string CoordinatesInvalidExtent = "GEO-CRD-004";
+
+    public const string CoordinatesExtentOverflow = "GEO-CRD-005";
+
     public const string RasterFailure = "GEO-RAS-001";
 
     public const string GenerateFailure = "GEO-GEN-001";
