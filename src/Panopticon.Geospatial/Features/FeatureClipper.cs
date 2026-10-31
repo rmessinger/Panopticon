@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Valid;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
 using Panopticon.Geospatial.Projection;
-
-[assembly: InternalsVisibleTo("Panopticon.Geospatial.Tests")]
 
 namespace Panopticon.Geospatial.Features;
 
