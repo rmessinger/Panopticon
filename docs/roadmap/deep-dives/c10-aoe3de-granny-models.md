@@ -76,7 +76,9 @@ from Maya scenes. The engine links Granny statically.
 Type trees name their fields, so files are self-describing: `Skeletons/Bones/ParentIndex/
 Transform/InverseWorldTransform`, `Meshes/PrimaryVertexData/TriTopologies/Groups/BoneBindings`,
 and the vertex layout `Position, Normal, Tangent, Binormal, DiffuseColor0, TextureCoordinates0,
-BoneWeights, BoneIndices`. Granny material and texture records reference source PNGs and are
+BoneWeights, BoneIndices` (struct member names; the `VertexComponentNames` strings differ,
+naming the same slots `UnnamedColor0` and `map1`). `InverseWorldTransform` is a `Real32` array
+of 16, not a Transform. Granny material and texture records reference source PNGs and are
 ignored in favor of `.material.XMB`.
 
 Skeletons are Biped style (`Bip01_Pelvis` through `Bip01_Prop1/2`). LODs are separate files
@@ -90,8 +92,20 @@ mip offset and size pairs. Format codes: 1 BGRA, 4 BC1, 5 BC1 with alpha, 7 R8, 
 44,740 files, all `alz4` in the archive.
 
 `Render\materialdefs\default.materialdef.XMB` declares BaseColor (sRGB), Normals, Masks, and
-Details plus AO, roughness, and metallic range sliders. Open: the Masks channel layout, confirmed
-empirically in C10b.
+Details plus AO, roughness, and metallic range sliders. Unit models carry a sibling
+`.material.xmb` (mesh name minus `Shape`, same directory) whose `submaterial` elements are keyed
+by the Granny material name (`mata`, `matb`) and hold texture role overrides plus optional float
+slider overrides; override paths are unit-relative under `Art/` and resolve by appending `.ddt`.
+
+Masks channel layout, confirmed in C10b by decoding mip 0 of the musketeer and hussar horse
+textures: R = ambient occlusion, G = roughness, B = metallic, which is the glTF
+occlusion/roughness/metallic packing, so no channel swizzle is needed. Evidence: musketeer matA
+B is near-binary (97.9% black, 0.7% white); where B is set, G averages 121 (roughness about
+0.47, polished metal) against 191 (about 0.75) elsewhere; R averages 217 with a small dark tail
+(crevices). Horse matA and matB Masks match (B 99% black, R high, G mid-range; horse matA also
+overrides AO Intensity to 0.2). Slider overrides apply as factors: AO Intensity to occlusion
+strength, Metallic/Roughness Max to the PBR factors; min offsets and lift sliders are recorded
+as material properties only.
 
 ## 5. Unit binding and proof units
 
@@ -171,6 +185,38 @@ Recorded by the C10a Interactive tests against the reference install:
 - Musketeer `matA` textures: BC1, 10 mips, 1024x1024, mip 0 is 524,288 bytes, the last mip is
   2 bytes with trailing padding. `musketeer_4age.ddt` is BC2 and `musketeer_4age_bump.ddt` is
   BC3, both 64x64.
+
+### C10b reader findings
+
+- `ArtUnits.bar` GR2 corpus: 4,942 files, 4,189 parsed uncompressed, 753 rejected compressed
+  (`GrannyCompressedSectionException`), 0 other failures.
+- 38 corpus files use the version 7 little-endian 32-bit pointer layout (distinct 16-byte
+  signatures); the reader supports both pointer widths. Compressed 32-bit files occur too.
+- Curve data is a Granny user type: every curve variant carries the same DaK32fC32f-shaped
+  type definition regardless of the `CurveDataHeader` Format byte (observed: 1 DaK32fC32f,
+  3 DaConstant32f, 4 D3Constant32f), so the generic walk cannot follow the type tree into
+  curve bodies. The reader exposes `Format`, `Degree`, and `CurveDataKind` and leaves the body
+  opaque; real curve decoding belongs to `WI-C10c-02`.
+
+### C10b results
+
+Recorded by the C10b import and proof work against the reference install:
+
+- Musketeer imports at 23 bones, 1 sub-object, 1,197 vertices, 1,344 triangles, engine bounds
+  0.67 x 1.33 x 0.37 m (upright). Hussar horse imports at 32 bones, 3,978 vertices, 1,404
+  triangles in two groups with two materials (`mata`, `matb`).
+- Matrices are row-vector convention: local `R * T` chained as `local * world[parent]`;
+  `InverseWorldTransform` reads directly row-major. Every bone's inverse bind times its bind
+  world is identity within 1e-4.
+- Engine space is right-handed Z-up; the AoE3 art basis (Y-up, `Right = (-1, 0, 0)`, 1.5625
+  units per meter) is conjugated into it with the same 3-cycle the glTF converter uses.
+- W3D header bounding boxes carry exporter junk (inverted min/max on `AIRNGR-SKN`), so the
+  proof calibrates scale from the Ranger rest-pose skeleton height: 12.031 units for a 1.8 m
+  human gives 6.684 game units per meter.
+- Proof captures: musketeer and hussar horse stand textured beside the Generals Ranger with
+  feet aligned; the Oodle1 falconet fails naming file, section 0, and compression type
+  (`artifacts/proofs/aoe3-granny-proof`, evidence `aoe3-musketeer-beside-ranger-c10b-v1.png`
+  and `aoe3-horse-beside-ranger-c10b-v1.png` in the screenshot viewer).
 
 ## 8. Risks
 

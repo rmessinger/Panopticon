@@ -512,6 +512,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.Aoe3GrannyProof)
+        {
+            Environment.ExitCode = Aoe3GrannyProofScenario.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.Ee2NifProof)
         {
             Environment.ExitCode = Ee2NifProofScenario.Run(installation, config, reporter);

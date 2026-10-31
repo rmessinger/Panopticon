@@ -1070,7 +1070,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     entries decompress to their recorded sizes; XMB decodes to an XML tree; `.ddt` BC1, BC2, BC3,
     BGRA, and R8 images decode to RGBA through the imported-image decoder; encrypted sound entries and unknown flags fail with
     path.
-- [ ] C10b AoE3 DE static Granny models
+- [x] C10b AoE3 DE static Granny models
       ([deep dive](deep-dives/c10-aoe3de-granny-models.md)); cards `WI-C10b-01..04`.
   - AC: a type-tree-driven reader loads uncompressed Granny version 7 files; musketeer and hussar
     horse meshes, bind poses, and `.material.XMB` maps import through C1 and C3 with the Masks

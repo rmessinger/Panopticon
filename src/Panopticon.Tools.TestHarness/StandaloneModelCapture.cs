@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using Panopticon.Content;
@@ -49,49 +50,82 @@ internal static class StandaloneModelCapture
         Matrix4x4? worldMatrix = null,
         StandaloneCaptureOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(game);
-
         ArgumentNullException.ThrowIfNull(model);
+
+        CaptureCore(
+            game,
+            loadContext,
+            outputPath,
+            viewportSize,
+            [new CaptureSubject(model, worldMatrix ?? Matrix4x4.Identity, configureInstance)],
+            options);
+    }
+
+    /// <summary>
+    /// Captures two models in one frame, for example an imported model beside a native
+    /// reference model; the camera fits the union of both transformed bounds.
+    /// </summary>
+    public static void CapturePair(
+        Game game,
+        Model primaryModel,
+        Matrix4x4 primaryWorldMatrix,
+        Model referenceModel,
+        Matrix4x4 referenceWorldMatrix,
+        AssetLoadContext loadContext,
+        string outputPath,
+        in Size viewportSize,
+        StandaloneCaptureOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(primaryModel);
+
+        ArgumentNullException.ThrowIfNull(referenceModel);
+
+        CaptureCore(
+            game,
+            loadContext,
+            outputPath,
+            viewportSize,
+            [
+                new CaptureSubject(primaryModel, primaryWorldMatrix, null),
+                new CaptureSubject(referenceModel, referenceWorldMatrix, null),
+            ],
+            options);
+    }
+
+    private static void CaptureCore(
+        Game game,
+        AssetLoadContext loadContext,
+        string outputPath,
+        in Size viewportSize,
+        CaptureSubject[] subjects,
+        StandaloneCaptureOptions? options)
+    {
+        ArgumentNullException.ThrowIfNull(game);
 
         if (string.IsNullOrEmpty(outputPath))
         {
             throw new ArgumentException("Output path must not be null or empty.", nameof(outputPath));
         }
 
-        if (model.SubObjects.Length == 0)
+        foreach (var subject in subjects)
         {
-            throw new InvalidDataException(
-                $"Model '{model.Name}' has no sub-objects; there is nothing to capture.");
+            if (subject.Model.SubObjects.Length == 0)
+            {
+                throw new InvalidDataException(
+                    $"Model '{subject.Model.Name}' has no sub-objects; there is nothing to capture.");
+            }
         }
 
-        var enclosingBounds = ComputeEnclosingBoundingBox(model);
-        if (worldMatrix is { } magnification)
+        // Fit the camera to the union of the transformed subject bounds, not raw model bounds.
+        var points = new List<Vector3>();
+        foreach (var subject in subjects)
         {
-            // Fit the camera to the magnified bounds, not the raw model bounds.
-            var corners = new[]
-            {
-                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Min.Y, enclosingBounds.Min.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Min.Y, enclosingBounds.Min.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Max.Y, enclosingBounds.Min.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Max.Y, enclosingBounds.Min.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Min.Y, enclosingBounds.Max.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Min.Y, enclosingBounds.Max.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Max.Y, enclosingBounds.Max.Z), magnification),
-                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Max.Y, enclosingBounds.Max.Z), magnification),
-            };
-            enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(corners);
+            AddTransformedCorners(points, ComputeEnclosingBoundingBox(subject.Model), subject.WorldMatrix);
         }
+
+        var enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(points);
 
         var (cameraTarget, cameraDistance) = FitCamera(enclosingBounds);
-
-        using var modelInstance = model.CreateInstance(loadContext);
-        MuzzleFlashBones.HideForStandaloneRender(modelInstance, game.AssetStore.ObjectDefinitions);
-        if (configureInstance != null)
-        {
-            configureInstance(modelInstance);
-        }
-
-        modelInstance.Update(TimeInterval.Zero);
 
         var inputMessageBuffer = new InputMessageBuffer();
         var width = (float)viewportSize.Width;
@@ -113,21 +147,26 @@ internal static class StandaloneModelCapture
         using var renderTarget = new RenderTarget(game.GraphicsDevice);
         renderTarget.EnsureSize(viewportSize);
 
+        var instances = CreateInstances(game, loadContext, subjects);
+
         void OnBuildingRenderList(object? sender, BuildingRenderListEventArgs e)
         {
-            modelInstance.SetWorldMatrix(worldMatrix ?? Matrix4x4.Identity);
-            modelInstance.BuildRenderList(
-                e.RenderList,
-                e.Camera,
-                true,
-                new MeshShaderResources.RenderItemConstantsPS
-                {
-                    HouseColor = Vector3.One,
-                    Opacity = 1.0f,
-                    TintColor = Vector3.One,
-                });
+            for (var i = 0; i < subjects.Length; i++)
+            {
+                instances[i].SetWorldMatrix(subjects[i].WorldMatrix);
+                instances[i].BuildRenderList(
+                    e.RenderList,
+                    e.Camera,
+                    true,
+                    new MeshShaderResources.RenderItemConstantsPS
+                    {
+                        HouseColor = Vector3.One,
+                        Opacity = 1.0f,
+                        TintColor = Vector3.One,
+                    });
 
-            FlushMeshWorldConstants(game, modelInstance);
+                FlushMeshWorldConstants(game, instances[i]);
+            }
         }
 
         renderPipeline.BuildingRenderList += OnBuildingRenderList;
@@ -171,8 +210,61 @@ internal static class StandaloneModelCapture
         finally
         {
             renderPipeline.BuildingRenderList -= OnBuildingRenderList;
+
+            foreach (var instance in instances)
+            {
+                instance.Dispose();
+            }
         }
     }
+
+    private static List<ModelInstance> CreateInstances(
+        Game game,
+        AssetLoadContext loadContext,
+        CaptureSubject[] subjects)
+    {
+        var instances = new List<ModelInstance>();
+
+        try
+        {
+            foreach (var subject in subjects)
+            {
+                var instance = subject.Model.CreateInstance(loadContext);
+                instances.Add(instance);
+                MuzzleFlashBones.HideForStandaloneRender(instance, game.AssetStore.ObjectDefinitions);
+                subject.ConfigureInstance?.Invoke(instance);
+                instance.Update(TimeInterval.Zero);
+            }
+
+            return instances;
+        }
+        catch
+        {
+            foreach (var instance in instances)
+            {
+                instance.Dispose();
+            }
+
+            throw;
+        }
+    }
+
+    private static void AddTransformedCorners(List<Vector3> points, in AxisAlignedBoundingBox bounds, in Matrix4x4 matrix)
+    {
+        points.Add(Vector3.Transform(new Vector3(bounds.Min.X, bounds.Min.Y, bounds.Min.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Max.X, bounds.Min.Y, bounds.Min.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Min.X, bounds.Max.Y, bounds.Min.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Max.X, bounds.Max.Y, bounds.Min.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Min.X, bounds.Min.Y, bounds.Max.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Max.X, bounds.Min.Y, bounds.Max.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Min.X, bounds.Max.Y, bounds.Max.Z), matrix));
+        points.Add(Vector3.Transform(new Vector3(bounds.Max.X, bounds.Max.Y, bounds.Max.Z), matrix));
+    }
+
+    private readonly record struct CaptureSubject(
+        Model Model,
+        Matrix4x4 WorldMatrix,
+        Action<ModelInstance>? ConfigureInstance);
 
     /// <summary>
     /// Uploads every mesh's world constants synchronously before the render passes execute,
