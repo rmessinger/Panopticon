@@ -7,7 +7,7 @@
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-B4b-20` and `WI-B4b-23` |
+| Prerequisites | `WI-B4b-19`, `WI-B4b-20`, `WI-B4b-23` |
 | Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
