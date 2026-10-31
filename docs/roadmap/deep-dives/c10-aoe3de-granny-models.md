@@ -129,10 +129,45 @@ Textures live in `ArtUnitsTextures*.bar`, for example
 - Resource Manager (github.com/eBaeza/Resource-Manager, MIT): BAR v6, `alz4`, XMB, DDT. Usable
   with credit; the C10a readers were written against game data with this project as reference, no
   code copied (RefPack precedent).
-- LSLib (github.com/Norbyte/lslib, MIT): type-tree-driven Granny v6/v7 reader. Its decompressor is
-  a native C++/CLI component; C10d reviews its provenance before any port, and C10b does not
-  depend on it.
-- The Granny SDK is proprietary with no public format specification.
+- LSLib (github.com/Norbyte/lslib, MIT, reviewed at commit 6f5f698): type-tree-driven Granny v6/v7
+  container reference. Its decompressor (`LSLibNative/granny2wrapper.cpp`) is a Windows P/Invoke
+  shim into the proprietary `granny2.dll` and contains no algorithm code, so it is not a port
+  source; the MIT umbrella does not reach the DLL. Its managed reader supplies two verified
+  container facts: Oodle1 stops are (`first16bit`, `first8bit`, `uncompressedSize`), and type-4
+  sections also compress their relocation and marshalling blobs (u32 size prefix, 12/16 bytes
+  per entry).
+- C10d approved sources (pinned 2026-10-30). The C10d decoders are original C# written against
+  the written specs, with these implementations as cross-check references only; no code is
+  copied. Reference attribution is retained alongside the implementation; any adapted MIT
+  code must retain its upstream notice:
+  - liboodle (github.com/LunaticInAHat/liboodle@7837c253f8ca505a3ba3cd8e35d8bc3f5ab76a30,
+    Unlicense; each file header restates the public-domain dedication). `README.md` is the Oodle1
+    written spec: bitstream, adaptive symbol coder, LZ layer, 12-byte header, and the Granny
+    three-stream wrapper (three headers, 36 bytes, shared arithmetic stream, dictionary re-init
+    at stops). `src/Oodle1.cpp` and `include/oodle/Oodle1.h` are a reference decoder. No
+    external derivation claims.
+  - libbg3 (github.com/eiz/libbg3@23c701a943a189a789163af40b0398e290d2681a, MIT, copyright
+    2024 Mackenzie Straight). `docs/bitknit2.txt` is the BitKnit2 written spec: magic 0x75B1,
+    2-way interleaved rANS (L=2^16, M=2^15), 64 KiB quanta, 8-entry LRU offset cache, deferred
+    adaptive models. The file self-describes as an unverified draft, so the paired decoder
+    below anchors correctness.
+  - pybg3 (github.com/eiz/pybg3@3b02e59bb4484c27e49e51ee9d83e8a9d09df4ed, MIT, copyright 2024
+    Mackenzie Straight; `src/rans.h` carries the notice inline and is unchanged since 9ebda24).
+    Complete BitKnit2 C++ decoder built on the libbg3 spec; its reference list cites public
+    papers and blog posts only, with no copied-code provenance chain.
+  - blendergranny (github.com/Rasetsuu/blendergranny@aec91bbd8e244d82277d1f5435dc20feff3086f9,
+    MIT, copyright 2026 ciupix and contributors). Clean-room Python Oodle1 decoder
+    (`io_scene_gr2/gr2/decompress/oodle1.py`) for cross-checking; `docs/PROVENANCE.md` bars
+    proprietary-derived code in that repository. Its BitKnit decoder is in flux (README claims
+    ahead of the pending entropy core) and is reference-only.
+- Excluded from C10d: the Granny SDK and `granny2.dll` (proprietary, no public format
+  specification; the shim path is rejected); the rygorous BitKnit gist
+  (gist.github.com/rygorous/b434cf2916be5c9573796b5f96671cbe, RAD-authored codec source with no
+  license); powzix/ooz (no license); and Knit (github.com/neptuwunium/Knit, EUPL-1.2 repository
+  with a per-file SPDX-MIT BitKnit port, unnecessary given pybg3). Both codecs remain
+  reverse-engineered RAD/Epic formats with no public specification. The operator AoE3 DE install
+  ships no granny2.dll, so validation is cross-implementation agreement plus full-file
+  structural checks through the Interactive corpus tests.
 - No AoE3 asset is committed. Assets are read from the operator's install only.
 
 ## 7. Phase split
@@ -142,7 +177,7 @@ Textures live in `ArtUnitsTextures*.bar`, for example
 | C10a | `BarFileSystem`, LZ4, XMB, DDT decode | All 42 archives enumerate; musketeer textures decode with recorded sizes | [`WI-C10a-01`](../agent/cards/WI-C10a-01-bar-archive-file-system.md), [`WI-C10a-02`](../agent/cards/WI-C10a-02-xmb-binary-xml-decoder.md), [`WI-C10a-03`](../agent/cards/WI-C10a-03-ddt-texture-decode.md) |
 | C10b | Generic uncompressed GR2 reader, static meshes, materials on C3 PBR | Musketeer and hussar horse render textured beside a Generals Ranger | [`WI-C10b-01`](../agent/cards/WI-C10b-01-granny-container-reader.md), [`WI-C10b-02`](../agent/cards/WI-C10b-02-granny-static-model-import.md), [`WI-C10b-03`](../agent/cards/WI-C10b-03-aoe3-material-mapping.md), [`WI-C10b-04`](../agent/cards/WI-C10b-04-aoe3-static-proof.md) |
 | C10c | Skins, float-curve clips, animfile resolution with variants and attachments | Musketeer march and volley clips and hussar idles bind and capture deterministically | [`WI-C10c-01`](../agent/cards/WI-C10c-01-granny-skin-import.md), [`WI-C10c-02`](../agent/cards/WI-C10c-02-granny-animation-import.md), [`WI-C10c-03`](../agent/cards/WI-C10c-03-aoe3-animfile-resolver.md), [`WI-C10c-04`](../agent/cards/WI-C10c-04-aoe3-animated-proof.md) |
-| C10d | Oodle1 and BitKnit2 section decompression after license review | Falconet imports and plays `falconet_limber` | none until the review in section 6 |
+| C10d | Oodle1 and BitKnit2 section decompression after license review | Falconet imports and plays `falconet_limber` | `WI-C10d-01` through `WI-C10d-04`, linked from the Track C resources |
 
 Card order: `WI-C10a-01` first; `WI-C10a-02`, `WI-C10a-03`, and `WI-C10b-01` in parallel after it;
 `WI-C10b-02`, then `WI-C10b-03` (also after `WI-C10a-02` and `WI-C10a-03`), then `WI-C10b-04`.
@@ -567,6 +602,72 @@ sequenceDiagram
   S->>CAP: Capture frames at fixed times
   CAP-->>S: PNGs, missing-target count 0
 ```
+
+### C10d decompression architecture
+
+Proposed types extend the existing `GrannyFile.Read` section assembly before relocation and
+type-tree traversal. Codec inputs and outputs remain CPU-only. Implementation is gated by
+the [provenance review](../agent/cards/WI-C10d-01-decompressor-provenance.md).
+
+```mermaid
+classDiagram
+  class GrannyFile {
+    Read(stream, name)
+    ReadSectionTable(reader, header, name)
+    BuildBuffer(reader, sections, name)
+    ApplyRelocations(reader, sections, name)
+    ValidateMixedMarshalling(reader, sections, name)
+  }
+  class GrannySection {
+    Compression
+    CompressedSize
+    UncompressedSize
+    First16Bit
+    First8Bit
+  }
+  class Oodle1Decoder {
+    Decode(input, outputSize, first16Bit, first8Bit)
+  }
+  class BitKnit2Decoder {
+    Decode(input, outputSize)
+  }
+  GrannyFile --> GrannySection : validates ranges and stop offsets
+  GrannyFile --> Oodle1Decoder : compression 2
+  GrannyFile --> BitKnit2Decoder : compression 4
+```
+
+```mermaid
+sequenceDiagram
+  participant I as GrannyModelImporter / GrannyAnimationImporter
+  participant F as GrannyFile
+  participant O as Oodle1Decoder
+  participant B as BitKnit2Decoder
+  participant T as GrannyTypeTreeReader
+  I->>F: Read(stream, name)
+  F->>F: Validate section ranges, sizes, and stop offsets
+  loop Each section
+    alt Compression 0
+      F->>F: Copy uncompressed bytes
+    else Compression 2
+      F->>O: Decode(section, expected size, stops)
+      O-->>F: Exact-size section bytes
+    else Compression 4
+      F->>B: Decode(section, expected size)
+      B-->>F: Exact-size section bytes
+      F->>B: Decode sized relocation / marshalling streams
+      B-->>F: Exact-size table bytes
+    else Unsupported compression
+      F-->>I: Contextual NotSupportedException
+    end
+  end
+  F->>F: Apply relocations and validate marshalling
+  F->>T: Read relocated type tree and root
+  T-->>I: Existing Granny object graph
+```
+
+Grounding: `GrannyFile.Read`, `ReadSectionTable`, `BuildBuffer`, `ApplyRelocations`, and
+`ValidateMixedMarshalling` own section assembly today. `GrannySection` already records
+compression and sizes; the two stop offsets and codec types are additions.
 
 ## Appendix: grounding
 
