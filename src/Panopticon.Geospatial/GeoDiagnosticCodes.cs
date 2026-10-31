@@ -38,6 +38,8 @@ public static class GeoDiagnosticCodes
 
     public const string CoordinatesExtentOverflow = "GEO-CRD-005";
 
+    public const string CoordinatesUnsupportedUnits = "GEO-CRD-006";
+
     public const string RasterFailure = "GEO-RAS-001";
 
     public const string GenerateFailure = "GEO-GEN-001";

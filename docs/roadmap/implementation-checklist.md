@@ -1543,7 +1543,7 @@ imagery and terrain are not supported inputs.
   - AC: the project references no engine assembly; malformed manifests fail with typed codes.
 - [ ] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
   - AC: interchange types reference no `MapFile`, LibTiff, or ImageSharp type.
-- [ ] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
+- [x] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
   - AC: unsafe archives and DTDs are rejected before expansion; GeoTIFF fixtures reproduce their
     georeferencing, including south-up and pixel-is-point cases.
 - [ ] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).

@@ -137,6 +137,12 @@ metadata. Google Earth supplies KML/KMZ vectors; raster inputs come from operato
 datasets exported through Earth Engine or another geospatial tool. Google Earth basemap imagery
 and terrain are explicitly unsupported.
 
+The initial TIFF adapter accepts single-image classic TIFF with axis-aligned affine metadata.
+BigTIFF, multiple images, sub-IFDs, non-meter units, and nonidentity elevation mappings fail
+before decoding. RGB and straight-alpha RGBA use unsigned 8-bit samples. An unspecified fourth
+band is treated as straight alpha; associated-alpha imagery is rejected. Raw metadata has a
+16 MiB auxiliary-data limit before LibTiff opens the file.
+
 Dependencies (see the B4b dependency Decision in [open-questions.md](../open-questions.md)):
 
 | Concern | Choice |
@@ -473,9 +479,9 @@ Validation layers:
 |---|---|---|---|
 | B4b-1. Input contract | Project, diagnostics, limits, manifest schema and loader. | [`WI-B4b-01`](../agent/cards/WI-B4b-01-scaffold-geospatial-project.md), [`02`](../agent/cards/WI-B4b-02-import-manifest.md) | Done |
 | B4b-2. Geospatial interchange | Immutable raster, feature, CRS, provenance values and reader/transform interfaces. | [`WI-B4b-03`](../agent/cards/WI-B4b-03-interchange-values.md) | Done |
-| B4b-3. Local source readers | KML, KMZ, and GeoTIFF readers with limits; synthetic GeoTIFF fixtures. | [`07`](../agent/cards/WI-B4b-07-kml-reader.md), [`08`](../agent/cards/WI-B4b-08-kmz-archive.md), [`09`](../agent/cards/WI-B4b-09-geotiff-fixtures.md), [`10`](../agent/cards/WI-B4b-10-geotiff-reader.md) | Not started |
+| B4b-3. Local source readers | KML, KMZ, and GeoTIFF readers with limits; synthetic GeoTIFF fixtures. | [`07`](../agent/cards/WI-B4b-07-kml-reader.md), [`08`](../agent/cards/WI-B4b-08-kmz-archive.md), [`09`](../agent/cards/WI-B4b-09-geotiff-fixtures.md), [`10`](../agent/cards/WI-B4b-10-geotiff-reader.md) | Done |
 | B4b-4. Coordinate normalization | Transverse Mercator, CRS transformer, local map grid with distortion check. | [`04`](../agent/cards/WI-B4b-04-transverse-mercator.md), [`05`](../agent/cards/WI-B4b-05-coordinate-transformer.md), [`06`](../agent/cards/WI-B4b-06-local-map-grid.md) | Done |
-| B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | Not started |
+| B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | In progress |
 | B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](../agent/cards/WI-B4b-15-feature-clipping.md), [`16`](../agent/cards/WI-B4b-16-feature-mapping.md), [`17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Not started |
 | B4b-6a. Standalone payload | Import pipeline, payload writer/reader, CLI, control-point validation (§6.1). | [`18`](../agent/cards/WI-B4b-18-import-pipeline-payload.md), [`19`](../agent/cards/WI-B4b-19-geoimport-cli.md), [`20`](../agent/cards/WI-B4b-20-control-point-validation.md) | Not started |
 | B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | In progress |

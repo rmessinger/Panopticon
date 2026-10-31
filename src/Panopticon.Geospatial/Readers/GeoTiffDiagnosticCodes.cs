@@ -1,17 +1,13 @@
 namespace Panopticon.Geospatial.Readers;
 
-/// <summary>
-/// Diagnostic codes specific to the GeoTIFF reader. The Coordinates codes are local until the
-/// shared <see cref="GeoDiagnosticCodes"/> gains the group 1 constants; the string values are
-/// final and move there at that rebase.
-/// </summary>
+/// <summary>GeoTIFF diagnostic codes.</summary>
 public static class GeoTiffDiagnosticCodes
 {
     /// <summary>The file declares a well-formed CRS outside the supported source set.</summary>
-    public const string CoordinatesUnsupportedCrs = "GEO-CRD-002";
+    public const string CoordinatesUnsupportedCrs = GeoDiagnosticCodes.CoordinatesUnsupportedCrs;
 
     /// <summary>The file declares linear or angular units other than meters and degrees.</summary>
-    public const string CoordinatesUnsupportedUnits = "GEO-CRD-006";
+    public const string CoordinatesUnsupportedUnits = GeoDiagnosticCodes.CoordinatesUnsupportedUnits;
 
     /// <summary>The compression scheme has no configured LibTiff decoder.</summary>
     public const string ParseUnsupportedCompression = "GEO-PAR-004";
