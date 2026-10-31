@@ -383,15 +383,37 @@ public class SyntheticGeoTiffWriterTests
     [Fact]
     public void Write_FailureLeavesNoTempDirectory()
     {
-        // VerticalCrsEpsg beyond ushort range fails during fixture assembly (checked cast);
-        // a failed write must not leave a panopticon-geotiff directory behind.
-        var before = Directory.GetDirectories(Path.GetTempPath(), "panopticon-geotiff-*");
+        // An owned temp root keeps the assertions local: no process-global temp counting and
+        // no environment mutation that could race parallel tests.
+        var ownedRoot = Path.Combine(Path.GetTempPath(), "panopticon-geotiff-owned-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(ownedRoot);
 
-        Assert.Throws<OverflowException>(
-            () => SyntheticGeoTiffWriter.Plane(1d, 1d, new SyntheticGeoTiffOptions { VerticalCrsEpsg = 65536 }));
+        try
+        {
+            // VerticalCrsEpsg beyond ushort range fails during fixture assembly (checked
+            // cast); a failed write must not leave a panopticon-geotiff directory behind.
+            Assert.Throws<OverflowException>(
+                () => SyntheticGeoTiffWriter.Write(
+                    new double[8 * 6],
+                    new SyntheticGeoTiffOptions { VerticalCrsEpsg = 65536 },
+                    ownedRoot));
 
-        var after = Directory.GetDirectories(Path.GetTempPath(), "panopticon-geotiff-*");
-        Assert.Equal(before.Length, after.Length);
+            Assert.Empty(Directory.GetDirectories(ownedRoot));
+
+            using (var fixture = SyntheticGeoTiffWriter.Write(
+                new double[8 * 6],
+                new SyntheticGeoTiffOptions(),
+                ownedRoot))
+            {
+                Assert.Single(Directory.GetDirectories(ownedRoot));
+            }
+
+            Assert.Empty(Directory.GetDirectories(ownedRoot));
+        }
+        finally
+        {
+            Directory.Delete(ownedRoot, recursive: true);
+        }
     }
 
     [Fact]
