@@ -44,7 +44,8 @@ internal static class GrannySkeletonConverter
 
             // Bind TRS is the bone's LOCAL transform in engine space; the runtime rebuilds the
             // hierarchy by chaining locals, so storing a world rotation here would double-compose.
-            if (!Matrix4x4.Decompose(axes.ToEngineMatrix(local), out _, out var bindRotation, out var bindTranslation))
+            var bindLocal = axes.ToEngineMatrix(local);
+            if (!Matrix4x4.Decompose(bindLocal, out _, out var bindRotation, out var bindTranslation))
             {
                 throw new InvalidDataException(
                     $"Granny file '{sourceKey}': bind transform of bone {i} is not decomposable.");
@@ -56,7 +57,9 @@ internal static class GrannySkeletonConverter
                 parentIndex,
                 bindTranslation,
                 Quaternion.Normalize(bindRotation),
-                inverseBindEngine);
+                inverseBindEngine,
+                bindScale: 1f,
+                bindLocalMatrix: bindLocal);
         }
 
         return new ImportedSkeleton(name, bones);

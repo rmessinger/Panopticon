@@ -282,9 +282,9 @@ internal static class GrannyMeshConverter
         {
             foreach (var field in items[i].Fields.Values)
             {
-                if (field is int value)
+                if (field is int or short or ushort)
                 {
-                    values[i] = value;
+                    values[i] = field is short signed ? (ushort)signed : System.Convert.ToInt32(field);
                 }
             }
         }
@@ -500,7 +500,8 @@ internal static class GrannyMeshConverter
             }
 
             materials[g] = materialConverter.Convert(
-                materialNames[group.MaterialIndex], materialFileKey, meshName, boneBindingCount);
+                materialNames[group.MaterialIndex], materialFileKey, meshName, boneBindingCount,
+                sourceKey[..sourceKey.LastIndexOf('.')] + ".material.xmb");
             meshParts[g] = new ImportedMeshPart(
                 textureCoordinates is null ? null : ExtractCoordinates(textureCoordinates),
                 textureCoordinates1: null,

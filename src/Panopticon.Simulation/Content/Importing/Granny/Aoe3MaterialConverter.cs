@@ -38,11 +38,20 @@ internal sealed class Aoe3MaterialConverter
         string? materialName,
         string materialFileKey,
         string meshName,
-        int boneBindingCount)
+        int boneBindingCount,
+        string? fallbackMaterialFileKey = null)
     {
         if (string.IsNullOrEmpty(materialName))
         {
             return CreatePlaceholderMaterial(materialName, boneBindingCount);
+        }
+
+        // Multi-mesh models can share the model's material file despite unrelated mesh names.
+        if (_context.FileSystem.GetFile(materialFileKey) is null &&
+            fallbackMaterialFileKey is not null &&
+            _context.FileSystem.GetFile(fallbackMaterialFileKey) is not null)
+        {
+            materialFileKey = fallbackMaterialFileKey;
         }
 
         var submaterial = TryFindSubmaterial(materialFileKey, materialName, meshName);

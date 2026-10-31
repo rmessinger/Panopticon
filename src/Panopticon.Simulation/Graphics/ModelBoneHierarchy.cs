@@ -56,6 +56,12 @@ public sealed class ModelBoneHierarchy : BaseAsset
                 importedBone.BindRotation,
                 importedBone.InverseBindMatrix,
                 isRoot ? importedBone.BindScale * rootScale : importedBone.BindScale);
+            if (importedBone.HasExactBindLocalMatrix)
+            {
+                Bones[i].Transform.Matrix = isRoot
+                    ? importedBone.BindLocalMatrix * Matrix4x4.CreateScale(rootScale)
+                    : importedBone.BindLocalMatrix;
+            }
         }
     }
 }
