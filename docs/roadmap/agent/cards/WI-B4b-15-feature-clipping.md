@@ -21,7 +21,7 @@ Transform KML features into local game coordinates and clip them to the map rect
 
 ## Steps
 
-1. Add `FeatureClipper.Clip(features, grid)`: transform each coordinate to projected then game XY, then clip lines with Liang-Barsky and polygons (each ring) with Sutherland-Hodgman against the map rectangle.
+1. Add `FeatureClipper.Clip(features, grid)`: transform each coordinate to projected then game XY, then clip lines with Liang-Barsky and polygons against the map rectangle. Preserve polygon holes and disconnected results as required by the §5.3 contract; independent ring clipping with Sutherland-Hodgman alone is insufficient.
 2. Drop features fully outside with an `Info` diagnostic; keep stable ids and attributes; split multi-part results deterministically.
 3. Add `LocalFeature` records (game-space geometry plus source feature).
 4. Add `test/Panopticon.Geospatial.Tests/Features/FeatureClipperTests.cs`.
@@ -35,6 +35,7 @@ Transform KML features into local game coordinates and clip them to the map rect
 
 - [ ] A line crossing the rectangle is clipped to the exact boundary intersection.
 - [ ] A polygon straddling a corner produces the expected clipped ring.
+- [ ] A concave polygon clipped into disconnected pieces retains separate parts with stable IDs; holes retain their exclusion semantics.
 - [ ] Points outside are dropped with a diagnostic.
 - [ ] Standard validation passes.
 
