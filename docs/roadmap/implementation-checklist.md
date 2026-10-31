@@ -837,43 +837,6 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: a large map authors, saves, reloads, and plays within B1 budgets.
 - [ ] B4a-7 Large-population authoring (no cards yet; pairs with A5-5) (`TBD`).
   - AC: bulk placement and region multi-object edits stay interactive.
-- [ ] B4b Geospatial map generation
-      ([deep dive](deep-dives/b4b-geospatial-map-generation.md)): import Google Earth KML/KMZ plus
-      georeferenced DEM/imagery rasters from operator-authorized Earth Engine datasets or other
-      sources into WorldBuilder through the map interchange boundary. Project, crop, resample, and
-      preserve source/projection metadata without direct Google service access. Google basemap
-      imagery and terrain are not supported inputs. Depends on B4a and H6.
-  - AC: a synthetic fixture and one operator-supplied real-world area generate maps whose extent,
-    elevations, imagery, and named vector landmarks match source control points within declared
-    tolerances; each map saves, reloads in WorldBuilder, and plays.
-- [ ] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
-      (`WI-B4b-01`, `WI-B4b-02`).
-  - AC: the project references no engine assembly; malformed manifests fail with typed codes.
-- [ ] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
-  - AC: interchange types reference no `MapFile`, LibTiff, or ImageSharp type.
-- [ ] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
-  - AC: unsafe archives and DTDs are rejected before expansion; GeoTIFF fixtures reproduce their
-    georeferencing, including south-up and pixel-is-point cases.
-- [ ] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).
-  - AC: round trips within 1 mm; a custom-meridian grid spans UTM 31/32 and scale error over 0.1%
-    fails.
-- [ ] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
-  - AC: shared chunk edges are bit-identical; repeated runs produce identical chunk hashes.
-- [ ] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
-  - AC: clipped geometry matches exact boundary intersections; slope and water masks follow the
-    manifest thresholds.
-- [ ] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
-  - AC: a synthetic import writes the full payload transactionally and control points pass within
-    tolerance.
-- [ ] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).
-  - AC: a generated synthetic map loads in Generals and runs 300 logic frames.
-- [ ] B4b-7 H3 package output through the H2 interchange (blocked on H2/H3, B4a-5).
-  - AC: TBD by `WI-H2-01`.
-- [ ] B4b-8 WorldBuilder import workflow (blocked on H6).
-  - AC: import is one transaction; cancellation leaves the session unchanged.
-- [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
-  - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
-    plays; B1 records import time and peak memory.
 - [x] B5 Rendering at scale
       ([deep dive](deep-dives/b5-rendering-at-scale.md)): GPU instancing for repeated unit
       models through the source-agnostic `RenderItem` seam (W3D, glTF/PBR, and any C1
@@ -1564,6 +1527,53 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a
     ReplaySketch scenario using new-format content passes the same headless assertions as its
     legacy-format equivalent.
+
+## Track R: Real-World Terrain
+
+See [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md). Formerly Track B phase B4b;
+item labels and card IDs keep the B4b prefix. Design:
+[deep dive](deep-dives/b4b-geospatial-map-generation.md); cards:
+[plan](implementation/track-b-b4b-geospatial.md). Imports operator-supplied Google Earth KML/KMZ
+plus georeferenced DEM and imagery rasters without direct Google service access; Google basemap
+imagery and terrain are not supported inputs.
+
+### R1: Geospatial import core
+- [ ] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
+      (`WI-B4b-01`, `WI-B4b-02`).
+  - AC: the project references no engine assembly; malformed manifests fail with typed codes.
+- [ ] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
+  - AC: interchange types reference no `MapFile`, LibTiff, or ImageSharp type.
+- [ ] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
+  - AC: unsafe archives and DTDs are rejected before expansion; GeoTIFF fixtures reproduce their
+    georeferencing, including south-up and pixel-is-point cases.
+- [ ] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).
+  - AC: round trips within 1 mm; a custom-meridian grid spans UTM 31/32 and scale error over 0.1%
+    fails.
+- [ ] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
+  - AC: shared chunk edges are bit-identical; repeated runs produce identical chunk hashes.
+- [ ] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
+  - AC: clipped geometry matches exact boundary intersections; slope and water masks follow the
+    manifest thresholds.
+
+### R2: Standalone payload and dev preview
+- [ ] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
+  - AC: a synthetic import writes the full payload transactionally and control points pass within
+    tolerance.
+- [ ] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).
+  - AC: a generated synthetic map loads in Generals and runs 300 logic frames.
+
+### R3: Map package output (depends on B4a-5, H3)
+- [ ] B4b-7 H3 package output through the H2 interchange (blocked on H2/H3, B4a-5).
+  - AC: TBD by `WI-H2-01`.
+
+### R4: WorldBuilder import workflow (depends on H6)
+- [ ] B4b-8 WorldBuilder import workflow (blocked on H6).
+  - AC: import is one transaction; cancellation leaves the session unchanged.
+
+### R5: Validation and scale proof
+- [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
+  - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
+    plays; B1 records import time and peak memory.
 
 ## Track W: Western Front Simulation
 

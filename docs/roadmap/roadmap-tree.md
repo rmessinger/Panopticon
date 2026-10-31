@@ -6,7 +6,8 @@
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
 > [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
 > [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md) ·
-> [W](track-w-western-front.md) · [M](track-m-mass-battle.md) · [X](track-x-fixes-tweaks.md)) and the deep dives as phases,
+> [W](track-w-western-front.md) · [M](track-m-mass-battle.md) ·
+> [N](track-n-pathfinding-performance.md) · [R](track-r-real-world-terrain.md) · [X](track-x-fixes-tweaks.md)) and the deep dives as phases,
 > sub-phases, or dependencies change; see [Tree maintenance](#tree-maintenance).
 >
 > Audience: human overview of roadmap structure and dependency flow.
@@ -134,18 +135,6 @@ mindmap
         B4a-5 Chunked storage
         B4a-6 Round-trip and play
         B4a-7 Large-population scenario authoring
-      B4b Geospatial map generation ⮕
-        B4b-1 Input contract and dependency spike
-        B4b-2 Geospatial interchange
-        B4b-3 Local source readers
-        B4b-4 Coordinate normalization
-        B4b-5 Terrain and imagery generation
-        B4b-6 Vector semantics
-        B4b-6a Standalone payload
-        B4b-6b Dev preview
-        B4b-7 H3 package output
-        B4b-8 WorldBuilder workflow
-        B4b-9 Validation and scale proof
       B5 Rendering at scale ⮕
       B6 Distributed simulation ⮕
         B6-1 Partition and boundary spec
@@ -413,6 +402,20 @@ mindmap
         N19-2 Steering integration
       N20 Layered navigation verification ⮕
         N20-1 Layered target verification
+    R. Real-world terrain
+      R1 Geospatial import core ⮕
+        B4b-1 Input contract and dependency spike
+        B4b-2 Geospatial interchange
+        B4b-3 Local source readers
+        B4b-4 Coordinate normalization
+        B4b-5 Terrain and imagery generation
+        B4b-6 Vector semantics
+      R2 Standalone payload and dev preview ⮕
+        B4b-6a Standalone payload
+        B4b-6b Dev preview
+      R3 Map package output ⮕
+      R4 WorldBuilder import workflow ⮕
+      R5 Validation and scale proof ⮕
 ```
 
 ---
@@ -421,7 +424,7 @@ mindmap
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
 Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal,
-F = red, G = violet, H = olive, W = slate, M = rust, N = slate teal). Track G is the one track not gated by Stage P: it changes
+F = red, G = violet, H = olive, W = slate, M = rust, N = slate teal, R = moss). Track G is the one track not gated by Stage P: it changes
 presentation only.
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
@@ -442,6 +445,7 @@ flowchart LR
   classDef trackW fill:#eef0f3,stroke:#5a6a7a,color:#122;
   classDef trackM fill:#fbefe6,stroke:#a0583a,color:#311;
   classDef trackN fill:#eef7f7,stroke:#3a7a80,color:#123;
+  classDef trackR fill:#f2f6ea,stroke:#6a8a4a,color:#121;
 
   subgraph SP["Stage P · Playable baseline (prerequisite)"]
     direction TB
@@ -472,6 +476,7 @@ flowchart LR
     G1["G1 High-DPI & resolution correctness"]
     G2["G2 Graphics settings & presets"]
     H1["H1 Format requirements & audit"]
+    R1["R1 Geospatial import core"]
   end
 
   subgraph S1["Stage 1 · Core host & cleanup"]
@@ -495,6 +500,7 @@ flowchart LR
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
     H2["H2 Format-agnostic map interchange abstraction"]
+    R2["R2 Standalone payload & dev preview"]
   end
 
   subgraph S2["Stage 2 · Harness & core scale"]
@@ -540,6 +546,7 @@ flowchart LR
     F4A["F4a Game-object physics adoption"]
     G5["G5 Cutout & alpha-test clarity"]
     M1["M1 Capacity probe"]
+    R3["R3 Map package output"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling & physics consumers"]
@@ -557,7 +564,6 @@ flowchart LR
 
   subgraph S5["Stage 5 · Integration & round-trip validation"]
     direction TB
-    B4B["B4b Geospatial map generation"]
     C4D["C4d EE2 skinned animation"]
     C4E["C4e EE2 property animation"]
     C4F["C4f EE2 scale animation"]
@@ -618,6 +624,7 @@ flowchart LR
     direction TB
     H7["H7 Validation & round-trip regression"]
     N6["N6 Deadlock detection baseline"]
+    R4["R4 WorldBuilder import workflow"]
   end
 
   subgraph S11["Stage 11 · Navigation deadlock resolution"]
@@ -626,6 +633,7 @@ flowchart LR
     N8["N8 Blocked-unit resolution"]
     N9["N9 Destination crowding"]
     N11["N11 Passage detection and baseline"]
+    R5["R5 Validation & scale proof"]
   end
 
   subgraph S12["Stage 12 · Navigation deadlock verification & passage queues"]
@@ -812,8 +820,13 @@ flowchart LR
   G4 --> G5
   H5 --> H7
   H6 --> H7
-  B4A --> B4B
-  H6 --> B4B
+  R1 --> R2
+  R2 --> R3
+  B4A --> R3
+  H3 --> R3
+  R3 --> R4
+  H6 --> R4
+  R4 --> R5
   W1 --> W2
   A4 --> W2
 
@@ -856,7 +869,7 @@ flowchart LR
   F6 --> F8
   F7 --> F8
   W2 --> W3A
-  B4B --> W3A
+  R2 --> W3A
   A1OR --> W3A
   W2 --> W4
   A5 --> W4
@@ -925,7 +938,7 @@ flowchart LR
   N19 --> N20
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
-  class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
+  class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C,C8A,C8B,C8C,C9A,C9B,C9C,C9D,C10A,C10B,C10C,C10D,C11A,C11B,C11C,C12A,C12B,C12C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11 trackG;
@@ -935,6 +948,7 @@ flowchart LR
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class M0,M1,M2,M3,M4,M5 trackM;
+  class R1,R2,R3,R4,R5 trackR;
   class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14,N15,N16,N17,N18,N19,N20 trackN;
   class A4S seam;
 ```

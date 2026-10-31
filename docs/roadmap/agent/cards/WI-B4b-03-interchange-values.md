@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-B4b-03` |
-| Roadmap phase | [Track B · B4b](../../track-b-scale.md): B4b-2 geospatial interchange |
+| Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-2 geospatial interchange |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |

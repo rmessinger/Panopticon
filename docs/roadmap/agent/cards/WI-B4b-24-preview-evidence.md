@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-B4b-24` |
-| Roadmap phase | [Track B · B4b](../../track-b-scale.md): B4b-6b dev preview |
+| Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): B4b-6b dev preview |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |

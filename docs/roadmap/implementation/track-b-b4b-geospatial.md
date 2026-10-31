@@ -1,8 +1,8 @@
-# Track B · B4b: Geospatial map generation
+# Track R · R1-R2: Geospatial map generation (formerly B4b)
 
 > Audience: human overview above the divider; agent-context detail below it.
 
-Implements B4b-1 through B4b-6b of [Track B](../track-b-scale.md). Design source of truth:
+Implements B4b-1 through B4b-6b, phases R1 and R2 of [Track R](../track-r-real-world-terrain.md) (formerly Track B phase B4b). Design source of truth:
 [deep-dives/b4b-geospatial-map-generation.md](../deep-dives/b4b-geospatial-map-generation.md),
 including its [architecture diagrams](../deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams).
 

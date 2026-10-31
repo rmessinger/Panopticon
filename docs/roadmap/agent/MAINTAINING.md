@@ -17,7 +17,7 @@ Each artifact owns one view. A plan change usually touches several. Know which o
 
 | Document | Owns (source of truth for) |
 |---|---|
-| [`track-*.md`](../README.md#document-map) (P, A-H, W, M, N, X) | Phase definitions, goals, Milestone (definition-of-done), Status, dependencies, per-phase notes. |
+| [`track-*.md`](../README.md#document-map) (P, A-H, W, M, N, R, X) | Phase definitions, goals, Milestone (definition-of-done), Status, dependencies, per-phase notes. |
 | [`deep-dives/x1-imported-unit-hit-feedback.md`](../deep-dives/x1-imported-unit-hit-feedback.md) | X1 presentation policy boundary and target-hit evidence. |
 | [`implementation-checklist.md`](../implementation-checklist.md) | The flat, granular change list: concrete items per phase, each with an acceptance criteria (`AC:`) sub-bullet. |
 | [`roadmap-tree.md`](../roadmap-tree.md) | The visual hierarchy (mindmap) + dependency flow (LR stages). |

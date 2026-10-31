@@ -797,3 +797,9 @@
   reciprocal steering becomes the lowest layer behind `UnitSteering`, with N8's discrete
   resolution as fallback. Navigation groups are transient and carry no AI intent. New options
   default off until N20. See the [deep dive](deep-dives/n-layered-navigation.md#6-decisions).
+- Real-world terrain scope. Decision (2026-10-31): geospatial map generation moves out of Track B
+  (phase B4b) into its own track, [Track R](track-r-real-world-terrain.md), as R1 to R5. It is a
+  content and authoring pipeline rather than scale work, and new source types or generation stages
+  take further R phases instead of growing a Track B sub-phase. Card IDs, sub-phase labels, the
+  deep dive, and the plan keep their B4b names to avoid renaming every reference. W3a now depends
+  on R2, the standalone payload its cards already consume, instead of the whole former B4b.

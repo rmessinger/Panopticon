@@ -1,6 +1,7 @@
 # Deep Dive: Geospatial Map Generation
 
-> Expands phase B4b of [Track B: Scale](../track-b-scale.md). Part of the
+> Expands phases R1 to R5 of [Track R: Real-World Terrain](../track-r-real-world-terrain.md)
+> (formerly Track B phase B4b; sub-phase labels and card IDs keep the B4b prefix). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
 > Audience: human design for offline generation of Panopticon maps from operator-supplied

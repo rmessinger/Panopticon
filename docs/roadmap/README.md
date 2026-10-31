@@ -129,7 +129,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`seams.md`](seams.md) | human + agent | Definition of a "seam" and the maintained registry of all framework seams (structural + A4 experiment seams). Pending split into a human overview and an agent registry. |
 | [`track-p-playable-baseline.md`](track-p-playable-baseline.md) | human | Prerequisite track: make the reference game (Generals/ZH) a fully playable end-to-end skirmish (setup, AI, economy, production, combat, win/lose). Gates Tracks A/B/C. |
 | [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, statistical validation, sim/presentation seam, experiment framework, scenario authoring & visualization. |
-| [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
+| [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, larger maps, rendering, distributed sim, variable fidelity. |
 | [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, production glTF, EE2 NIF proof, tooling, StarCraft II, BFME-family W3D, Total War: THREE KINGDOMS, AoE3 DE, Rise of Legends. |
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes water/ground pathfinding and adds ship combat/production against BFME2 content. E1/E3 depend on Track P; E2 also uses F4a Bepu hull contacts. |
@@ -139,6 +139,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-w-western-front.md`](track-w-western-front.md) | human | Western Front simulation: charter fixture, aggregate sector model, fidelity promotion and reconciliation, geospatial sector, command and logistics experiments, distributed regions, and a long-run campaign. Built as a domain through the A4-1 seam and A4-4 state projection. |
 | [`track-m-mass-battle.md`](track-m-mass-battle.md) | human | Mixed-roster mass battle: capacity probe, battle map, EE2 combat units, roster normalization, army-scale AI, and the 1000 vs 1000 battle in batch, replay, and live modes. |
 | [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md) | human | Multi-unit pathfinding performance and deadlocks: path cost baseline, search core efficiency, shared group requests, gated shared-destination fields, off-thread order paths, scale verification, stall attribution, path liveness, blocked-unit resolution, destination crowding, passage queueing, and layered navigation (strategic sectors, corridor main paths, navigation groups, steering). |
+| [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md) | human | Real-world terrain: operator-supplied Google Earth KML/KMZ plus georeferenced elevation and imagery rasters to standalone payloads, dev preview maps, H3 packages, and WorldBuilder import. Formerly Track B phase B4b. |
 | [`track-x-fixes-tweaks.md`](track-x-fixes-tweaks.md) | human | Open-ended miscellaneous fixes and tweaks, each with a bounded milestone. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `Panopticon.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
@@ -178,7 +179,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
 | [`deep-dives/b4-spatial-pathfinding-scaling.md`](deep-dives/b4-spatial-pathfinding-scaling.md) | Track B phase B4 - Spatial and pathfinding scaling (partition hot-path budget, group movement, async path requests, gated hierarchical pathfinding). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
-| [`deep-dives/b4b-geospatial-map-generation.md`](deep-dives/b4b-geospatial-map-generation.md) | Track B phase B4b - Offline generation of editable maps from operator-supplied Google Earth or Google Earth Engine geospatial exports. |
+| [`deep-dives/b4b-geospatial-map-generation.md`](deep-dives/b4b-geospatial-map-generation.md) | Track R phases R1-R5 (formerly B4b) - Offline generation of editable maps from operator-supplied Google Earth or Google Earth Engine geospatial exports. |
 | [`deep-dives/b5-rendering-at-scale.md`](deep-dives/b5-rendering-at-scale.md) | Track B phase B5 - Rendering at scale: source-agnostic GPU instancing, distance LOD/culling, render-bucket/shadow submit improvements, and the render-scale probe. |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (fidelity registry, group aggregation contract, visualization and error reporting). |
@@ -256,8 +257,7 @@ track document.
   scales with the sim).
 - [Track B - Scale](track-b-scale.md): B1 profiling & benchmarking utilities · B2 allocation cleanup · B3
   parallel/data-oriented logic · B4 spatial & pathfinding scaling · B4a larger maps (+
-  large-population scenario authoring in WorldBuilder) · B4b geospatial map generation from Google
-  Earth KML/KMZ plus operator-authorized elevation and imagery data · B5 rendering at scale · B6
+  large-population scenario authoring in WorldBuilder) · B5 rendering at scale · B6
   distributed simulation · B7 variable simulation fidelity.
 - [Track C - External Models & Animations](track-c-external-assets.md): C1 import
   abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first production
@@ -302,7 +302,7 @@ track document.
 - [Track W - Western Front Simulation](track-w-western-front.md): W0 charter fixture · W1
   aggregate sector simulation · W2 fidelity promotion and reconciliation · W3a Sedan 1870 · W3b
   Somme sector · W4 command and logistics experiment · W5 distributed regional simulation · W6
-  long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
+  long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, R2, A5, and B6.
 - [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 battle map · M1 capacity
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
   battle (in progress: scenario, batch chain, and spectator done; full-scale acceptance batches,
@@ -318,6 +318,10 @@ track document.
   group local router · N19 unit steering · N20 layered navigation verification · N21 structure
   passability coverage. Depends on B1,
   B4, and M4.
+- [Track R - Real-World Terrain](track-r-real-world-terrain.md): R1 geospatial import core ·
+  R2 standalone payload and dev preview · R3 map package output · R4 WorldBuilder import
+  workflow · R5 validation and scale proof. Formerly Track B phase B4b; card IDs keep the B4b
+  prefix. R1 and R2 have no dependencies; R3 depends on B4a and H3, R4 on H6.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1. X6 extracts navigation logic from `AIUpdate` into its own class after N11.
 
@@ -350,7 +354,7 @@ track document.
   Track C supplies visuals; H4 stores H2a's representation. Its H3 (new map storage format) reserves a terrain section for
   [B4a-5's chunked heightmap representation](deep-dives/b4a-larger-maps.md) rather than competing
   with it: B4a-5 owns the runtime chunking/streaming model, H3 owns the on-disk container and
-  versioning. B4b consumes both through H6's WorldBuilder integration as the output path for
+  versioning. Track R consumes both (R3) and H6's WorldBuilder integration (R4) as the output path for
   generated geospatial maps. H2's
   format-agnostic interchange abstraction mirrors [C1](track-c-external-assets.md)'s
   import-abstraction pattern applied to maps; H2a owns unit-content interchange and materialization.
@@ -358,7 +362,7 @@ track document.
   tool](plans/mod-collector.md) once the new object-definition format exists.
 - Track W builds on Track A: W0 needs A4-1 and the A4-4 state projection, W1 needs A2, W2 needs
   A4-3. W2 is the first B7-4 group-aggregation instance and does not wait for B7. W3a consumes
-  B4b, W4 and W6 consume A5, and W5 consumes B6.
+  Track R's R2 payload, W4 and W6 consume A5, and W5 consumes B6.
 - Track N follows B4 and M4: it reuses B4's async queue and group movement and measures on M4's
   army-AI probe. E1's surface layers make N1's region labels and N16's sector graph per-layer,
   and A4-32 wraps N's `Navigation` surface. N15 builds on X6's `UnitNavigation`. M5 does not
@@ -406,7 +410,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Track | Progress | Items |
 |---|---|---|
 | Track A - Foundations | `██████▌░░░` | 14 / 22 |
-| Track B - Scale | `█░░░░░░░░░` | 1 / 44 |
+| Track B - Scale | `██▌░░░░░░░` | 8 / 32 |
 | Track C - External Assets | `██▌░░░░░░░` | 9 / 35 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
@@ -529,6 +533,17 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | N20 - Layered navigation verification | `░░░░░░░░░░` | 0 / 1 |
 | N21 - Structure passability coverage | `██████████` | 1 / 1 |
 | Track N total | `██████░░░░` | 23 / 40 |
+
+### Track R - Real-World Terrain
+
+| Phase | Progress | Items |
+|---|---|---|
+| R1 - Geospatial import core | `░░░░░░░░░░` | 0 / 6 |
+| R2 - Standalone payload and dev preview | `░░░░░░░░░░` | 0 / 2 |
+| R3 - Map package output | `░░░░░░░░░░` | 0 / 1 |
+| R4 - WorldBuilder import workflow | `░░░░░░░░░░` | 0 / 1 |
+| R5 - Validation and scale proof | `░░░░░░░░░░` | 0 / 1 |
+| Track R total | `░░░░░░░░░░` | 0 / 11 |
 
 ---
 

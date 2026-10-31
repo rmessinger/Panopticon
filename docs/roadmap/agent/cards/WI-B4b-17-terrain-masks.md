@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-B4b-17` |
-| Roadmap phase | [Track B · B4b](../../track-b-scale.md): B4b-6 vector semantics |
+| Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-6 vector semantics |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |

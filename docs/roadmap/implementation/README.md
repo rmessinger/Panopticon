@@ -132,7 +132,7 @@ Source of truth: [deep-dives/b4a-larger-maps.md](../deep-dives/b4a-larger-maps.m
 |---|---|---|
 | [track-b-b4a-larger-maps.md](track-b-b4a-larger-maps.md) | B4a-1…B4a-6 | Larger maps (WI-B4a-01..11) |
 
-## Track B · B4b : Geospatial map generation
+## Track R · R1-R2 : Geospatial import core, payload, and dev preview (formerly B4b)
 
 Source of truth:
 [deep-dives/b4b-geospatial-map-generation.md](../deep-dives/b4b-geospatial-map-generation.md) :
@@ -140,7 +140,7 @@ Source of truth:
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | B4b-1…B4b-6b | Geospatial map generation (WI-B4b-01..24) |
+| [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | R1 (B4b-1…B4b-6), R2 (B4b-6a, B4b-6b) | Geospatial map generation (WI-B4b-01..24) |
 
 ## Track B · B5 : Rendering at scale
 

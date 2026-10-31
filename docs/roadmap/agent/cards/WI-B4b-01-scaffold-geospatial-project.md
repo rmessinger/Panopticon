@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-B4b-01` |
-| Roadmap phase | [Track B · B4b](../../track-b-scale.md): B4b-1 input contract |
+| Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-1 input contract |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
