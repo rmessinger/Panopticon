@@ -237,7 +237,7 @@ mindmap
       C10a AoE3 DE archives and textures ⮕
       C10b AoE3 DE static Granny models ⮕
       C10c AoE3 DE skinned animation ⮕
-      C10d Granny decompression deferred ⮕
+      C10d Granny decompression ✓
       C11a Rise of Legends archives ⮕
       C11b Rise of Legends static BH3 models ⮕
       C11c Rise of Legends animation ⮕
@@ -538,7 +538,7 @@ flowchart LR
     C4B["C4b EE2 cooked textures"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
-    C10D["C10d Granny decompression (deferred)"]
+    C10D["C10d Granny decompression (done)"]
     C8C["C8c BFME-family skinning and animation"]
     D4["D4 Reference non-SAGE scenario"]
     F2["F2 Runtime mesh & rendering update"]

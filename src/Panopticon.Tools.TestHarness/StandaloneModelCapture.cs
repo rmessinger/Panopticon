@@ -32,7 +32,8 @@ internal sealed record StandaloneCaptureOptions(
     Settings.WorldLighting? Lighting = null,
     Mathematics.ColorRgbaF? Background = null,
     Mathematics.AxisAlignedBoundingBox? CameraFitBounds = null,
-    bool GroundComparison = false);
+    bool GroundComparison = false,
+    bool GroundGrid = false);
 
 /// <summary>
 /// Renders one already-materialized runtime <see cref="Model"/> to a PNG without the ImGui-based
@@ -336,6 +337,51 @@ internal static class StandaloneModelCapture
             // target (verified: a (0.2, 0.4, 0.9) clear colour captures as (124, 170, 243)),
             // so the PNG holds display-ready values.
             FrameCapturer.CaptureToPng(game.GraphicsDevice, renderTarget.ColorTarget, outputPath);
+            if (options?.GroundGrid == true)
+            {
+                using var gridImage = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba32>(outputPath);
+                var backgroundPixel = gridImage[0, 0];
+                var spacing = MathF.Max(enclosingBounds.Max.X - enclosingBounds.Min.X,
+                    enclosingBounds.Max.Y - enclosingBounds.Min.Y) / 8f;
+                var center = (enclosingBounds.Min + enclosingBounds.Max) * 0.5f;
+                var gridColor = new SixLabors.ImageSharp.PixelFormats.Rgba32(170, 190, 210, 255);
+                for (var line = -5; line <= 5; line++)
+                {
+                    DrawGroundLine(new Vector3(center.X + line * spacing, center.Y - 5 * spacing, 0),
+                        new Vector3(center.X + line * spacing, center.Y + 5 * spacing, 0));
+                    DrawGroundLine(new Vector3(center.X - 5 * spacing, center.Y + line * spacing, 0),
+                        new Vector3(center.X + 5 * spacing, center.Y + line * spacing, 0));
+                }
+
+                using var gridOutput = File.Create(outputPath);
+                gridImage.Save(gridOutput, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+
+                void DrawGroundLine(Vector3 start, Vector3 end)
+                {
+                    var a = scene.Camera.WorldToScreenPoint(start);
+                    var b = scene.Camera.WorldToScreenPoint(end);
+                    for (var step = 0; step <= 2048; step++)
+                    {
+                        var point = Vector2.Lerp(new Vector2(a.X, a.Y), new Vector2(b.X, b.Y), step / 2048f);
+                        var x = (int)MathF.Round(point.X);
+                        var y = (int)MathF.Round(point.Y);
+                        if (x < 0 || x >= gridImage.Width || y < 0 || y >= gridImage.Height)
+                        {
+                            continue;
+                        }
+
+                        // Diagnostic overlay only: leave rendered geometry untouched.
+                        var pixel = gridImage[x, y];
+                        if (Math.Abs(pixel.R - backgroundPixel.R) <= 3
+                            && Math.Abs(pixel.G - backgroundPixel.G) <= 3
+                            && Math.Abs(pixel.B - backgroundPixel.B) <= 3)
+                        {
+                            gridImage[x, y] = gridColor;
+                        }
+                    }
+                }
+            }
+
             if (options?.GroundComparison == true)
             {
                 // Project the real world ground, rather than aligning silhouettes after rendering.

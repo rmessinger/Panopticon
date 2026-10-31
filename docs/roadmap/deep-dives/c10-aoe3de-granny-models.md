@@ -377,6 +377,20 @@ The redcoat no longer uses the C10c atlas overlay. Viewer evidence:
 `aoe3-redcoat-beside-ranger-c10d-v1.png`, `aoe3-falconet-beside-ranger-c10d-v1.png`, and
 `aoe3-johnboat-beside-ranger-c10d-v1.png`.
 
+Falconet `Limber` review passes: six coherent poses, each captured twice byte-identically.
+The horse moves about 2.35 m in depth with a constant rig-root height; its source mesh minimum
+Z remains 0.006-0.015 m. A diagnostic ground-grid overlay makes this motion distinguishable
+from floating without changing the camera, animation, or model scale. Bind identity error
+is below 0.000004. Evidence: `aoe3-falconet-limber-c10d-v1.gif` and
+`frames/aoe3-falconet-limber-c10d-v1/` in the viewer. The 3.7917 s clip uses six 630 ms GIF
+frames. The source cannon dips about 0.143 m below grade near the end; nonuniform animated
+scale remains reduced to the existing runtime's uniform-scale channels.
+
+Validation: 155 Granny/AoE3 and bind-matrix tests pass, including all 4,942 corpus entries;
+27 codec tests include independent decoded-byte comparisons. Non-interactive simulation
+tests: 2,622 passed, seven skipped, one pre-existing `ParkingPlaceBehavior_ReportLanding`
+failure. Six capture-framework tests, build, format, and brace checks pass.
+
 The damaged sloop passes decoding but fails the normal-map tangent generator's degenerate-UV
 guardrail. The guardrail remains unchanged. Large imported textures request contiguous
 ImageSharp buffers because the GPU upload path requires a single pixel span.

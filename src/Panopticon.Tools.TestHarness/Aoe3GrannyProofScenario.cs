@@ -594,7 +594,8 @@ public static class Aoe3GrannyProofScenario
         var fitBounds = ComputeAnimatedFitBounds(model, importedModel, animation, sampleSeconds, world, loadContext);
         var options = new StandaloneCaptureOptions(
             Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f),
-            CameraFitBounds: fitBounds);
+            CameraFitBounds: fitBounds,
+            GroundGrid: displayName == "falconet-limber");
 
         StandaloneModelCapture.Capture(
             game,

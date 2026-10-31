@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C10d-04` |
 | Roadmap phase | [Track C · C10d](../../track-c-external-assets.md) |
-| Status | `In progress` |
+| Status | `Done` |
 | Type | `validation` |
 | Effort | `M` |
 | Prerequisites | `WI-C10d-03` |
@@ -39,11 +39,11 @@ Import and animate the Falconet and validate real compressed variants through ex
 
 ## Acceptance criteria
 
-- [ ] Falconet imports and plays `falconet_limber` with coherent geometry.
+- [x] Falconet imports and plays `falconet_limber` with coherent geometry.
 - [x] Available type-4 content is validated, or its corpus absence is recorded.
 - [x] Real redcoat mesh replaces the mismatched overlay where supported.
 - [x] Existing musketeer and horse proofs remain visually correct.
-- [ ] Evidence and validation are linked in the open group-4 PR.
+- [x] Evidence and validation are linked in the open group-4 PR.
 
 ## Validation
 
@@ -51,7 +51,10 @@ Run the proof under Xvfb, review captures, run Granny/AoE3 and non-interactive s
 format, and brace checks. Stop on determinism deviations and preserve artifacts.
 
 Static capture review passes: actual redcoat, Falconet, BitKnit2 johnboat, and existing
-musketeer/horse comparisons. Falconet animation review remains in progress.
+musketeer/horse comparisons. Falconet animation passes with a diagnostic ground grid showing
+authored depth motion. Six frames capture twice byte-identically. Evidence and results:
+[PR #307](https://github.com/rmessinger/Panopticon/pull/307) and the
+[C10d results](../../deep-dives/c10-aoe3de-granny-models.md#c10d-reader-and-bind-transform-results).
 
 ## Out of scope / guardrails
 

@@ -1082,7 +1082,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     to C1 TRS channels and other curve codecs fail with context; animfile XML resolves models,
     tech variants, clips, and attachments; musketeer march and volley clips and hussar idles bind
     with no missing targets and capture deterministically.
-- [ ] C10d Granny section decompression (in progress)
+- [x] C10d Granny section decompression
       ([deep dive](deep-dives/c10-aoe3de-granny-models.md#6-references-and-licensing)).
   - AC: starts only after a recorded provenance and license review of the decompressor source;
     Oodle1 and BitKnit2 sections decompress to their recorded sizes; the falconet imports and plays
