@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using BitMiracle.LibTiff.Classic;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Readers;
 
 namespace Panopticon.Geospatial.Tests.Fixtures;
 
@@ -29,22 +30,15 @@ public static class SyntheticGeoTiffWriter
     private const ushort ProjectedCSTypeGeoKey = 3072;
     private const ushort VerticalCSTypeGeoKey = 4096;
 
-    private static readonly TiffFieldInfo[] GeoTiffFieldInfos =
+    /// <summary>
+    /// Registers GeoTIFF fields once through the production registration gate shared with
+    /// <c>GeoTiffRasterReader</c>, so reader and fixture never install competing LibTiff.NET
+    /// tag extenders.
+    /// </summary>
+    public static void EnsureGeoTiffTagsRegistered()
     {
-        new(TiffTag.GEOTIFF_MODELPIXELSCALETAG, -1, -1, TiffType.DOUBLE, FieldBit.Custom, true, true, "ModelPixelScaleTag"),
-        new(TiffTag.GEOTIFF_MODELTIEPOINTTAG, -1, -1, TiffType.DOUBLE, FieldBit.Custom, true, true, "ModelTiepointTag"),
-        new(TiffTag.GEOTIFF_MODELTRANSFORMATIONTAG, -1, -1, TiffType.DOUBLE, FieldBit.Custom, true, true, "ModelTransformationTag"),
-        new(TiffTag.GEOTIFF_GEOKEYDIRECTORYTAG, -1, -1, TiffType.SHORT, FieldBit.Custom, true, true, "GeoKeyDirectoryTag"),
-        new(TiffTag.GEOTIFF_GEODOUBLEPARAMSTAG, -1, -1, TiffType.DOUBLE, FieldBit.Custom, true, true, "GeoDoubleParamsTag"),
-        new(TiffTag.GEOTIFF_GEOASCIIPARAMSTAG, -1, -1, TiffType.ASCII, FieldBit.Custom, true, false, "GeoAsciiParamsTag"),
-        new(TiffTag.GDAL_NODATA, -1, -1, TiffType.ASCII, FieldBit.Custom, true, false, "GDAL_NODATA"),
-    };
-
-    private static readonly object RegistrationGate = new();
-
-    private static bool GeoTiffTagsRegistered;
-
-    private static Tiff.TiffExtendProc PreviousExtender;
+        GeoTiffTagRegistration.EnsureRegistered();
+    }
 
     /// <summary>
     /// North-up plane elevation z = 10 + slopeX * column + slopeY * row.
@@ -164,13 +158,23 @@ public static class SyntheticGeoTiffWriter
     /// <summary>Writes samples (row-major, band-interleaved) as a GeoTIFF fixture.</summary>
     public static SyntheticGeoTiffFixture Write(double[] samples, SyntheticGeoTiffOptions options = null)
     {
+        return Write(samples, options, Path.GetTempPath());
+    }
+
+    /// <summary>
+    /// Writes a fixture under an explicit temp root a single test owns, so directory-lifecycle
+    /// assertions never depend on process-global temp state or environment mutation.
+    /// </summary>
+    internal static SyntheticGeoTiffFixture Write(double[] samples, SyntheticGeoTiffOptions options, string tempRoot)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(tempRoot);
         options ??= new SyntheticGeoTiffOptions();
         ValidateOptions(options, samples);
         EnsureGeoTiffTagsRegistered();
 
         var georeferencing = ResolveGeoreferencing(options);
         var geoKeys = BuildGeoKeyDirectory(options);
-        var directory = Path.Combine(Path.GetTempPath(), "panopticon-geotiff-" + Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(tempRoot, "panopticon-geotiff-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         var filePath = Path.Combine(directory, "raster.tif");
 
@@ -226,30 +230,6 @@ public static class SyntheticGeoTiffWriter
             options.Malformation,
             geoKeys,
             samples);
-    }
-
-    /// <summary>
-    /// Registers GeoTIFF fields once. Production readers and fixtures must coordinate changes
-    /// to LibTiff.NET's process-global extender slot.
-    /// </summary>
-    public static void EnsureGeoTiffTagsRegistered()
-    {
-        lock (RegistrationGate)
-        {
-            if (GeoTiffTagsRegistered)
-            {
-                return;
-            }
-
-            PreviousExtender = Tiff.SetTagExtender(ExtendDirectoryWithGeoTiffTags);
-            GeoTiffTagsRegistered = true;
-        }
-    }
-
-    private static void ExtendDirectoryWithGeoTiffTags(Tiff tiff)
-    {
-        tiff.MergeFieldInfo(GeoTiffFieldInfos, GeoTiffFieldInfos.Length);
-        PreviousExtender?.Invoke(tiff);
     }
 
     private static double[] ScalarSamples(SyntheticGeoTiffOptions options, Func<int, int, double> value)

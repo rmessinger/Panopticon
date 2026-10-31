@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Panopticon.Geospatial.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BitMiracle.LibTiff.NET" />
   </ItemGroup>
 
