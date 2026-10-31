@@ -538,7 +538,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Phase | Progress | Items |
 |---|---|---|
-| R1 - Geospatial import core | `██░░░░░░░░` | 1 / 6 |
+| R1 - Geospatial import core | `███░░░░░░░` | 2 / 6 |
 | R2 - Standalone payload and dev preview | `░░░░░░░░░░` | 0 / 2 |
 | R3 - Map package output | `░░░░░░░░░░` | 0 / 1 |
 | R4 - WorldBuilder import workflow | `░░░░░░░░░░` | 0 / 1 |
