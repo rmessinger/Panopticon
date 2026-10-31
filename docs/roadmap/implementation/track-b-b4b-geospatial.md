@@ -138,7 +138,7 @@ written only when present (`MapFile.cs:382-533`).
 | `WorldInfo` | `MapFile.cs:400-401` | none in the engine load path | empty `AssetPropertyCollection` (`WorldInfo.cs:12-16`) |
 | `SidesList` | `MapFile.cs:409-410` | `SidesListUtility.cs:81-234`, `MapFile.cs:100-102` | skirmish sides per below; `SidesList.cs:54-84` |
 | `ObjectsList` | `MapFile.cs:436-437` | `Scene3D.cs:149-157,177-277` | start waypoint map objects only; `ObjectsList` defaults to an empty list (`ObjectsList.cs:12`) |
-| `GlobalLighting` | `MapFile.cs:493-494` | `Scene3D.cs:145-147` | exactly four configurations keyed by `TimeOfDay` plus a `Time` value (`GlobalLighting.cs:62-65,109-112`); `Create` (`GlobalLighting.cs:41-52`) |
+| `GlobalLighting` | `MapFile.cs:493-494` | `Scene3D.cs:145-147` | exactly four configurations keyed by `TimeOfDay` plus a `Time` value (`GlobalLighting.cs:62-65,109-112`); `Create` (`GlobalLighting.cs:41-52`) is writable but its zero-valued lights render black. Generated previews require nonzero terrain and object lighting. |
 | `WaypointsList` | `MapFile.cs:526-527` | `Scene3D.cs:275` | empty `WaypointPaths` (`WaypointsList.cs:12-16`) |
 
 Optional sections with load-path reads, all null-tolerant:
