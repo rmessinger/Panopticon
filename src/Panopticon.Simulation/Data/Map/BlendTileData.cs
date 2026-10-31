@@ -9,6 +9,9 @@ public sealed class BlendTileData : Asset
 {
     public const string AssetName = "BlendTileData";
 
+    /// <summary>Default texture: a Terrain.ini block name, not an arbitrary texture file name.</summary>
+    public const string DefaultTextureName = "GrassType1";
+
     public uint NumTiles { get; private set; }
 
     public ushort[,] Tiles { get; private set; }
@@ -67,6 +70,8 @@ public sealed class BlendTileData : Asset
 
     private List<BlendTileTextureIndex> _textureIndices;
 
+    public static BlendTileData Create(uint width, uint height) => CreateUniform(width, height, DefaultTextureName);
+
     /// <summary>
     /// Zero-filled tile data sized to a height map (WI-A5-27, WI-A5-28): tile, blend, and cliff
     /// arrays plus the version-gated passability arrays are allocated so editor edits and
@@ -76,10 +81,13 @@ public sealed class BlendTileData : Asset
     /// (written when Version &gt; 6) without pulling in the heavier version-gated chunks.
     /// WI-A5-35 follow-through, found by the WI-A5-02 play leg: one terrain texture entry is
     /// seeded because Terrain.CreateTileDataTexture indexes TextureIndices by the per-tile
-    /// texture id and an empty list makes every tile access out of range.
+    /// texture id and an empty list makes every tile access out of range. textureName must be
+    /// a Terrain.ini block name in the installed game.
     /// </summary>
-    public static BlendTileData Create(uint width, uint height)
+    public static BlendTileData CreateUniform(uint width, uint height, string textureName = DefaultTextureName)
     {
+        Ensure.NotNullOrEmpty(textureName, "Terrain texture name must be a Terrain.ini block name.");
+
         return new BlendTileData
         {
             Version = 8,
@@ -100,7 +108,7 @@ public sealed class BlendTileData : Asset
             TiberiumGrowability = new bool[width, height],
             DynamicShrubberyDensity = new byte[width, height],
             TextureCellCount = 16,
-            Textures = [BlendTileTexture.Create("GrassType1", 0, 16, 4)],
+            Textures = [BlendTileTexture.Create(textureName, 0, 16, 4)],
             BlendDescriptions = [],
             CliffTextureMappings = [],
         };

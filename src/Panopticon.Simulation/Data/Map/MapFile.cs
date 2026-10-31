@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using Panopticon.Data.Utilities.Extensions;
 using Panopticon.FileFormats;
@@ -10,6 +11,7 @@ using Panopticon.FileFormats.RefPack;
 using Panopticon.IO;
 using Panopticon.Logic.Map;
 using Panopticon.Scripting;
+using Panopticon.Terrain;
 
 namespace Panopticon.Data.Map;
 
@@ -210,6 +212,61 @@ public class MapFile
             GlobalLighting = GlobalLighting.Create(),
             WaypointsList = WaypointsList.Create(),
         };
+    }
+
+    /// <summary>
+    /// Builds a complete playable map from an elevation grid (border included: playable
+    /// + 2*borderWidth + 1 samples per side). Heights serialize 16-bit, sides are the
+    /// two-slot America/GLA skirmish set, and each slot gets a start waypoint inside the
+    /// playable bounds.
+    /// </summary>
+    public static MapFile CreateFromHeights(ushort[,] heights, uint borderWidth, string textureName = BlendTileData.DefaultTextureName)
+    {
+        ArgumentNullException.ThrowIfNull(heights);
+        Ensure.NotNullOrEmpty(textureName, "Terrain texture name must be a Terrain.ini block name.");
+
+        var width = (uint)heights.GetLength(0);
+        var height = (uint)heights.GetLength(1);
+        if (width < (ulong)borderWidth * 2 + 2 || height < (ulong)borderWidth * 2 + 2)
+        {
+            throw new ArgumentException($"A {width}x{height} elevation grid with border {borderWidth} leaves no playable area.");
+        }
+
+        var result = new MapFile
+        {
+            HeightMapData = HeightMapData.Create16Bit(borderWidth, heights),
+            BlendTileData = BlendTileData.CreateUniform(width, height, textureName),
+            WorldInfo = WorldInfo.Create(),
+            SidesList = SidesList.CreateSkirmish(SkirmishFactions),
+            ObjectsList = new ObjectsList(),
+            GlobalLighting = GlobalLighting.Create(),
+            WaypointsList = WaypointsList.Create(),
+        };
+
+        AddPlayerStartWaypoints(result);
+        return result;
+    }
+
+    private static readonly string[] SkirmishFactions = ["FactionAmerica", "FactionGLA"];
+
+    private static void AddPlayerStartWaypoints(MapFile mapFile)
+    {
+        // Start markers are (east, north, 0): Scene3D adds the terrain height to Z itself
+        // when spawning the starting building. World coordinates are playable-relative per
+        // HeightMap.GetPosition ((sample - border) * HorizontalScale); 25% / 75% along the
+        // diagonal keeps slots apart and clear of the hardcoded (80, 80, 0) fallback.
+        var borderWidth = mapFile.HeightMapData.BorderWidth;
+        var playableWidth = mapFile.HeightMapData.Width - borderWidth * 2 - 1;
+        var playableHeight = mapFile.HeightMapData.Height - borderWidth * 2 - 1;
+        var slotCount = SkirmishFactions.Length;
+        for (var slot = 1; slot <= slotCount; slot++)
+        {
+            var fraction = 0.25 + 0.5 * (slot - 1) / (slotCount - 1);
+            var east = (uint)Math.Round(fraction * playableWidth) * HeightMap.HorizontalScale;
+            var north = (uint)Math.Round(fraction * playableHeight) * HeightMap.HorizontalScale;
+            mapFile.ObjectsList.AddObject(
+                Waypoint.CreateWaypointMapObject(new Vector3(east, north, 0), slot, $"Player_{slot}_Start"));
+        }
     }
 
     private static MapFile ParseMapData(BinaryReader reader)
