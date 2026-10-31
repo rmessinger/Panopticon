@@ -20,9 +20,9 @@ Validate named control points against the generated payload within manifest tole
 
 ## Steps
 
-1. Add manifest `controlPoints` (name, lat, lon, optional expected elevation meters, optional expected imagery RGB).
+1. Add manifest `controlPoints` (name, lat, lon, optional expected elevation meters, optional expected imagery RGB, independent expected game XY or matched feature ID, and per-channel imagery tolerance). Apply the validation semantics in deep dive §6.1.
 2. Add `ControlPointValidator`: transform to game XY, sample payload terrain (and imagery), compare with horizontal and vertical tolerances; mark absolute vertical `not evaluated` when datum is `unknown`.
-3. Run it at the end of `GeospatialImporter.Run`; failures are `Validate` errors.
+3. Run it against staged output before the commit rename in `GeospatialImporter.Run`; failures are `Validate` errors.
 4. Add `test/Panopticon.Geospatial.Tests/Pipeline/ControlPointValidatorTests.cs`.
 
 ## Files likely to change

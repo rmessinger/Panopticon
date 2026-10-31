@@ -21,8 +21,8 @@ Wire `GeospatialImporter.Run` end to end and write/read the §6.1 payload direct
 ## Steps
 
 1. Add `GeospatialImporter.Run(manifestPath, outputDirectory, cancellationToken)` returning `GeoImportResult` (success, diagnostics, payload path).
-2. Order: load manifest; hash sources (SHA-256); read vector and raster sources; reject mixed known vertical datums; build grid; per chunk generate terrain, imagery, materials, masks; map features; write payload.
-3. Add `GeneratedMapPayloadWriter` (writes to `<out>.tmp-<guid>`, then `Directory.Move`; deletes the temp directory on error or cancellation) and `GeneratedMapPayloadReader`.
+2. Order: load manifest; hash sources (SHA-256); read vector and raster sources; reject mixed known vertical datums; build grid; generate terrain and imagery; clip and map features; generate materials and masks; stage and validate payload; commit output.
+3. Add `GeneratedMapPayloadWriter` (writes to `<out>.tmp-<guid>`, then `Directory.Move`; deletes the temp directory on error or cancellation) and `GeneratedMapPayloadReader`. Apply the validation and replacement contract in deep dive §6.1.
 4. Add `payload.json` schema (payload version 1, transform, chunk layout, palette, features, provenance) and `report.json` (diagnostics, kernels and GSD ratios, fill counts).
 5. Check the cancellation token between chunks.
 6. Add `test/Panopticon.Geospatial.Tests/Pipeline/GeospatialImporterTests.cs` with a synthetic end-to-end manifest (KML extent plus `Plane` DEM plus imagery plus classification).

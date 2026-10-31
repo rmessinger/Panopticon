@@ -426,6 +426,10 @@
   tests use synthetic fixtures. This keeps the importer deterministic and service-independent
   while leaving source-data rights with the operator under the existing single-operator scope.
   Affects [B4b](deep-dives/b4b-geospatial-map-generation.md).
+- R1/R2 standalone integration. Decision (2026-10-31): the origin, sampling footprint, generation
+  order, payload validation, and preview offset contracts are fixed in
+  [B4b §4-6.1](deep-dives/b4b-geospatial-map-generation.md#4-coordinate-and-elevation-contract).
+  Explicit coordinates and pre-commit validation prevent ambiguous extents and partial output.
 - B4b geospatial pipeline. Decision: the B4b-1 deferred choices are settled as follows.
   1. Dependencies: `BitMiracle.LibTiff.NET` with in-house GeoTIFF key parsing; in-house WGS84
      Transverse Mercator (Krüger series, order 6); no projection package.
