@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-13` |
 | Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-5 terrain and imagery generation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-12` |
