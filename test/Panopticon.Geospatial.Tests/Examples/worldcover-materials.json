@@ -1,0 +1,64 @@
+{
+  "sources": [
+    {
+      "id": "extent",
+      "kind": "kml",
+      "path": "playable-area.kml",
+      "role": "extent",
+      "label": "Playable area outline"
+    },
+    {
+      "id": "dem",
+      "kind": "geotiff",
+      "path": "copernicus-dem.tif",
+      "role": "elevation",
+      "verticalDatum": "unknown",
+      "label": "Copernicus GLO-30 DEM",
+      "attribution": "Contains modified Copernicus data"
+    },
+    {
+      "id": "worldcover",
+      "kind": "geotiff",
+      "path": "esa-worldcover-2020.tif",
+      "role": "classification",
+      "label": "ESA WorldCover 10 m 2020",
+      "attribution": "Contains modified Copernicus Land Cover data (2021)"
+    },
+    {
+      "id": "regions",
+      "kind": "kml",
+      "path": "material-regions.kml",
+      "role": "vector",
+      "label": "Curated material regions"
+    }
+  ],
+  "targetCoordinateSystem": { "type": "utm", "zone": 31, "hemisphere": "north" },
+  "metersPerGameUnit": 1,
+  "defaultMaterial": "grass",
+  "extentFeatureId": "playable-area",
+  "tolerances": { "relativeVerticalMeters": 2 },
+  "materialRules": [
+    { "classificationValue": 10, "material": "forest" },
+    { "classificationValue": 20, "material": "shrubland" },
+    { "classificationValue": 30, "material": "grassland" },
+    { "classificationValue": 40, "material": "cropland" },
+    { "classificationValue": 50, "material": "built-up" },
+    { "classificationValue": 60, "material": "bare" },
+    { "classificationValue": 70, "material": "snow" },
+    { "classificationValue": 80, "material": "water" },
+    { "classificationValue": 90, "material": "wetland" },
+    { "classificationValue": 95, "material": "mangroves" },
+    { "classificationValue": 100, "material": "moss-lichen" }
+  ],
+  "featureMappings": [
+    {
+      "sourceId": "regions",
+      "geometry": "polygon",
+      "attribute": "surface",
+      "value": "sand",
+      "target": "material",
+      "material": "sand",
+      "layerName": "Material Regions"
+    }
+  ]
+}

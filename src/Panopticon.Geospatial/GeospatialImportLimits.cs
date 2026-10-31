@@ -11,4 +11,13 @@ public sealed record GeospatialImportLimits(
     long MaxRasterDecodedBytes = 4L * 1024 * 1024 * 1024,
     int MaxFeatureCount = 1_000_000,
     long MaxCoordinateCount = 50_000_000,
-    int MaxChunkCount = 65536);
+    int MaxChunkCount = 65536,
+    long MaxVectorWorkPerChunk = 64L * 1024 * 1024)
+{
+    /// <summary>
+    /// Whole-map budget for FeatureMapper rule-feature comparisons, charged once per
+    /// (rule, feature) pair. Distinct from MaxVectorWorkPerChunk, the per-chunk material
+    /// polygon work budget.
+    /// </summary>
+    public long MaxFeatureRuleComparisons { get; init; } = 64L * 1024 * 1024;
+}
