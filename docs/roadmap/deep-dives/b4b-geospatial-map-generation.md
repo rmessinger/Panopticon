@@ -349,6 +349,12 @@ A mapping rule selects source layer and attributes, target kind, and target para
 placement requires an explicit object-definition name and orientation policy. Unmapped features
 remain inspectable annotations and produce no gameplay state.
 
+Rule predicates use source ID, optional exact `layerName`, geometry, and attribute presence or
+exact string value. Authoring targets use the first matching rule. Water, passability, and
+buildability retain all matching regions with their manifest rule index, so mask overrides use
+global manifest order across features. Material rules are evaluated independently by the material
+generator. A feature with no authoring or region match remains an annotation.
+
 Generated points sample terrain Z after terrain creation. Lines and polygons are clipped to the
 selected extent before rasterization. Stable source IDs and attributes remain attached to
 generated authoring records for diagnostics.

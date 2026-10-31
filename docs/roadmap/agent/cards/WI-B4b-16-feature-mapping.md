@@ -21,7 +21,7 @@ Apply manifest `FeatureMappingRule`s to clipped features, producing generated wa
 ## Steps
 
 1. Add `GeneratedFeature` (kind: Waypoint, Landmark, ObjectCandidate, Road, Rail, River, Water, Passability, Buildability, Annotation; game geometry; parameters; source feature id).
-2. Add `FeatureMapper.Map(localFeatures, rules, terrain)`: first matching rule by layer and attribute predicates; object candidates require an object-definition name and orientation policy; unmatched features become Annotations.
+2. Add `FeatureMapper.Map(localFeatures, rules, terrain)`: match source ID, optional layer, geometry, and attribute predicates. Authoring targets use the first matching rule. Water, passability, and buildability regions retain every matching rule with its manifest index for ordered mask overrides. Material rules belong to the material generator. Object candidates require an object-definition name and orientation policy; unmatched features become Annotations.
 3. Sample terrain Z for points from terrain chunks with bilinear interpolation.
 4. Add `test/Panopticon.Geospatial.Tests/Features/FeatureMapperTests.cs`.
 

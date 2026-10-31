@@ -619,7 +619,8 @@ internal static class ManifestValidator
                 rule.OrientationDegrees,
                 NormalizeOptional(rule.Material),
                 rule.Passable,
-                rule.Buildable));
+                rule.Buildable,
+                NormalizeOptional(rule.LayerName)));
         }
 
         return rules;
