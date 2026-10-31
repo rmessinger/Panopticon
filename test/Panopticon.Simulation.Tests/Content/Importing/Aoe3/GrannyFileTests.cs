@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using Panopticon.FileFormats.Bar;
@@ -113,15 +114,70 @@ public sealed class GrannyFileTests
     }
 
     [Fact]
-    public void CompressedSectionThrowsWithType()
+    public void UnsupportedCompressionThrowsWithType()
     {
-        using var stream = new MemoryStream(SyntheticGrannyBuilder.BuildWithCompressedSection(2));
+        using var stream = new MemoryStream(SyntheticGrannyBuilder.BuildWithCompressedSection(99));
 
         var exception = Assert.Throws<GrannyCompressedSectionException>(() => GrannyFile.Read(stream, "unit.gr2"));
         Assert.Equal(0, exception.SectionIndex);
-        Assert.Equal(2u, exception.Compression);
+        Assert.Equal(99u, exception.Compression);
         Assert.Equal("unit.gr2", exception.FilePath);
-        Assert.Contains("Oodle1", exception.Message);
+        Assert.Contains("compression 99", exception.Message);
+    }
+
+    [Theory]
+    [InlineData(0x70, uint.MaxValue, "2 GiB")]
+    [InlineData(0x74, uint.MaxValue, "2 GiB")]
+    [InlineData(0x84, uint.MaxValue, "relocation")]
+    [InlineData(0x88, uint.MaxValue, "relocation")]
+    [InlineData(0x8c, uint.MaxValue, "marshalling")]
+    [InlineData(0x90, uint.MaxValue, "marshalling")]
+    public void RejectsInvalidSectionRanges(int fieldOffset, uint value, string expected)
+    {
+        var bytes = SyntheticGrannyBuilder.BuildValid();
+        if (fieldOffset == 0x8c)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(0x90), 1);
+        }
+
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(fieldOffset), value);
+        using var stream = new MemoryStream(bytes);
+
+        var exception = Assert.Throws<InvalidDataException>(() => GrannyFile.Read(stream, "bad-range.gr2"));
+
+        Assert.Contains("bad-range.gr2", exception.Message);
+        Assert.Contains(expected, exception.Message);
+    }
+
+    [Fact]
+    public void RejectsReversedOodleDictionaryBoundaries()
+    {
+        var bytes = SyntheticGrannyBuilder.BuildWithCompressedSection(2);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(0x7c), 2);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(0x80), 1);
+        using var stream = new MemoryStream(bytes);
+
+        var exception = Assert.Throws<InvalidDataException>(() => GrannyFile.Read(stream, "bad-stops.gr2"));
+
+        Assert.Contains("bad-stops.gr2", exception.Message);
+        Assert.Contains("section 0", exception.Message);
+        Assert.Contains("dictionary boundaries", exception.Message);
+    }
+
+    [Theory]
+    [InlineData(2u)]
+    [InlineData(4u)]
+    public void CorruptCompressedPayloadRetainsFileAndSectionContext(uint compression)
+    {
+        var bytes = SyntheticGrannyBuilder.BuildWithCompressedSection(compression);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(0x70), 1);
+        using var stream = new MemoryStream(bytes);
+
+        var exception = Assert.Throws<InvalidDataException>(() => GrannyFile.Read(stream, "bad-codec.gr2"));
+
+        Assert.Contains("bad-codec.gr2", exception.Message);
+        Assert.Contains("section 0", exception.Message);
+        Assert.Contains($"compression {compression}", exception.Message);
     }
 
     [Fact]
@@ -160,7 +216,7 @@ public sealed class GrannyFileTests
 
     [Fact]
     [Trait("Category", "Interactive")]
-    public void ArtUnitsCorpusParsesUncompressedFiles()
+    public void ArtUnitsCorpusParsesAllFiles()
     {
         var gameDirectory = Aoe3Install.GetGameDirectory();
         var barPath = Path.Combine(gameDirectory, "Art", "ArtUnits.bar");
@@ -196,7 +252,8 @@ public sealed class GrannyFileTests
         _output.WriteLine($"ArtUnits.bar GR2 corpus: {parsed} parsed, {compressed} compressed, "
             + $"{failures.Count} failed, of {parsed + compressed + failures.Count} total");
 
-        Assert.True(parsed > 3000, $"expected the majority of models to be uncompressed, got {parsed}");
+        Assert.True(parsed > 4900, $"expected the complete model corpus, got {parsed}");
+        Assert.Equal(0, compressed);
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures[..Math.Min(5, failures.Count)]));
     }
 }

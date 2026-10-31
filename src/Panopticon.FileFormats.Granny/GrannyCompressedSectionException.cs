@@ -3,8 +3,7 @@ using System;
 namespace Panopticon.FileFormats.Granny;
 
 /// <summary>
-/// Thrown when a GR2 file contains a compressed section. Section decompression
-/// (Oodle1, BitKnit2) is deferred to C10d; uncompressed files parse today.
+/// Thrown when a GR2 section uses an unsupported compression format.
 /// </summary>
 public sealed class GrannyCompressedSectionException : Exception
 {
@@ -27,7 +26,7 @@ public sealed class GrannyCompressedSectionException : Exception
         var name = DescribeCompression(compression);
         var file = filePath is null ? "GR2 stream" : $"GR2 file '{filePath}'";
         return $"{file} section {sectionIndex} uses compression {compression} ({name}); "
-            + "compressed sections are not supported yet.";
+            + "this compression format is not supported.";
     }
 
     private static string DescribeCompression(uint compression)

@@ -321,7 +321,7 @@ internal static class SyntheticGrannyBuilder
 
     private static byte[] Build(int pointerSize)
     {
-        var memberSize = pointerSize == 4 ? 36 : 44;
+        var memberSize = pointerSize == 4 ? 32 : 44;
         var buffer = new List<byte>(4096);
         var relocations = new List<(uint Position, uint TargetOffset)>();
 

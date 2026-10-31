@@ -219,18 +219,18 @@ public class GrannyAnimationImportTests
     }
 
     [Fact]
-    public void CompressedClipFailsWithKeySectionAndType()
+    public void UnsupportedCompressionFailsWithKeySectionAndType()
     {
         var importer = new GrannyAnimationImporter();
         using var fileSystem = new MemoryFileSystem();
-        fileSystem.AddFile("clip.gr2", SyntheticGrannyBuilder.BuildWithCompressedSection(2));
+        fileSystem.AddFile("clip.gr2", SyntheticGrannyBuilder.BuildWithCompressedSection(99));
 
         var exception = Assert.Throws<InvalidDataException>(
             () => importer.ImportAnimation("clip.gr2", new AssetImportContext(fileSystem, language: null), CreateSkeleton()));
 
         Assert.Contains("clip.gr2", exception.Message);
         Assert.Contains("section 0", exception.Message);
-        Assert.Contains("Oodle1", exception.Message);
+        Assert.Contains("compression 99", exception.Message);
     }
 
     [Fact]

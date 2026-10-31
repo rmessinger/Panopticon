@@ -9,10 +9,10 @@ using System.Text;
 namespace Panopticon.FileFormats.Granny;
 
 /// <summary>
-/// Read access to uncompressed little-endian Granny GR2 version 7 files, in both
+/// Read access to little-endian Granny GR2 version 7 files, in both
 /// 64-bit and 32-bit pointer layouts. The file's embedded type tree drives parsing
-/// into generic <see cref="GrannyObject"/> field maps. Compressed sections (Oodle1,
-/// BitKnit2) throw <see cref="GrannyCompressedSectionException"/>.
+/// into generic <see cref="GrannyObject"/> field maps. Supports uncompressed,
+/// Oodle1, and BitKnit2 sections.
 /// </summary>
 public sealed class GrannyFile
 {
@@ -48,7 +48,7 @@ public sealed class GrannyFile
     /// <summary>Pointer field width in bytes: 8 for 64-bit files, 4 for 32-bit files.</summary>
     public int PointerSize { get; }
 
-    private int MemberSize => PointerSize == 4 ? 36 : 44;
+    private int MemberSize => PointerSize == 4 ? 32 : 44;
 
     public string? FilePath { get; }
 
@@ -155,7 +155,7 @@ public sealed class GrannyFile
         for (var i = 0; i < header.SectionCount; i++)
         {
             var compression = reader.ReadUInt32();
-            if (compression != 0)
+            if (compression is not (0 or 2 or 4))
             {
                 throw new GrannyCompressedSectionException(filePath, i, compression);
             }
@@ -164,32 +164,45 @@ public sealed class GrannyFile
             var compressedSize = reader.ReadUInt32();
             var uncompressedSize = reader.ReadUInt32();
             _ = reader.ReadUInt32(); // alignment
-            _ = reader.ReadUInt32(); // first 16-bit element
-            _ = reader.ReadUInt32(); // first 8-bit element
+            var first16Bit = reader.ReadUInt32();
+            var first8Bit = reader.ReadUInt32();
             var relocationsOffset = (long)reader.ReadUInt32();
             var relocationCount = reader.ReadUInt32();
             var marshallingOffset = (long)reader.ReadUInt32();
             var marshallingCount = reader.ReadUInt32();
 
-            if (compressedSize != uncompressedSize)
+            if (compressedSize > int.MaxValue || dataOffset + uncompressedSize > int.MaxValue)
+            {
+                throw new InvalidDataException($"{name} section {i} exceeds the 2 GiB reader limit.");
+            }
+
+            if (compression == 0 && compressedSize != uncompressedSize)
             {
                 throw new InvalidDataException(
                     $"{name} section {i} claims {compressedSize} stored bytes for {uncompressedSize} raw bytes.");
             }
 
+            if (compression == 2 && (first16Bit > first8Bit || first8Bit > uncompressedSize))
+            {
+                throw new InvalidDataException($"{name} section {i} has invalid Oodle1 dictionary boundaries.");
+            }
+
             if (uncompressedSize > 0
-                && (offsetInFile < tableEnd || offsetInFile + uncompressedSize > reader.BaseStream.Length))
+                && (compressedSize == 0 || offsetInFile < tableEnd || offsetInFile + compressedSize > reader.BaseStream.Length))
             {
                 throw new InvalidDataException($"{name} section {i} data range lies outside the file.");
             }
 
-            if (relocationCount > 0 && relocationsOffset + (long)relocationCount * 12 > reader.BaseStream.Length)
+            if (relocationCount > int.MaxValue / 12
+                || (relocationCount > 0 && (relocationsOffset < tableEnd
+                    || relocationsOffset + (compression == 4 ? 4 : (long)relocationCount * 12) > reader.BaseStream.Length)))
             {
                 throw new InvalidDataException($"{name} section {i} relocation table extends past the end.");
             }
 
-            if (marshallingCount > 0
-                && marshallingOffset + (long)marshallingCount * 16 > reader.BaseStream.Length)
+            if (marshallingCount > int.MaxValue / 16
+                || (marshallingCount > 0 && (marshallingOffset < tableEnd
+                    || marshallingOffset + (compression == 4 ? 4 : (long)marshallingCount * 16) > reader.BaseStream.Length)))
             {
                 throw new InvalidDataException($"{name} section {i} marshalling table extends past the end.");
             }
@@ -200,6 +213,8 @@ public sealed class GrannyFile
                 OffsetInFile = offsetInFile,
                 CompressedSize = compressedSize,
                 UncompressedSize = uncompressedSize,
+                First16Bit = first16Bit,
+                First8Bit = first8Bit,
                 OffsetInBuffer = (int)dataOffset,
                 RelocationsOffset = relocationsOffset,
                 RelocationCount = relocationCount,
@@ -243,18 +258,40 @@ public sealed class GrannyFile
         }
 
         var buffer = new byte[total];
-        foreach (var section in sections)
+        for (var i = 0; i < sections.Count; i++)
         {
+            var section = sections[i];
             if (section.IsEmpty)
             {
                 continue;
             }
 
             reader.BaseStream.Seek(section.OffsetInFile, SeekOrigin.Begin);
-            var read = reader.Read(buffer, section.OffsetInBuffer, (int)section.UncompressedSize);
-            if (read != section.UncompressedSize)
+            var stored = reader.ReadBytes((int)section.CompressedSize);
+            if (stored.Length != section.CompressedSize)
             {
                 throw new InvalidDataException($"{name} section data ended unexpectedly.");
+            }
+
+            try
+            {
+                var decoded = section.Compression switch
+                {
+                    0 => stored,
+                    2 => Oodle1Decoder.Decode(stored, (int)section.UncompressedSize, section.First16Bit, section.First8Bit),
+                    4 => BitKnit2Decoder.Decode(stored, (int)section.UncompressedSize),
+                    _ => throw new InvalidDataException("Unsupported compression."),
+                };
+                if (decoded.Length != section.UncompressedSize)
+                {
+                    throw new InvalidDataException("Decoded size differs from the section size.");
+                }
+
+                decoded.CopyTo(buffer, section.OffsetInBuffer);
+            }
+            catch (InvalidDataException exception)
+            {
+                throw new InvalidDataException($"{name} section {i} compression {section.Compression}: {exception.Message}", exception);
             }
         }
 
@@ -271,14 +308,15 @@ public sealed class GrannyFile
                 continue;
             }
 
-            reader.BaseStream.Seek(section.RelocationsOffset, SeekOrigin.Begin);
+            using var table = ReadFixupTable(reader, section, section.RelocationsOffset,
+                checked((int)section.RelocationCount * 12), name, i, "relocation");
             for (var r = 0; r < section.RelocationCount; r++)
             {
-                var position = reader.ReadUInt32();
-                var targetSection = reader.ReadUInt32();
-                var targetOffset = reader.ReadUInt32();
+                var position = table.ReadUInt32();
+                var targetSection = table.ReadUInt32();
+                var targetOffset = table.ReadUInt32();
 
-                if (position + 4 > section.UncompressedSize)
+                if ((ulong)position + 4 > section.UncompressedSize)
                 {
                     throw new InvalidDataException(
                         $"{name} section {i} relocation {r} writes at {position}, outside the section.");
@@ -316,13 +354,14 @@ public sealed class GrannyFile
                 continue;
             }
 
-            reader.BaseStream.Seek(section.MarshallingOffset, SeekOrigin.Begin);
+            using var table = ReadFixupTable(reader, section, section.MarshallingOffset,
+                checked((int)section.MarshallingCount * 16), name, i, "marshalling");
             for (var m = 0; m < section.MarshallingCount; m++)
             {
-                _ = reader.ReadUInt32(); // element count
-                var position = reader.ReadUInt32();
-                var typeSection = reader.ReadUInt32();
-                var typeOffset = reader.ReadUInt32();
+                _ = table.ReadUInt32(); // element count
+                var position = table.ReadUInt32();
+                var typeSection = table.ReadUInt32();
+                var typeOffset = table.ReadUInt32();
 
                 if (position > section.UncompressedSize
                     || typeSection >= sections.Count
@@ -332,6 +371,39 @@ public sealed class GrannyFile
                         $"{name} section {i} marshalling entry {m} points outside the file.");
                 }
             }
+        }
+    }
+
+    private static BinaryReader ReadFixupTable(
+        BinaryReader reader, GrannySection section, long offset, int outputSize,
+        string name, int sectionIndex, string kind)
+    {
+        reader.BaseStream.Seek(offset, SeekOrigin.Begin);
+        var storedSize = section.Compression == 4 ? reader.ReadUInt32() : (uint)outputSize;
+        if (storedSize > int.MaxValue || storedSize > reader.BaseStream.Length - reader.BaseStream.Position)
+        {
+            throw new InvalidDataException($"{name} section {sectionIndex} {kind} stream extends past the end.");
+        }
+
+        var stored = reader.ReadBytes((int)storedSize);
+        if (stored.Length != storedSize)
+        {
+            throw new InvalidDataException($"{name} section {sectionIndex} {kind} stream ended unexpectedly.");
+        }
+
+        try
+        {
+            var decoded = section.Compression == 4 ? BitKnit2Decoder.Decode(stored, outputSize) : stored;
+            if (decoded.Length != outputSize)
+            {
+                throw new InvalidDataException($"Decoded {decoded.Length} bytes; expected {outputSize}.");
+            }
+
+            return new BinaryReader(new MemoryStream(decoded, writable: false));
+        }
+        catch (InvalidDataException exception)
+        {
+            throw new InvalidDataException($"{name} section {sectionIndex} {kind}: {exception.Message}", exception);
         }
     }
 

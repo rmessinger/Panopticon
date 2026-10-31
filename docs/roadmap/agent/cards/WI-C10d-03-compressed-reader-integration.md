@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C10d-03` |
 | Roadmap phase | [Track C · C10d](../../track-c-external-assets.md) |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `M` |
 | Prerequisites | `WI-C10d-02` |
@@ -39,14 +39,18 @@ type-tree pipeline, preserving uncompressed behavior.
 
 ## Acceptance criteria
 
-- [ ] Valid compressed data and auxiliary tables reach the existing type-tree reader.
-- [ ] Corrupt sizes, tables, offsets, and unsupported codecs name the file and section.
-- [ ] Uncompressed reader tests remain passing.
-- [ ] Available compressed model and animation files parse without native dependencies.
+- [x] Valid compressed data and auxiliary tables reach the existing type-tree reader.
+- [x] Corrupt sizes, tables, offsets, and unsupported codecs name the file and section.
+- [x] Uncompressed reader tests remain passing.
+- [x] Available compressed model and animation files parse without native dependencies.
 
 ## Validation
 
 Targeted Granny tests and local install corpus checks; standard build, format, and brace checks.
+
+Result: all 4,942 ArtUnits Granny files parse, including compressed sections and BitKnit2
+fixup tables. The 32-bit type-member stride is corrected to 32 bytes; the synthetic fixture
+uses the same layout. Build, format, and brace checks pass.
 
 ## Out of scope / guardrails
 
