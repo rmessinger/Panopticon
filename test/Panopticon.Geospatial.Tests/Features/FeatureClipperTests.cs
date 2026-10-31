@@ -3,7 +3,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using NetTopologySuite.Geometries;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Grid;
@@ -237,7 +240,7 @@ public class FeatureClipperTests
         Assert.Empty(polygon.InnerRings);
 
         // The surviving hole vertices keep their source altitudes; vertices created on
-        // the map edge get zero.
+        // the map edge have unknown altitude (null), never an invented zero.
         AssertRing(
             polygon.OuterRing,
             (0d, 50d),
@@ -248,7 +251,7 @@ public class FeatureClipperTests
             (1280d, 300d),
             (1280d, 350d),
             (0d, 350d));
-        AssertAltitudes(polygon.OuterRing, [0d, 0d, 0d, 5d, 6d, 0d, 0d, 0d, 0d]);
+        AssertAltitudes(polygon.OuterRing, [null, null, null, 5d, 6d, null, null, null, null]);
     }
 
     [Fact]
@@ -426,22 +429,226 @@ public class FeatureClipperTests
     }
 
     [Fact]
-    public void ClippedOutputAboveTheFeatureLimit_IsAGenerateErrorAndStops()
+    public void InputFeatureCountAboveTheLimit_StopsBeforeAnyClipping()
     {
         var diagnostics = new GeoDiagnosticBag();
-        var limits = new GeospatialImportLimits(MaxFeatureCount: 1);
+        var limits = new GeospatialImportLimits(MaxFeatureCount: 2);
         var results = FeatureClipper.Clip(
-            [Feature("a", Point(100d, 100d)), Feature("b", Point(200d, 200d))],
+            [Feature("a", Point(2000d, 2000d)), Feature("b", Point(2100d, 2100d)), Feature("c", Point(100d, 100d))],
             CreateGrid(),
             Transformer,
             diagnostics,
             limits);
 
+        Assert.Empty(results);
+        Assert.Equal(2, diagnostics.Items.Count(d => d.Severity == GeoSeverity.Info));
+        var diagnostic = Assert.Single(diagnostics.Items, d => d.Severity == GeoSeverity.Error);
+        Assert.Equal(FeatureDiagnosticCodes.FeatureOutputLimitExceeded, diagnostic.Code);
+        Assert.Equal(GeoStage.Generate, diagnostic.Stage);
+        Assert.Contains("maxFeatureCount", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OutputPartsAboveTheFeatureLimit_IsAGenerateErrorAndStops()
+    {
+        // One feature splitting into two parts with room for one output feature: the
+        // emission bound fires after the first part.
+        var diagnostics = new GeoDiagnosticBag();
+        var limits = new GeospatialImportLimits(MaxFeatureCount: 1);
+        var results = ClipFeatures(
+            Polygon(
+                Ring(
+                    (-300d, 200d),
+                    (600d, 200d),
+                    (600d, 400d),
+                    (-100d, 400d),
+                    (-100d, 600d),
+                    (600d, 600d),
+                    (600d, 800d),
+                    (-300d, 800d))),
+            diagnostics,
+            limits: limits,
+            featureId: "area");
+
         Assert.Single(results);
-        Assert.Equal("area.kml/a#0", results[0].PartId);
+        Assert.Equal("area.kml/area#0", results[0].PartId);
         var diagnostic = AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureOutputLimitExceeded, GeoSeverity.Error);
         Assert.Equal(GeoStage.Generate, diagnostic.Stage);
         Assert.Contains("maxFeatureCount", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LargeOutsideLine_IsBoundedByTheInputCoordinateCount()
+    {
+        // Six input positions against a limit of four: the bound fires before any copy or
+        // clipping work, even though the feature would produce no output at all.
+        var diagnostics = new GeoDiagnosticBag();
+        var limits = new GeospatialImportLimits(MaxCoordinateCount: 4);
+        var results = ClipFeatures(
+            Line((2000d, 2000d, null), (2100d, 2050d, null), (2200d, 2100d, null), (2300d, 2150d, null), (2400d, 2200d, null), (2500d, 2250d, null)),
+            diagnostics,
+            limits: limits);
+
+        Assert.Empty(results);
+        var diagnostic = AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureOutputLimitExceeded, GeoSeverity.Error);
+        Assert.Equal(GeoStage.Generate, diagnostic.Stage);
+        Assert.Contains("maxCoordinateCount", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ManyMultiChildren_IsBoundedByTheInputCoordinateCount()
+    {
+        var diagnostics = new GeoDiagnosticBag();
+        var limits = new GeospatialImportLimits(MaxCoordinateCount: 3);
+        var results = ClipFeatures(
+            new GeoMultiGeometry([Point(2000d, 2000d), Point(2100d, 2100d), Point(2200d, 2200d), Point(2300d, 2300d)]),
+            diagnostics,
+            limits: limits);
+
+        Assert.Empty(results);
+        AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureOutputLimitExceeded, GeoSeverity.Error);
+        Assert.DoesNotContain(diagnostics.Items, d => d.Severity == GeoSeverity.Info);
+    }
+
+    [Fact]
+    public void OverlayTopologyFailure_IsTranslatedToAGenerateErrorWithDetail()
+    {
+        var diagnostics = new GeoDiagnosticBag();
+        var polygon = Polygon(Ring((100d, 100d), (600d, 100d), (600d, 600d), (100d, 600d)));
+        var results = FeatureClipper.Clip(
+            [Feature("area", polygon)],
+            CreateGrid(),
+            Transformer,
+            diagnostics,
+            limits: null,
+            cancellationToken: default,
+            beforeOverlay: () => throw new TopologyException("robustness boundary"));
+
+        Assert.Empty(results);
+        var diagnostic = AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureOverlayFailed, GeoSeverity.Error);
+        Assert.Equal(GeoStage.Generate, diagnostic.Stage);
+        Assert.IsType<TopologyException>(diagnostic.Detail);
+
+        // Without the hook the same input clips normally.
+        var clean = ClipFeatures(polygon);
+        Assert.Single(clean);
+    }
+
+    [Fact]
+    public async Task OverlayFailureHookAndNormalClip_RunConcurrentlyWithoutInterference()
+    {
+        // The hook is per call: a failing call must not affect a normal Clip running at
+        // the same time.
+        var grid = CreateGrid();
+        var polygon = Polygon(Ring((100d, 100d), (600d, 100d), (600d, 600d), (100d, 600d)));
+        var feature = Feature("area", polygon);
+
+        var failing = Task.Run(() =>
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                var diagnostics = new GeoDiagnosticBag();
+                var results = FeatureClipper.Clip(
+                    [feature],
+                    grid,
+                    Transformer,
+                    diagnostics,
+                    limits: null,
+                    cancellationToken: default,
+                    beforeOverlay: () => throw new TopologyException("robustness boundary"));
+
+                Assert.Empty(results);
+                Assert.True(diagnostics.HasErrors);
+                Assert.Equal(FeatureDiagnosticCodes.FeatureOverlayFailed, diagnostics.Items[0].Code);
+            }
+        });
+
+        var normal = Task.Run(() =>
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                var diagnostics = new GeoDiagnosticBag();
+                var results = FeatureClipper.Clip([feature], grid, Transformer, diagnostics);
+
+                Assert.Single(results);
+                Assert.Empty(diagnostics.Items);
+            }
+        });
+
+        await Task.WhenAll(failing, normal);
+    }
+
+    [Fact]
+    public void HugeButFiniteSegmentCoordinates_AreACoordinatesErrorNotNaNOutput()
+    {
+        // The segment delta overflows even though both endpoints are finite; the clipper
+        // must fail typed instead of emitting non-finite interpolated positions.
+        var diagnostics = new GeoDiagnosticBag();
+        var results = ClipFeatures(Line((-1e308, 640d, null), (1e308, 640d, null)), diagnostics);
+
+        Assert.Empty(results);
+        var diagnostic = AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureClipArithmeticOverflow, GeoSeverity.Error);
+        Assert.Equal(GeoStage.Coordinates, diagnostic.Stage);
+        Assert.True(diagnostics.HasErrors);
+    }
+
+    [Fact]
+    public void HugeFiniteAltitudes_InterpolatingToNonFiniteFailsTyped()
+    {
+        var diagnostics = new GeoDiagnosticBag();
+        var results = ClipFeatures(Line((-1280d, 640d, -1e308), (1280d, 640d, 1e308)), diagnostics);
+
+        Assert.Empty(results);
+        AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureClipArithmeticOverflow, GeoSeverity.Error);
+    }
+
+    [Fact]
+    public void NonFiniteAltitude_IsRejectedBeforeAnyOutput()
+    {
+        var diagnostics = new GeoDiagnosticBag();
+        var point = new GeoPointGeometry(new GeoPosition(new Vector2d(OriginEasting + 100d, OriginNorthing + 100d), double.NaN));
+        var results = ClipFeatures(point, diagnostics);
+
+        Assert.Empty(results);
+        var diagnostic = AssertDiagnostic(diagnostics, FeatureDiagnosticCodes.FeatureNonFiniteCoordinate, GeoSeverity.Error);
+        Assert.Equal(GeoStage.Coordinates, diagnostic.Stage);
+        Assert.Contains("altitude", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ResultsAreNotCastableToAMutableList()
+    {
+        var results = ClipFeatures(Point(100d, 100d));
+
+        Assert.IsNotType<List<LocalFeature>>(results);
+        var collection = Assert.IsAssignableFrom<ICollection<LocalFeature>>(results);
+        Assert.Throws<NotSupportedException>(() => collection.Add(null!));
+    }
+
+    [Fact]
+    public void CombinedOutsideFeatures_ExhaustTheTotalInputCoordinateBudgetAndStop()
+    {
+        // Each line has three positions: under a limit of four alone, over it together,
+        // and dropped features still charge the budget.
+        var diagnostics = new GeoDiagnosticBag();
+        var limits = new GeospatialImportLimits(MaxCoordinateCount: 4);
+        var results = FeatureClipper.Clip(
+            [
+                Feature("first", Line((2000d, 2000d, null), (2100d, 2050d, null), (2200d, 2100d, null))),
+                Feature("second", Line((2300d, 2150d, null), (2400d, 2200d, null), (2500d, 2250d, null))),
+                Feature("third", Point(100d, 100d)),
+            ],
+            CreateGrid(),
+            Transformer,
+            diagnostics,
+            limits);
+
+        Assert.Empty(results);
+        Assert.Single(diagnostics.Items, d => d.Severity == GeoSeverity.Info);
+        var diagnostic = Assert.Single(diagnostics.Items, d => d.Severity == GeoSeverity.Error);
+        Assert.Equal(FeatureDiagnosticCodes.FeatureOutputLimitExceeded, diagnostic.Code);
+        Assert.Equal(GeoStage.Generate, diagnostic.Stage);
+        Assert.Contains("maxCoordinateCount", diagnostic.Message, StringComparison.Ordinal);
     }
 
     private static IReadOnlyList<LocalFeature> ClipFeatures(

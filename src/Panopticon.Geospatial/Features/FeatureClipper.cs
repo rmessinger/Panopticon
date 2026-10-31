@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Valid;
@@ -8,16 +9,15 @@ using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
 using Panopticon.Geospatial.Projection;
 
+[assembly: InternalsVisibleTo("Panopticon.Geospatial.Tests")]
+
 namespace Panopticon.Geospatial.Features;
 
 /// <summary>
-/// Transforms vector features into local game coordinates and clips them to the map
-/// rectangle (WI-B4b-15). The clip region is the full chunk-rounded rectangle
-/// [0, chunksX * <see cref="ChunkLayout.ChunkSpanGameUnits"/>] x
-/// [0, chunksY * <see cref="ChunkLayout.ChunkSpanGameUnits"/>] game units; the playable-area
-/// polygon is applied later by terrain masking, not here. NetTopologySuite backs the polygon
-/// overlay and stays inside this class: no NTS type appears in the public API, and the
-/// Panopticon.Geospatial project keeps no engine references.
+/// Transforms vector features into local game coordinates and clips them to the full
+/// chunk-rounded map rectangle (WI-B4b-15); the playable-area polygon is applied later by
+/// terrain masking. NetTopologySuite backs the polygon overlay and stays private to this
+/// class.
 /// </summary>
 public static class FeatureClipper
 {
@@ -25,19 +25,10 @@ public static class FeatureClipper
     public const int MaxGeometryNestingDepth = 128;
 
     /// <summary>
-    /// Projects each feature from its source CRS into the grid's projected CRS and then
-    /// local game XY, clips it to the map rectangle, and returns the surviving parts.
-    /// Boundary points are kept. Lines are clipped per segment with Liang-Barsky and split
-    /// into one part per surviving run; boundary vertices created by clipping interpolate
-    /// the source altitude. Polygons are overlaid on the rectangle with NetTopologySuite,
-    /// which keeps holes and disconnected parts; invalid polygon topology is a Generate
-    /// error, never an automatic repair. Polygon parts are normalized for stable output:
-    /// exterior rings wind counter-clockwise from their lexicographically smallest vertex,
-    /// holes wind clockwise and sort stably, and parts sort by bounds then ring sequence.
-    /// Polygon vertices keep the source altitude where the vertex survives and get zero
-    /// where the clip introduces them; feature mapping samples terrain Z instead. Features
-    /// fully outside are dropped with an Info diagnostic. Output is bounded by
-    /// maxFeatureCount and maxCoordinateCount; exceeding either is a Generate error.
+    /// Projects each feature into local game coordinates, clips it to the chunk-rounded map
+    /// rectangle, and returns the surviving parts with stable identities; boundary points are
+    /// kept and fully outside features are dropped with an Info diagnostic. The clipping,
+    /// normalization, altitude, and resource-limit contracts live in B4b deep dive 5.3 and 7.
     /// </summary>
     public static IReadOnlyList<LocalFeature> Clip(
         IEnumerable<GeospatialFeature> features,
@@ -47,13 +38,30 @@ public static class FeatureClipper
         GeospatialImportLimits? limits = null,
         CancellationToken cancellationToken = default)
     {
+        return Clip(features, grid, transformer, diagnostics, limits, cancellationToken, beforeOverlay: null);
+    }
+
+    /// <summary>
+    /// Test entry: <paramref name="beforeOverlay"/> runs inside the polygon overlay's
+    /// failure-translation boundary, so adapter translation is testable per call. Public
+    /// <see cref="Clip"/> passes null; there is no static test state.
+    /// </summary>
+    internal static IReadOnlyList<LocalFeature> Clip(
+        IEnumerable<GeospatialFeature> features,
+        LocalMapGrid grid,
+        ICoordinateTransformer transformer,
+        GeoDiagnosticBag diagnostics,
+        GeospatialImportLimits? limits,
+        CancellationToken cancellationToken,
+        Action? beforeOverlay)
+    {
         ArgumentNullException.ThrowIfNull(features);
         ArgumentNullException.ThrowIfNull(grid);
         ArgumentNullException.ThrowIfNull(transformer);
         ArgumentNullException.ThrowIfNull(diagnostics);
         limits ??= new GeospatialImportLimits();
 
-        var context = new ClipContext(grid, transformer, diagnostics, limits, cancellationToken);
+        var context = new ClipContext(grid, transformer, diagnostics, limits, cancellationToken, beforeOverlay);
         foreach (var feature in features)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -69,6 +77,15 @@ public static class FeatureClipper
         return context.Results;
     }
 
+    private enum InputCountStatus
+    {
+        WithinBounds,
+
+        CountExceeded,
+
+        TooDeep,
+    }
+
     private sealed class ClipContext
     {
         private readonly ICoordinateTransformer _transformer;
@@ -79,7 +96,11 @@ public static class FeatureClipper
 
         private readonly CancellationToken _cancellationToken;
 
+        private readonly Action? _beforeOverlay;
+
         private readonly List<LocalFeature> _results = [];
+
+        private readonly IReadOnlyList<LocalFeature> _resultsView;
 
         private readonly List<GeoGeometry> _parts = [];
 
@@ -93,6 +114,10 @@ public static class FeatureClipper
 
         private long _emittedPositions;
 
+        private long _inputCoordinates;
+
+        private long _inputFeatureCount;
+
         private string _currentFeatureId = string.Empty;
 
         private bool _featureErrored;
@@ -104,13 +129,16 @@ public static class FeatureClipper
             ICoordinateTransformer transformer,
             GeoDiagnosticBag diagnostics,
             GeospatialImportLimits limits,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            Action? beforeOverlay)
         {
             Grid = grid;
             _transformer = transformer;
             _diagnostics = diagnostics;
             _limits = limits;
             _cancellationToken = cancellationToken;
+            _beforeOverlay = beforeOverlay;
+            _resultsView = _results.AsReadOnly();
             MapWidthGameUnits = grid.ChunksX * (double)ChunkLayout.ChunkSpanGameUnits;
             MapHeightGameUnits = grid.ChunksY * (double)ChunkLayout.ChunkSpanGameUnits;
             _mapRectangle = (Polygon)_factory.ToGeometry(new Envelope(0d, MapWidthGameUnits, 0d, MapHeightGameUnits));
@@ -122,7 +150,8 @@ public static class FeatureClipper
 
         public double MapHeightGameUnits { get; }
 
-        public IReadOnlyList<LocalFeature> Results => _results;
+        // A read-only view: callers must not be able to cast back to the working list.
+        public IReadOnlyList<LocalFeature> Results => _resultsView;
 
         public bool Stopped { get; private set; }
 
@@ -133,12 +162,22 @@ public static class FeatureClipper
             _featureErrored = false;
             _featureTouched = false;
 
+            // Input bounds are checked before any geometry copy or NTS allocation, so
+            // oversized features cost one bounded counting pass, not a clipped copy.
+            if (!InputWithinBounds(feature))
+            {
+                return;
+            }
+
             if (!TryProjectGeometry(feature.Geometry, feature.CoordinateSystem, 0, out var local))
             {
                 return;
             }
 
-            ClipLocalGeometry(local);
+            if (!ClipLocalGeometry(local))
+            {
+                return;
+            }
 
             // A feature that already failed with an error is not additionally reported as
             // dropped.
@@ -151,18 +190,93 @@ public static class FeatureClipper
             EmitParts(feature);
         }
 
-        private bool TryProjectGeometry(GeoGeometry geometry, CoordinateSystemId source, int depth, out GeoGeometry local)
+        private bool InputWithinBounds(GeospatialFeature feature)
         {
-            local = null!;
+            if (_inputFeatureCount >= _limits.MaxFeatureCount)
+            {
+                AddError(
+                    FeatureDiagnosticCodes.FeatureOutputLimitExceeded,
+                    GeoStage.Generate,
+                    $"Input feature count exceeded the maxFeatureCount limit {_limits.MaxFeatureCount.ToString(CultureInfo.InvariantCulture)} at feature '{feature.FeatureId}'.");
+                Stopped = true;
+                return false;
+            }
 
+            _inputFeatureCount++;
+
+            // The input coordinate budget is total across the whole enumeration, charged
+            // for outside and errored features too; a per-feature reset would allow
+            // maxFeatureCount * maxCoordinateCount units of work with no output at all.
+            var status = CountInputCoordinates(feature.Geometry, 0);
+            if (status == InputCountStatus.CountExceeded)
+            {
+                AddError(
+                    FeatureDiagnosticCodes.FeatureOutputLimitExceeded,
+                    GeoStage.Generate,
+                    $"Total input coordinates exceeded the maxCoordinateCount limit {_limits.MaxCoordinateCount.ToString(CultureInfo.InvariantCulture)} at feature '{feature.FeatureId}'.");
+                Stopped = true;
+                return false;
+            }
+
+            return status == InputCountStatus.WithinBounds;
+        }
+
+        private InputCountStatus CountInputCoordinates(GeoGeometry geometry, int depth)
+        {
             if (depth >= MaxGeometryNestingDepth)
             {
                 AddError(
                     FeatureDiagnosticCodes.FeatureNestingTooDeep,
                     GeoStage.Parse,
                     $"Feature '{_currentFeatureId}' nests multi geometry deeper than the maximum depth {MaxGeometryNestingDepth.ToString(CultureInfo.InvariantCulture)}.");
-                return false;
+                return InputCountStatus.TooDeep;
             }
+
+            _cancellationToken.ThrowIfCancellationRequested();
+            _inputCoordinates += geometry switch
+            {
+                GeoPointGeometry => 1L,
+                GeoLineString line => line.Positions.Count,
+                GeoPolygon polygon => CountRingPositions(polygon),
+                _ => 0L,
+            };
+
+            // Early exit keeps the pass bounded: the rest of an oversized feature is not
+            // traversed and no copy is made.
+            if (_inputCoordinates > _limits.MaxCoordinateCount)
+            {
+                return InputCountStatus.CountExceeded;
+            }
+
+            if (geometry is GeoMultiGeometry multi)
+            {
+                for (var i = 0; i < multi.Geometries.Count; i++)
+                {
+                    var childStatus = CountInputCoordinates(multi.Geometries[i], depth + 1);
+                    if (childStatus != InputCountStatus.WithinBounds)
+                    {
+                        return childStatus;
+                    }
+                }
+            }
+
+            return InputCountStatus.WithinBounds;
+        }
+
+        private static long CountRingPositions(GeoPolygon polygon)
+        {
+            var count = (long)polygon.OuterRing.Positions.Count;
+            for (var i = 0; i < polygon.InnerRings.Count; i++)
+            {
+                count += polygon.InnerRings[i].Positions.Count;
+            }
+
+            return count;
+        }
+
+        private bool TryProjectGeometry(GeoGeometry geometry, CoordinateSystemId source, int depth, out GeoGeometry local)
+        {
+            local = null!;
 
             if (geometry is GeoPointGeometry point)
             {
@@ -265,6 +379,15 @@ public static class FeatureClipper
                 return false;
             }
 
+            if (position.AltitudeMeters is { } altitude && !double.IsFinite(altitude))
+            {
+                AddError(
+                    FeatureDiagnosticCodes.FeatureNonFiniteCoordinate,
+                    GeoStage.Coordinates,
+                    $"Feature '{_currentFeatureId}' contains an altitude that is not finite.");
+                return false;
+            }
+
             if (source == Grid.ProjectedCoordinateSystem)
             {
                 return FinishProject(position.Coordinate, position, out local);
@@ -321,7 +444,7 @@ public static class FeatureClipper
             return true;
         }
 
-        private void ClipLocalGeometry(GeoGeometry geometry)
+        private bool ClipLocalGeometry(GeoGeometry geometry)
         {
             if (geometry is GeoPointGeometry point)
             {
@@ -330,28 +453,31 @@ public static class FeatureClipper
                     _parts.Add(point);
                 }
 
-                return;
+                return true;
             }
 
             if (geometry is GeoLineString line)
             {
-                ClipLine(line);
-                return;
+                return ClipLine(line);
             }
 
             if (geometry is GeoPolygon polygon)
             {
-                ClipPolygon(polygon);
-                return;
+                return ClipPolygon(polygon);
             }
 
             if (geometry is GeoMultiGeometry multi)
             {
                 for (var i = 0; i < multi.Geometries.Count; i++)
                 {
-                    ClipLocalGeometry(multi.Geometries[i]);
+                    if (!ClipLocalGeometry(multi.Geometries[i]))
+                    {
+                        return false;
+                    }
                 }
             }
+
+            return true;
         }
 
         private bool ContainsInclusive(Vector2d coordinate)
@@ -362,13 +488,11 @@ public static class FeatureClipper
                 && coordinate.Y <= MapHeightGameUnits;
         }
 
-        private void ClipLine(GeoLineString line)
+        private bool ClipLine(GeoLineString line)
         {
             var positions = line.Positions;
             List<GeoPosition>? run = null;
 
-            // A run ends when its closing segment leaves the rectangle; a run shorter than
-            // two positions degenerated to a touch and contributes nothing.
             void Flush()
             {
                 if (run is { Count: >= 2 })
@@ -385,7 +509,20 @@ public static class FeatureClipper
                 var a = positions[i];
                 var b = positions[i + 1];
 
-                if (!TryClipSegment(a, b, out var t0, out var t1) || t1 <= t0)
+                // A finite endpoint pair can still overflow its delta; Liang-Barsky on an
+                // infinite delta silently misclassifies the segment, so reject it first.
+                var dx = b.Coordinate.X - a.Coordinate.X;
+                var dy = b.Coordinate.Y - a.Coordinate.Y;
+                if (!double.IsFinite(dx) || !double.IsFinite(dy))
+                {
+                    AddError(
+                        FeatureDiagnosticCodes.FeatureClipArithmeticOverflow,
+                        GeoStage.Coordinates,
+                        $"Clipping a segment of feature '{_currentFeatureId}' overflowed to a non-finite segment delta from finite input.");
+                    return false;
+                }
+
+                if (!TryClipSegment(a, b, dx, dy, out var t0, out var t1) || t1 <= t0)
                 {
                     if (t1 == t0)
                     {
@@ -398,6 +535,15 @@ public static class FeatureClipper
 
                 var enter = Interpolate(a, b, t0);
                 var exit = Interpolate(a, b, t1);
+                if (!IsFinite(enter) || !IsFinite(exit))
+                {
+                    AddError(
+                        FeatureDiagnosticCodes.FeatureClipArithmeticOverflow,
+                        GeoStage.Coordinates,
+                        $"Clipping a segment of feature '{_currentFeatureId}' produced a non-finite local coordinate from finite input.");
+                    return false;
+                }
+
                 if (run is null)
                 {
                     run = [enter];
@@ -420,15 +566,14 @@ public static class FeatureClipper
             }
 
             Flush();
+            return true;
         }
 
-        private bool TryClipSegment(GeoPosition a, GeoPosition b, out double t0, out double t1)
+        private bool TryClipSegment(GeoPosition a, GeoPosition b, double dx, double dy, out double t0, out double t1)
         {
             // Liang-Barsky against the map rectangle.
             t0 = 0d;
             t1 = 1d;
-            var dx = b.Coordinate.X - a.Coordinate.X;
-            var dy = b.Coordinate.Y - a.Coordinate.Y;
 
             return ClipEdge(-dx, a.Coordinate.X, ref t0, ref t1)
                 && ClipEdge(dx, MapWidthGameUnits - a.Coordinate.X, ref t0, ref t1)
@@ -483,13 +628,23 @@ public static class FeatureClipper
             return new GeoPosition(new Vector2d(x, y), altitude);
         }
 
-        private void ClipPolygon(GeoPolygon polygon)
+        private static bool IsFinite(GeoPosition position)
+        {
+            if (!double.IsFinite(position.Coordinate.X) || !double.IsFinite(position.Coordinate.Y))
+            {
+                return false;
+            }
+
+            return position.AltitudeMeters is not { } altitude || double.IsFinite(altitude);
+        }
+
+        private bool ClipPolygon(GeoPolygon polygon)
         {
             _cancellationToken.ThrowIfCancellationRequested();
 
             if (!TryBuildNtsPolygon(polygon, out var ntsPolygon))
             {
-                return;
+                return false;
             }
 
             _polygonAltitudes.Clear();
@@ -499,7 +654,22 @@ public static class FeatureClipper
                 CollectAltitudes(polygon.InnerRings[i]);
             }
 
-            var intersection = ntsPolygon.Intersection(_mapRectangle);
+            Geometry intersection;
+            try
+            {
+                _beforeOverlay?.Invoke();
+                intersection = ntsPolygon.Intersection(_mapRectangle);
+            }
+            catch (Exception ex) when (ex is TopologyException or ArgumentException)
+            {
+                AddError(
+                    FeatureDiagnosticCodes.FeatureOverlayFailed,
+                    GeoStage.Generate,
+                    $"Polygon overlay failed for feature '{_currentFeatureId}': {ex.Message}",
+                    ex);
+                return false;
+            }
+
             var pieces = new List<Polygon>();
             CollectPolygonParts(intersection, pieces);
 
@@ -525,6 +695,8 @@ public static class FeatureClipper
             {
                 _parts.Add(part);
             }
+
+            return true;
         }
 
         private bool TryBuildNtsPolygon(GeoPolygon polygon, out Polygon ntsPolygon)
@@ -556,14 +728,28 @@ public static class FeatureClipper
                 holes[i] = hole;
             }
 
-            var candidate = _factory.CreatePolygon(
-                _factory.CreateLinearRing(shell),
-                ToLinearRings(holes));
+            Polygon candidate;
+            IsValidOp validator;
+            try
+            {
+                candidate = _factory.CreatePolygon(
+                    _factory.CreateLinearRing(shell),
+                    ToLinearRings(holes));
+                validator = new IsValidOp(candidate);
+                _ = validator.IsValid;
+            }
+            catch (Exception ex) when (ex is TopologyException or ArgumentException)
+            {
+                AddError(
+                    FeatureDiagnosticCodes.FeatureOverlayFailed,
+                    GeoStage.Generate,
+                    $"Polygon conversion failed for feature '{_currentFeatureId}': {ex.Message}",
+                    ex);
+                return false;
+            }
 
             // Invalid input (self-intersection, bad ring nesting) is reported, never
             // silently repaired.
-            var validator = new IsValidOp(candidate);
-            _ = validator.IsValid;
             if (validator.ValidationError is { } error)
             {
                 AddError(
@@ -679,6 +865,8 @@ public static class FeatureClipper
                     continue;
                 }
 
+                // Vertices the clip introduces have unknown altitude (null), never an
+                // invented zero.
                 _ringVertices.Add(
                     new GeoPosition(new Vector2d(coordinate.X, coordinate.Y), AltitudeAt(coordinate)));
             }
@@ -720,9 +908,9 @@ public static class FeatureClipper
             return new GeoRing(closed);
         }
 
-        private double AltitudeAt(Coordinate coordinate)
+        private double? AltitudeAt(Coordinate coordinate)
         {
-            return _polygonAltitudes.TryGetValue((coordinate.X, coordinate.Y), out var altitude) ? altitude : 0d;
+            return _polygonAltitudes.TryGetValue((coordinate.X, coordinate.Y), out var altitude) ? altitude : null;
         }
 
         private static bool SameCoordinate(GeoPosition a, GeoPosition b)
@@ -869,13 +1057,7 @@ public static class FeatureClipper
 
             if (geometry is GeoPolygon polygon)
             {
-                var count = (long)polygon.OuterRing.Positions.Count;
-                for (var i = 0; i < polygon.InnerRings.Count; i++)
-                {
-                    count += polygon.InnerRings[i].Positions.Count;
-                }
-
-                return count;
+                return CountRingPositions(polygon);
             }
 
             if (geometry is GeoMultiGeometry multi)

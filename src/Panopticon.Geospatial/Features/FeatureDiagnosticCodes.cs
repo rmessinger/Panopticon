@@ -29,4 +29,10 @@ public static class FeatureDiagnosticCodes
 
     /// <summary>A geometry kind the clipper does not support.</summary>
     public const string FeatureUnsupportedGeometry = "GEO-FEA-008";
+
+    /// <summary>A NetTopologySuite polygon conversion or overlay operation failed.</summary>
+    public const string FeatureOverlayFailed = "GEO-FEA-009";
+
+    /// <summary>Clipping segment arithmetic overflowed to non-finite local coordinates.</summary>
+    public const string FeatureClipArithmeticOverflow = "GEO-FEA-010";
 }
