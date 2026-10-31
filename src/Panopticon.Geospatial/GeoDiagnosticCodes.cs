@@ -20,6 +20,8 @@ public static class GeoDiagnosticCodes
 
     public const string CoordinatesFailure = "GEO-CRD-001";
 
+    public const string CoordinatesUnsupportedCrs = "GEO-CRD-002";
+
     public const string RasterFailure = "GEO-RAS-001";
 
     public const string GenerateFailure = "GEO-GEN-001";
