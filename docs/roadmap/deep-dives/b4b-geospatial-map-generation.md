@@ -330,7 +330,10 @@ generated terrain material layers.
 
 Gameplay terrain materials remain explicit. A manifest can map integer classification raster
 values or vector polygon attributes to a controlled Panopticon material palette. Polygon rules
-override classification rules, and later rules override earlier ones. There is no built-in
+override classification rules, and later rules override earlier ones. Evaluation order:
+classification entries in `materialRules`, attribute entries in `materialRules`, then
+material-target feature mappings. Each family retains manifest order. An attribute rule
+without `sourceId` matches polygons from any source. There is no built-in
 vocabulary; an example manifest fragment maps the ESA WorldCover classes. Arbitrary imagery colors are not
 silently quantized into legacy `BlendTileData`. The manifest requires one default base terrain
 material; cells not matched by a classification or vector rule use that material.
