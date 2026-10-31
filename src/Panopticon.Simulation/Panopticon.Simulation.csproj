@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Panopticon.Core\Panopticon.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.Bar\Panopticon.FileFormats.Bar.csproj" />
     <ProjectReference Include="..\Panopticon.FileFormats.Big\Panopticon.FileFormats.Big.csproj" />
     <ProjectReference Include="..\Panopticon.FileFormats.RefPack\Panopticon.FileFormats.RefPack.csproj" />
     <ProjectReference Include="..\Panopticon.FileFormats.Nif\Panopticon.FileFormats.Nif.csproj" />
