@@ -409,8 +409,12 @@ compatibility promise, and it is removed or kept as a debug tool when B4b-7 land
 
 Preview crops use a half-open chunk rectangle. XY is translated by the crop origin and border;
 Z is rebased by the crop minimum elevation. The report retains both offsets and quantization loss.
+Default preview border: zero. An assembled heightmap index `(i, j)` maps to engine XY
+`((i - border) * 10, (j - border) * 10)`. Stored waypoint coordinates use engine XY, not indices.
 Waypoints outside the crop are excluded; retained waypoints and control-point checks use the same
 transform. Height comparisons restore the reported Z offset before comparison.
+Player-start waypoints use Z zero because skirmish startup adds terrain height; ordinary mapped
+waypoints retain their rebased absolute elevation.
 
 ## 7. Diagnostics and security
 

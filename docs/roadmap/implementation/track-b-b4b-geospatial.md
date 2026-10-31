@@ -237,6 +237,9 @@ when more than one player and no map scripts (`SidesListUtility.cs:221-233`), an
   dereferences crash (`SidesListUtility.cs:198-205,326,383`).
 - Start waypoints are convention, not enforced: the fallback position stacks every player at one
   point, so a playable map needs one waypoint per slot by construction.
+- Player-start positions use horizontal X/Y and terrain-relative Z: `Scene3D.cs:473-476`
+  adds terrain height to the stored Z. Generated starts use Z zero. The existing
+  `NewMapFactory.cs:65-69` swaps northing and elevation; it is not a coordinate-layout reference.
 - `WorldInfo` has no engine-load read; an empty collection is sufficient.
 - `SidesList.PrepareForMpOrSkirmish` (`SidesList.cs:449-512`) has no callers; the live skirmish
   path is `SidesListUtility`.
