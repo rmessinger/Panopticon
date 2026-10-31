@@ -6,6 +6,12 @@
 >
 > Audience: human reference for roadmap decisions.
 
+- C10d decompressor provenance. Decision (2026-10-30): implement managed Oodle1 and BitKnit2
+  using the pinned permissive specifications and cross-check implementations recorded in
+  [the provenance review](deep-dives/c10-aoe3de-granny-models.md#6-references-and-licensing).
+  Exclude the proprietary Granny DLL and unlicensed sources. Retain reference attribution
+  and any required notices; validate against independent decoders and the installed corpus.
+
 - Internal length unit. Decision (2026-10-06): the engine's internal length unit becomes the meter in [H2b](deep-dives/h2b-metric-core.md), after the complete H2a group merges. Source formats keep their units; conversion happens once at each source-to-engine boundary and is inverted on legacy writes. Supersedes the presentation-only [metric-units plan](../plans/metric-units.md), which kept feet internally. Mixed EE2, glTF, and Generals content makes a single physical unit the cleaner runtime contract than per-importer meters-to-feet expansion.
 - Multi-source unit importing. Decision (2026-10-04): H2a owns shared engine-native unit-content interchange, inheritance/dependency resolution, capability validation, runtime materialization, and scoped publication. It runs next before M2 without waiting for H1/H2/H3. Generals INI proves legacy coverage; a bounded real EE2 slice proves a second source. M2 expands the EE2 adapter, Track C supplies visuals, M3 owns balancing, and H4 serializes the shared representation. Unsupported required gameplay blocks import instead of silently substituting defaults. This avoids source-specific runtime paths. Design and cards: [H2a](deep-dives/h2a-unit-content-import.md).
 - Determinism priority. Decision (revised twice): determinism is not a roadmap requirement or a

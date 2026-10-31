@@ -23,6 +23,11 @@ public sealed class ImportedBone
     /// <summary>Uniform bind-pose scale; defaults to 1 for formats without stored scale.</summary>
     public float BindScale { get; }
 
+    /// <summary>Exact local bind transform, including non-uniform scale and shear.</summary>
+    public Matrix4x4 BindLocalMatrix { get; }
+
+    internal bool HasExactBindLocalMatrix { get; }
+
     public Matrix4x4 InverseBindMatrix { get; }
 
     public ImportedBone(string name, int parentIndex, in Vector3 bindTranslation, in Quaternion bindRotation)
@@ -56,7 +61,8 @@ public sealed class ImportedBone
         in Vector3 bindTranslation,
         in Quaternion bindRotation,
         in Matrix4x4 inverseBindMatrix,
-        float bindScale)
+        float bindScale,
+        Matrix4x4? bindLocalMatrix = null)
     {
         ArgumentNullException.ThrowIfNull(name);
 
@@ -72,6 +78,9 @@ public sealed class ImportedBone
         BindTranslation = bindTranslation;
         BindRotation = bindRotation;
         BindScale = bindScale;
+        HasExactBindLocalMatrix = bindLocalMatrix.HasValue;
+        BindLocalMatrix = bindLocalMatrix ?? Matrix4x4.CreateScale(bindScale)
+            * Matrix4x4.CreateFromQuaternion(bindRotation) * Matrix4x4.CreateTranslation(bindTranslation);
         InverseBindMatrix = inverseBindMatrix;
     }
 }

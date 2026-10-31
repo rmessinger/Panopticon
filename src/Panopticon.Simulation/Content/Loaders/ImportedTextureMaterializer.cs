@@ -121,7 +121,11 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         // and device-independent. The coverage variant rebuilds the chain so the cutout
         // passing fraction survives minification (WI-G5-02); the sRGB variant rebuilds in
         // linear light so minification stops darkening colour (WI-G6-02).
+        // Veldrid's upload path pins each mip as one contiguous pixel buffer.
+        var configuration = SixLabors.ImageSharp.Configuration.Default.Clone();
+        configuration.PreferContiguousImageBuffers = true;
         using var image = Image.LoadPixelData<Rgba32>(
+            configuration,
             decoded.RgbaPixels.ToArray(),
             decoded.Width,
             decoded.Height);

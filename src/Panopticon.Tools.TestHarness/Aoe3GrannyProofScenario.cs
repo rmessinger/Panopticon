@@ -22,16 +22,15 @@ using Veldrid;
 namespace Panopticon.Tools.TestHarness;
 
 /// <summary>
-/// Headless C10b/C10c proof: mounts the operator-supplied AoE3 DE Game/ tree through
+/// Headless C10b-C10d proof: mounts the operator-supplied AoE3 DE Game/ tree through
 /// BarFileSystem, resolves the Musketeer (guard and redcoat techs) and Hussar through
 /// Aoe3AnimfileResolver, imports models through GrannyModelImporter with AoE3 material
 /// mapping onto C3 PBR, and captures each beside a native Generals Ranger
-/// (AIRNGR_SKN). The musketeer march and volley clips and the horse idle clip are
+/// (AIRNGR_SKN). Musketeer march/volley, horse idle, and falconet limber clips are
 /// imported through GrannyAnimationImporter, bound to their skeletons (shared-library
 /// extra tracks are dropped and reported), sampled at fixed times, and captured twice
-/// per frame with byte-identical output required. The falconet has an Oodle1-compressed
-/// section and must fail with an explicit message naming the file, section index, and
-/// compression type. No AoE3 asset is copied or committed.
+/// per frame with byte-identical output required. Compressed models use managed section
+/// decoders; the redcoat uses its own mesh and atlas. No AoE3 asset is copied or committed.
 /// </summary>
 public static class Aoe3GrannyProofScenario
 {
@@ -45,9 +44,7 @@ public static class Aoe3GrannyProofScenario
 
     private const string MusketeerKey = @"Art\units\infantry_ranged\musketeer\musketeer_4age.gr2";
 
-    private const string RedcoatMaterialKey = @"Art\units\infantry_ranged\musketeer\redcoats_age4.material.xmb";
-
-    private const string MusketeerMaterialZipEntry = "Art/units/infantry_ranged/musketeer/musketeer_4age.material.xmb";
+    private const string RedcoatKey = @"Art\units\infantry_ranged\musketeer\redcoats_age4.gr2";
 
     private const string RangerModelName = "AIRNGR_SKN";
 
@@ -123,6 +120,8 @@ public static class Aoe3GrannyProofScenario
             $"{MusketeerUnit} (guardmusketeers) resolved to '{musketeerVisual.ModelPath}' " +
             $"with {musketeerVisual.ClipsByAnimName.Count} clips.");
         var hussarVisual = resolver.Resolve(HussarUnit, ["guardhussars"]);
+        var redcoatVisual = resolver.Resolve(MusketeerUnit, ["rgredcoats"]);
+        var falconetVisual = resolver.Resolve("Falconet", []);
         reporter.Info(
             $"{HussarUnit} (guardhussars) resolved to '{hussarVisual.ModelPath}' " +
             $"with {hussarVisual.ClipsByAnimName.Count} clips.");
@@ -145,22 +144,19 @@ public static class Aoe3GrannyProofScenario
             "so a mottled grey uniform is the expected render");
         captures.Add(("musketeer-beside-ranger.png", "see above"));
 
-        var redcoatImportContext = CreateRedcoatImportContext(barFileSystem, reporter);
         _ = CaptureBesideRanger(
             game,
             ranger,
             unitsPerMeter,
             loadContext,
-            redcoatImportContext,
-            new GrannyModelImporter(),
+            importContext,
+            importer,
             reporter,
             outputDirectory,
-            MusketeerKey,
+            redcoatVisual.ModelPath,
             "redcoat-beside-ranger.png",
-            "the same uncompressed musketeer mesh renders with its pre-colored red coat " +
-            "textures; the variant .gr2 models (redcoats, blue_guard, ...) are internally " +
-            "Oodle1-compressed until C10d, so the redcoats_age4 material file is overlaid " +
-            "on the musketeer_4age material key through a zip file system");
+            "the actual redcoat variant renders its own mesh and matching atlas, with " +
+            "coherent face, coat, and insignia; no material overlay is used");
         captures.Add(("redcoat-beside-ranger.png", "see above"));
 
         var (horseModel, horseImported) = CaptureBesideRanger(
@@ -178,47 +174,34 @@ public static class Aoe3GrannyProofScenario
             "with both material groups (mata, matb default_cutout) rendered textured");
         captures.Add(("horse-beside-ranger.png", "see above"));
 
-        var falconetFailed = false;
-        try
-        {
-            _ = importer.ImportModel(FalconetKey, importContext);
-        }
-        catch (InvalidDataException exception)
-        {
-            falconetFailed = true;
-            var message = exception.Message;
-            if (message.Contains(FalconetKey, StringComparison.Ordinal) &&
-                message.Contains("section 0", StringComparison.Ordinal) &&
-                message.Contains("Oodle1", StringComparison.Ordinal))
-            {
-                reporter.Info($"Falconet rejected as expected: {message}");
-            }
-            else
-            {
-                reporter.Error($"Falconet failure message lacks the expected fields: {message}");
-                return 5;
-            }
-        }
+        var (falconetModel, falconetImported) = CaptureBesideRanger(
+            game, ranger, unitsPerMeter, loadContext, importContext, importer, reporter,
+            outputDirectory, FalconetKey, "falconet-beside-ranger.png",
+            "the decompressed Falconet has coherent barrel, carriage, and wheels beside the Ranger");
+        captures.Add(("falconet-beside-ranger.png", "see above"));
 
-        if (!falconetFailed)
-        {
-            reporter.Error($"Falconet '{FalconetKey}' imported without failing despite compressed sections.");
-            return 5;
-        }
+        _ = CaptureBesideRanger(
+            game, ranger, unitsPerMeter, loadContext, importContext, importer, reporter,
+            outputDirectory, @"Art\units\naval\johnboat\johnboat.gr2", "johnboat-beside-ranger.png",
+            "the BitKnit2-compressed johnboat renders coherent geometry beside the Ranger");
+        captures.Add(("johnboat-beside-ranger.png", "see above"));
 
-        CaptureDebugViews(game, loadContext, importContext, redcoatImportContext, importer, reporter, outputDirectory);
+        CaptureDebugViews(game, loadContext, importContext, importer, reporter, outputDirectory);
 
         var animatedPlans = new List<(string DisplayName, string AnimName, Model Model, ImportedModel Imported)>
         {
             ("musketeer-march", "Volley_walk", musketeerModel, musketeerImported),
             ("musketeer-volley", "Volley_standing_attack", musketeerModel, musketeerImported),
             ("horse-idle", "Idle", horseModel, horseImported),
+            ("falconet-limber", "Limber", falconetModel, falconetImported),
         };
 
         var animatedSummaries = new List<(string DisplayName, string Summary)>();
         foreach (var (displayName, animName, model, importedModel) in animatedPlans)
         {
-            var clipKey = (displayName.StartsWith("horse", StringComparison.Ordinal) ? hussarVisual : musketeerVisual)
+            var visual = displayName.StartsWith("horse", StringComparison.Ordinal) ? hussarVisual
+                : displayName.StartsWith("falconet", StringComparison.Ordinal) ? falconetVisual : musketeerVisual;
+            var clipKey = visual
                 .ClipsByAnimName[animName];
             var (ok, summary) = CaptureAnimatedClip(
                 game,
@@ -247,38 +230,6 @@ public static class Aoe3GrannyProofScenario
     }
 
     /// <summary>
-    /// Builds an import context whose musketeer_4age material key resolves to the
-    /// redcoats_age4 material file (pre-colored textures), read out of the BAR and
-    /// mounted through a zip file system ahead of the archives.
-    /// </summary>
-    private static AssetImportContext CreateRedcoatImportContext(
-        BarFileSystem barFileSystem, ITestHarnessReporter reporter)
-    {
-        var materialEntry = barFileSystem.GetFile(RedcoatMaterialKey)
-            ?? throw new InvalidDataException($"Missing '{RedcoatMaterialKey}' in the AoE3 archives.");
-        byte[] materialBytes;
-        using (var stream = materialEntry.Open())
-        {
-            using var buffered = new MemoryStream();
-            stream.CopyTo(buffered);
-            materialBytes = buffered.ToArray();
-        }
-
-        var zipPath = Path.Combine(Path.GetTempPath(), "aoe3-granny-proof-redcoat-material.zip");
-        using (var archiveStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
-        {
-            using var archive = new System.IO.Compression.ZipArchive(archiveStream, System.IO.Compression.ZipArchiveMode.Create);
-            var entry = archive.CreateEntry(MusketeerMaterialZipEntry);
-            using var entryStream = entry.Open();
-            entryStream.Write(materialBytes, 0, materialBytes.Length);
-        }
-
-        reporter.Info($"Redcoat material overlay written to {zipPath}.");
-        var zipFileSystem = new ZipFileSystem(zipPath);
-        return new AssetImportContext(new CompositeFileSystem(zipFileSystem, barFileSystem), language: null);
-    }
-
-    /// <summary>
     /// Captures diagnostic material views of the musketeer at 1024 px: unlit albedo (texture
     /// detail without lighting), a UV debug pattern (island layout, orientation, mirroring),
     /// normal-only shading (verifies the tangent frame), and the Masks texture displayed as
@@ -288,7 +239,6 @@ public static class Aoe3GrannyProofScenario
         Game game,
         AssetLoadContext loadContext,
         AssetImportContext importContext,
-        AssetImportContext redcoatImportContext,
         GrannyModelImporter importer,
         ITestHarnessReporter reporter,
         string outputDirectory)
@@ -332,8 +282,8 @@ public static class Aoe3GrannyProofScenario
 
         reporter.Info("Debug albedo views captured (full ambient, no directional light): coat, face, and chevrons should read like the decoded atlas.");
 
-        var redcoatImported = importer.ImportModel(MusketeerKey, redcoatImportContext)
-            ?? throw new InvalidOperationException($"AoE3 import returned null for '{MusketeerKey}' (redcoat overlay).");
+        var redcoatImported = importer.ImportModel(RedcoatKey, importContext)
+            ?? throw new InvalidOperationException($"AoE3 import returned null for '{RedcoatKey}'.");
         var redcoatAlbedoModel = ImportedModelMaterializer.MaterializeModel(redcoatImported, loadContext);
         StandaloneModelCapture.Capture(
             game,
@@ -349,7 +299,7 @@ public static class Aoe3GrannyProofScenario
             Path.Combine(debugDirectory, "albedo-redcoat.png"),
             size,
             options: unlit);
-        reporter.Info("Debug redcoat albedo view captured (unlit): the overlaid redcoats_age4 material should read as a red coat.");
+        reporter.Info("Debug redcoat albedo view captured (unlit): the actual variant mesh and atlas should form a coherent red coat.");
 
         var debugPattern = EncodeUvDebugPng();
         var checkerModel = ImportedModelMaterializer.MaterializeModel(
@@ -644,7 +594,8 @@ public static class Aoe3GrannyProofScenario
         var fitBounds = ComputeAnimatedFitBounds(model, importedModel, animation, sampleSeconds, world, loadContext);
         var options = new StandaloneCaptureOptions(
             Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f),
-            CameraFitBounds: fitBounds);
+            CameraFitBounds: fitBounds,
+            GroundGrid: displayName == "falconet-limber");
 
         StandaloneModelCapture.Capture(
             game,
@@ -804,16 +755,15 @@ public static class Aoe3GrannyProofScenario
         writer.WriteLine("Every capture comes from BarFileSystem(AoE3DE_PATH/Game) ->");
         writer.WriteLine("Aoe3AnimfileResolver -> GrannyModelImporter -> .material.xmb mapping onto C3");
         writer.WriteLine("PBR with DDT texture bindings -> ImportedModelMaterializer -> runtime Model,");
-        writer.WriteLine("rendered beside a native Generals Ranger (AIRNGR_SKN) through CapturePair.");
+        writer.WriteLine("rendered beside a native Generals Ranger (AIRNGR_SKN) through CaptureGroundedPair.");
         writer.WriteLine($"Scale calibration: {unitsPerMeter.ToString("0.0##", CultureInfo.InvariantCulture)} Generals units");
         writer.WriteLine("per meter, from the Ranger visible mesh height (14.61 units, pixel-verified; the");
         writer.WriteLine($"rest-pose skeleton span undercounts) divided by an assumed {ReferenceHumanHeightMeters.ToString("0.0", CultureInfo.InvariantCulture)} m human.");
         writer.WriteLine("The default matA musketeer and horse textures are intentionally desaturated for");
         writer.WriteLine("player-color tinting in the DE engine; Panopticon does not tint, so the grey render");
-        writer.WriteLine("is expected, and the redcoat capture (churchthinredline tech) shows pre-colored");
-        writer.WriteLine("textures through the same pipeline. The falconet import must fail naming the");
-        writer.WriteLine("file, section 0, and Oodle1; decompression is C10d. No AoE3 asset is copied or");
-        writer.WriteLine("committed.");
+        writer.WriteLine("is expected. The redcoat capture uses the actual rgredcoats variant and its own");
+        writer.WriteLine("atlas, not an overlay. The Oodle1-compressed Falconet must import and play Limber");
+        writer.WriteLine("without corrupt geometry or cropped animation frames. No AoE3 asset is copied or committed.");
         writer.WriteLine();
         foreach (var (fileName, check) in captures)
         {

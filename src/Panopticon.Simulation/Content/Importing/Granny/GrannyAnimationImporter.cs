@@ -121,10 +121,7 @@ internal sealed class GrannyAnimationImporter : IAnimationImporter
         var binds = new Dictionary<string, Matrix4x4>(skeleton.Bones.Count, StringComparer.Ordinal);
         foreach (var bone in skeleton.Bones)
         {
-            var local = Matrix4x4.CreateScale(bone.BindScale)
-                * Matrix4x4.CreateFromQuaternion(bone.BindRotation)
-                * Matrix4x4.CreateTranslation(bone.BindTranslation);
-            binds[bone.Name.Replace(' ', '_')] = local;
+            binds[bone.Name.Replace(' ', '_')] = bone.BindLocalMatrix;
         }
 
         return binds;

@@ -43,18 +43,18 @@ public class GrannyModelImportTests
     }
 
     [Fact]
-    public void CompressedFileFailsWithKeySectionAndType()
+    public void UnsupportedCompressionFailsWithKeySectionAndType()
     {
         var importer = new GrannyModelImporter();
         using var fileSystem = new Panopticon.Tests.Content.MemoryFileSystem();
-        fileSystem.AddFile("unit.gr2", SyntheticGrannyBuilder.BuildWithCompressedSection(2));
+        fileSystem.AddFile("unit.gr2", SyntheticGrannyBuilder.BuildWithCompressedSection(99));
 
         var exception = Assert.Throws<InvalidDataException>(
             () => importer.ImportModel("unit.gr2", CreateContext(fileSystem)));
 
         Assert.Contains("unit.gr2", exception.Message);
         Assert.Contains("section 0", exception.Message);
-        Assert.Contains("Oodle1", exception.Message);
+        Assert.Contains("compression 99", exception.Message);
         Assert.IsType<GrannyCompressedSectionException>(exception.InnerException);
     }
 
@@ -135,17 +135,36 @@ public class GrannyModelImportTests
 
     [Fact]
     [Trait("Category", "Interactive")]
-    public void FalconetFailsExplicitlyWithCompression()
+    public void FalconetImportsWithCompressedSections()
     {
         var importer = new GrannyModelImporter();
         using var fileSystem = Aoe3Install.CreateFileSystem();
 
-        var exception = Assert.Throws<InvalidDataException>(
-            () => importer.ImportModel(FalconetPath, CreateContext(fileSystem)));
+        var model = importer.ImportModel(FalconetPath, CreateContext(fileSystem));
 
-        Assert.Contains(FalconetPath, exception.Message);
-        Assert.Contains("section 0", exception.Message);
-        Assert.Contains("Oodle1", exception.Message);
+        Assert.NotNull(model);
+        Assert.NotEmpty(model.Skeleton.Bones);
+        Assert.NotEmpty(model.SubObjects);
+        Assert.All(model.SubObjects, subObject => Assert.IsType<ImportedMesh>(subObject.RenderObject));
+        AssertBindPoseIsConsistent(model);
+    }
+
+    [Theory]
+    [InlineData(@"Art\units\infantry_ranged\musketeer\redcoats_age4.gr2")]
+    [InlineData(FalconetPath)]
+    [Trait("Category", "Interactive")]
+    public void NarrowTopologyIndicesPreserveTriangleVertices(string path)
+    {
+        using var fileSystem = Aoe3Install.CreateFileSystem();
+        var model = new GrannyModelImporter().ImportModel(path, CreateContext(fileSystem));
+        Assert.NotNull(model);
+        foreach (var subObject in model.SubObjects)
+        {
+            var mesh = Assert.IsType<ImportedMesh>(subObject.RenderObject);
+            Assert.True(mesh.Indices.Distinct().Count() > 3);
+            Assert.NotEqual(mesh.Indices[0], mesh.Indices[1]);
+            Assert.NotEqual(mesh.Indices[1], mesh.Indices[2]);
+        }
     }
 
     [Fact]
@@ -177,9 +196,7 @@ public class GrannyModelImportTests
         for (var i = 0; i < bones.Count; i++)
         {
             var bone = bones[i];
-            var local = Matrix4x4.CreateScale(bone.BindScale) *
-                Matrix4x4.CreateFromQuaternion(bone.BindRotation) *
-                Matrix4x4.CreateTranslation(bone.BindTranslation);
+            var local = bone.BindLocalMatrix;
             worlds[i] = bone.ParentIndex >= 0 ? local * worlds[bone.ParentIndex] : local;
 
             var product = bone.InverseBindMatrix * worlds[i];
@@ -216,9 +233,7 @@ public class GrannyModelImportTests
         for (var i = 0; i < bones.Count; i++)
         {
             var bone = bones[i];
-            var local = Matrix4x4.CreateScale(bone.BindScale) *
-                Matrix4x4.CreateFromQuaternion(bone.BindRotation) *
-                Matrix4x4.CreateTranslation(bone.BindTranslation);
+            var local = bone.BindLocalMatrix;
             worlds[i] = bone.ParentIndex >= 0 ? local * worlds[bone.ParentIndex] : local;
         }
 

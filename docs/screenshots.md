@@ -31,6 +31,9 @@ with the renderer's skinning transforms, not culling or non-rendered collision b
 The angled perspective camera preserves surface detail. A projected world-ground line
 marks the shared baseline. `CapturePair` remains available for arbitrary world transforms.
 
+`StandaloneCaptureOptions.GroundGrid` overlays a projected world-Z-zero grid for animated
+depth motion. Lines affect background pixels only; this diagnostic is not a depth-tested floor.
+
 ## macOS reference screenshots
 
 Operator screenshots: `~/OneDrive/Screenshots (MacOS)/`. Select the most recently modified

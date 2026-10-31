@@ -58,6 +58,26 @@ public sealed class Aoe3MaterialTests
     }
 
     [Fact]
+    public void MissingMeshMaterialFallsBackToModelMaterial()
+    {
+        const string modelMaterial = @"Art\units\t\model.material.xmb";
+        var document = BuildMaterialDocument("mata", "default",
+            Texture("BaseColor", @"units\t\coat"),
+            Texture("Normals", @"units\t\coat_normals"),
+            Texture("Masks", @"units\t\coat_masks"));
+        var (_, converter, diagnostics) = CreateFixture(
+            modelMaterial, document, @"Art\units\t\coat.ddt",
+            @"Art\units\t\coat_normals.ddt", @"Art\units\t\coat_masks.ddt");
+
+        var material = converter.Convert(
+            "mata", @"Art\units\t\unrelated_mesh.material.xmb", "unrelated_meshShape", 1,
+            modelMaterial);
+
+        Assert.EndsWith("coat.ddt", material.PbrMetallicRoughness!.BaseColorTexture!.ImageSource.VirtualPath);
+        Assert.Empty(diagnostics.Warnings);
+    }
+
+    [Fact]
     public void MapsSubmaterialToPbrWithAllBindings()
     {
         var document = BuildMaterialDocument("mata", "default",
