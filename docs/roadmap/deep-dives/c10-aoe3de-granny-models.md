@@ -40,8 +40,8 @@ C10c supports:
 - animfile XML: `GrannyModel` and `GrannyAnim` asset references, tech `logic` variants, and
   `frombone`/`tobone` attachments.
 
-C10d (deferred) supports Oodle1 (section type 2) and BitKnit2 (type 4) Granny section
-decompression and any non-float curve codecs, only after the review in section 6.
+C10d supports Oodle1 (section type 2) and BitKnit2 (type 4) Granny section
+decompression using the approved sources in section 6. Other curve codecs remain separate.
 
 C10 rejects:
 
@@ -369,11 +369,35 @@ Recorded by the C10c skin, animation, animfile, and proof work:
   scales. The musketeer and Ranger have near-equal rendered heights; physical scale remains
   empirically calibrated rather than independently verified.
 
+### C10d reader and bind-transform results
+
+Static proof captures use the actual redcoat variant, Oodle1 Falconet, and BitKnit2 johnboat.
+All render coherent textured geometry through the existing angled, shared-ground comparison.
+The redcoat no longer uses the C10c atlas overlay. Viewer evidence:
+`aoe3-redcoat-beside-ranger-c10d-v1.png`, `aoe3-falconet-beside-ranger-c10d-v1.png`, and
+`aoe3-johnboat-beside-ranger-c10d-v1.png`.
+
+The damaged sloop passes decoding but fails the normal-map tangent generator's degenerate-UV
+guardrail. The guardrail remains unchanged. Large imported textures request contiguous
+ImageSharp buffers because the GPU upload path requires a single pixel span.
+
+- Managed section dispatch accepts uncompressed, Oodle1, and BitKnit2 payloads. BitKnit2
+  relocation and mixed-marshalling tables use their length-prefixed compressed streams.
+  Decode errors retain the file name, section index, and compression type.
+- All 4,942 GR2 entries in `ArtUnits.bar` parse, including the previously blocked compressed
+  models. Real 32-bit files exposed a type-member stride error: 32 bytes, not 36. The reader
+  and synthetic fixture now use the correct stride.
+- Falconet bind transforms contain nonuniform scale. `ImportedBone.BindLocalMatrix` preserves
+  the full local matrix, including shear, through runtime materialization and animation-offset
+  conversion. Existing importers retain their original scalar-transform path. Regression tests
+  cover exact root and child matrices with root scales of 1 and 2.
+
 ## 8. Risks
 
 - The generic Granny reader (64-bit pointer layout, fixup tables, type-tree marshalling) is the
   largest single piece of work in C10.
-- About 15% of unit models stay unloadable until C10d; C10b reports them explicitly.
+- Compressed models require C10d; the full `ArtUnits.bar` reader corpus now passes. Visual
+  coverage remains narrower than parsing coverage.
 - Tech and age variants mean one unit maps to several models; C10c selects one variant per request.
 
 ## 9. Architecture diagrams

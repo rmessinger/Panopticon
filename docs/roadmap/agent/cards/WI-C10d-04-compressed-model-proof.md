@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C10d-04` |
 | Roadmap phase | [Track C · C10d](../../track-c-external-assets.md) |
-| Status | `Blocked` |
+| Status | `In progress` |
 | Type | `validation` |
 | Effort | `M` |
 | Prerequisites | `WI-C10d-03` |
@@ -40,15 +40,18 @@ Import and animate the Falconet and validate real compressed variants through ex
 ## Acceptance criteria
 
 - [ ] Falconet imports and plays `falconet_limber` with coherent geometry.
-- [ ] Available type-4 content is validated, or its corpus absence is recorded.
-- [ ] Real redcoat mesh replaces the mismatched overlay where supported.
-- [ ] Existing musketeer and horse proofs remain visually correct.
+- [x] Available type-4 content is validated, or its corpus absence is recorded.
+- [x] Real redcoat mesh replaces the mismatched overlay where supported.
+- [x] Existing musketeer and horse proofs remain visually correct.
 - [ ] Evidence and validation are linked in the open group-4 PR.
 
 ## Validation
 
 Run the proof under Xvfb, review captures, run Granny/AoE3 and non-interactive suites, build,
 format, and brace checks. Stop on determinism deviations and preserve artifacts.
+
+Static capture review passes: actual redcoat, Falconet, BitKnit2 johnboat, and existing
+musketeer/horse comparisons. Falconet animation review remains in progress.
 
 ## Out of scope / guardrails
 
