@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-08` |
 | Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-3 local source readers |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-07` |
@@ -51,6 +51,10 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 No archive resources beyond the KML.
+
+## Implementation notes
+
+ZIP64 and multi-disk archives are rejected with an Archive diagnostic. Central-directory counts are checked before `ZipArchive` materializes entries. Stream inputs must be seekable.
 
 ## On completion
 

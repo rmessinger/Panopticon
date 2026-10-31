@@ -16,6 +16,12 @@ public static class GeoDiagnosticCodes
 
     public const string ArchiveFailure = "GEO-ARC-001";
 
+    public const string ArchiveLimitExceeded = "GEO-ARC-002";
+
+    public const string ArchiveUnsafeEntryName = "GEO-ARC-003";
+
+    public const string ArchiveUnsafeReference = "GEO-ARC-004";
+
     public const string ParseFailure = "GEO-PAR-001";
 
     public const string ParseUnsupportedKmlElement = "GEO-PAR-002";
