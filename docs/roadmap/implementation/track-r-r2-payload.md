@@ -23,6 +23,8 @@ JSON uses camelCase properties, strict kebab-case named enums, finite numbers, d
 
 `MaxPayloadMetadataBytes` defaults to 128 MiB, separately applied to each JSON file. Reads and writes are byte-bounded. Structural chunk, feature, coordinate, and palette limits apply before DTO collection allocation. Serialization streams rather than constructing an unbounded intermediate byte array.
 
+`MaxSourceFileBytes` defaults to 4 GiB per encoded input source. Hashing enforces this bound before reader invocation. Manifest and KML hashing also enforce their smaller format-specific byte limits. Vector feature and coordinate limits apply to the combined import, not only individual readers.
+
 Source provenance retains manifest IDs, roles, kinds, normalized relative paths, hashes, actual CRS, embedded and declared vertical datums, labels, attribution, and accuracy declarations. Rebinding vector source IDs preserves archive-entry and folder attributes. Contradictory known datums fail; no geoid conversion runs. Classification-value material rules with a source ID must name the classification source.
 
 The report retains diagnostic DTOs, actual kernel counts and observed GSD/spacing ranges, fill statistics, generation summaries, ordered validation checks, and the exact payload JSON hash. Diagnostic paths are manifest-relative. Wall clocks, output paths, exception objects, and a report self-hash are excluded.
