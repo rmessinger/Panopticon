@@ -27,7 +27,7 @@ JSON uses camelCase properties, strict kebab-case named enums, finite numbers, d
 
 Source provenance retains manifest IDs, roles, kinds, normalized relative paths, hashes, actual CRS, embedded and declared vertical datums, labels, attribution, and accuracy declarations. Rebinding vector source IDs preserves archive-entry and folder attributes. Contradictory known datums fail; no geoid conversion runs. Classification-value material rules with a source ID must name the classification source.
 
-The report retains diagnostic DTOs, actual kernel counts and observed GSD/spacing ranges, fill statistics, generation summaries, ordered validation checks, and the exact payload JSON hash. Diagnostic paths are manifest-relative. Wall clocks, output paths, exception objects, and a report self-hash are excluded.
+The report retains diagnostic DTOs, actual kernel counts and observed GSD/spacing ranges, fill statistics, generation summaries, ordered validation checks, and the exact payload JSON hash. Elevation, imagery, and classification sampling summaries remain separate. Diagnostic paths are manifest-relative. Wall clocks, output paths, exception objects, and a report self-hash are excluded.
 
 ## Reader validation
 

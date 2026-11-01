@@ -22,7 +22,8 @@ public sealed record GeneratedMapPayloadReport
         PayloadFeatureGenerationSummary features,
         IReadOnlyList<PayloadValidationCheck> validationChecks,
         string payloadSha256Hex,
-        PayloadImageryGenerationSummary? imagery = null)
+        PayloadImageryGenerationSummary? imagery = null,
+        PayloadSamplingSummary? classificationSampling = null)
     {
         ArgumentNullException.ThrowIfNull(diagnostics);
         ArgumentNullException.ThrowIfNull(terrain);
@@ -39,6 +40,7 @@ public sealed record GeneratedMapPayloadReport
             CopyItems(validationChecks, nameof(validationChecks)));
         PayloadSha256Hex = payloadSha256Hex;
         Imagery = imagery;
+        ClassificationSampling = classificationSampling;
     }
 
     /// <summary>Fixed report kind discriminator, <c>panopticon-geospatial-payload-report</c>.</summary>
@@ -53,6 +55,9 @@ public sealed record GeneratedMapPayloadReport
 
     /// <summary>Imagery generation summary; null when the payload has no imagery layer.</summary>
     public PayloadImageryGenerationSummary? Imagery { get; }
+
+    /// <summary>Classification sampling summary; null when no classification raster was sampled.</summary>
+    public PayloadSamplingSummary? ClassificationSampling { get; }
 
     public PayloadMaskGenerationSummary Masks { get; }
 
