@@ -20,4 +20,14 @@ public sealed record GeospatialImportLimits(
     /// polygon work budget.
     /// </summary>
     public long MaxFeatureRuleComparisons { get; init; } = 64L * 1024 * 1024;
+
+    /// <summary>Byte bound applied separately to each payload JSON file (payload.json, report.json).</summary>
+    public long MaxPayloadMetadataBytes { get; init; } = 128L * 1024 * 1024;
+
+    /// <summary>
+    /// Per-input-source encoded file byte cap, independent of decoded and metadata caps;
+    /// charged before readers' own limits so padded, device, or unbounded sources are
+    /// rejected while hashing. KML additionally stays within MaxKmlEntryBytes.
+    /// </summary>
+    public long MaxSourceFileBytes { get; init; } = 4L * 1024 * 1024 * 1024;
 }
