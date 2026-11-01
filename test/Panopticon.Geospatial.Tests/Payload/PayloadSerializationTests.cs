@@ -1159,6 +1159,120 @@ public class PayloadSerializationTests
             () => PayloadJson.WriteMetadata(belowLimit, metadata, new GeospatialImportLimits { MaxPayloadMetadataBytes = exact - 1 }));
     }
 
+    [Fact]
+    public void ReportClassificationSampling_RoundTripsDistinctFromTerrainAndImagery()
+    {
+        var classification = new PayloadSamplingSummary(
+            5_000,
+            2,
+            7,
+            3,
+            KernelCounts(0, 4_998, 0, 0),
+            new PayloadObservedRanges(
+                new PayloadObservedRange(30d, 31.5d),
+                new PayloadObservedRange(30d, 31.5d),
+                new PayloadObservedRange(90d, 94.5d),
+                new PayloadObservedRange(90d, 94.5d),
+                new PayloadObservedRange(3d, 3d),
+                new PayloadObservedRange(3d, 3d)));
+
+        var original = WriteReportBytes(Report(classificationSampling: classification));
+
+        var report = ReadReport(original);
+
+        Assert.NotNull(report);
+        Assert.NotNull(report!.ClassificationSampling);
+        Assert.Equal(5_000L, report.ClassificationSampling.SampleCount);
+        Assert.Equal(2L, report.ClassificationSampling.FailedSampleCount);
+        Assert.Equal(7L, report.ClassificationSampling.NoDataFillCount);
+        Assert.Equal(3L, report.ClassificationSampling.OutsideFillCount);
+        Assert.Equal(4_998L, report.ClassificationSampling.KernelCounts[(int)SampleKernel.Nearest].Count);
+        Assert.Equal(30d, report.ClassificationSampling.ObservedRanges!.SourceGsdXMeters!.Value.Min);
+        Assert.Equal(3d, report.ClassificationSampling.ObservedRanges.GsdRatioX!.Value.Max);
+
+        // The terrain and imagery summaries stay separate and untouched.
+        Assert.Equal(10_000L, report.Terrain.Sampling.SampleCount);
+        Assert.Equal(100L, report.Terrain.Sampling.KernelCounts[(int)SampleKernel.Nearest].Count);
+        Assert.NotNull(report.Imagery);
+        Assert.Equal(20L, report.Imagery!.Sampling.SampleCount);
+
+        Assert.Equal(original, WriteReportBytes(report));
+    }
+
+    [Fact]
+    public void ReportClassificationSampling_OmittedWhenNullStaysBackwardCompatible()
+    {
+        var defaultReport = ReadReport(WriteReportBytes(Report()));
+
+        Assert.NotNull(defaultReport);
+        Assert.Null(defaultReport!.ClassificationSampling);
+        Assert.Equal(0, CountOccurrences(Text(WriteReportBytes(Report())), "\"classificationSampling\""));
+
+        // A report written before the member existed parses with a null summary.
+        var withClassification = Text(WriteReportBytes(Report(classificationSampling: SamplingSummary(9, 1, 0, 0, 1d, 1d, 1d, 1d))));
+        var start = withClassification.IndexOf("\"classificationSampling\"", StringComparison.Ordinal);
+        var end = withClassification.IndexOf("\"masks\"", StringComparison.Ordinal);
+        var stripped = withClassification[..start] + withClassification[end..];
+
+        var strippedReport = ReadReport(BytesOf(stripped));
+
+        Assert.NotNull(strippedReport);
+        Assert.Null(strippedReport!.ClassificationSampling);
+        Assert.Equal(PayloadSha256Hex, strippedReport.PayloadSha256Hex);
+    }
+
+    [Fact]
+    public void MalformedClassificationSampling_IsRejectedAsSchemaInvalid()
+    {
+        var cases = new Func<string, string>[]
+        {
+            // Unknown kernel token inside the classification summary.
+            t => t.Replace("\"kernel\":\"nearest\",\"count\":4998", "\"kernel\":\"nearest-x\",\"count\":4998"),
+            // Duplicate kernel token inside the classification summary (entry count stays four).
+            t => t.Replace("\"kernel\":\"area-weighted\",\"count\":0}]},\"masks\":{", "\"kernel\":\"nearest\",\"count\":0}]},\"masks\":{"),
+            // Duplicate classificationSampling member at the report root.
+            t => t.Replace("\"masks\":{", "\"classificationSampling\":{\"sampleCount\":1},\"masks\":{"),
+        };
+
+        var original = Text(WriteReportBytes(Report(classificationSampling: new PayloadSamplingSummary(
+            5_000, 2, 7, 3, KernelCounts(0, 4_998, 0, 0)))));
+
+        foreach (var corrupt in cases)
+        {
+            var diagnostics = new GeoDiagnosticBag();
+
+            Assert.Null(ReadReport(BytesOf(corrupt(original)), diagnostics: diagnostics));
+
+            Assert.Equal(PayloadDiagnosticCodes.PayloadSchemaInvalid, Assert.Single(diagnostics.Items).Code);
+        }
+    }
+
+    [Fact]
+    public void InvalidClassificationSamplingCounts_IsRejectedAsValueError()
+    {
+        var json = Text(WriteReportBytes(Report(classificationSampling: new PayloadSamplingSummary(
+            5_000, 2, 7, 3, KernelCounts(0, 4_998, 0, 0)))))
+            .Replace("\"sampleCount\":5000,\"failedSampleCount\":2", "\"sampleCount\":2,\"failedSampleCount\":2");
+
+        var diagnostics = new GeoDiagnosticBag();
+
+        Assert.Null(ReadReport(BytesOf(json), diagnostics: diagnostics));
+
+        Assert.Equal(PayloadDiagnosticCodes.PayloadValueInvalid, Assert.Single(diagnostics.Items).Code);
+    }
+
+    [Fact]
+    public void ReportStreamReadFailure_ReportsResourceDiagnostic()
+    {
+        var diagnostics = new GeoDiagnosticBag();
+        using var stream = new ThrowingStream();
+
+        var report = PayloadJson.TryReadReport(stream, diagnostics, new GeospatialImportLimits());
+
+        Assert.Null(report);
+        Assert.Equal(PayloadDiagnosticCodes.PayloadResourceFailure, Assert.Single(diagnostics.Items).Code);
+    }
+
     private sealed class StubValidator : IStagedPayloadValidator
     {
         public IReadOnlyList<PayloadValidationCheck> Validate(

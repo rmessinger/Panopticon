@@ -214,7 +214,7 @@ internal static class PayloadTestSupport
             ChunkDescriptors(imagery));
     }
 
-    public static GeneratedMapPayloadReport Report(bool imagery = true)
+    public static GeneratedMapPayloadReport Report(bool imagery = true, PayloadSamplingSummary? classificationSampling = null)
     {
         return new GeneratedMapPayloadReport(
             [
@@ -230,7 +230,8 @@ internal static class PayloadTestSupport
                 new PayloadValidationCheck("control-point", "imagery-r", PayloadValidationStatus.NotEvaluated),
             ],
             PayloadSha256Hex,
-            imagery ? new PayloadImageryGenerationSummary(SamplingSummary(20, 0, 0, 0, minGsd: 0.5d, maxGsd: 0.5d, minRatio: 1d, maxRatio: 1d), 2) : null);
+            imagery ? new PayloadImageryGenerationSummary(SamplingSummary(20, 0, 0, 0, minGsd: 0.5d, maxGsd: 0.5d, minRatio: 1d, maxRatio: 1d), 2) : null,
+            classificationSampling);
     }
 
     public static PayloadMaskGenerationSummary MasksSummary()

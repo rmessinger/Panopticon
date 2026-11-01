@@ -116,6 +116,7 @@ internal static class PayloadJsonReader
         List<PayloadDiagnosticDto>? diagnostics = null;
         PayloadTerrainDto? terrain = null;
         PayloadImageryDto? imagery = null;
+        PayloadSamplingDto? classificationSampling = null;
         PayloadMaskDto? masks = null;
         PayloadFeaturesSummaryDto? featuresSummary = null;
         List<PayloadValidationCheckDto>? validationChecks = null;
@@ -140,6 +141,9 @@ internal static class PayloadJsonReader
                     break;
                 case "imagery":
                     imagery = ParseImagery(ref reader, context);
+                    break;
+                case "classificationSampling":
+                    classificationSampling = ParseSampling(ref reader, context);
                     break;
                 case "masks":
                     masks = ParseMasks(ref reader);
@@ -166,6 +170,7 @@ internal static class PayloadJsonReader
             diagnostics,
             terrain,
             imagery,
+            classificationSampling,
             masks,
             featuresSummary,
             validationChecks,

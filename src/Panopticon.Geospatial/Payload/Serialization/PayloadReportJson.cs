@@ -93,6 +93,12 @@ internal static class PayloadReportJson
                     check.Message));
         }
 
+        PayloadSamplingSummary? classification = null;
+        if (dto.ClassificationSampling is { } classificationDto)
+        {
+            classification = BuildSampling(classificationDto, "classificationSampling");
+        }
+
         return new GeneratedMapPayloadReport(
             diagnostics,
             terrain,
@@ -100,7 +106,8 @@ internal static class PayloadReportJson
             features,
             checks,
             RequireString(dto.PayloadSha256, "payloadSha256"),
-            imagery);
+            imagery,
+            classification);
     }
 
     internal static void Write(Utf8JsonWriter writer, GeneratedMapPayloadReport report, PayloadWriteContext context)
@@ -145,6 +152,16 @@ internal static class PayloadReportJson
             writer.WriteStartObject();
             WriteSampling(writer, imagery.Sampling);
             writer.WriteNumber("chunkCount", imagery.ChunkCount);
+            writer.WriteEndObject();
+        }
+
+        if (report.ClassificationSampling is { } classification)
+        {
+            context.Checkpoint(writer);
+
+            writer.WritePropertyName("classificationSampling");
+            writer.WriteStartObject();
+            WriteSamplingProperties(writer, classification);
             writer.WriteEndObject();
         }
 
@@ -363,7 +380,13 @@ internal static class PayloadReportJson
     {
         writer.WritePropertyName("sampling");
         writer.WriteStartObject();
+        WriteSamplingProperties(writer, sampling);
+        writer.WriteEndObject();
+    }
 
+    /// <summary>Writes the sampling members into an already open summary object.</summary>
+    private static void WriteSamplingProperties(Utf8JsonWriter writer, PayloadSamplingSummary sampling)
+    {
         writer.WriteNumber("sampleCount", sampling.SampleCount);
         writer.WriteNumber("failedSampleCount", sampling.FailedSampleCount);
         writer.WriteNumber("noDataFillCount", sampling.NoDataFillCount);
@@ -394,8 +417,6 @@ internal static class PayloadReportJson
             WriteRange(writer, "gsdRatioY", ranges.GsdRatioY);
             writer.WriteEndObject();
         }
-
-        writer.WriteEndObject();
     }
 
     private static void WriteRange(Utf8JsonWriter writer, string member, PayloadObservedRange? range)

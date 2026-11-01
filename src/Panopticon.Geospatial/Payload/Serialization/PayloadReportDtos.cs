@@ -77,6 +77,7 @@ internal sealed record PayloadReportDto(
     List<PayloadDiagnosticDto>? Diagnostics = null,
     PayloadTerrainDto? Terrain = null,
     PayloadImageryDto? Imagery = null,
+    PayloadSamplingDto? ClassificationSampling = null,
     PayloadMaskDto? Masks = null,
     PayloadFeaturesSummaryDto? Features = null,
     List<PayloadValidationCheckDto>? ValidationChecks = null,
