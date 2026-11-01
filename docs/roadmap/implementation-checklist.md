@@ -1551,7 +1551,7 @@ imagery and terrain are not supported inputs.
     fails.
 - [x] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
   - AC: shared chunk edges are bit-identical; repeated runs produce identical chunk hashes.
-- [ ] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
+- [x] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
   - AC: clipped geometry matches exact boundary intersections; slope and water masks follow the
     manifest thresholds.
 
