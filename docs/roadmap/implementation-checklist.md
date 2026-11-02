@@ -1533,9 +1533,9 @@ complete H2a group merges. Each item corresponds to one card.
 See [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md). Formerly Track B phase B4b;
 item labels and card IDs keep the B4b prefix. Design:
 [deep dive](deep-dives/r-real-world-terrain.md); cards:
-[plan](implementation/track-b-b4b-geospatial.md). Imports operator-supplied Google Earth KML/KMZ
-plus georeferenced DEM and imagery rasters without direct Google service access; Google basemap
-imagery and terrain are not supported inputs.
+[plan](implementation/track-b-b4b-geospatial.md). Imports locally prepared KML/KMZ plus
+georeferenced DEM and imagery rasters with no network access; Google basemap imagery and terrain
+are not supported inputs.
 
 ### R1: Geospatial import core
 - [x] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest

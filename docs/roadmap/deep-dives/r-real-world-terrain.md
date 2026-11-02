@@ -7,18 +7,20 @@
 > Audience: human design for offline generation of Panopticon maps from operator-supplied
 > geospatial data. Code references are in the agent-context appendix.
 
-Purpose: generate an editable, playable Panopticon map from a bounded real-world area selected in
-Google Earth or prepared through Google Earth Engine. The importer converts local KML/KMZ from
-Google Earth and georeferenced raster exports from operator-authorized Earth Engine datasets or
-other authorized sources into the B4a/H3 map representation. Google basemap imagery and terrain
-are not input sources. The pipeline does not couple the engine to a network service or treat
-geographic coordinates as game-space coordinates.
+Purpose: generate an editable, playable Panopticon map from a bounded real-world area. Command-line
+preparation scripts (`scripts/geo/`, §8.1) fetch openly licensed elevation, imagery, benchmark, and
+building footprint data from per-provider profiles (national agencies such as IGN, Europe-wide
+Copernicus), reproject it, and generate the extent KML. The importer converts those local KML/KMZ
+and GeoTIFF files into the B4a/H3 map representation. KML may also be authored by hand or in Google
+Earth Pro, and rasters may be exported from openly licensed Earth Engine datasets; Google basemap
+imagery and terrain are not input sources (§2). The importer does not couple the engine to a
+network service or treat geographic coordinates as game-space coordinates.
 
 ---
 
 ## 1. Scope and completion boundary
 
-B4b owns an offline source-to-map pipeline:
+Track R owns an offline source-to-map pipeline:
 
 1. Read a local import manifest and its referenced files.
 2. Parse KML/KMZ vector data and georeferenced elevation/imagery rasters.
@@ -42,13 +44,22 @@ The milestone is not visual resemblance alone. Source control points must map to
 terrain and named landmarks within declared horizontal and vertical tolerances. The generated map
 must then survive a WorldBuilder save/reload and run in the engine.
 
+Operator data preparation sits outside the importer: scripts under `scripts/geo/` download open
+data with `curl` and reproject it with GDAL, never run in CI, and commit no source or derived data
+(§8.1). Structures are in scope as footprint masks in R2 and as generated or placed geometry in R3
+(§5.4).
+
 Out of scope:
 
-- authenticating to Google or another provider;
-- downloading map tiles, resolving remote KML links, or scraping a service;
+- network access from the importer or engine: downloading tiles, resolving remote KML links, or
+  querying a service (preparation scripts own all downloads);
+- providers that need accounts, API keys, or interactive licence acceptance, including any Google
+  service;
+- Google basemap imagery, Google 3D terrain, and data traced or digitized from them (§2);
 - automatically inferring object definitions from arbitrary feature names;
 - globe-scale coordinates or rendering Earth curvature;
-- reconstructing buildings from imagery;
+- reconstructing buildings from imagery or from surface-model (DSM) elevation;
+- OpenStreetMap data until an ODbL decision is recorded;
 - merging a changed source dataset into arbitrary hand edits;
 - legacy `.map` export for operators (deferred until H5 migration tooling; the dev preview in
   §6.1 is not an operator export).
@@ -133,9 +144,9 @@ Styles may supply a mapping key but do not define engine materials directly. Tou
 overlays with remote resources, network links, and dynamic updates are unsupported.
 
 The initial raster contract is GeoTIFF with an affine transform, declared CRS, bands, and no-data
-metadata. Google Earth supplies KML/KMZ vectors; raster inputs come from operator-authorized
-datasets exported through Earth Engine or another geospatial tool. Google Earth basemap imagery
-and terrain are explicitly unsupported.
+metadata. KML/KMZ vectors come from the preparation scripts (`ogr2ogr`), hand authoring, or Google
+Earth Pro drawing; raster inputs come from openly licensed datasets reprojected with GDAL or
+exported through Earth Engine. Google Earth basemap imagery and terrain are explicitly unsupported.
 
 The initial TIFF adapter accepts single-image classic TIFF with axis-aligned affine metadata.
 BigTIFF, multiple images, sub-IFDs, non-meter units, and nonidentity elevation mappings fail

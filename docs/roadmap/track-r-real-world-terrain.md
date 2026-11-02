@@ -1,8 +1,9 @@
 # Track R: Real-World Terrain
 
 > Part of the [Large-Scale RTS Roadmap](README.md). This track generates editable, playable
-> Panopticon maps from operator-supplied real-world geospatial data: Google Earth KML/KMZ plus
-> georeferenced elevation and imagery rasters.
+> Panopticon maps from openly licensed real-world geospatial data: KML/KMZ extents and features
+> plus georeferenced elevation and imagery rasters, prepared by command-line scripts from
+> per-provider profiles.
 >
 > Architecture context: see [`agent/current-state.md`](agent/current-state.md).
 >
