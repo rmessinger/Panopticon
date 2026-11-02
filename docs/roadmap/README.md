@@ -540,12 +540,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Phase | Progress | Items |
 |---|---|---|
 | R1 - Geospatial import core | `██████████` | 6 / 6 |
-| R2 - Standalone payload and dev preview | `░░░░░░░░░░` | 0 / 5 |
+| R2 - Standalone payload and dev preview | `██░░░░░░░░` | 1 / 5 |
 | R3 - Map package output | `░░░░░░░░░░` | 0 / 2 |
 | R4 - WorldBuilder import workflow | `░░░░░░░░░░` | 0 / 1 |
 | R5 - Validation and scale proof | `░░░░░░░░░░` | 0 / 1 |
 | R6 - Earth curvature (later goal) | `░░░░░░░░░░` | 0 / 1 |
-| Track R total | `████░░░░░░` | 6 / 16 |
+| Track R total | `████░░░░░░` | 7 / 16 |
 
 ---
 
