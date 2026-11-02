@@ -1567,6 +1567,9 @@ imagery and terrain are not supported inputs.
 - [ ] R2 Provider source profiles for data preparation (`WI-R2-02`).
   - AC: one preparation script prepares the Sedan area from both the `ign-fr` and the Europe-wide
     `copernicus-glo30` profiles, and both outputs import without errors.
+- [ ] R2 Building footprints as terrain masks (`WI-R2-03`).
+  - AC: IGN BD TOPO footprints in the Sedan proof area become impassable, unbuildable mask cells,
+    and units in the preview follow streets around them.
 
 ### R3: Map package output (depends on B4a-5, H3)
 - [ ] B4b-7 H3 package output through the H2 interchange (blocked on H2/H3, B4a-5).

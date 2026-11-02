@@ -143,6 +143,7 @@ Source of truth:
 | [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | R1 (B4b-1…B4b-6), R2 (B4b-6a, B4b-6b) | Geospatial map generation (WI-B4b-01..24) |
 | [WI-R2-01](../agent/cards/WI-R2-01-sedan-operator-proof.md) | R2 | Sedan real-data preview proof (after `WI-B4b-24`) |
 | [WI-R2-02](../agent/cards/WI-R2-02-provider-source-profiles.md) | R2 | Provider source profiles for data preparation (after `WI-R2-01`) |
+| [WI-R2-03](../agent/cards/WI-R2-03-building-footprint-masks.md) | R2 | Building footprints as terrain masks (after `WI-R2-02`) |
 
 ## Track B · B5 : Rendering at scale
 

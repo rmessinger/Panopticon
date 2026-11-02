@@ -367,6 +367,25 @@ mask bits; subsequent passability and buildability rules change only their respe
 Exterior playable-area masking is applied last. Polygon holes remain excluded; clipping preserves
 disconnected parts and gives each split part a stable identity.
 
+### 5.4 Real-world structures
+
+Buildings, bridges, and other structures reach a generated map only through these inputs:
+
+| Input | Treatment |
+|---|---|
+| Elevation | Profiles use bare-earth terrain models (RGE ALTI is one), so buildings, vegetation, and bridges are absent from the terrain. A surface model would bake roofs in as terrain lumps; a surface-model profile records that limit in its `sources.txt`. |
+| Imagery | Roofs and streets are flat texture with no height or collision. |
+| Vector footprints | Building polygons map to Passability (impassable) and Buildability (unbuildable) regions through ordinary rules ([`WI-R2-03`](../agent/cards/WI-R2-03-building-footprint-masks.md)). Footprints smaller than a lattice cell set no mask cells and are counted in the report. |
+
+Deferred to R3, where placed objects enter the map package:
+
+- Structure objects: footprint or point to an object definition, size, orientation, and terrain
+  seating. Needs a content source (Generals buildings or W3a period definitions) and a mapping
+  vocabulary; R2 object candidates stop before placement.
+- Bridges: bare-earth terrain removes them, so they come from vector lines and need engine bridge
+  layers, which are stubbed today.
+- Building heights from source attributes, for line of sight and visuals.
+
 ## 6. H2/H3 and WorldBuilder boundary
 
 B4b depends on B4a and H6, but format-specific parsing must not write H3 bytes directly.

@@ -6,6 +6,14 @@
 >
 > Audience: human reference for roadmap decisions.
 
+- Real-world structures. Decision (2026-11-02): through R2, structures exist only as imagery and
+  as building footprints mapped to impassable, unbuildable mask regions
+  ([`WI-R2-03`](agent/cards/WI-R2-03-building-footprint-masks.md)); preparation profiles use
+  bare-earth elevation. Structure object placement, bridges, and building heights are deferred to
+  R3, where placed objects enter the map package; see
+  [§5.4](deep-dives/r-real-world-terrain.md#54-real-world-structures). OpenStreetMap footprints
+  wait for a separate ODbL decision.
+
 - C10d decompressor provenance. Decision (2026-10-30): implement managed Oodle1 and BitKnit2
   using the pinned permissive specifications and cross-check implementations recorded in
   [the provenance review](deep-dives/c10-aoe3de-granny-models.md#6-references-and-licensing).
