@@ -1559,7 +1559,7 @@ are not supported inputs.
 - [x] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
   - AC: a synthetic import writes the full payload transactionally and control points pass within
     tolerance.
-- [ ] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).
+- [x] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).
   - AC: a generated synthetic map loads in Generals and runs 300 logic frames.
 - [ ] R2 Sedan real-data preview proof (`WI-R2-01`).
   - AC: an IGN RGE ALTI and BD ORTHO import of about 1.1 km of Sedan passes its IGN benchmark and

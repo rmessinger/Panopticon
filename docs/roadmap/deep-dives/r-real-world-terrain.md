@@ -504,11 +504,15 @@ The dev preview (`Panopticon.Geospatial.Preview`) converts a payload, or a chunk
 it, into a resident legacy `MapFile`: 16-bit `HeightMapData` (`gameZ / 0.0390625`, clamped with
 reported loss), uniform-then-painted `BlendTileData` from a palette-to-terrain-texture map,
 passability from masks, and waypoints from mapped features. It writes a `.map` into a dev maps
-directory so the existing load path plays it. It is dev-only: no capability gating, no
-compatibility promise, and it is removed or kept as a debug tool when B4b-7 lands.
+directory so the existing load path plays it. Publication runs through the `GeoImport` CLI's
+separate `preview` verb (`preview --payload <dir> --textures <map.json>
+[--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir>`); there is no `import --emit-preview`
+alias. It is dev-only: no capability gating, no compatibility promise, and it is removed or
+kept as a debug tool when B4b-7 lands.
 
-Preview crops use a half-open chunk rectangle. XY is translated by the crop origin and border;
-Z is rebased by the crop minimum elevation. The report retains both offsets and quantization loss.
+Preview crops use a half-open chunk rectangle. XY is translated by the crop origin (border is
+index padding only); Z is rebased by the crop minimum elevation. The report retains both
+offsets and quantization loss.
 Legacy preview masks: `Impassability = true` is blocked. The later-format
 `BlendTileData.Buildability` field has unverified polarity and no runtime consumer; Generals
 version 8 does not serialize it. The preview reports unrepresented buildability cells and
@@ -597,7 +601,7 @@ Results: pending.
 | B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | Done |
 | B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](../agent/cards/WI-B4b-15-feature-clipping.md), [`16`](../agent/cards/WI-B4b-16-feature-mapping.md), [`17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Done |
 | B4b-6a. Standalone payload | Import pipeline, payload writer/reader, CLI, control-point validation (§6.1). | [`18`](../agent/cards/WI-B4b-18-import-pipeline-payload.md), [`19`](../agent/cards/WI-B4b-19-geoimport-cli.md), [`20`](../agent/cards/WI-B4b-20-control-point-validation.md) | Done |
-| B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | In progress |
+| B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | Done |
 | B4b-7. H3 package output | Populate the H2 map interchange and write chunked terrain, generated assets, vector-derived layers, provenance, and diagnostics through H3. | blocked on H2/H3 and B4a-5 | Not started |
 | B4b-8. WorldBuilder workflow | Build on H6 to add transactional import, preview, cancellation, report display, and edit/save/reload. | blocked on H6 | Not started |
 | B4b-9. Validation and scale proof | Package and engine round-trips, one operator-supplied control-point proof, and B1 measurements. | blocked on B4b-7/8 | Not started |
