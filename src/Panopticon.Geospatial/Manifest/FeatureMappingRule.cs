@@ -54,12 +54,13 @@ public sealed record FeatureMappingRule(
     double? OrientationDegrees = null,
     string? Material = null,
     bool? Passable = null,
-    bool? Buildable = null)
+    bool? Buildable = null,
+    string? LayerName = null)
 {
     public static bool IsTargetCompatible(ManifestFeatureTarget target, ManifestFeatureGeometry geometry) =>
         (target, geometry) switch
         {
-            (ManifestFeatureTarget.Landmark or ManifestFeatureTarget.Waypoint or ManifestFeatureTarget.Object, ManifestFeatureGeometry.Point) => true,
+            (ManifestFeatureTarget.Landmark or ManifestFeatureTarget.Waypoint or ManifestFeatureTarget.Object or ManifestFeatureTarget.Annotation, ManifestFeatureGeometry.Point) => true,
             (ManifestFeatureTarget.Road or ManifestFeatureTarget.Rail or ManifestFeatureTarget.River or ManifestFeatureTarget.Annotation, ManifestFeatureGeometry.Line) => true,
             (ManifestFeatureTarget.Water or ManifestFeatureTarget.Material or ManifestFeatureTarget.Passability or ManifestFeatureTarget.Buildability or ManifestFeatureTarget.Annotation, ManifestFeatureGeometry.Polygon) => true,
             _ => false,

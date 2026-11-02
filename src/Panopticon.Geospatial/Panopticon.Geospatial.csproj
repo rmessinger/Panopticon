@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="BitMiracle.LibTiff.NET" />
+    <PackageReference Include="NetTopologySuite" />
+    <PackageReference Include="SixLabors.ImageSharp" />
   </ItemGroup>
 
 </Project>

@@ -1538,20 +1538,20 @@ plus georeferenced DEM and imagery rasters without direct Google service access;
 imagery and terrain are not supported inputs.
 
 ### R1: Geospatial import core
-- [ ] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
+- [x] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
       (`WI-B4b-01`, `WI-B4b-02`).
   - AC: the project references no engine assembly; malformed manifests fail with typed codes.
-- [ ] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
+- [x] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
   - AC: interchange types reference no `MapFile`, LibTiff, or ImageSharp type.
 - [x] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
   - AC: unsafe archives and DTDs are rejected before expansion; GeoTIFF fixtures reproduce their
     georeferencing, including south-up and pixel-is-point cases.
-- [ ] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).
+- [x] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).
   - AC: round trips within 1 mm; a custom-meridian grid spans UTM 31/32 and scale error over 0.1%
     fails.
-- [ ] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
+- [x] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
   - AC: shared chunk edges are bit-identical; repeated runs produce identical chunk hashes.
-- [ ] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
+- [x] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
   - AC: clipped geometry matches exact boundary intersections; slope and water masks follow the
     manifest thresholds.
 

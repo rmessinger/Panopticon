@@ -151,6 +151,7 @@ Dependencies (see the B4b dependency Decision in [open-questions.md](../open-que
 | Projection | in-house WGS84 Transverse Mercator (Krüger series, order 6); no projection package |
 | PNG encoding | existing `SixLabors.ImageSharp` |
 | KML/KMZ | `System.Xml` and `System.IO.Compression` |
+| Polygon overlay | `NetTopologySuite` 2.6.0 (CPU-only, BSD-3), private to `FeatureClipper`; robust rectangle clipping that preserves holes and disconnected parts |
 
 Both stay behind `IGeospatialRasterReader` and `ICoordinateTransformer`, so either can be
 replaced without changing the generation pipeline. All code lives in the CPU-only
@@ -329,7 +330,10 @@ generated terrain material layers.
 
 Gameplay terrain materials remain explicit. A manifest can map integer classification raster
 values or vector polygon attributes to a controlled Panopticon material palette. Polygon rules
-override classification rules, and later rules override earlier ones. There is no built-in
+override classification rules, and later rules override earlier ones. Evaluation order:
+classification entries in `materialRules`, attribute entries in `materialRules`, then
+material-target feature mappings. Each family retains manifest order. An attribute rule
+without `sourceId` matches polygons from any source. There is no built-in
 vocabulary; an example manifest fragment maps the ESA WorldCover classes. Arbitrary imagery colors are not
 silently quantized into legacy `BlendTileData`. The manifest requires one default base terrain
 material; cells not matched by a classification or vector rule use that material.
@@ -347,6 +351,12 @@ Feature mappings are declarative:
 A mapping rule selects source layer and attributes, target kind, and target parameters. Object
 placement requires an explicit object-definition name and orientation policy. Unmapped features
 remain inspectable annotations and produce no gameplay state.
+
+Rule predicates use source ID, optional exact `layerName`, geometry, and attribute presence or
+exact string value. Authoring targets use the first matching rule. Water, passability, and
+buildability retain all matching regions with their manifest rule index, so mask overrides use
+global manifest order across features. Material rules are evaluated independently by the material
+generator. A feature with no authoring or region match remains an annotation.
 
 Generated points sample terrain Z after terrain creation. Lines and polygons are clipped to the
 selected extent before rasterization. Stable source IDs and attributes remain attached to
@@ -481,8 +491,8 @@ Validation layers:
 | B4b-2. Geospatial interchange | Immutable raster, feature, CRS, provenance values and reader/transform interfaces. | [`WI-B4b-03`](../agent/cards/WI-B4b-03-interchange-values.md) | Done |
 | B4b-3. Local source readers | KML, KMZ, and GeoTIFF readers with limits; synthetic GeoTIFF fixtures. | [`07`](../agent/cards/WI-B4b-07-kml-reader.md), [`08`](../agent/cards/WI-B4b-08-kmz-archive.md), [`09`](../agent/cards/WI-B4b-09-geotiff-fixtures.md), [`10`](../agent/cards/WI-B4b-10-geotiff-reader.md) | Done |
 | B4b-4. Coordinate normalization | Transverse Mercator, CRS transformer, local map grid with distortion check. | [`04`](../agent/cards/WI-B4b-04-transverse-mercator.md), [`05`](../agent/cards/WI-B4b-05-coordinate-transformer.md), [`06`](../agent/cards/WI-B4b-06-local-map-grid.md) | Done |
-| B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | In progress |
-| B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](../agent/cards/WI-B4b-15-feature-clipping.md), [`16`](../agent/cards/WI-B4b-16-feature-mapping.md), [`17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Not started |
+| B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | Done |
+| B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](../agent/cards/WI-B4b-15-feature-clipping.md), [`16`](../agent/cards/WI-B4b-16-feature-mapping.md), [`17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Done |
 | B4b-6a. Standalone payload | Import pipeline, payload writer/reader, CLI, control-point validation (§6.1). | [`18`](../agent/cards/WI-B4b-18-import-pipeline-payload.md), [`19`](../agent/cards/WI-B4b-19-geoimport-cli.md), [`20`](../agent/cards/WI-B4b-20-control-point-validation.md) | Not started |
 | B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | In progress |
 | B4b-7. H3 package output | Populate the H2 map interchange and write chunked terrain, generated assets, vector-derived layers, provenance, and diagnostics through H3. | blocked on H2/H3 and B4a-5 | Not started |

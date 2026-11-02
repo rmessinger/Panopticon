@@ -901,6 +901,48 @@ public class ManifestLoaderTests
     }
 
     [Fact]
+    public void MaterialRuleClassificationValueWithStrayValue_ProducesValueInvalidDiagnostic()
+    {
+        var json = FullManifest.Replace(
+            "{ \"classificationValue\": 20, \"material\": \"shrub\" }",
+            "{ \"classificationValue\": 20, \"value\": \"water\", \"material\": \"shrub\" }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        var diagnostic = AssertSingleError(diagnostics, GeoDiagnosticCodes.ManifestValueInvalid);
+        Assert.Contains("value requires", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MaterialRuleValueWithoutAnyMatcher_ReportsBothValueInvalidDiagnostics()
+    {
+        var json = MinimalManifest.Replace(
+            "\"metersPerGameUnit\": 1.25",
+            "\"metersPerGameUnit\": 1.25,\n          \"materialRules\": [ { \"value\": \"water\", \"material\": \"water\" } ]");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        Assert.All(diagnostics.Items, static item => Assert.Equal(GeoDiagnosticCodes.ManifestValueInvalid, item.Code));
+        Assert.Contains(diagnostics.Items, static item => item.Message.Contains("value requires", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.Items, static item => item.Message.Contains("classificationValue or attribute", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void MaterialRuleAttributeWithoutValue_LoadsForPresenceMatching()
+    {
+        var json = MinimalManifest.Replace(
+            "\"metersPerGameUnit\": 1.25",
+            "\"metersPerGameUnit\": 1.25,\n          \"materialRules\": [ { \"sourceId\": \"extent\", \"attribute\": \"cover\", \"material\": \"water\" } ]");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.False(diagnostics.HasErrors);
+        Assert.NotNull(manifest);
+        var rule = Assert.Single(manifest!.MaterialRules);
+        Assert.Equal("cover", rule.Attribute);
+        Assert.Null(rule.Value);
+    }
+
+    [Fact]
     public void MaterialRuleWithoutMaterial_ProducesMissingRequiredDiagnostic()
     {
         var json = FullManifest.Replace(
@@ -1403,5 +1445,63 @@ public class ManifestLoaderTests
         Assert.IsType<ReadOnlyCollection<ManifestSource>>(manifest!.Sources);
         Assert.IsType<ReadOnlyCollection<MaterialRule>>(manifest.MaterialRules);
         Assert.IsType<ReadOnlyCollection<FeatureMappingRule>>(manifest.FeatureMappings);
+    }
+
+    [Fact]
+    public void FeatureMappingLayerNameIsRetainedAndEmptyLayerIsNormalized()
+    {
+        var json = MinimalManifest.Replace(
+            "\"metersPerGameUnit\": 1.25",
+            "\"metersPerGameUnit\": 1.25,\n          \"featureMappings\": [\n"
+                + "            { \"sourceId\": \"extent\", \"geometry\": \"point\", \"attribute\": \"name\", \"target\": \"landmark\", \"layerName\": \"roads/primary\" },\n"
+                + "            { \"sourceId\": \"extent\", \"geometry\": \"point\", \"attribute\": \"name\", \"target\": \"landmark\", \"layerName\": \"\" } ]");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.False(diagnostics.HasErrors);
+        Assert.NotNull(manifest);
+        Assert.Equal(2, manifest!.FeatureMappings.Count);
+        Assert.Equal("roads/primary", manifest.FeatureMappings[0].LayerName);
+        Assert.Null(manifest.FeatureMappings[1].LayerName);
+    }
+
+    [Fact]
+    public void PointAnnotationTarget_IsValid()
+    {
+        var json = MinimalManifest.Replace(
+            "\"metersPerGameUnit\": 1.25",
+            "\"metersPerGameUnit\": 1.25,\n          \"featureMappings\": [ { \"sourceId\": \"extent\", \"geometry\": \"point\", \"attribute\": \"name\", \"target\": \"annotation\" } ]");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.False(diagnostics.HasErrors);
+        Assert.NotNull(manifest);
+        var mapping = Assert.Single(manifest!.FeatureMappings);
+        Assert.Equal(ManifestFeatureTarget.Annotation, mapping.Target);
+        Assert.Equal(ManifestFeatureGeometry.Point, mapping.Geometry);
+    }
+
+    [Fact]
+    public void FeatureMappingValueWithoutAttribute_ProducesValueInvalidDiagnostic()
+    {
+        var json = FullManifest.Replace(
+            "{ \"sourceId\": \"vectors\", \"geometry\": \"polygon\", \"attribute\": \"kind\", \"value\": \"river\", \"target\": \"water\" }",
+            "{ \"sourceId\": \"vectors\", \"geometry\": \"polygon\", \"value\": \"river\", \"target\": \"water\" }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        var diagnostic = AssertSingleError(diagnostics, GeoDiagnosticCodes.ManifestValueInvalid);
+        Assert.Contains("value requires", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FeatureMappingWhitespaceAttribute_ProducesValueInvalidDiagnostic()
+    {
+        var json = FullManifest.Replace(
+            "\"geometry\": \"polygon\", \"attribute\": \"kind\", \"value\": \"river\", \"target\": \"water\"",
+            "\"geometry\": \"polygon\", \"attribute\": \"   \", \"value\": \"river\", \"target\": \"water\"");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        var diagnostic = AssertSingleError(diagnostics, GeoDiagnosticCodes.ManifestValueInvalid);
+        Assert.Contains("attribute", diagnostic.Message, StringComparison.Ordinal);
     }
 }
