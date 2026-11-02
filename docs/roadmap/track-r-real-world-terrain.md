@@ -40,7 +40,7 @@ bathymetry, or scanned historical maps) take the next phase number.
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
 | R1 | [Geospatial map generation](deep-dives/r-real-world-terrain.md) | [§10](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-01..17` ([plan](implementation/track-b-b4b-geospatial.md)) |
-| R2 | [§6.1](deep-dives/r-real-world-terrain.md#61-standalone-payload-and-dev-preview) | [§10.3, §10.4](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-18..24` ([plan](implementation/track-b-b4b-geospatial.md)); Sedan real-data proof [`WI-R2-01`](agent/cards/WI-R2-01-sedan-operator-proof.md) |
+| R2 | [§6.1](deep-dives/r-real-world-terrain.md#61-standalone-payload-and-dev-preview) | [§10.3, §10.4](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-18..24` ([plan](implementation/track-b-b4b-geospatial.md)); Sedan real-data proof [`WI-R2-01`](agent/cards/WI-R2-01-sedan-operator-proof.md); provider source profiles [`WI-R2-02`](agent/cards/WI-R2-02-provider-source-profiles.md) |
 | R3 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.1](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H2/H3 and B4a-5 |
 | R4 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.2](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H6 |
 | R5 | [§8](deep-dives/r-real-world-terrain.md#8-determinism-and-validation) | — | none until R4 |

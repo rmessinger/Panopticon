@@ -491,6 +491,9 @@ elevation (`NGF-IGN69`), IGN BD ORTHO imagery, a generated KML extent, and IGN l
 benchmarks as independent vertical control. It omits the H3 package and WorldBuilder round-trip,
 which stay in R5. Data preparation is command-line only (`scripts/geo/prepare-sedan-proof.sh`:
 `curl` downloads, GDAL reprojection, `ogr2ogr` KML generation); no desktop tool is required.
+[`WI-R2-02`](../agent/cards/WI-R2-02-provider-source-profiles.md) then generalizes it into
+`scripts/geo/prepare_area.py` with one source profile per provider (`ign-fr`, Europe-wide
+`copernicus-glo30`), so other countries need a profile, not a new script.
 
 Results: pending.
 
