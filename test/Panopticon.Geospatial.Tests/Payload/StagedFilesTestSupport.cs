@@ -51,6 +51,12 @@ internal static class StagedFilesTestSupport
 
     internal static MaterialChunk MaterialChunkAt(int chunkX, int chunkY)
     {
+        return MaterialChunkWith(Palette, chunkX, chunkY);
+    }
+
+    /// <summary>Material chunk over the standard index lattice bound to any palette with at least three entries.</summary>
+    internal static MaterialChunk MaterialChunkWith(MaterialPalette palette, int chunkX, int chunkY)
+    {
         var axis = ChunkLayout.PointsPerChunkAxis;
         var indices = new byte[axis * axis];
 
@@ -58,11 +64,23 @@ internal static class StagedFilesTestSupport
         {
             for (var x = 0; x < axis; x++)
             {
-                indices[(y * axis) + x] = (byte)((x + (3 * y) + chunkX + chunkY) % Palette.Count);
+                indices[(y * axis) + x] = (byte)((x + (3 * y) + chunkX + chunkY) % palette.Count);
             }
         }
 
-        return new MaterialChunk(chunkX, chunkY, Palette, indices);
+        return new MaterialChunk(chunkX, chunkY, palette, indices);
+    }
+
+    /// <summary>Minimal metadata fixture carrying an explicit palette and no features.</summary>
+    internal static GeneratedMapPayloadMetadata MetadataWithPalette(MaterialPalette palette)
+    {
+        return new GeneratedMapPayloadMetadata(
+            PayloadTestSupport.Grid(),
+            palette,
+            [],
+            PayloadTestSupport.ManifestSha256Hex,
+            PayloadTestSupport.Provenance(),
+            PayloadTestSupport.ChunkDescriptors());
     }
 
     internal static TerrainMaskChunk MaskChunkAt(int chunkX, int chunkY)

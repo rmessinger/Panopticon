@@ -42,4 +42,7 @@ internal static class StagedFileDiagnostics
 
     /// <summary>An imagery chunk's PNG IHDR declares dimensions beyond the raster dimension limits.</summary>
     internal const string ImageryBudgetExceeded = "GEO-PAY-061";
+
+    /// <summary>A material chunk or payload.json carries a palette whose ordered names differ from the palette already bound to the staged payload.</summary>
+    internal const string MaterialPaletteMismatch = "GEO-PAY-062";
 }
