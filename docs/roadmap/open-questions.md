@@ -6,6 +6,13 @@
 >
 > Audience: human reference for roadmap decisions.
 
+- Earth curvature. Decision (2026-11-02): curvature on the planar map is a later Track R goal,
+  [R6](track-r-real-world-terrain.md), after R5. It is applied observer-relative with a
+  refraction coefficient to line of sight, detection, rendering, and long-range ballistics,
+  behind an option that defaults off; terrain and payloads stay planar. Globe-scale coordinates
+  remain out of scope. Magnitudes and constraints:
+  [§4.1](deep-dives/r-real-world-terrain.md#41-earth-curvature-r6-later-goal).
+
 - Real-world structures. Decision (2026-11-02): through R2, structures exist only as imagery and
   as building footprints mapped to impassable, unbuildable mask regions
   ([`WI-R2-03`](agent/cards/WI-R2-03-building-footprint-masks.md)); preparation profiles use

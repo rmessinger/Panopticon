@@ -1587,6 +1587,12 @@ are not supported inputs.
   - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
     plays; B1 records import time and peak memory.
 
+### R6: Earth curvature (later goal, depends on R5)
+- [ ] R6 Observer-relative Earth curvature for line of sight, rendering, and long-range ballistics.
+  - AC: with `EarthCurvature` on, line of sight over a map spanning tens of kilometres matches the
+    curved-Earth answer with refraction, the rendered horizon agrees, and with it off behaviour is
+    unchanged.
+
 ## Track W: Western Front Simulation
 
 See [`track-w-western-front.md`](track-w-western-front.md). W0 depends on A4-1 and A4-4; later

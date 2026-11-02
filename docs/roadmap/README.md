@@ -179,7 +179,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
 | [`deep-dives/b4-spatial-pathfinding-scaling.md`](deep-dives/b4-spatial-pathfinding-scaling.md) | Track B phase B4 - Spatial and pathfinding scaling (partition hot-path budget, group movement, async path requests, gated hierarchical pathfinding). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
-| [`deep-dives/r-real-world-terrain.md`](deep-dives/r-real-world-terrain.md) | Track R phases R1-R5 (formerly B4b) - Offline generation of editable maps from openly licensed geospatial data prepared by command-line scripts. |
+| [`deep-dives/r-real-world-terrain.md`](deep-dives/r-real-world-terrain.md) | Track R phases R1-R6 (formerly B4b) - Offline generation of editable maps from openly licensed geospatial data prepared by command-line scripts. |
 | [`deep-dives/b5-rendering-at-scale.md`](deep-dives/b5-rendering-at-scale.md) | Track B phase B5 - Rendering at scale: source-agnostic GPU instancing, distance LOD/culling, render-bucket/shadow submit improvements, and the render-scale probe. |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (fidelity registry, group aggregation contract, visualization and error reporting). |
@@ -320,7 +320,7 @@ track document.
   B4, and M4.
 - [Track R - Real-World Terrain](track-r-real-world-terrain.md): R1 geospatial import core ·
   R2 standalone payload and dev preview · R3 map package output · R4 WorldBuilder import
-  workflow · R5 validation and scale proof. Formerly Track B phase B4b; card IDs keep the B4b
+  workflow · R5 validation and scale proof · R6 Earth curvature (later goal). Formerly Track B phase B4b; card IDs keep the B4b
   prefix. R1 and R2 have no dependencies; R3 depends on B4a and H3, R4 on H6.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1. X6 extracts navigation logic from `AIUpdate` into its own class after N11. X7 groups non-logic types into `Types/` subfolders and has no dependencies.
@@ -544,7 +544,8 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | R3 - Map package output | `░░░░░░░░░░` | 0 / 2 |
 | R4 - WorldBuilder import workflow | `░░░░░░░░░░` | 0 / 1 |
 | R5 - Validation and scale proof | `░░░░░░░░░░` | 0 / 1 |
-| Track R total | `████░░░░░░` | 6 / 15 |
+| R6 - Earth curvature (later goal) | `░░░░░░░░░░` | 0 / 1 |
+| Track R total | `████░░░░░░` | 6 / 16 |
 
 ---
 

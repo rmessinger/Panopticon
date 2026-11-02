@@ -1,6 +1,6 @@
 # Deep Dive: Geospatial Map Generation
 
-> Expands phases R1 to R5 of [Track R: Real-World Terrain](../track-r-real-world-terrain.md)
+> Expands phases R1 to R6 of [Track R: Real-World Terrain](../track-r-real-world-terrain.md)
 > (formerly Track B phase B4b; sub-phase labels and card IDs keep the B4b prefix). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
@@ -57,7 +57,8 @@ Out of scope:
   service;
 - Google basemap imagery, Google 3D terrain, and data traced or digitized from them (§2);
 - automatically inferring object definitions from arbitrary feature names;
-- globe-scale coordinates or rendering Earth curvature;
+- globe-scale coordinates (a spherical or Earth-centred world frame); Earth curvature on the
+  planar map is a later goal (R6, §4.1);
 - reconstructing buildings from imagery or from surface-model (DSM) elevation;
 - OpenStreetMap data until an ODbL decision is recorded;
 - merging a changed source dataset into arbitrary hand edits;
@@ -230,7 +231,7 @@ Supported coordinate systems:
 A custom central meridian lets one import cover several UTM zones, such as the whole Western Front
 (about 5 degrees of longitude, under 0.05% scale error at the edges). Import fails when the point
 scale error `|k/k0 - 1|` at any extent corner or edge midpoint exceeds `maxScaleError` (default
-0.001). Earth-curvature rendering remains out of scope.
+0.001). Earth curvature is not applied before R6 (§4.1).
 
 Vertical datum is metadata only: the manifest records each source's datum (for example `EGM96`,
 `EGM2008`, or `unknown`), no geoid conversion runs, and sources that declare different known
@@ -289,6 +290,37 @@ The H3 output elevation quantum must be no greater than half the vertical tolera
 may tighten either tolerance. Absolute vertical validation requires a declared vertical datum.
 With `unknown`, the report marks absolute validation `not evaluated` and requires an explicit
 relative-elevation tolerance.
+
+### 4.1 Earth curvature (R6, later goal)
+
+R1 to R5 treat the projected map as flat. Curvature drop at distance `d` is `d^2 / (2 R_eff)`,
+with `R` 6,371 km and `R_eff = R / (1 - k)` for atmospheric refraction coefficient `k` (standard
+0.13):
+
+| Distance | Geometric drop | With refraction (k 0.13) |
+|---|---|---|
+| 1 km | 0.08 m | 0.07 m |
+| 5 km | 1.96 m | 1.71 m |
+| 10 km | 7.85 m | 6.83 m |
+| 35 km (W3a east-west span) | 96 m | 84 m |
+
+Below about 5 km the drop is under the vertical tolerance of 1 m DEMs plus mark height. W3a
+observation and artillery lines of several kilometres, and any map spanning tens of kilometres,
+exceed it.
+
+R6 design constraints:
+
+- Curvature is observer-relative, so it is not baked into terrain heights: a drop baked relative
+  to one origin is wrong for every other observer. Terrain chunks and the payload stay planar.
+- Line of sight and detection subtract the drop between observer and sample point along each ray.
+  This is the gameplay-relevant effect and the first deliverable.
+- Rendering applies the same drop relative to the camera in the terrain and object vertex
+  stages, so the horizon matches line of sight. Optional after line of sight.
+- Ballistic trajectories over long ranges take the same correction at the target point.
+- An `EarthCurvature` option with `k` defaults off; small maps keep current behaviour.
+- The payload already records the projection origin and scale, so no import change is expected;
+  the projection scale factor and curvature stay separate corrections.
+- Globe-scale coordinates stay out of scope (§1).
 
 ## 5. Terrain, imagery, and vector generation
 
