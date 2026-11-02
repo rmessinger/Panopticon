@@ -602,6 +602,8 @@ Results: pending.
 | B4b-8. WorldBuilder workflow | Build on H6 to add transactional import, preview, cancellation, report display, and edit/save/reload. | blocked on H6 | Not started |
 | B4b-9. Validation and scale proof | Package and engine round-trips, one operator-supplied control-point proof, and B1 measurements. | blocked on B4b-7/8 | Not started |
 
+Phase progress includes the additional R2 proof cards and R3 investigation in the [implementation checklist](../implementation-checklist.md); these are not B4b sub-phases.
+
 B4b-1..6b depend on no Track H or B4a work. Design cards `WI-B4a-01` (chunk contract),
 `WI-H1-01`/`02` (map format audit and decisions), and `WI-H2-01` (interchange design) prepare
 B4b-7.
