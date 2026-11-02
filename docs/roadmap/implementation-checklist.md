@@ -1384,6 +1384,28 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
         ([`WI-G11-04`](agent/cards/WI-G11-04-enhanced-decals-and-golden-frames.md)).
     - AC: `Enhanced` scorches are terrain-lit; `faithful` and `enhanced` goldens recorded and an
       injected regression fails.
+- [ ] G12 Open material packs (operator-built CC0 replacements for terrain textures, terrain PBR,
+      then model textures; design in the [deep dive](deep-dives/g12-open-material-packs.md)).
+  - [ ] G12-1 Terrain texture inventory and material map
+        ([`WI-G12-01`](agent/cards/WI-G12-01-terrain-texture-inventory-and-map.md)).
+    - AC: every original `Terrain` entry is reported with size and colour statistics, and the
+      committed mapping table resolves every class to a licensed source or `keepOriginal`.
+  - [ ] G12-2 Fetch, bake, and runtime terrain material packs
+        ([`WI-G12-02`](agent/cards/WI-G12-02-fetch-open-materials.md) to
+        [`WI-G12-04`](agent/cards/WI-G12-04-terrain-material-runtime-and-goldens.md)).
+    - AC: a pack bakes from command-line downloads with licences recorded; selecting it replaces
+      terrain layers with per-layer fallback; `Legacy` never reads packs; `enhanced-materials`
+      goldens recorded and existing goldens unchanged.
+  - [ ] G12-3 Terrain normal and roughness shading
+        ([`WI-G12-05`](agent/cards/WI-G12-05-terrain-normal-roughness-shading.md),
+        [`WI-G12-06`](agent/cards/WI-G12-06-terrain-pbr-goldens-and-cost.md)).
+    - AC: pack surface maps shade terrain with GGX specular; without maps output is unchanged;
+      PBR goldens recorded and terrain pass cost stated.
+  - [ ] G12-4 Model texture replacement
+        ([`WI-G12-07`](agent/cards/WI-G12-07-model-texture-replacement-investigation.md)
+        investigation first).
+    - AC: the investigation recommends an approach with captures and writes the implementation
+      cards.
 
 ## Track H: Map & Unit Storage Formats
 

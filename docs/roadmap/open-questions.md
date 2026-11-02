@@ -798,6 +798,14 @@
   goal field, is gated on measurement after request sharing. Behavior-changing options default off
   until N5 evidence and an operator decision. The no-hierarchy clause is superseded by the layered
   navigation decision (2026-10-28).
+- Open material packs. Decision (2026-11-02): replacing original terrain and model textures with
+  openly licensed materials is Track G phase G12. Packs are operator-built from command-line
+  downloads (CC0 first; CC-BY only with recorded attribution) and stored outside the repository
+  and install like G7 packs. The material source is a separate setting, `Original` by default in
+  both presets, and `Legacy` never reads packs, so the original-look requirement and existing
+  goldens hold. Replacements are colour-matched to each original entry to keep maps readable.
+  Terrain comes first, terrain PBR second, model textures after an investigation. See the
+  [deep dive](deep-dives/g12-open-material-packs.md#2-constraints).
 - Terrain impact decals. Decision (2026-10-26): persistent scorch marks are Track G phase G11, not
   Track F; F keeps crater geometry and heightmap deformation and reuses G11's decal store for
   crater textures. Decals are a terrain overlay mesh following the original height-map grid, not

@@ -438,6 +438,15 @@ Source of truth: [deep-dives/g11-terrain-impact-decals.md](../deep-dives/g11-ter
 |---|---|---|
 | [track-g-g11-terrain-impact-decals.md](track-g-g11-terrain-impact-decals.md) | G11-1…G11-4 | Terrain impact decals |
 
+## Track G · G12 : Open material packs
+
+Source of truth: [deep-dives/g12-open-material-packs.md](../deep-dives/g12-open-material-packs.md) :
+[Architecture diagrams §5](../deep-dives/g12-open-material-packs.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g12-open-material-packs.md](track-g-g12-open-material-packs.md) | G12-1…G12-4 | Open material packs (WI-G12-01..07) |
+
 ## Track H · H1-H3 : Map storage
 
 Source of truth: [track-h-storage-formats.md](../track-h-storage-formats.md).
