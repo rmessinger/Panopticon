@@ -4,10 +4,10 @@
 |---|---|
 | Card ID | `WI-B4b-06` |
 | Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-4 coordinate normalization |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-B4b-05` |
+| Prerequisites | `WI-B4b-02`, `WI-B4b-05` |
 | Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal

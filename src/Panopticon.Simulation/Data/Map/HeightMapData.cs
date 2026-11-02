@@ -62,6 +62,19 @@ public sealed class HeightMapData : Asset
         };
     }
 
+    /// <summary>
+    /// Authoring factory selecting the 16-bit layout: Version 5 makes
+    /// <see cref="ElevationsAre16Bit"/> serialize elevations as UInt16 (VerticalScale
+    /// 0.0390625), so values above 255 round-trip. <see cref="Create"/> keeps the 8-bit
+    /// layout <see cref="MapFile.CreateEmpty"/> writes.
+    /// </summary>
+    public static HeightMapData Create16Bit(uint borderWidth, ushort[,] elevations)
+    {
+        var result = Create(borderWidth, elevations);
+        result.Version = 5;
+        return result;
+    }
+
     internal static HeightMapData Parse(BinaryReader reader, MapParseContext context)
     {
         return ParseAsset(reader, context, version =>

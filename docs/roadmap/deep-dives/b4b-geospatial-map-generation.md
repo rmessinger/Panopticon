@@ -158,9 +158,10 @@ Raster coordinates come from their embedded CRS and affine transform.
 Import uses this sequence:
 
 1. Transform the selected KML polygon into the manifest's projected CRS.
-2. Build the smallest axis-aligned target-CRS rectangle containing that polygon, rounded outward
-   to the terrain lattice and chunk boundaries. Retain the polygon as the playable-area mask.
-3. Choose the declared origin, normally the southwest corner or center of that rectangle.
+2. Build the smallest axis-aligned target-CRS rectangle containing that polygon. Anchor the local
+   lattice at its southwest corner and round its width and height upward to whole chunks.
+   Retain the polygon as the playable-area mask; exterior samples are impassable and unbuildable.
+3. Use that southwest corner as the standalone payload's origin. Other origin policies are deferred.
 4. Subtract the origin to obtain local meters.
 5. Divide by `metersPerGameUnit` to obtain Panopticon horizontal world units.
 6. For each output sample, inverse-transform its target-CRS location into each source raster and
@@ -168,6 +169,9 @@ Import uses this sequence:
 
 `ICoordinateTransformer` transforms coordinates only; it never creates an intermediate warped
 raster. This single inverse-warp rule avoids two rounds of interpolation.
+
+Geographic `Vector2d` coordinates use X longitude and Y latitude. An extent source must contain
+exactly one polygon unless `extentFeatureId` selects a polygon explicitly. Ambiguous extents fail.
 
 Projected easting maps to game +X and projected northing maps to game +Y. Raster row order comes
 from the affine transform: a north-up raster with negative row scale is flipped while sampling so
@@ -249,6 +253,12 @@ Resampling follows source and output ground-sample distance:
 
 The report records source ground-sample distance, output spacing, their ratio, and the selected
 kernel.
+
+Affine coordinates refer to pixel corners; samples lie at half-pixel centers. Output sampling
+footprints are rectangles in target projected meters, transformed into source pixel space.
+Ground-sample-distance comparisons use meters, including for geographic rasters. Decimation in
+either axis selects area weighting; zero-weight neighbours do not contribute no-data failures.
+Partial source coverage applies the edge policy independently from in-raster no-data.
 
 Default validation tolerances are owned by the manifest:
 
@@ -336,6 +346,11 @@ Generated points sample terrain Z after terrain creation. Lines and polygons are
 selected extent before rasterization. Stable source IDs and attributes remain attached to
 generated authoring records for diagnostics.
 
+Generation order: terrain, clipped and mapped features, then materials and masks. Water sets both
+mask bits; subsequent passability and buildability rules change only their respective bit.
+Exterior playable-area masking is applied last. Polygon holes remain excluded; clipping preserves
+disconnected parts and gives each split part a stable identity.
+
 ## 6. H2/H3 and WorldBuilder boundary
 
 B4b depends on B4a and H6, but format-specific parsing must not write H3 bytes directly.
@@ -375,12 +390,31 @@ The importer writes into a temporary sibling directory and renames it on success
 cancelled import leaves no partial payload. B4b-7 later maps the same generated values into the
 H2 interchange; the payload remains a debug artifact.
 
+Control-point validation runs before the rename. Replacing an existing output preserves it until
+generation and validation succeed, then swaps through a recoverable sibling backup. Payload reads
+validate safe paths, exact chunk inventory and byte lengths, hashes, finite heights, seam equality,
+palette indices, known mask bits, and consistent optional imagery before preview.
+
+Horizontal control points include independent expected game XY or a matched generated feature ID;
+coordinates alone report horizontal validation as not evaluated. Imagery tolerance is an explicit
+per-channel byte threshold. Unknown-datum elevation comparisons are relative to the declared
+vertical origin and require a relative-elevation tolerance.
+
 The dev preview (`Panopticon.Geospatial.Preview`) converts a payload, or a chunk-aligned crop of
 it, into a resident legacy `MapFile`: 16-bit `HeightMapData` (`gameZ / 0.0390625`, clamped with
 reported loss), uniform-then-painted `BlendTileData` from a palette-to-terrain-texture map,
 passability from masks, and waypoints from mapped features. It writes a `.map` into a dev maps
 directory so the existing load path plays it. It is dev-only: no capability gating, no
 compatibility promise, and it is removed or kept as a debug tool when B4b-7 lands.
+
+Preview crops use a half-open chunk rectangle. XY is translated by the crop origin and border;
+Z is rebased by the crop minimum elevation. The report retains both offsets and quantization loss.
+Default preview border: zero. An assembled heightmap index `(i, j)` maps to engine XY
+`((i - border) * 10, (j - border) * 10)`. Stored waypoint coordinates use engine XY, not indices.
+Waypoints outside the crop are excluded; retained waypoints and control-point checks use the same
+transform. Height comparisons restore the reported Z offset before comparison.
+Player-start waypoints use Z zero because skirmish startup adds terrain height; ordinary mapped
+waypoints retain their rebased absolute elevation.
 
 ## 7. Diagnostics and security
 
@@ -437,14 +471,14 @@ Validation layers:
 
 | Phase | Goal | Cards | Status |
 |---|---|---|---|
-| B4b-1. Input contract | Project, diagnostics, limits, manifest schema and loader. | [`WI-B4b-01`](../agent/cards/WI-B4b-01-scaffold-geospatial-project.md), [`02`](../agent/cards/WI-B4b-02-import-manifest.md) | Not started |
-| B4b-2. Geospatial interchange | Immutable extent, raster, feature, CRS, provenance values and reader/transform interfaces. | [`WI-B4b-03`](../agent/cards/WI-B4b-03-interchange-values.md) | Not started |
+| B4b-1. Input contract | Project, diagnostics, limits, manifest schema and loader. | [`WI-B4b-01`](../agent/cards/WI-B4b-01-scaffold-geospatial-project.md), [`02`](../agent/cards/WI-B4b-02-import-manifest.md) | Done |
+| B4b-2. Geospatial interchange | Immutable raster, feature, CRS, provenance values and reader/transform interfaces. | [`WI-B4b-03`](../agent/cards/WI-B4b-03-interchange-values.md) | Done |
 | B4b-3. Local source readers | KML, KMZ, and GeoTIFF readers with limits; synthetic GeoTIFF fixtures. | [`07`](../agent/cards/WI-B4b-07-kml-reader.md), [`08`](../agent/cards/WI-B4b-08-kmz-archive.md), [`09`](../agent/cards/WI-B4b-09-geotiff-fixtures.md), [`10`](../agent/cards/WI-B4b-10-geotiff-reader.md) | Not started |
-| B4b-4. Coordinate normalization | Transverse Mercator, CRS transformer, local map grid with distortion check. | [`04`](../agent/cards/WI-B4b-04-transverse-mercator.md), [`05`](../agent/cards/WI-B4b-05-coordinate-transformer.md), [`06`](../agent/cards/WI-B4b-06-local-map-grid.md) | Not started |
+| B4b-4. Coordinate normalization | Transverse Mercator, CRS transformer, local map grid with distortion check. | [`04`](../agent/cards/WI-B4b-04-transverse-mercator.md), [`05`](../agent/cards/WI-B4b-05-coordinate-transformer.md), [`06`](../agent/cards/WI-B4b-06-local-map-grid.md) | Done |
 | B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | Not started |
 | B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](../agent/cards/WI-B4b-15-feature-clipping.md), [`16`](../agent/cards/WI-B4b-16-feature-mapping.md), [`17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Not started |
 | B4b-6a. Standalone payload | Import pipeline, payload writer/reader, CLI, control-point validation (§6.1). | [`18`](../agent/cards/WI-B4b-18-import-pipeline-payload.md), [`19`](../agent/cards/WI-B4b-19-geoimport-cli.md), [`20`](../agent/cards/WI-B4b-20-control-point-validation.md) | Not started |
-| B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | Not started |
+| B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | In progress |
 | B4b-7. H3 package output | Populate the H2 map interchange and write chunked terrain, generated assets, vector-derived layers, provenance, and diagnostics through H3. | blocked on H2/H3 and B4a-5 | Not started |
 | B4b-8. WorldBuilder workflow | Build on H6 to add transactional import, preview, cancellation, report display, and edit/save/reload. | blocked on H6 | Not started |
 | B4b-9. Validation and scale proof | Package and engine round-trips, one operator-supplied control-point proof, and B1 measurements. | blocked on B4b-7/8 | Not started |

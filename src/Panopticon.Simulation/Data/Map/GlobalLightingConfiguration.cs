@@ -33,6 +33,22 @@ public sealed class GlobalLightingConfiguration
         InfantryAccent2 = new GlobalLight(),
     };
 
+    /// <summary>
+    /// Shared terrain/object lighting. Version 6 omits infantry lights.
+    /// </summary>
+    internal static GlobalLightingConfiguration CreateLit(GlobalLight sun, GlobalLight fill) => new()
+    {
+        TerrainSun = sun,
+        TerrainAccent1 = fill,
+        TerrainAccent2 = new GlobalLight(),
+        ObjectSun = sun,
+        ObjectAccent1 = fill,
+        ObjectAccent2 = new GlobalLight(),
+        InfantrySun = new GlobalLight(),
+        InfantryAccent1 = new GlobalLight(),
+        InfantryAccent2 = new GlobalLight(),
+    };
+
     internal static GlobalLightingConfiguration Parse(BinaryReader reader, uint version)
     {
         var result = new GlobalLightingConfiguration();
