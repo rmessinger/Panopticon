@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-02`, `WI-B4b-03` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Implement `RasterSampler` with nearest, bilinear, and area-weighted kernels plus
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §4 (no-data, edge policy, resampling) and §5.1 (determinism).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §4 (no-data, edge policy, resampling) and §5.1 (determinism).
 - `src/Panopticon.Geospatial/Interchange/GeospatialRaster.cs`.
 
 ## Steps

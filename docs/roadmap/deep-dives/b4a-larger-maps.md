@@ -281,6 +281,6 @@ sequenceDiagram
 ## Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
-- B4b chunk layout: [`b4b-geospatial-map-generation.md#51a-chunk-layout`](b4b-geospatial-map-generation.md#51a-chunk-layout)
+- B4b chunk layout: [`r-real-world-terrain.md#51a-chunk-layout`](r-real-world-terrain.md#51a-chunk-layout)
 - Track H storage formats: [`../track-h-storage-formats.md`](../track-h-storage-formats.md)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)

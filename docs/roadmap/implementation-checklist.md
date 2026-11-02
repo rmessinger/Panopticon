@@ -1532,7 +1532,7 @@ complete H2a group merges. Each item corresponds to one card.
 
 See [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md). Formerly Track B phase B4b;
 item labels and card IDs keep the B4b prefix. Design:
-[deep dive](deep-dives/b4b-geospatial-map-generation.md); cards:
+[deep dive](deep-dives/r-real-world-terrain.md); cards:
 [plan](implementation/track-b-b4b-geospatial.md). Imports operator-supplied Google Earth KML/KMZ
 plus georeferenced DEM and imagery rasters without direct Google service access; Google basemap
 imagery and terrain are not supported inputs.

@@ -19,7 +19,7 @@ Create `deep-dives/h1-h2-map-storage.md` with a grounded audit of the legacy `.m
 - `docs/roadmap/track-h-storage-formats.md` H1-H3.
 - `src/Panopticon.Simulation/Data/Map/`.
 - `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs`, `NewMapFactory.cs`.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §6.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §6.
 
 ## Steps
 

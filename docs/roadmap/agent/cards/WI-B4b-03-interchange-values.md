@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-01` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Add the immutable CPU-only interchange values and reader/transform interfaces fr
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §3 and §4 (`GeospatialMapTransform`), §10.3.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §3 and §4 (`GeospatialMapTransform`), §10.3.
 
 ## Steps
 

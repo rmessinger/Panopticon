@@ -19,7 +19,7 @@ Implement the region and cell grid over the B4b projected extent.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md` §1 and §4.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1a.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.1a.
 
 ## Steps
 

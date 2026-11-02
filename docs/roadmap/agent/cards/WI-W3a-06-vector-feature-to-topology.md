@@ -19,7 +19,7 @@ Map B4b generated features into W topology records per the W3a §4 layer table.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md` §4.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.3.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.3.
 
 ## Steps
 

@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-18` and `WI-B4b-22` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Add `Panopticon.Geospatial.Preview` converting a payload or chunk-aligned crop i
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §6.1 (dev preview).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §6.1 (dev preview).
 - `src/Panopticon.Simulation/Data/Map/MapFile.cs` `CreateFromHeights`.
 - `src/Panopticon.Geospatial/Payload/GeneratedMapPayloadReader.cs`.
 

@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-12` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Resample imagery rasters into chunk-aligned RGBA8 PNGs at `imageryPixelsPerSampl
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.2.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.2.
 - `src/Panopticon.Geospatial/Generation/TerrainChunkGenerator.cs` (traversal pattern).
 
 ## Steps

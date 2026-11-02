@@ -431,10 +431,10 @@
   metadata but does not authenticate to, scrape, or download from Google services. Repository
   tests use synthetic fixtures. This keeps the importer deterministic and service-independent
   while leaving source-data rights with the operator under the existing single-operator scope.
-  Affects [B4b](deep-dives/b4b-geospatial-map-generation.md).
+  Affects [B4b](deep-dives/r-real-world-terrain.md).
 - R1/R2 standalone integration. Decision (2026-10-31): the origin, sampling footprint, generation
   order, payload validation, and preview offset contracts are fixed in
-  [B4b §4-6.1](deep-dives/b4b-geospatial-map-generation.md#4-coordinate-and-elevation-contract).
+  [B4b §4-6.1](deep-dives/r-real-world-terrain.md#4-coordinate-and-elevation-contract).
   Explicit coordinates and pre-commit validation prevent ambiguous extents and partial output.
 - B4b geospatial pipeline. Decision: the B4b-1 deferred choices are settled as follows.
   1. Dependencies: `BitMiracle.LibTiff.NET` with in-house GeoTIFF key parsing; in-house WGS84
@@ -456,14 +456,14 @@
   9. Reimport: replace-only.
   10. Placement: new CPU-only `Panopticon.Geospatial` project with no engine references.
   B4b-1..6b proceed before B4a and H with a standalone payload; B4b-7..9 stay blocked. Affects
-  [B4b](deep-dives/b4b-geospatial-map-generation.md), [B4a-5](deep-dives/b4a-larger-maps.md),
+  [B4b](deep-dives/r-real-world-terrain.md), [B4a-5](deep-dives/b4a-larger-maps.md),
   [H1-H2](track-h-storage-formats.md).
 - Western Front terrain currency. Decision: only the geographic area must be historical. Modern
   land cover, roads, and buildings from present-day sources are acceptable in W3a and W3b
   generated terrain; 1916 trench, wire, and crater state comes from W-track summaries, not from
   source imagery. W3a adds operator-digitized 1870 features (rail, bridges, fortress, inundations,
   border) over modern layers.
-  Affects [W3a-W3b](deep-dives/w3-w6-integration-experiments.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
+  Affects [W3a-W3b](deep-dives/w3-w6-integration-experiments.md), [B4b](deep-dives/r-real-world-terrain.md).
 - Western Front decision gates. Decision: the twelve gates of the
   [Western Front charter](deep-dives/western-front-scale-simulation.md#11-decision-gates) are
   settled as follows, and the goal becomes [Track W](track-w-western-front.md).
@@ -512,7 +512,7 @@
 - Western Front sector. Decision: W3b covers lat 49.90-50.17 N, lon 2.52-2.80 E in UTM 31N at true
   scale (0.3048 m per game unit), from IGN RGE ALTI 1 m reprojected by the operator, modern
   OSM-derived features, and operator-digitized 1916 front lines. Regions are 1 km with 8 x 8 cells.
-  Affects [W3b](track-w-western-front.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
+  Affects [W3b](track-w-western-front.md), [B4b](deep-dives/r-real-world-terrain.md).
 - Sedan 1870 interim goal. Decision: before the Somme, Track W simulates the Battle of Sedan,
   31 August 00:00 to 2 September 12:00 1870 local mean time, as phase W3a, the first geospatial
   battle and the large-scale proof of concept. The former W3 Somme sector becomes W3b and depends

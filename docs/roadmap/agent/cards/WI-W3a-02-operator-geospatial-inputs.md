@@ -20,7 +20,7 @@ Create the operator-local Sedan input checklist and manifest example without com
 
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md` §1, §3, and §4.
 - `docs/roadmap/deep-dives/w3b-somme-sector.md` §1-§2 for the Somme manifest pattern.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §2, §4, and §6.1.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §2, §4, and §6.1.
 
 ## Steps
 

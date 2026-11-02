@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-03` and `WI-B4b-04` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Implement `ICoordinateTransformer` for EPSG:4326, WGS84 UTM, and custom Transver
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §4 (supported coordinate systems).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §4 (supported coordinate systems).
 - `src/Panopticon.Geospatial/Interchange/CoordinateSystemId.cs`, `src/Panopticon.Geospatial/Projection/TransverseMercatorProjection.cs`.
 
 ## Steps

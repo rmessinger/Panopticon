@@ -1,7 +1,7 @@
 # Deep Dive: W3a Sedan 1870
 
 > Expands phase W3a of [Track W: Western Front Simulation](../track-w-western-front.md).
-> Builds on [W2](w2-fidelity-promotion.md) and [B4b](b4b-geospatial-map-generation.md). Precedes
+> Builds on [W2](w2-fidelity-promotion.md) and [B4b](r-real-world-terrain.md). Precedes
 > [W3b](w3b-somme-sector.md).
 >
 > Audience: human + agent design for `WI-W3a-01..31`.

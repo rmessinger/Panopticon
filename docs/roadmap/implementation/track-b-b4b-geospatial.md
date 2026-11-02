@@ -3,8 +3,8 @@
 > Audience: human overview above the divider; agent-context detail below it.
 
 Implements B4b-1 through B4b-6b, phases R1 and R2 of [Track R](../track-r-real-world-terrain.md) (formerly Track B phase B4b). Design source of truth:
-[deep-dives/b4b-geospatial-map-generation.md](../deep-dives/b4b-geospatial-map-generation.md),
-including its [architecture diagrams](../deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams).
+[deep-dives/r-real-world-terrain.md](../deep-dives/r-real-world-terrain.md),
+including its [architecture diagrams](../deep-dives/r-real-world-terrain.md#10-architecture-diagrams).
 
 ## Scope
 

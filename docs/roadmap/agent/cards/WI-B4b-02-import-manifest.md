@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-01` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Load and validate `GeospatialImportManifest` from JSON with strict schema, relat
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §3 (manifest fields), §4 (target CRS, no-data, edge, tolerance policies), §5.2 (material rules), §5.3 (feature mappings), §7 (Manifest stage).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §3 (manifest fields), §4 (target CRS, no-data, edge, tolerance policies), §5.2 (material rules), §5.3 (feature mappings), §7 (Manifest stage).
 - `src/Panopticon.Geospatial/GeoDiagnosticCodes.cs`, `src/Panopticon.Geospatial/GeospatialImportLimits.cs`.
 
 ## Steps

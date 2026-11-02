@@ -20,7 +20,7 @@ Create the operator-local input checklist and manifest example for the Somme sec
 
 - `docs/roadmap/deep-dives/w3b-somme-sector.md` §1-§2.
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md` §3.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §2, §4, and §6.1.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §2, §4, and §6.1.
 
 ## Steps
 

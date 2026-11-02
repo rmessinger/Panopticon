@@ -18,7 +18,7 @@ Draft: flip to Ready once the prerequisite cards are Done and the named types ar
 
 - `docs/roadmap/deep-dives/h1-h2-map-storage.md`.
 - `docs/roadmap/deep-dives/b4a-larger-maps.md` chunk contract.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1a and §6.1.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.1a and §6.1.
 
 ## Steps
 

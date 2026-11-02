@@ -2,7 +2,7 @@
 
 > Expands phase W3b of [Track W: Western Front Simulation](../track-w-western-front.md).
 > Builds on [W3a](w3a-sedan-1870.md), [W2](w2-fidelity-promotion.md), and
-> [B4b](b4b-geospatial-map-generation.md).
+> [B4b](r-real-world-terrain.md).
 >
 > Audience: human + agent design for `WI-W3b-01..06`.
 

@@ -4,7 +4,7 @@
 
 Source of truth: [Track H](../track-h-storage-formats.md), the H1/H2 map-storage deep dive created
 by `WI-H1-01`, [B4a larger maps](../deep-dives/b4a-larger-maps.md), and
-[B4b geospatial map generation](../deep-dives/b4b-geospatial-map-generation.md).
+[B4b geospatial map generation](../deep-dives/r-real-world-terrain.md).
 
 ## Settled format choices
 

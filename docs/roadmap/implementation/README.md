@@ -135,8 +135,8 @@ Source of truth: [deep-dives/b4a-larger-maps.md](../deep-dives/b4a-larger-maps.m
 ## Track R · R1-R2 : Geospatial import core, payload, and dev preview (formerly B4b)
 
 Source of truth:
-[deep-dives/b4b-geospatial-map-generation.md](../deep-dives/b4b-geospatial-map-generation.md) :
-[Architecture diagrams §10](../deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams).
+[deep-dives/r-real-world-terrain.md](../deep-dives/r-real-world-terrain.md) :
+[Architecture diagrams §10](../deep-dives/r-real-world-terrain.md#10-architecture-diagrams).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|

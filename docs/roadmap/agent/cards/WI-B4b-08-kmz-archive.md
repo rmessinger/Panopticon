@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-07` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Implement `KmzArchiveReader : IVectorSourceReader` that safely opens a KMZ and d
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §7 (Archive stage, limits).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §7 (Archive stage, limits).
 - `src/Panopticon.Geospatial/Readers/KmlReader.cs`.
 
 ## Steps

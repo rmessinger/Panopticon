@@ -156,7 +156,7 @@ mapping to its active objects; it does not lose its operational identity.
 
 ## 4. Geography and topology
 
-[B4b](b4b-geospatial-map-generation.md) supplies bounded real-world terrain. The simulation adds a
+[B4b](r-real-world-terrain.md) supplies bounded real-world terrain. The simulation adds a
 hierarchical topology over that map:
 
 1. Theater and front sectors for strategic ownership and objectives.

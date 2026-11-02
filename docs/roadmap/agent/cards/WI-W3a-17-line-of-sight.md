@@ -19,7 +19,7 @@ Gate direct fire and detection on terrain and feature line of sight.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md` §4, §7.1, and §7.3.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1-§5.3.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.1-§5.3.
 - `src/Panopticon.Simulation/Logic/Object/Weapon/Weapon.cs:157` and `ObjectDefinition.cs:506-511`: fire and detection hooks.
 
 ## Steps

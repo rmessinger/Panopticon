@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Create the CPU-only `Panopticon.Geospatial` project and test project with the di
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §3 (dependencies) and §7 (diagnostics, limits).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §3 (dependencies) and §7 (diagnostics, limits).
 - `src/Panopticon.Mathematics/Panopticon.Mathematics.csproj`: minimal project with no engine references.
 - `test/Panopticon.Mathematics.Tests/Panopticon.Mathematics.Tests.csproj`: test project pattern.
 - `Directory.Packages.props`: central package versions.

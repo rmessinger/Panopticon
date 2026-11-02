@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-01`, `WI-B4b-03` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Implement the Krüger-series (order 6) WGS84 Transverse Mercator forward, invers
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §4 (target CRS, scale-error rule).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §4 (target CRS, scale-error rule).
 - Karney, C. F. F. (2011), "Transverse Mercator with an accuracy of a few nanometers", J. Geodesy 85, eqs. 35-36 (series coefficients to order 6).
 
 ## Steps

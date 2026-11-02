@@ -16,7 +16,7 @@ Ground the B4b §5.1a chunk layout against the engine and record it as the propo
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1a.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.1a.
 - `docs/roadmap/deep-dives/b4a-larger-maps.md`.
 - `src/Panopticon.Simulation/Terrain/HeightMap.cs`, `Terrain.cs`, `TerrainPatch*.cs`.
 

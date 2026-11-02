@@ -19,7 +19,7 @@ Add Sedan-specific validation for the B4b generated payload contract.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md` §1, §3, §4, and §12.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5-§6.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5-§6.
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §5.
 
 ## Steps

@@ -19,7 +19,7 @@ R1 and R2 need neither B4a nor Track H: they produce a standalone chunked payloa
 preview on a legacy `MapFile`. R3 writes the H3 package through the H2 interchange once B4a-5 and
 H3 exist, R4 adds the WorldBuilder workflow on H6, and R5 proves one operator-supplied area end to
 end. Source boundary, coordinate contract, and generation rules live in the
-[deep dive](deep-dives/b4b-geospatial-map-generation.md).
+[deep dive](deep-dives/r-real-world-terrain.md).
 
 New source types or generation stages (for example other vector sources, point clouds,
 bathymetry, or scanned historical maps) take the next phase number.
@@ -39,11 +39,11 @@ bathymetry, or scanned historical maps) take the next phase number.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| R1 | [Geospatial map generation](deep-dives/b4b-geospatial-map-generation.md) | [§10](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | `WI-B4b-01..17` ([plan](implementation/track-b-b4b-geospatial.md)) |
-| R2 | [§6.1](deep-dives/b4b-geospatial-map-generation.md#61-standalone-payload-and-dev-preview) | [§10.3, §10.4](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | `WI-B4b-18..24` ([plan](implementation/track-b-b4b-geospatial.md)) |
-| R3 | [§6](deep-dives/b4b-geospatial-map-generation.md#6-h2h3-and-worldbuilder-boundary) | [§10.1](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | none until H2/H3 and B4a-5 |
-| R4 | [§6](deep-dives/b4b-geospatial-map-generation.md#6-h2h3-and-worldbuilder-boundary) | [§10.2](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | none until H6 |
-| R5 | [§8](deep-dives/b4b-geospatial-map-generation.md#8-determinism-and-validation) | — | none until R4 |
+| R1 | [Geospatial map generation](deep-dives/r-real-world-terrain.md) | [§10](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-01..17` ([plan](implementation/track-b-b4b-geospatial.md)) |
+| R2 | [§6.1](deep-dives/r-real-world-terrain.md#61-standalone-payload-and-dev-preview) | [§10.3, §10.4](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-18..24` ([plan](implementation/track-b-b4b-geospatial.md)) |
+| R3 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.1](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H2/H3 and B4a-5 |
+| R4 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.2](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H6 |
+| R5 | [§8](deep-dives/r-real-world-terrain.md#8-determinism-and-validation) | — | none until R4 |
 
 ## Cross-track dependencies
 

@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-02`, `WI-B4b-08`, `WI-B4b-10`, `WI-B4b-13`, `WI-B4b-14`, `WI-B4b-16`, and `WI-B4b-17` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Wire `GeospatialImporter.Run` end to end and write/read the §6.1 payload direct
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §6.1 (payload layout), §4 (vertical datum rule), §7, §10.4.
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §6.1 (payload layout), §4 (vertical datum rule), §7, §10.4.
 
 ## Steps
 

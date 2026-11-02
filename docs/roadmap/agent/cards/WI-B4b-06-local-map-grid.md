@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-02`, `WI-B4b-05` |
-| Diagrams | [B4b §10.3](../../deep-dives/b4b-geospatial-map-generation.md#103-standalone-pipeline-and-dev-preview-types) |
+| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Build `LocalMapGrid` from the extent polygon: target CRS resolution, chunk-round
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §4 (import sequence, custom central meridian, `maxScaleError`) and §5.1a (chunk layout).
+- `docs/roadmap/deep-dives/r-real-world-terrain.md` §4 (import sequence, custom central meridian, `maxScaleError`) and §5.1a (chunk layout).
 - `src/Panopticon.Geospatial/Manifest/GeospatialImportManifest.cs`, `src/Panopticon.Geospatial/Projection/`.
 
 ## Steps
