@@ -84,7 +84,7 @@ public sealed record GeoImportResult
     /// </summary>
     public string? RetainedBackupPath { get; }
 
-    /// <summary>Final report of a successful import; null for recoverable failures.</summary>
+    /// <summary>The committed report on success; null before any content was generated, otherwise the optional last-built immutable snapshot of a late failure. Runtime diagnostics stay authoritative.</summary>
     public GeneratedMapPayloadReport? Report { get; }
 
     private static void ValidateOptionalPath(string? path, string paramName)
