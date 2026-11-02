@@ -483,6 +483,16 @@ Validation layers:
    operator-local gate; no source data is committed or required in CI.
 7. B1 benchmark: import time, peak memory, chunk generation/streaming time, and editor latency.
 
+### 8.1 Early operator proof (R2)
+
+Before R5, [`WI-R2-01`](../agent/cards/WI-R2-01-sedan-operator-proof.md) runs layers 5 and 6 on the
+R2 dev preview with real data: about 1.1 km of Sedan around the Château fort, IGN RGE ALTI 1 m
+elevation (`NGF-IGN69`), IGN BD ORTHO imagery, a Google Earth Pro KML extent, and IGN levelling
+benchmarks as independent vertical control. It omits the H3 package and WorldBuilder round-trip,
+which stay in R5.
+
+Results: pending.
+
 ## 9. Sub-phases and cards
 
 | Phase | Goal | Cards | Status |

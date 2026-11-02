@@ -141,6 +141,7 @@ Source of truth:
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | R1 (B4b-1…B4b-6), R2 (B4b-6a, B4b-6b) | Geospatial map generation (WI-B4b-01..24) |
+| [WI-R2-01](../agent/cards/WI-R2-01-sedan-operator-proof.md) | R2 | Sedan real-data preview proof (after `WI-B4b-24`) |
 
 ## Track B · B5 : Rendering at scale
 
