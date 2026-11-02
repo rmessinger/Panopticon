@@ -1,23 +1,27 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using CommandLine;
+using Panopticon.Data.Map;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Panopticon.Geospatial.Pipeline;
+using Panopticon.Geospatial.Preview;
 
 namespace Panopticon.Tools.GeoImport;
 
 /// <summary>
 /// In-process entry of the GeoImport CLI over the card 18 importer and reader:
-/// `import --manifest &lt;path&gt; --out &lt;dir&gt; [--force]` and `report --payload &lt;dir&gt;`.
-/// Exit codes: 0 success, 1 operational or input failure, 2 usage error. Every
-/// diagnostic prints as one line `severity code stage message` with whitespace
-/// normalized, so messages containing newlines cannot break the line protocol.
+/// `import --manifest &lt;path&gt; --out &lt;dir&gt; [--force]`, `report --payload &lt;dir&gt;`,
+/// and `preview --payload &lt;dir&gt; --textures &lt;map.json&gt; [--crop cx0,cy0,cx1,cy1]
+/// [--force] --out &lt;maps dir&gt;`. Exit codes: 0 success, 1 operational or input failure,
+/// 2 usage error. Every diagnostic prints as one line `severity code stage message` with
+/// whitespace normalized, so messages containing newlines cannot break the line protocol.
 /// Cancellation propagates through the token and never misreports a published payload.
 /// </summary>
 public static class GeoImportCli
@@ -28,7 +32,22 @@ public static class GeoImportCli
 
     private const int UsageExit = 2;
 
+    private const int TexturesBlockBytes = 64 * 1024;
+
+    /// <summary>CLI-private encoded UTF-8 bound on the textures file, enforced while streaming (card 24 decision 12).</summary>
+    internal const int MaxTexturesBytes = 1024 * 1024;
+
     public static int Run(string[] arguments, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
+    {
+        return Run(arguments, standardOut, errorOut, cancellationToken, null);
+    }
+
+    public static int Run(
+        string[] arguments,
+        TextWriter standardOut,
+        TextWriter errorOut,
+        CancellationToken cancellationToken,
+        GeoImportCliOptions? options)
     {
         ArgumentNullException.ThrowIfNull(arguments);
         ArgumentNullException.ThrowIfNull(standardOut);
@@ -39,10 +58,11 @@ public static class GeoImportCli
         var parser = new Parser(with => with.HelpWriter = null);
 
         return parser
-            .ParseArguments<ImportOptions, ReportOptions>(arguments)
+            .ParseArguments<ImportOptions, ReportOptions, PreviewOptions>(arguments)
             .MapResult(
-                (ImportOptions options) => RunImport(options, standardOut, errorOut, cancellationToken),
-                (ReportOptions options) => RunReport(options, standardOut, errorOut, cancellationToken),
+                (ImportOptions importOptions) => RunImport(importOptions, standardOut, errorOut, cancellationToken),
+                (ReportOptions reportOptions) => RunReport(reportOptions, standardOut, errorOut, cancellationToken),
+                (PreviewOptions previewOptions) => RunPreview(previewOptions, options, standardOut, errorOut, cancellationToken),
                 _ => UsageFailure(errorOut));
     }
 
@@ -107,6 +127,223 @@ public static class GeoImportCli
             errorOut.WriteLine("cancelled: the report was cancelled before it was read");
             return OperationalFailureExit;
         }
+    }
+
+    /// <summary>
+    /// The preview verb: converts an already published payload into a legacy `.map` in the
+    /// maps directory, through its own publication transaction. The payload itself is an
+    /// unmodified read input; preview failures and cancellation never claim the payload was
+    /// not published. Argument syntax problems (including a malformed crop) exit 2; content,
+    /// IO, catalog, build, and publication failures exit 1.
+    /// </summary>
+    private static int RunPreview(
+        PreviewOptions options,
+        GeoImportCliOptions? cliOptions,
+        TextWriter standardOut,
+        TextWriter errorOut,
+        CancellationToken cancellationToken)
+    {
+        PreviewCrop? crop = null;
+
+        if (options.Crop is not null && !TryParseCrop(options.Crop, out crop))
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "usage: geoimport preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir> (crop must be exactly four integers cx0,cy0,cx1,cy1)"));
+            return UsageExit;
+        }
+
+        string payloadRoot = options.PayloadDirectory;
+
+        try
+        {
+            var diagnostics = new GeoDiagnosticBag();
+
+            var texturesJson = TryReadTextures(options.TexturesPath, diagnostics, cancellationToken);
+
+            if (texturesJson is null)
+            {
+                return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+            }
+
+            var transaction = PreviewMapTransaction.Create(
+                options.PayloadDirectory, options.TexturesPath, options.MapsDirectory, options.Force, diagnostics);
+
+            if (transaction is null)
+            {
+                return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+            }
+
+            cliOptions?.ConfigureTransaction?.Invoke(transaction);
+
+            payloadRoot = transaction.PayloadRoot;
+
+            var catalog = TryResolveCatalog(cliOptions, diagnostics);
+
+            if (catalog is null)
+            {
+                return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+            }
+
+            var textureMap = PreviewTextureMap.FromJson(texturesJson, catalog, diagnostics);
+
+            if (textureMap is null)
+            {
+                return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+            }
+
+            var reader = GeneratedMapPayloadReader.Open(payloadRoot, diagnostics, cancellationToken: cancellationToken);
+
+            if (reader is null)
+            {
+                return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+            }
+
+            using (reader)
+            using (transaction)
+            {
+                var build = GeneratedMapPreviewBuilder.Build(reader, textureMap, crop);
+
+                WriteDiagnostics(build.Diagnostics, standardOut, errorOut);
+
+                if (!build.Success || build.MapFile is null)
+                {
+                    return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+                }
+
+                if (!transaction.TryPublish(build.MapFile, cancellationToken))
+                {
+                    return PreviewFailed(payloadRoot, diagnostics, standardOut, errorOut);
+                }
+
+                // Success printing observes no cancellation token: a commit that finished
+                // must not be misreported by a late cancel.
+                standardOut.WriteLine($"preview: {NormalizeWhitespace(transaction.TargetPath)}");
+
+                if (transaction.RetainedBackupPath is not null)
+                {
+                    standardOut.WriteLine($"retained backup: {NormalizeWhitespace(transaction.RetainedBackupPath)}");
+                }
+            }
+
+            return SuccessExit;
+        }
+        catch (OperationCanceledException)
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    $"cancelled: the preview was cancelled; the published payload at {payloadRoot} is unchanged"));
+            return OperationalFailureExit;
+        }
+    }
+
+    private static int PreviewFailed(string payloadRoot, GeoDiagnosticBag diagnostics, TextWriter standardOut, TextWriter errorOut)
+    {
+        WriteDiagnostics(diagnostics.Items, standardOut, errorOut);
+        errorOut.WriteLine(
+            NormalizeWhitespace(
+                $"preview failed: the published payload at {payloadRoot} is unchanged"));
+        return OperationalFailureExit;
+    }
+
+    private static ITerrainTextureCatalog? TryResolveCatalog(GeoImportCliOptions? cliOptions, GeoDiagnosticBag diagnostics)
+    {
+        try
+        {
+            // Only the preview verb resolves an installation; import and report never
+            // call this, so they never probe for one.
+            return cliOptions?.TerrainTextureCatalogResolver is { } resolver
+                ? resolver()
+                : InstallationTerrainTextureCatalog.FromFirstInstalledGenerals();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or InvalidOperationException)
+        {
+            diagnostics.Add(new GeoDiagnostic(
+                GeoImportCliDiagnostics.CatalogUnavailable,
+                GeoStage.Write,
+                GeoSeverity.Error,
+                $"The terrain texture catalog of the installed Generals could not be loaded: {ex.Message}"));
+            return null;
+        }
+    }
+
+    /// <summary>Streams the textures file in 64 KiB blocks under a 1 MiB encoded UTF-8 bound; never reads an oversized file whole.</summary>
+    private static string? TryReadTextures(string path, GeoDiagnosticBag diagnostics, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var file = File.OpenRead(path);
+            using var contents = new MemoryStream();
+
+            var block = new byte[TexturesBlockBytes];
+            int read;
+
+            while ((read = file.Read(block, 0, block.Length)) > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (contents.Length + read > MaxTexturesBytes)
+                {
+                    diagnostics.Add(new GeoDiagnostic(
+                        GeoImportCliDiagnostics.TexturesOversized,
+                        GeoStage.Parse,
+                        GeoSeverity.Error,
+                        $"The textures file exceeds the {MaxTexturesBytes}-byte bound."));
+                    return null;
+                }
+
+                contents.Write(block, 0, read);
+            }
+
+            try
+            {
+                return new UTF8Encoding(false, throwOnInvalidBytes: true).GetString(contents.ToArray());
+            }
+            catch (DecoderFallbackException)
+            {
+                diagnostics.Add(new GeoDiagnostic(
+                    GeoImportCliDiagnostics.TexturesNotUtf8,
+                    GeoStage.Parse,
+                    GeoSeverity.Error,
+                    "The textures file is not valid UTF-8."));
+                return null;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+        {
+            diagnostics.Add(new GeoDiagnostic(
+                GeoImportCliDiagnostics.TexturesUnreadable,
+                GeoStage.Parse,
+                GeoSeverity.Error,
+                $"The textures file could not be read: {ex.Message}",
+                path));
+            return null;
+        }
+    }
+
+    private static bool TryParseCrop(string text, out PreviewCrop? crop)
+    {
+        crop = null;
+
+        var parts = text.Split(',');
+
+        if (parts.Length != 4)
+        {
+            return false;
+        }
+
+        var values = new int[4];
+
+        for (var index = 0; index < 4; index++)
+        {
+            if (!int.TryParse(parts[index].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out values[index]))
+            {
+                return false;
+            }
+        }
+
+        crop = new PreviewCrop(values[0], values[1], values[2], values[3]);
+        return true;
     }
 
     /// <summary>One-line summary of the validated payload: identity, chunk counts, features, checks.</summary>
@@ -194,7 +431,9 @@ public static class GeoImportCli
     {
         errorOut.WriteLine(
             NormalizeWhitespace(
-                "usage: geoimport import --manifest <path> --out <dir> [--force]; geoimport report --payload <dir>"));
+                "usage: geoimport import --manifest <path> --out <dir> [--force]; "
+                + "geoimport report --payload <dir>; "
+                + "geoimport preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir>"));
         return UsageExit;
     }
 
@@ -216,5 +455,24 @@ public static class GeoImportCli
     {
         [Option('p', "payload", Required = true, HelpText = "Path to the payload directory.")]
         public string PayloadDirectory { get; set; } = null!;
+    }
+
+    [Verb("preview", HelpText = "Converts a published payload into a playable legacy .map dev preview.")]
+    public sealed class PreviewOptions
+    {
+        [Option('p', "payload", Required = true, HelpText = "Path to the published payload directory.")]
+        public string PayloadDirectory { get; set; } = null!;
+
+        [Option('t', "textures", Required = true, HelpText = "Path to the palette-to-terrain-texture JSON map.")]
+        public string TexturesPath { get; set; } = null!;
+
+        [Option('c', "crop", HelpText = "Half-open chunk rectangle, exactly four integers cx0,cy0,cx1,cy1.")]
+        public string? Crop { get; set; }
+
+        [Option('f', "force", HelpText = "Replace an existing .map, always retaining a backup of it.")]
+        public bool Force { get; set; }
+
+        [Option('o', "out", Required = true, HelpText = "Maps directory that receives <payload name>.map.")]
+        public string MapsDirectory { get; set; } = null!;
     }
 }
