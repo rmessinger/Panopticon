@@ -1,6 +1,6 @@
 # R2 standalone payload contract
 
-Scope: `WI-B4b-18`. Payload layout and generation semantics: [B4b deep dive §6.1](../deep-dives/b4b-geospatial-map-generation.md#61-standalone-payload-and-dev-preview). H2/H3 packaging remains out of scope.
+Scope: `WI-B4b-18`. Payload layout and generation semantics: [B4b deep dive §6.1](../deep-dives/r-real-world-terrain.md#61-standalone-payload-and-dev-preview). H2/H3 packaging remains out of scope.
 
 ## Entry points
 
