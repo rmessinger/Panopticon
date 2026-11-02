@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Panopticon.Geospatial.Manifest;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Panopticon.Geospatial.Pipeline.Generation;
@@ -8,6 +9,7 @@ using Panopticon.Geospatial.Pipeline.GenerationPlanning;
 using Panopticon.Geospatial.Pipeline.ImportOrchestration;
 using Panopticon.Geospatial.Pipeline.Reporting;
 using Panopticon.Geospatial.Pipeline.SourceLoading;
+using Panopticon.Geospatial.Pipeline.Validation;
 
 namespace Panopticon.Geospatial.Pipeline;
 
@@ -118,7 +120,10 @@ public static class GeospatialImporter
                 return ImportRunOutcome.Failed;
             }
 
-            if (options.StagedValidators.Count > 0)
+            // The built-in control-point validator runs first whenever the manifest
+            // declares control points; declared option validators keep their order after
+            // it. Both use this same loaded manifest instance generation used.
+            if (options.StagedValidators.Count > 0 || sources.LoadedManifest.ControlPoints.Count > 0)
             {
                 report = RunStagedValidators(writer, sources, output, plan, payloadSha256Hex, options, diagnostics, cancellationToken);
 
@@ -176,10 +181,11 @@ public static class GeospatialImporter
         }
 
         var aggregated = new List<PayloadValidationCheck>();
+        var validators = BuildValidatorSequence(sources.LoadedManifest, options);
 
         using (reader)
         {
-            foreach (var validator in options.StagedValidators)
+            foreach (var validator in validators)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -235,6 +241,27 @@ public static class GeospatialImporter
         }
 
         return rewritten;
+    }
+
+    /// <summary>
+    /// The effective staged validator order: the built-in control-point validator first
+    /// when the manifest declares control points, then the declared option validators
+    /// in their original order.
+    /// </summary>
+    private static List<IStagedPayloadValidator> BuildValidatorSequence(
+        GeospatialImportManifest manifest,
+        GeoImportOptions options)
+    {
+        var validators = new List<IStagedPayloadValidator>(options.StagedValidators.Count + 1);
+
+        if (manifest.ControlPoints.Count > 0)
+        {
+            validators.Add(new ControlPointValidator(options.Limits));
+        }
+
+        validators.AddRange(options.StagedValidators);
+
+        return validators;
     }
 
     /// <summary>Locals-only import outcome; the public result is constructed from it after disposal.</summary>
