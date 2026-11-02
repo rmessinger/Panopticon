@@ -386,6 +386,28 @@ Deferred to R3, where placed objects enter the map package:
   layers, which are stubbed today.
 - Building heights from source attributes, for line of sight and visuals.
 
+#### 5.4.1 Candidate content sources
+
+Structures avoid one bespoke model per building. Candidate routes, combinable:
+
+| Route | Sources | Licence | Notes |
+|---|---|---|---|
+| 1. Procedural extrusion | Footprint plus height attributes, roof rule; tiling PBR materials from ambientCG and Poly Haven | CC0 | Leading candidate. Fits every country with footprints and heights. OSM2World (LGPL) is a reference for footprint-to-roof generation. |
+| 2. Modular kits | Kenney (City, Building, Castle, Fantasy Town kits), Quaternius, KayKit free editions | CC0 | Low-poly, stylized glTF; doors, windows, chimneys as details on route 1 walls. Style mismatch with realistic materials. |
+| 3. Open LoD2 city models | Netherlands 3D BAG, German state LoD2, swissBUILDINGS3D; some French cities (CityGML) | Open, per dataset (3D BAG CC-BY 4.0) | Real per-building geometry where published; no national French equivalent. A separate source type. |
+
+Sketchfab and OpenGameArt assets carry per-asset licences and are used only after individual
+review. Landmarks such as the Sedan château stay bespoke. Both glTF import (C4) and PBR materials
+(C3) exist, so routes 1 and 2 need no new importer.
+
+#### 5.4.2 Procedural building investigation
+
+[`WI-R3-01`](../agent/cards/WI-R3-01-procedural-building-investigation.md) prototypes route 1 on the
+Sedan footprints and recommends the R3 layout (merged chunk meshes or per-building objects), roof
+rule, and material list.
+
+Results: pending.
+
 ## 6. H2/H3 and WorldBuilder boundary
 
 B4b depends on B4a and H6, but format-specific parsing must not write H3 bytes directly.

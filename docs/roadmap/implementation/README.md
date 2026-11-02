@@ -144,6 +144,7 @@ Source of truth:
 | [WI-R2-01](../agent/cards/WI-R2-01-sedan-operator-proof.md) | R2 | Sedan real-data preview proof (after `WI-B4b-24`) |
 | [WI-R2-02](../agent/cards/WI-R2-02-provider-source-profiles.md) | R2 | Provider source profiles for data preparation (after `WI-R2-01`) |
 | [WI-R2-03](../agent/cards/WI-R2-03-building-footprint-masks.md) | R2 | Building footprints as terrain masks (after `WI-R2-02`) |
+| [WI-R3-01](../agent/cards/WI-R3-01-procedural-building-investigation.md) | R3 | Procedural buildings from footprints, investigation (after `WI-R2-03`) |
 
 ## Track B · B5 : Rendering at scale
 
