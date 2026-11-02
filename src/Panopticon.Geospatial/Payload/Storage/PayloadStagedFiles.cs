@@ -29,6 +29,13 @@ internal sealed class PayloadStagedFiles
     private string? _metadataSha256Hex;
     private bool _reportWritten;
 
+    /// <summary>
+    /// The palette bound to this staged payload by the first successful material write
+    /// or metadata write; serialized index bytes carry no palette ordering, so every
+    /// later palette-bearing write must agree with it name for name.
+    /// </summary>
+    private MaterialPalette? _boundPalette;
+
     internal PayloadStagedFiles(string stageDirectory, GeospatialImportLimits limits, GeoDiagnosticBag diagnostics)
     {
         ArgumentException.ThrowIfNullOrEmpty(stageDirectory);
@@ -55,14 +62,34 @@ internal sealed class PayloadStagedFiles
         return WriteOneTimeBytes(PayloadChunkPaths.Terrain(chunk.ChunkX, chunk.ChunkY), encoded, cancellationToken);
     }
 
-    /// <summary>Encodes one material chunk and writes its one-time file; the palette itself travels in payload.json.</summary>
+    /// <summary>
+    /// Encodes one material chunk and writes its one-time file; the palette itself
+    /// travels in payload.json. The chunk's palette must match, ordered name by name,
+    /// the palette already bound to this staged payload.
+    /// </summary>
     internal PayloadFileReference? WriteMaterial(MaterialChunk chunk, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(chunk);
 
-        var encoded = PayloadChunkCodec.EncodeMaterial(chunk, cancellationToken);
+        if (_boundPalette is not null && !PalettesMatch(_boundPalette, chunk.Palette))
+        {
+            Fail(
+                StagedFileDiagnostics.MaterialPaletteMismatch,
+                $"The material chunk ({chunk.ChunkX}, {chunk.ChunkY}) carries a palette that does not match the palette already bound to this staged payload.",
+                PayloadChunkPaths.Materials(chunk.ChunkX, chunk.ChunkY));
+            return null;
+        }
 
-        return WriteOneTimeBytes(PayloadChunkPaths.Materials(chunk.ChunkX, chunk.ChunkY), encoded, cancellationToken);
+        var encoded = PayloadChunkCodec.EncodeMaterial(chunk, cancellationToken);
+        var reference = WriteOneTimeBytes(PayloadChunkPaths.Materials(chunk.ChunkX, chunk.ChunkY), encoded, cancellationToken);
+
+        if (reference is null)
+        {
+            return null;
+        }
+
+        _boundPalette ??= chunk.Palette;
+        return reference;
     }
 
     /// <summary>Encodes one terrain mask chunk and writes its one-time file; null with a diagnostic on recoverable failure.</summary>
@@ -101,6 +128,15 @@ internal sealed class PayloadStagedFiles
     {
         ArgumentNullException.ThrowIfNull(metadata);
 
+        if (_boundPalette is not null && !PalettesMatch(_boundPalette, metadata.Palette))
+        {
+            Fail(
+                StagedFileDiagnostics.MaterialPaletteMismatch,
+                "The metadata palette does not match the palette already bound to this staged payload by a material chunk.",
+                PayloadChunkPaths.MetadataFileName);
+            return null;
+        }
+
         var reference = WriteOneTimeStream(
             PayloadChunkPaths.MetadataFileName,
             StagedFileDiagnostics.MetadataWriteFailed,
@@ -113,6 +149,7 @@ internal sealed class PayloadStagedFiles
         }
 
         _metadataSha256Hex = reference.Sha256Hex;
+        _boundPalette ??= metadata.Palette;
         return _metadataSha256Hex;
     }
 
@@ -527,6 +564,34 @@ internal sealed class PayloadStagedFiles
                 $"Chunk ({chunk.ChunkX}, {chunk.ChunkY}): the imagery IHDR declares {width} x {height} pixels, beyond the {_limits.MaxRasterWidth} x {_limits.MaxRasterHeight} raster dimension limits.",
                 relativePath);
             return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Ordered-name palette comparison: the reference-equality fast path keeps repeated
+    /// writes of one shared palette instance cheap; content equality accepts an equal
+    /// but distinct instance. Ordering matters because indices are positional.
+    /// </summary>
+    private static bool PalettesMatch(MaterialPalette first, MaterialPalette second)
+    {
+        if (ReferenceEquals(first, second))
+        {
+            return true;
+        }
+
+        if (first.Count != second.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < first.Count; index++)
+        {
+            if (!string.Equals(first.Names[index], second.Names[index], StringComparison.Ordinal))
+            {
+                return false;
+            }
         }
 
         return true;

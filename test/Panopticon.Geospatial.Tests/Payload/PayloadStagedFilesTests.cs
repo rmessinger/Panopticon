@@ -443,6 +443,75 @@ public class PayloadStagedFilesTests
         Assert.False(File.Exists(fixture.StagePath("imagery/0_0.png")));
     }
 
+    [Fact]
+    public void MaterialChunkPaletteMismatch_FailsAndPreservesExistingFiles()
+    {
+        using var fixture = StagedFilesTestSupport.StageFixture.Create();
+        var staged = fixture.CreateStagedFiles();
+
+        Assert.NotNull(staged.WriteMaterial(StagedFilesTestSupport.MaterialChunkAt(0, 0)));
+
+        var reordered = new MaterialPalette(StagedFilesTestSupport.Palette.Names.Reverse().ToArray());
+
+        Assert.Null(staged.WriteMaterial(StagedFilesTestSupport.MaterialChunkWith(reordered, 1, 0)));
+
+        SingleError(fixture.Bag, StagedFileDiagnostics.MaterialPaletteMismatch);
+        Assert.True(File.Exists(fixture.StagePath("materials/0_0.bin")));
+        Assert.False(File.Exists(fixture.StagePath("materials/1_0.bin")));
+    }
+
+    [Fact]
+    public void EqualPaletteContentInAnyInstance_BindsInBothOrders()
+    {
+        using var materialFirst = StagedFilesTestSupport.StageFixture.Create();
+        var ordered = new MaterialPalette(ReaderTestSupport.PaletteNames);
+
+        Assert.NotNull(materialFirst.CreateStagedFiles().WriteMaterial(StagedFilesTestSupport.MaterialChunkWith(ordered, 0, 0)));
+        Assert.NotNull(materialFirst.CreateStagedFiles().WriteMetadata(StagedFilesTestSupport.MetadataWithPalette(new MaterialPalette(ReaderTestSupport.PaletteNames))));
+        Assert.False(materialFirst.Bag.HasErrors);
+
+        using var metadataFirst = StagedFilesTestSupport.StageFixture.Create();
+        var staged = metadataFirst.CreateStagedFiles();
+
+        Assert.NotNull(staged.WriteMetadata(StagedFilesTestSupport.MetadataWithPalette(new MaterialPalette(ReaderTestSupport.PaletteNames))));
+        Assert.NotNull(staged.WriteMaterial(StagedFilesTestSupport.MaterialChunkWith(ordered, 0, 0)));
+        Assert.NotNull(staged.WriteMaterial(StagedFilesTestSupport.MaterialChunkWith(new MaterialPalette(ReaderTestSupport.PaletteNames), 1, 0)));
+        Assert.False(metadataFirst.Bag.HasErrors);
+    }
+
+    [Fact]
+    public void MetadataPaletteReorderedAgainstStagedMaterials_FailsWithoutWritingPayloadJson()
+    {
+        using var fixture = StagedFilesTestSupport.StageFixture.Create();
+        var staged = fixture.CreateStagedFiles();
+
+        Assert.NotNull(staged.WriteMaterial(StagedFilesTestSupport.MaterialChunkAt(0, 0)));
+
+        var reordered = new MaterialPalette(StagedFilesTestSupport.Palette.Names.Reverse().ToArray());
+
+        Assert.Null(staged.WriteMetadata(StagedFilesTestSupport.MetadataWithPalette(reordered)));
+
+        SingleError(fixture.Bag, StagedFileDiagnostics.MaterialPaletteMismatch);
+        Assert.False(File.Exists(fixture.StagePath("payload.json")));
+    }
+
+    [Fact]
+    public void MaterialAfterMetadata_MustMatchTheMetadataPalette()
+    {
+        using var fixture = StagedFilesTestSupport.StageFixture.Create();
+        var staged = fixture.CreateStagedFiles();
+
+        Assert.NotNull(staged.WriteMetadata(StagedFilesTestSupport.MetadataWithPalette(StagedFilesTestSupport.Palette)));
+
+        var reordered = new MaterialPalette(StagedFilesTestSupport.Palette.Names.Reverse().ToArray());
+
+        Assert.Null(staged.WriteMaterial(StagedFilesTestSupport.MaterialChunkWith(reordered, 0, 0)));
+
+        SingleError(fixture.Bag, StagedFileDiagnostics.MaterialPaletteMismatch);
+        Assert.False(File.Exists(fixture.StagePath("materials/0_0.bin")));
+        Assert.True(File.Exists(fixture.StagePath("payload.json")));
+    }
+
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
     private static GeoDiagnostic SingleError(GeoDiagnosticBag bag, string code)
