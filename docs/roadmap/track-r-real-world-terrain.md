@@ -21,7 +21,7 @@ H3 exist, R4 adds the WorldBuilder workflow on H6, and R5 proves one operator-su
 end. Source boundary, coordinate contract, and generation rules live in the
 [deep dive](deep-dives/r-real-world-terrain.md).
 
-New source types or generation stages (for example other vector sources, point clouds,
+New cards use `WI-R<phase>-NN` IDs, starting with `WI-R2-01`. New source types or generation stages (for example other vector sources, point clouds,
 bathymetry, or scanned historical maps) take the next phase number.
 
 > The Milestone column states the demonstrable outcome that marks each phase done. Granular steps
@@ -30,7 +30,7 @@ bathymetry, or scanned historical maps) take the next phase number.
 | Phase | Goal | Milestone | Status | Depends on |
 |---|---|---|---|---|
 | R1. Geospatial import core | Build the CPU-only `Panopticon.Geospatial` project: manifest and limits, interchange values, KML/KMZ and GeoTIFF readers, Transverse Mercator and local map grid, terrain, imagery, and material chunks, feature clipping and mapping, passability and buildability masks (sub-phases `B4b-1` to `B4b-6`). | Synthetic fixtures read, project within 1 mm, and generate bit-identical shared chunk edges and identical chunk hashes on repeated runs. | Done | — |
-| R2. Standalone payload and dev preview | Run the pipeline into a transactional standalone payload with a `GeoImport` CLI and control-point validation, then convert a payload into a resident legacy `MapFile` for play testing (sub-phases `B4b-6a`, `B4b-6b`). | A synthetic import passes its control points, and the generated map loads in Generals and runs 300 logic frames. | In progress | R1 |
+| R2. Standalone payload and dev preview | Run the pipeline into a transactional standalone payload with a `GeoImport` CLI and control-point validation, then convert a payload into a resident legacy `MapFile` for play testing (sub-phases `B4b-6a`, `B4b-6b`). | A synthetic import passes its control points, and the generated map loads in Generals and runs 300 logic frames; a Sedan IGN import passes its benchmarks and plays the same way. | In progress | R1 |
 | R3. Map package output | Populate the H2 map interchange and write chunked terrain, generated assets, vector-derived layers, provenance, and diagnostics through H3 (sub-phase `B4b-7`). | A generated map writes and reloads as an H3 package with its provenance and layers intact. | Not started | R2, B4a, H3 |
 | R4. WorldBuilder import workflow | Add transactional import, preview, cancellation, report display, and edit/save/reload in WorldBuilder on H6 (sub-phase `B4b-8`). | An import is one undoable transaction, cancellation leaves the session unchanged, and the result saves and reloads. | Not started | R3, H6 |
 | R5. Validation and scale proof | Package and engine round-trips, one operator-supplied control-point proof, and B1 measurements (sub-phase `B4b-9`). | One operator-supplied area matches its control points within declared tolerances, round-trips through WorldBuilder, and plays; B1 records import time and peak memory. | Not started | R4 |
@@ -40,7 +40,7 @@ bathymetry, or scanned historical maps) take the next phase number.
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
 | R1 | [Geospatial map generation](deep-dives/r-real-world-terrain.md) | [§10](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-01..17` ([plan](implementation/track-b-b4b-geospatial.md)) |
-| R2 | [§6.1](deep-dives/r-real-world-terrain.md#61-standalone-payload-and-dev-preview) | [§10.3, §10.4](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-18..24` ([plan](implementation/track-b-b4b-geospatial.md)) |
+| R2 | [§6.1](deep-dives/r-real-world-terrain.md#61-standalone-payload-and-dev-preview) | [§10.3, §10.4](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | `WI-B4b-18..24` ([plan](implementation/track-b-b4b-geospatial.md)); Sedan real-data proof [`WI-R2-01`](agent/cards/WI-R2-01-sedan-operator-proof.md) |
 | R3 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.1](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H2/H3 and B4a-5 |
 | R4 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.2](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H6 |
 | R5 | [§8](deep-dives/r-real-world-terrain.md#8-determinism-and-validation) | — | none until R4 |
