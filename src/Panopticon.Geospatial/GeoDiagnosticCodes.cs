@@ -16,7 +16,17 @@ public static class GeoDiagnosticCodes
 
     public const string ArchiveFailure = "GEO-ARC-001";
 
+    public const string ArchiveLimitExceeded = "GEO-ARC-002";
+
+    public const string ArchiveUnsafeEntryName = "GEO-ARC-003";
+
+    public const string ArchiveUnsafeReference = "GEO-ARC-004";
+
     public const string ParseFailure = "GEO-PAR-001";
+
+    public const string ParseUnsupportedKmlElement = "GEO-PAR-002";
+
+    public const string ParseKmlLimitExceeded = "GEO-PAR-003";
 
     public const string CoordinatesFailure = "GEO-CRD-001";
 
@@ -27,6 +37,8 @@ public static class GeoDiagnosticCodes
     public const string CoordinatesInvalidExtent = "GEO-CRD-004";
 
     public const string CoordinatesExtentOverflow = "GEO-CRD-005";
+
+    public const string CoordinatesUnsupportedUnits = "GEO-CRD-006";
 
     public const string RasterFailure = "GEO-RAS-001";
 

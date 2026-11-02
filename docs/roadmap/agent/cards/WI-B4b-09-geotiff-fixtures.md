@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-09` |
 | Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-3 local source readers |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-03` |
