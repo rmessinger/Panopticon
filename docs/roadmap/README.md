@@ -139,7 +139,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-w-western-front.md`](track-w-western-front.md) | human | Western Front simulation: charter fixture, aggregate sector model, fidelity promotion and reconciliation, geospatial sector, command and logistics experiments, distributed regions, and a long-run campaign. Built as a domain through the A4-1 seam and A4-4 state projection. |
 | [`track-m-mass-battle.md`](track-m-mass-battle.md) | human | Mixed-roster mass battle: capacity probe, battle map, EE2 combat units, roster normalization, army-scale AI, and the 1000 vs 1000 battle in batch, replay, and live modes. |
 | [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md) | human | Multi-unit pathfinding performance and deadlocks: path cost baseline, search core efficiency, shared group requests, gated shared-destination fields, off-thread order paths, scale verification, stall attribution, path liveness, blocked-unit resolution, destination crowding, passage queueing, and layered navigation (strategic sectors, corridor main paths, navigation groups, steering). |
-| [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md) | human | Real-world terrain: operator-supplied Google Earth KML/KMZ plus georeferenced elevation and imagery rasters to standalone payloads, dev preview maps, H3 packages, and WorldBuilder import. Formerly Track B phase B4b. |
+| [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md) | human | Real-world terrain: openly licensed KML/KMZ, elevation, and imagery prepared by command-line scripts to standalone payloads, dev preview maps, H3 packages, and WorldBuilder import. Formerly Track B phase B4b. |
 | [`track-x-fixes-tweaks.md`](track-x-fixes-tweaks.md) | human | Open-ended miscellaneous fixes and tweaks, each with a bounded milestone. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `Panopticon.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
@@ -179,7 +179,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
 | [`deep-dives/b4-spatial-pathfinding-scaling.md`](deep-dives/b4-spatial-pathfinding-scaling.md) | Track B phase B4 - Spatial and pathfinding scaling (partition hot-path budget, group movement, async path requests, gated hierarchical pathfinding). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
-| [`deep-dives/r-real-world-terrain.md`](deep-dives/r-real-world-terrain.md) | Track R phases R1-R5 (formerly B4b) - Offline generation of editable maps from operator-supplied Google Earth or Google Earth Engine geospatial exports. |
+| [`deep-dives/r-real-world-terrain.md`](deep-dives/r-real-world-terrain.md) | Track R phases R1-R6 (formerly B4b) - Offline generation of editable maps from openly licensed geospatial data prepared by command-line scripts. |
 | [`deep-dives/b5-rendering-at-scale.md`](deep-dives/b5-rendering-at-scale.md) | Track B phase B5 - Rendering at scale: source-agnostic GPU instancing, distance LOD/culling, render-bucket/shadow submit improvements, and the render-scale probe. |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (fidelity registry, group aggregation contract, visualization and error reporting). |
@@ -320,7 +320,7 @@ track document.
   B4, and M4.
 - [Track R - Real-World Terrain](track-r-real-world-terrain.md): R1 geospatial import core ·
   R2 standalone payload and dev preview · R3 map package output · R4 WorldBuilder import
-  workflow · R5 validation and scale proof. Formerly Track B phase B4b; card IDs keep the B4b
+  workflow · R5 validation and scale proof · R6 Earth curvature (later goal). Formerly Track B phase B4b; card IDs keep the B4b
   prefix. R1 and R2 have no dependencies; R3 depends on B4a and H3, R4 on H6.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1. X6 extracts navigation logic from `AIUpdate` into its own class after N11. X7 groups non-logic types into `Types/` subfolders and has no dependencies.
@@ -544,7 +544,8 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | R3 - Map package output | `░░░░░░░░░░` | 0 / 2 |
 | R4 - WorldBuilder import workflow | `░░░░░░░░░░` | 0 / 1 |
 | R5 - Validation and scale proof | `░░░░░░░░░░` | 0 / 1 |
-| Track R total | `████░░░░░░` | 6 / 15 |
+| R6 - Earth curvature (later goal) | `░░░░░░░░░░` | 0 / 1 |
+| Track R total | `████░░░░░░` | 6 / 16 |
 
 ---
 

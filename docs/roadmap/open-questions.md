@@ -6,6 +6,13 @@
 >
 > Audience: human reference for roadmap decisions.
 
+- Earth curvature. Decision (2026-11-02): curvature on the planar map is a later Track R goal,
+  [R6](track-r-real-world-terrain.md), after R5. It is applied observer-relative with a
+  refraction coefficient to line of sight, detection, rendering, and long-range ballistics,
+  behind an option that defaults off; terrain and payloads stay planar. Globe-scale coordinates
+  remain out of scope. Magnitudes and constraints:
+  [§4.1](deep-dives/r-real-world-terrain.md#41-earth-curvature-r6-later-goal).
+
 - Real-world structures. Decision (2026-11-02): through R2, structures exist only as imagery and
   as building footprints mapped to impassable, unbuildable mask regions
   ([`WI-R2-03`](agent/cards/WI-R2-03-building-footprint-masks.md)); preparation profiles use
@@ -440,6 +447,13 @@
   tests use synthetic fixtures. This keeps the importer deterministic and service-independent
   while leaving source-data rights with the operator under the existing single-operator scope.
   Affects [B4b](deep-dives/r-real-world-terrain.md).
+  Revised (2026-11-02): the importer boundary is unchanged, but the primary sources are openly
+  licensed national and Europe-wide datasets fetched by command-line preparation scripts
+  (`scripts/geo/`, [`WI-R2-01`](agent/cards/WI-R2-01-sedan-operator-proof.md),
+  [`WI-R2-02`](agent/cards/WI-R2-02-provider-source-profiles.md)) rather than Google Earth exports.
+  Scripts own all downloads, use only providers without accounts or keys, and never run in CI.
+  Google Earth Pro KML and Earth Engine exports of openly licensed datasets stay optional; data
+  traced or digitized from Google imagery is excluded.
 - R1/R2 standalone integration. Decision (2026-10-31): the origin, sampling footprint, generation
   order, payload validation, and preview offset contracts are fixed in
   [B4b §4-6.1](deep-dives/r-real-world-terrain.md#4-coordinate-and-elevation-contract).

@@ -1,8 +1,9 @@
 # Track R: Real-World Terrain
 
 > Part of the [Large-Scale RTS Roadmap](README.md). This track generates editable, playable
-> Panopticon maps from operator-supplied real-world geospatial data: Google Earth KML/KMZ plus
-> georeferenced elevation and imagery rasters.
+> Panopticon maps from openly licensed real-world geospatial data: KML/KMZ extents and features
+> plus georeferenced elevation and imagery rasters, prepared by command-line scripts from
+> per-provider profiles.
 >
 > Architecture context: see [`agent/current-state.md`](agent/current-state.md).
 >
@@ -34,6 +35,7 @@ bathymetry, or scanned historical maps) take the next phase number.
 | R3. Map package output | Populate the H2 map interchange and write chunked terrain, generated assets, vector-derived layers, provenance, and diagnostics through H3 (sub-phase `B4b-7`). Also owns the deferred structure object placement, bridges, and building heights ([§5.4](deep-dives/r-real-world-terrain.md#54-real-world-structures)). | A generated map writes and reloads as an H3 package with its provenance and layers intact. | Not started | R2, B4a, H3 |
 | R4. WorldBuilder import workflow | Add transactional import, preview, cancellation, report display, and edit/save/reload in WorldBuilder on H6 (sub-phase `B4b-8`). | An import is one undoable transaction, cancellation leaves the session unchanged, and the result saves and reloads. | Not started | R3, H6 |
 | R5. Validation and scale proof | Package and engine round-trips, one operator-supplied control-point proof, and B1 measurements (sub-phase `B4b-9`). | One operator-supplied area matches its control points within declared tolerances, round-trips through WorldBuilder, and plays; B1 records import time and peak memory. | Not started | R4 |
+| R6. Earth curvature | Later goal: observer-relative curvature drop with atmospheric refraction for line of sight and detection, then camera-relative terrain and object rendering and long-range ballistics; terrain and payload stay planar ([§4.1](deep-dives/r-real-world-terrain.md#41-earth-curvature-r6-later-goal)). | On a map spanning tens of kilometres, line of sight between two points matches the curved-Earth answer within tolerance, and the rendered horizon agrees with it; with the option off, behaviour is unchanged. | Not started | R5 |
 
 ## Phase resources
 
@@ -44,6 +46,7 @@ bathymetry, or scanned historical maps) take the next phase number.
 | R3 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.1](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | procedural building investigation [`WI-R3-01`](agent/cards/WI-R3-01-procedural-building-investigation.md); other cards wait for H2/H3 and B4a-5 |
 | R4 | [§6](deep-dives/r-real-world-terrain.md#6-h2h3-and-worldbuilder-boundary) | [§10.2](deep-dives/r-real-world-terrain.md#10-architecture-diagrams) | none until H6 |
 | R5 | [§8](deep-dives/r-real-world-terrain.md#8-determinism-and-validation) | — | none until R4 |
+| R6 | [§4.1](deep-dives/r-real-world-terrain.md#41-earth-curvature-r6-later-goal) | none yet | none until R5 |
 
 ## Cross-track dependencies
 
@@ -51,5 +54,7 @@ bathymetry, or scanned historical maps) take the next phase number.
   interchange; R4 builds on H6's WorldBuilder read/write integration. The importer targets the
   interchange boundary instead of either storage implementation.
 - R5 records its import time and peak memory through [B1](track-b-scale.md).
+- R6 changes line of sight and detection that [Track W](track-w-western-front.md) W3a uses for
+  multi-kilometre observation and artillery.
 - [Track W](track-w-western-front.md) W3a (Sedan 1870) and W3b (Somme sector) consume the R2
   payload (`WI-B4b-18`) and R1 types (`WI-B4b-06`, `WI-B4b-16`); W3a owns the topology builder.

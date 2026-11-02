@@ -416,6 +416,7 @@ mindmap
       R3 Map package output ⮕
       R4 WorldBuilder import workflow ⮕
       R5 Validation and scale proof ⮕
+      R6 Earth curvature ⮕
 ```
 
 ---
@@ -638,6 +639,7 @@ flowchart LR
 
   subgraph S12["Stage 12 · Navigation deadlock verification & passage queues"]
     direction TB
+    R6["R6 Earth curvature"]
     N10["N10 Deadlock verification"]
     N12["N12 Passage queues"]
   end
@@ -827,6 +829,7 @@ flowchart LR
   R3 --> R4
   H6 --> R4
   R4 --> R5
+  R5 --> R6
   W1 --> W2
   A4 --> W2
 
@@ -948,7 +951,7 @@ flowchart LR
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class M0,M1,M2,M3,M4,M5 trackM;
-  class R1,R2,R3,R4,R5 trackR;
+  class R1,R2,R3,R4,R5,R6 trackR;
   class N0,N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14,N15,N16,N17,N18,N19,N20 trackN;
   class A4S seam;
 ```

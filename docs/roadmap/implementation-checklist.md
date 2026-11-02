@@ -1533,9 +1533,9 @@ complete H2a group merges. Each item corresponds to one card.
 See [`track-r-real-world-terrain.md`](track-r-real-world-terrain.md). Formerly Track B phase B4b;
 item labels and card IDs keep the B4b prefix. Design:
 [deep dive](deep-dives/r-real-world-terrain.md); cards:
-[plan](implementation/track-b-b4b-geospatial.md). Imports operator-supplied Google Earth KML/KMZ
-plus georeferenced DEM and imagery rasters without direct Google service access; Google basemap
-imagery and terrain are not supported inputs.
+[plan](implementation/track-b-b4b-geospatial.md). Imports locally prepared KML/KMZ plus
+georeferenced DEM and imagery rasters with no network access; Google basemap imagery and terrain
+are not supported inputs.
 
 ### R1: Geospatial import core
 - [x] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
@@ -1586,6 +1586,12 @@ imagery and terrain are not supported inputs.
 - [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
   - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
     plays; B1 records import time and peak memory.
+
+### R6: Earth curvature (later goal, depends on R5)
+- [ ] R6 Observer-relative Earth curvature for line of sight, rendering, and long-range ballistics.
+  - AC: with `EarthCurvature` on, line of sight over a map spanning tens of kilometres matches the
+    curved-Earth answer with refraction, the rendered horizon agrees, and with it off behaviour is
+    unchanged.
 
 ## Track W: Western Front Simulation
 
