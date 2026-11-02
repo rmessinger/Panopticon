@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Panopticon.Data.Utilities.Extensions;
@@ -128,6 +129,42 @@ public sealed class BlendTileData : Asset
 
             return _textureIndices;
         }
+    }
+
+    /// <summary>
+    /// WI-B4b-23: replaces the texture table in place with one standard CellSize 4 entry
+    /// per distinct Terrain.ini block name, leaving every other field, including tile and
+    /// passability values, untouched. Texture k occupies tile values [64k, 64k + 63]; the
+    /// caller repaints Tiles accordingly.
+    /// </summary>
+    public void ReplaceTextures(IReadOnlyList<string> textureNames)
+    {
+        ArgumentNullException.ThrowIfNull(textureNames);
+
+        if (textureNames.Count == 0)
+        {
+            throw new ArgumentException("The texture table needs at least one texture name.", nameof(textureNames));
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var name in textureNames)
+        {
+            Ensure.NotNullOrEmpty(name, "Terrain texture names must be Terrain.ini block names.");
+
+            if (!seen.Add(name))
+            {
+                throw new ArgumentException($"The texture name '{name}' appears more than once.", nameof(textureNames));
+            }
+        }
+
+        var textures = new BlendTileTexture[textureNames.Count];
+        for (var i = 0; i < textureNames.Count; i++)
+        {
+            textures[i] = BlendTileTexture.Create(textureNames[i], 0, 16, 4);
+        }
+
+        Textures = textures;
+        _textureIndices = null;
     }
 
     internal static BlendTileData Parse(BinaryReader reader, MapParseContext context, HeightMapData heightMapData)
