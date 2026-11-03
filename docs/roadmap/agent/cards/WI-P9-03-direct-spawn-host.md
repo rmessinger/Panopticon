@@ -84,7 +84,7 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P9-3 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 
 ## Result
 

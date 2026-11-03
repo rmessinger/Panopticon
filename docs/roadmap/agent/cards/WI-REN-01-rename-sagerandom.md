@@ -28,7 +28,7 @@ Rename the class `SageRandom` to `PanopticonRandom` everywhere in code, so the d
 3. Update all remaining code references: `IGame.cs`, `Logic/GameLogic.cs`, `Recording/EngineCheckpoint.cs`, `Recording/EngineCheckpointRestorer.cs`, `test/.../PersistableLogicRandomTests.cs`, `test/.../Recording/EngineCheckpointFormatTests.cs`.
 4. Update forward-looking docs that name the class: `docs/roadmap/seams.md`, `docs/roadmap/open-questions.md`, `docs/roadmap/implementation-checklist.md`, `docs/roadmap/implementation/track-a-a1-6-operational-recording.md`, `docs/roadmap/implementation/track-w-w1-aggregate-sector.md`, the deep dives under `docs/roadmap/deep-dives/` (`a1-6-operational-recording.md`, `a2-reproducibility.md`, `w0-charter-fixture.md`, `w1-aggregate-sector.md`), and the not-yet-started card `docs/roadmap/agent/cards/WI-W1-03-seeded-streams-poisson.md`.
 5. Leave `Done` cards' Result sections (`WI-A1-13` through `WI-A1-16`) unchanged: they record the class name as it was implemented.
-6. Run the validation commands below, flip this card's Status, and append a `.exchange` line.
+6. Run the validation commands below, flip this card's Status, and add a `Result:` line as the first bullet under `## On completion`.
 
 ## Files likely to change
 
@@ -66,6 +66,6 @@ Do not rename `SageGame`, `SageGameExtensions`, `SystemRandom`, `IRandom`, or th
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List follow-up cards to create here:
   - none (a repo-wide `SageGame` rename, if ever wanted, is its own decision and card)

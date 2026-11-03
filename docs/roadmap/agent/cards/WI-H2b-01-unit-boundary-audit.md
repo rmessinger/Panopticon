@@ -32,7 +32,7 @@ Ground the dimensional inventory in final merged H2a code. Blocked pending that 
 ## Files likely to change
 
 - `docs/roadmap/deep-dives/h2b-metric-inventory.md` (new, audience line required).
-- This card and `.exchange`.
+- This card (its `Result:` line).
 
 ## Acceptance criteria
 
@@ -49,4 +49,4 @@ No engine edits. Unknown source units block conversion.
 
 ## On completion
 
-Set Status, reconcile the H2b checklist, and append findings to `.exchange`. Hand exact scopes to card 02.
+Set Status, reconcile the H2b checklist, and add a `Result:` line as the first bullet under `## On completion` with the findings. Hand exact scopes to card 02.

@@ -671,4 +671,5 @@ The stdout table has one row per roster unit. Verdicts:
   spawn-versus-production misbehaviour). The reason is printed on the following line.
 
 Gaps surfaced by a run escalate to P6b (unimplemented handlers) or P5 (spawn-versus-production
-differences); record them in `.exchange`, do not fix them inside the validation ground.
+differences); record them in the escalating card's `Result:` line, do not fix them inside the
+validation ground.

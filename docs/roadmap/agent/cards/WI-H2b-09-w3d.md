@@ -55,4 +55,4 @@ No glTF or NIF changes (card 10); no `W3dPatcher` write changes unless card 02 l
 
 ## On completion
 
-Set Status, tick H2b-9 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-9 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

@@ -61,4 +61,4 @@ No multi-process shards, load balancing, migration, or graph-cut optimization.
 
 - Set Status above to `Done` or `Blocked`.
 - Update the partition row in `seams.md`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

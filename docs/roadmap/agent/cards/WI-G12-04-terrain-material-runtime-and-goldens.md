@@ -64,4 +64,4 @@ dotnet run --project src/Panopticon.Tools.TestHarness -- --built-in-scenario Vis
 
 - Set Status above to `Done` or `Blocked` with reason; set `WI-G12-05` and `WI-G12-07` to `Ready`.
 - Tick G12-2 in the checklist and update the README progress row.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

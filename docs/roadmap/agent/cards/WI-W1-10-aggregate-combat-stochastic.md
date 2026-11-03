@@ -60,5 +60,5 @@ No mean-field variant.
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List follow-up cards to create: none.

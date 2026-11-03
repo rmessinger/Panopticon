@@ -39,7 +39,7 @@ Add a TestHarness `SageW3dProof` scenario that imports the section 5 proof model
 
 - [ ] Installed tests pass for each available game.
 - [ ] Captures show all eight models textured in bind pose beside the Ranger.
-- [ ] Capture paths, the Ranger model name, and scale ratios are recorded in `.exchange`.
+- [ ] Capture paths, the Ranger model name, and scale ratios are recorded in the card's `Result:` line.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -67,4 +67,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, change `WI-C8b-03` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

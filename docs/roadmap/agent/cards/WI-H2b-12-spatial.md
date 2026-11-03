@@ -57,4 +57,4 @@ No pathfinding algorithm changes. Draft until `WI-H2b-02` pins exact files and e
 
 ## On completion
 
-Set Status, tick H2b-12 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-12 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

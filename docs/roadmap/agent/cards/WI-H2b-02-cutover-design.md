@@ -33,7 +33,7 @@ Define bounded implementation scopes and explicit compatibility and release gate
 
 - `docs/roadmap/deep-dives/h2b-metric-execution.md` (new).
 - `docs/roadmap/deep-dives/h2b-metric-core.md`.
-- H2b cards and matching roadmap entries; `.exchange`.
+- H2b cards and matching roadmap entries; this card (its `Result:` line).
 
 ## Acceptance criteria
 
@@ -51,4 +51,4 @@ No implementation or baseline approval. Escalate unsettled design choices.
 
 ## On completion
 
-Set Status, reconcile checklist/resources and split cards, and append decisions to `.exchange`.
+Set Status, reconcile checklist/resources and split cards, and add a `Result:` line as the first bullet under `## On completion` with the decisions.

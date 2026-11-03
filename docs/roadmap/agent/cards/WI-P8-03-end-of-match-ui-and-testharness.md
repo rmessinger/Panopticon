@@ -77,7 +77,7 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Update the P8-3 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List any follow-up cards to create here:
   - Full win/lose dialog UI, if only a minimal hook was built here.
 

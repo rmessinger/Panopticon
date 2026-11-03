@@ -28,7 +28,7 @@ Parse and convert every `.w3d` in Generals, Zero Hour, BFME, BFME2, and RotWK in
 3. Add `SageW3dCorpusTests` with one `[GameFact(game)]` per game. Each enumerates `.w3d` files under its own install root only, while resolving references through `installation.CreateFileSystem()` (RotWK over BFME2, Zero Hour over Generals). Each file: `W3dFile.FromStream`; then `W3dModelImporter.Convert` when the file has render objects or an `HLod`, otherwise `W3dAnimationImporter.Convert` when it has an animation. Use the game's resolver from its `CreateAssetLoadStrategy()`.
 4. Record failures as `(path, reason)`; assert set equality with the manifest and print unexpected and missing entries on failure.
 5. Run with all five installs. Record observed conversion failures in the manifest. The expected set is section 4.1 (shader families, multi-id, `WsClassicEnv`) plus the three `SHDMESH` wall models; anything else stops the card for review.
-6. Print per-game totals (files, parsed, converted) to test output and copy them into `.exchange`.
+6. Print per-game totals (files, parsed, converted) to test output and copy them into the card's `Result:` line.
 
 ## Files likely to change
 
@@ -66,4 +66,4 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done` or `Blocked` with reason.
 - If done and `WI-C8a-01` is done, tick C8a in `docs/roadmap/implementation-checklist.md` and set C8a `Done` in the track doc.
 - If done, change `WI-C8b-01`, `WI-C8c-01`, `WI-C8c-02`, and `WI-C8c-03` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

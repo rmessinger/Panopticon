@@ -67,6 +67,6 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Update the roadmap phase Status if this card completes it.
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet here: date, what changed, validation outcome, follow-up cards.
 - List any follow-up cards to create here:
   - <follow-up>

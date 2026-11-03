@@ -26,7 +26,7 @@ Extend `Sc2M3Proof` with deterministic fixed-time captures of the twelve section
 1. Add an animated mode to `Sc2M3ProofScenario`. For each section 2 clip, capture at 0, 25, 50, and 75 percent of its duration using fixed-time evaluation, not wall clock.
 2. Capture the skinned bind pose and compare it with the C7b static capture within the harness image tolerance.
 3. Run twice and assert the PNGs are byte-identical. On a mismatch, follow the determinism stop-and-report rule.
-4. Inspect and record in `.exchange`: Marine and Zealot walk cycles, the Zealot blade swing, the Marine shield collapsing in `Spell`, the Zergling tail scaling in `Stand Morph Start`, and the Zealot `.m3a` clip.
+4. Inspect and record in the card's `Result:` line: Marine and Zealot walk cycles, the Zealot blade swing, the Marine shield collapsing in `Spell`, the Zergling tail scaling in `Stand Morph Start`, and the Zealot `.m3a` clip.
 5. Write captures to the shared viewer directory.
 
 ## Files likely to change
@@ -64,4 +64,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, set C7c Status to `Done` in the track doc and tick the checklist item.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

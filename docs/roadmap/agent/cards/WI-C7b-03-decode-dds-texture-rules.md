@@ -61,4 +61,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done and `WI-C7b-02` is done, change `WI-C7b-04` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

@@ -34,12 +34,12 @@ Measure the headless tactical runtime cost for Sedan-scale soldier counts with C
    [A1-6 §7](../../deep-dives/a1-6-operational-recording.md#7-size-and-latency) checkpoint
    estimate. If the save path fails, record the failure and continue.
 6. Extrapolate the measured frame cost to 6.48M frames.
-7. Add a W3a appendix named `Scale probe results` and append one `.exchange` result line.
+7. Add a W3a appendix named `Scale probe results` and one `Result:` line as the first bullet under `## On completion`.
 
 ## Files likely to change
 
 - `docs/roadmap/deep-dives/w3a-sedan-1870.md`
-- `.exchange`
+- This card (its `Result:` line)
 - Session-local probe files, not committed
 
 ## Acceptance criteria
@@ -65,6 +65,6 @@ Committed product code is read-only. Modelled detail is not reduced by default.
 
 - Set Status above to `Done` or `Blocked` with reason.
 - Update the roadmap phase Status if this card completes it.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List any follow-up cards to create here:
   - none

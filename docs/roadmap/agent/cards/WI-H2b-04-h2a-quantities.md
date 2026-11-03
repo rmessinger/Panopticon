@@ -60,4 +60,4 @@ No balancing, no new EE2 fields, no publication changes. Draft until `WI-H2b-02`
 
 ## On completion
 
-Set Status, tick H2b-4 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-4 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

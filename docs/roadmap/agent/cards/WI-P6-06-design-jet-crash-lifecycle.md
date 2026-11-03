@@ -77,4 +77,4 @@ temporary profiles and generated images remain outside the repository.
 ## On completion
 
 - Set Status to `Done`, update the plan table and corrective checklist item.
-- Append the design result and blockers to `.exchange`; retain the shipped P6 milestone.
+- Add a `Result:` line as the first bullet under `## On completion` with the design result and blockers; retain the shipped P6 milestone.

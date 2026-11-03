@@ -61,10 +61,10 @@ python3 scripts/check_brace_newline.py
 
 - Do not decode `SHDMESH`. That is `WI-C8b-04`.
 - Do not change importer behavior. That is `WI-C8a-03`.
-- Do not fix `W3dChunkHeader.HasSubChunks`; record it in `.exchange` if it blocks a test.
+- Do not fix `W3dChunkHeader.HasSubChunks`; record it in the card's `Result:` line if it blocks a test.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, change `WI-C8a-03` and `WI-C8b-04` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

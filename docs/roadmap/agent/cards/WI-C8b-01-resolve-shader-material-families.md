@@ -27,7 +27,7 @@ Remove the three section 4.1 mesh conversion hazards in `W3dMaterialConverter`, 
 2. On fallback, build `Simple` properties from the source: `Texture_0` from the first texture-kind property (`Texture_0`, `DiffuseTexture`, or any other), and `ColorEmissive` from `ColorEmissive` when present, else white. Log warning `W3D200 <mesh>: shader family '<name>' rendered as Simple`.
 3. Add a test asserting the converter's known families equal the `ShaderResourceManager` dictionary keys, so they cannot drift. Check how `GetCachedMaterial` treats missing constant members and record it in the test name or a comment.
 4. Per-face shader-material ids: when `ShaderMaterialIds` has one entry per triangle, group consecutive triangles into runs (as `GetMaterialRuns` does for fixed function) and emit one material and one mesh part per run. A count other than 1 or the triangle count throws `InvalidDataException`.
-5. Map `W3dVertexMappingType.WsClassicEnv` to `ImportedTextureMappingType.WsEnvironment`. If the renderer treats them differently, map to the closer one and record the choice in `.exchange`.
+5. Map `W3dVertexMappingType.WsClassicEnv` to `ImportedTextureMappingType.WsEnvironment`. If the renderer treats them differently, map to the closer one and record the choice in the card's `Result:` line.
 6. Synthetic tests: `WaterShader.FX` and `DefaultW3D.fx` fall back to `Simple` with the expected properties; `NormalMapped.FX` resolves to `NormalMapped`; a two-material per-face mesh yields two parts with the right index ranges; `WsClassicEnv` converts.
 7. Rerun `SageW3dCorpusTests` with all installs and remove the `shader-family`, `multi-shader-material`, and `ws-classic-env` entries from the manifest.
 
@@ -67,4 +67,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, change `WI-C8b-02` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

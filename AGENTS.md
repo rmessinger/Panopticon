@@ -36,7 +36,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 ### Development model (stacked PRs; superseded the C4 staging model Oct 2026)
 
-* Tracks ship as a `gh stack`-managed stack of group PRs targeting `main`: cards are implemented in dependency order, grouped onto shared branches (per-card commits, card Status flips, `.exchange` lines), each group = one PR. Groups are identified by numbers, not letters: branches use `track-<track>-<phase>-<group-n>-<topic>` and PRs use "group 1/2/3" wording.
+* Tracks ship as a `gh stack`-managed stack of group PRs targeting `main`: cards are implemented in dependency order, grouped onto shared branches (per-card commits, card Status flips, card `Result:` lines), each group = one PR. Groups are identified by numbers, not letters: branches use `track-<track>-<phase>-<group-n>-<topic>` and PRs use "group 1/2/3" wording.
 * Group 1 branches off `main` (or the upstream branch the track builds on); each later group branches off the previous group's branch, so every PR's base is the branch below it. No staging branches.
 * Manage the stack with the `gh stack` extension: `gh stack init`/`add` plus `submit` while developing, `gh stack link <prs bottom-to-top>` to adopt PRs that already exist, `gh stack checkout <stack>` to adopt locally, `gh stack sync`/`rebase` to update after merges.
 * Every PR is left open for the user to merge; agents never merge PRs themselves. After the user merges the bottom PR (repo default is squash), an agent runs `gh stack sync` so the remaining PRs rebase onto `main`; GitHub auto-retargets on branch delete but the squash commit is not an ancestor, so without the rebase each PR diff would include the groups below it.

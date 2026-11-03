@@ -60,4 +60,4 @@ SHOGUN2_PATH="/mnt/pit2/Network Storage/Transfer/Shogun 2 Complete Edition" dotn
 - Set Status above to `Done` or `Blocked` with reason.
 - Set `WI-C12c-03` to `Ready` if `WI-C12b-04` is `Done`.
 - Set `WI-C12c-05` to `Ready` if `WI-C12a-02` is `Done`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

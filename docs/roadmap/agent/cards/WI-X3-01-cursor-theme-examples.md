@@ -73,5 +73,5 @@ Read-only code, archive, and asset inspection. Record the artifact-generation co
 ## On completion
 
 - Set Status to `Done` once the artifacts and plan entries are recorded. Otherwise set it to `Blocked` and state the missing source or license evidence.
-- Tick X3-1 in the checklist, update X3 progress, and append a result line to `.exchange`.
+- Tick X3-1 in the checklist, update X3 progress, and add a `Result:` line as the first bullet under `## On completion`.
 - Follow-up cards: none until the evidence names a change.

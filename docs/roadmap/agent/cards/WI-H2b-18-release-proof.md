@@ -32,7 +32,7 @@ Show the metric engine reproduces final-H2a Generals and EE2 behavior scaled by 
 
 - `docs/roadmap/deep-dives/h2b-metric-execution.md` results section.
 - Approved, versioned metric baselines.
-- `.exchange`.
+- This card (its `Result:` line).
 
 ## Acceptance criteria
 
@@ -49,4 +49,4 @@ No baseline update without user approval; no new gameplay changes. Draft until `
 
 ## On completion
 
-Set Status, tick H2b-18 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-18 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

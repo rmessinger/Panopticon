@@ -63,4 +63,4 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done` or `Blocked` with reason.
 - Set `WI-N19-02` to `Ready` if `WI-N15-01` and `WI-N10-01` are done.
 - Tick N19-1 in the checklist and update the README progress row.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

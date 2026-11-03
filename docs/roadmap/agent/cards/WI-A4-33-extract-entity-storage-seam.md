@@ -62,4 +62,4 @@ No SoA migration, parallel update, or allocation optimization.
 
 - Set Status above to `Done` or `Blocked`.
 - Update the entity-storage row in `seams.md`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

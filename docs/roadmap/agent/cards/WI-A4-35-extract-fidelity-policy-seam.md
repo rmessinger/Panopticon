@@ -61,4 +61,4 @@ No temporal LOD, simplification, aggregation, precision reduction, or physics tr
 
 - Set Status above to `Done` or `Blocked`.
 - Update the fidelity row in `seams.md`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

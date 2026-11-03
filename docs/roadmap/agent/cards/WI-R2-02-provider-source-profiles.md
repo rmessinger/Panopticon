@@ -90,4 +90,4 @@ python3 scripts/geo/prepare_area.py --provider copernicus-glo30 --center 49.702,
 
 - Set Status above to `Done` or `Blocked` with reason.
 - Tick the R2 provider profiles item in the checklist and update the README Track R progress rows.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

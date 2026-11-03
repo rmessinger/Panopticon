@@ -62,4 +62,4 @@ No hierarchical, flow-field, asynchronous, or cross-shard routing implementation
 
 - Set Status above to `Done` or `Blocked`.
 - Update the pathfinding row in `seams.md`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

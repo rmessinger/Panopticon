@@ -78,8 +78,7 @@ A scenario is a versioned, declarative artifact containing the inputs needed to 
 ### 3.2 Authoring surfaces
 - Declarative scenario file (primary). A human- and agent-writable definition that the harness
   and host consume directly. It is the source of truth, diffable, and version-controllable.
-  Agent-authored scenarios, and the [`.exchange`](../../../.github/copilot-instructions.md)
-  hand-off, are first-class.
+  Agent-authored scenarios, and the in-card `Result:` hand-off, are first-class.
 - Visual setup (secondary, GPU-light). A domain-parameterized editor reusing the §4 rendering so
   authors can place or paint entities, edit parameters, and scrub a preview. For spatial domains
   this extends WorldBuilder; graph and zone domains render the network or district view. Visual

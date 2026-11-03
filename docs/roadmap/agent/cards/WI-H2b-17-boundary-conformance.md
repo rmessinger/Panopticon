@@ -54,4 +54,4 @@ No production code changes except bugs the suite exposes, each reported first. D
 
 ## On completion
 
-Set Status, tick H2b-17 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-17 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

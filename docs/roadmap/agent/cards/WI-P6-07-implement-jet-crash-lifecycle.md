@@ -88,4 +88,4 @@ await the operator's determination; do not refresh baselines to mask them.
 ## On completion
 
 - Set Status to `Done`, update the plan table and corrective checklist item.
-- Append tests and capture locations to `.exchange`; retain the shipped P6 milestone.
+- Add a `Result:` line as the first bullet under `## On completion` with tests and capture locations; retain the shipped P6 milestone.

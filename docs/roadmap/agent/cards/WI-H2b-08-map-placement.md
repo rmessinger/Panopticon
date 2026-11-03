@@ -55,4 +55,4 @@ No scripting distance parameters (card 12). Draft until `WI-H2b-02` pins exact f
 
 ## On completion
 
-Set Status, tick H2b-8 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-8 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

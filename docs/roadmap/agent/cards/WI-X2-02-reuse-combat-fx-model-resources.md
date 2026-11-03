@@ -76,7 +76,7 @@ Record the exact focused test, Windows D3D11 workload, measurement interval, and
 ## On completion
 
 - Update this card, the [X2 plan](../../implementation/track-x-x2-capacity-probe-fixes.md), checklist, progress table, and phase status if complete.
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - Record any broader pooling proposal as a separate follow-up.
 
 ## Result

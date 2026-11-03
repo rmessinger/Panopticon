@@ -79,4 +79,4 @@ deviations and await the operator's determination; do not regenerate baselines.
 ## On completion
 
 - Set Status to `Done`, update the plan table and corrective checklist item.
-- Append validation and capture locations to `.exchange`; retain the shipped G6 milestone.
+- Add a `Result:` line as the first bullet under `## On completion` with validation and capture locations; retain the shipped G6 milestone.
