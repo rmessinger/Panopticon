@@ -320,6 +320,12 @@ mindmap
         G12-2 Terrain material packs
         G12-3 Terrain PBR shading
         G12-4 Model texture replacement
+      G13 First-person ground view ⮕
+        G13-1 View mode seam
+        G13-2 Avatar drop
+        G13-3 Ground locomotion
+        G13-4 Ground-level rendering
+        G13-5 Transitions and goldens
     H. Map and unit storage formats
       H1 Format requirements and current-state audit
       H2 Format-agnostic map interchange abstraction
@@ -539,6 +545,7 @@ flowchart LR
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     G12["G12 Open material packs"]
+    G13["G13 First-person ground view"]
     A5["A5 Scenario & visualization"]
     A1OR["A1-6 Operational recording"]
     W0["W0 Charter fixture"]
@@ -772,6 +779,9 @@ flowchart LR
   G3 --> G11
   G3 --> G12
   G7 --> G12
+  G2 --> G13
+  G3 --> G13
+  G10 --> G13
   G2 --> G6
   G3 --> G6
   G2 --> G7
@@ -952,7 +962,7 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C,C8A,C8B,C8C,C9A,C9B,C9C,C9D,C10A,C10B,C10C,C10D,C11A,C11B,C11C,C12A,C12B,C12C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
-  class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G12 trackG;
+  class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G12,G13 trackG;
   class H1,H2,H2A,H2B,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;

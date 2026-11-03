@@ -1406,6 +1406,24 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
         investigation first).
     - AC: the investigation recommends an approach with captures and writes the implementation
       cards.
+- [ ] G13 First-person ground view (hotkey avatar drop, then walk in first person; design in the
+      [deep dive](deep-dives/g13-first-person-ground-view.md)).
+  - [ ] G13-1 View mode seam and relative mouse
+        ([`WI-G13-01`](agent/cards/WI-G13-01-view-mode-seam-and-relative-mouse.md)).
+    - AC: entering and leaving restores `TacticalView` exactly and RTS input is suppressed in
+      first person.
+  - [ ] G13-2 Avatar drop mode ([`WI-G13-02`](agent/cards/WI-G13-02-avatar-drop-mode.md)).
+    - AC: the marker validates ground and a valid click enters first person there.
+  - [ ] G13-3 Ground locomotion ([`WI-G13-03`](agent/cards/WI-G13-03-avatar-ground-locomotion.md)).
+    - AC: walking respects slope, impassable, structure, and border blocking at G10-derived scale.
+  - [ ] G13-4 Ground-level rendering
+        ([`WI-G13-04`](agent/cards/WI-G13-04-ground-level-projection-and-hud.md),
+        [`WI-G13-05`](agent/cards/WI-G13-05-sky-and-distance-fog.md)).
+    - AC: no near-plane clipping, sky and fog at the horizon, HUD hidden; tactical rendering and
+      goldens unchanged.
+  - [ ] G13-5 Transitions, goldens, and cost
+        ([`WI-G13-06`](agent/cards/WI-G13-06-transitions-goldens-and-cost.md)).
+    - AC: `first-person` goldens recorded with injected regressions failing; frame time recorded.
 
 ## Track H: Map & Unit Storage Formats
 

@@ -798,6 +798,12 @@
   goal field, is gated on measurement after request sharing. Behavior-changing options default off
   until N5 evidence and an operator decision. The no-hierarchy clause is superseded by the layered
   navigation decision (2026-10-28).
+- First-person ground view. Decision (2026-11-02): an avatar drop and walk mode is Track G phase
+  G13, presentation only: the avatar is client state, not a `GameObject`, issues no orders, and
+  never changes simulation results; selection and orders are unavailable while in first person.
+  A view-mode seam saves and restores `TacticalView` rather than extending its orbit model. Eye
+  height and speed derive from the G10 reference scale. See the
+  [deep dive](deep-dives/g13-first-person-ground-view.md#2-constraints).
 - Open material packs. Decision (2026-11-02): replacing original terrain and model textures with
   openly licensed materials is Track G phase G12. Packs are operator-built from command-line
   downloads (CC0 first; CC-BY only with recorded attribution) and stored outside the repository
