@@ -58,6 +58,6 @@ Granular frames come only from the A1-6 reconstructor and are labelled rebuilt.
 
 - Set Status above to `Done` or `Blocked` with reason.
 - Update the roadmap phase Status if this card completes it.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List any follow-up cards to create here:
   - none

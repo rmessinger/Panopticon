@@ -57,4 +57,4 @@ No blend tiles, object placement, or pathfinding (cards 08 and 12). Draft until 
 
 ## On completion
 
-Set Status, tick H2b-7 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-7 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

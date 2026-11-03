@@ -54,4 +54,4 @@ No temporal LOD, simplified physics, aggregation, or visualization.
 ## On completion
 
 - Set Status above to `Done` or `Blocked` with reason.
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

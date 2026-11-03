@@ -55,4 +55,4 @@ npx -y @mermaid-js/mermaid-cli@latest -p /tmp/pp.json -i docs/roadmap/deep-dives
 - Set Status above to `Done` or `Blocked` with reason.
 - If done and `WI-C8b-04` is done, tick C8b in `docs/roadmap/implementation-checklist.md` and set C8b `Done` in the track doc (unless `WI-C8b-05` exists and is open).
 - If done, change `WI-C8c-04` to `Ready` when its other prerequisites are done.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

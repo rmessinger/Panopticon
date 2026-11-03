@@ -70,7 +70,7 @@ Find your change type; update every box listed. Then run the [validation](#valid
 6. Consistency sweep. Confirm the [invariants](#consistency-invariants) hold.
 7. Update the session `plan.md` (if you're an orchestrator with one). But never rely on it as
    shared truth; it isn't in the repo.
-8. Hand off via repo-root `.exchange` if other agents are involved.
+8. Record the outcome in each touched card's `Result:` line (`## On completion`).
 
 ---
 

@@ -56,4 +56,4 @@ No ReplaySketch UI changes (card 16). Draft until `WI-H2b-02` pins exact files a
 
 ## On completion
 
-Set Status, tick H2b-14 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-14 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

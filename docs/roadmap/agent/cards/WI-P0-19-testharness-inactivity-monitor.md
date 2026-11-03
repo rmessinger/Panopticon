@@ -86,4 +86,4 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Update the `implementation-checklist.md` P0 item this card closes.
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

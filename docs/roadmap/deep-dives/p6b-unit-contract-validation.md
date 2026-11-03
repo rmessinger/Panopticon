@@ -68,7 +68,7 @@ like "unit of definition D exists in player's owned set" that need a query selec
 If a special-ability handler is still unimplemented in `OrderProcessor`, the harness run should
 fail with a clear message (assertion failed: `SpecialPower(X)` had no observable effect after N
 frames). That turns missing handlers into an explicit P6b gap list instead of a silent failure.
-Document gaps in `P6b.exchange` or `.exchange`, then fix them within P6b.
+Document gaps in the P6b cards' `Result:` lines, then fix them within P6b.
 
 ---
 

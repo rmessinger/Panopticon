@@ -71,4 +71,4 @@ TESTHARNESS_VR_UPDATE_GOLDENS=1 dotnet run --project src/Panopticon.Tools.TestHa
 
 - Set Status above to `Done` or `Blocked` with reason; mark G11 `Done` in the Track G table.
 - Tick G11-4 in the checklist and update the README progress row.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

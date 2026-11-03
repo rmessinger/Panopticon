@@ -56,4 +56,4 @@ dotnet run --project src/Panopticon.Tools.TestHarness -- --built-in-scenario Mas
 
 - Set Status above to `Done` or `Blocked` with reason.
 - Tick N20-1 in the checklist and update the README progress row.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

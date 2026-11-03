@@ -52,4 +52,4 @@ Decode enough of the top-level `0x0B00` chunk in `gbmtwalld`, `gbmtwalldramp`, a
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done and `WI-C8b-03` is done, tick C8b in `docs/roadmap/implementation-checklist.md` and set C8b `Done` in the track doc (unless a follow-up card is open).
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

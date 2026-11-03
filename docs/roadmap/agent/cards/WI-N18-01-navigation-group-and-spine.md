@@ -64,4 +64,4 @@ dotnet run --project src/Panopticon.Tools.TestHarness -- --built-in-scenario Nav
 - Set Status above to `Done` or `Blocked` with reason.
 - Set `WI-N18-03` to `Ready`; set `WI-N18-02` to `Ready` if `WI-N14-01` is done.
 - Tick N18-1 in the checklist and update the README progress row.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

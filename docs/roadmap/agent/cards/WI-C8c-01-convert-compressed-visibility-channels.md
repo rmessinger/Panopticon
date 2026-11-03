@@ -23,7 +23,7 @@ Import `W3dCompressedAnimation.TimeCodedBitChannels` as visibility channels inst
 ## Steps
 
 1. In `ConvertCompressed`, convert each `TimeCodedBitChannels` entry with `ChannelType == Visibility` into an `ImportedAnimationChannel` of type `Visibility`: a keyframe at time 0 with `DefaultValue` when the first time code is not 0, then one keyframe per datum at `TimeCode / FrameRate`. Other bit channel types throw `NotSupportedException` like `ConvertBitChannel`.
-2. Verify the bit-31 value guess: find installed clips that ship both an uncompressed and a compressed form of the same animation, or compare against the clip's mesh visibility in captures. Record the result in `.exchange`; if the guess is wrong, fix `W3dTimeCodedBitDatum.Parse` and its writer together.
+2. Verify the bit-31 value guess: find installed clips that ship both an uncompressed and a compressed form of the same animation, or compare against the clip's mesh visibility in captures. Record the result in the card's `Result:` line; if the guess is wrong, fix `W3dTimeCodedBitDatum.Parse` and its writer together.
 3. Synthetic test: a compressed animation with one visibility bit channel imports with the expected keyframes and times.
 4. Extend `SageW3dCorpusTests` (or a sibling installed test) to count imported compressed visibility channels per game and assert they are nonzero for BFME and BFME2.
 
@@ -36,7 +36,7 @@ Import `W3dCompressedAnimation.TimeCodedBitChannels` as visibility channels inst
 ## Acceptance criteria
 
 - [ ] Step 3 and step 4 tests pass.
-- [ ] Generals animation import output is unchanged: `W3dImportParityTests` pass with `CNC_GENERALS_PATH` set. Generals clips carrying compressed bit channels, if any, are listed in `.exchange`.
+- [ ] Generals animation import output is unchanged: `W3dImportParityTests` pass with `CNC_GENERALS_PATH` set. Generals clips carrying compressed bit channels, if any, are listed in the card's `Result:` line.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -60,4 +60,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, change `WI-C8c-04` to `Ready` when its other prerequisites are done.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

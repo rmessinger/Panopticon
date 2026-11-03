@@ -61,7 +61,7 @@ CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" EMPIRE_EAR
 
 - Set Status above to `Done`.
 - On a met verdict, tick M5-4 in the implementation checklist and update the README progress row.
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List any follow-up cards to create here:
   - State: `Blocked` on the presenting-display run; measurement plumbing landed. The windowed
     battle's B1 record now carries `tick.fps` (median, with `tick.wallMs` and the logic, `ai`,

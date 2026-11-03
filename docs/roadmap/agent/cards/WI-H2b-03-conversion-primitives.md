@@ -57,4 +57,4 @@ No call-site migration, no generic parser changes, no mass or force conversion. 
 
 ## On completion
 
-Set Status, tick H2b-3 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-3 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

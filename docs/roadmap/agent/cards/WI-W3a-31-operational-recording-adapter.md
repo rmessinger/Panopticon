@@ -68,7 +68,7 @@ Do not change historical Sedan datasets or run families. Do not add W6 save/load
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - Unblock W3a operational reference-run evidence cards that depend on A1-6.
 - List follow-up cards to create here:
   - none

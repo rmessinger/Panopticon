@@ -73,4 +73,4 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` or `Blocked`.
 - If `WI-C4a-05` and `WI-C4a-06` are also done and `WI-C1-08` is done, change
   `WI-C4a-07` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

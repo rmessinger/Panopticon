@@ -41,9 +41,9 @@ Every agent working from this guide follows the same loop:
    matching phase row's Status in the [track doc](../README.md#tracks-at-a-glance) if the card
    completes a phase, and tick the matching item(s) in the
    [implementation checklist](../implementation-checklist.md).
-6. Report / hand off. Write a one-paragraph result to the shared [`.exchange`](#coordination)
-   file at the repo root (what changed, validation result, and any follow-up cards to create). This
-   lets the next agent or a human continue without re-discovering the work.
+6. Record the result. Add a `Result:` line as the first bullet of the card's `## On completion`
+   section: date, what changed, validation outcome, and any follow-up cards to create. This lets
+   the next agent or a human continue without re-discovering the work.
 
 > Golden rule: a card is a contract. If a card cannot be satisfied within its stated scope and
 > guardrails, it is marked `Blocked` with an explanation rather than expanded to force completion.
@@ -117,12 +117,13 @@ output where the card specifies.
 
 ---
 
-## Coordination
+## Recording results
 
-Agents share the repo-root `.exchange` file to pass state across sessions and concurrent runs
-(it is gitignored). A short, dated entry is appended when a card is completed or blocked: card id,
-what changed, validation result, and any follow-up cards to create. The file is read before work
-starts to avoid duplicate in-flight work.
+A completed or blocked card records its result in the card itself: a `Result:` bullet (date,
+what changed, validation outcome, follow-up cards) as the first bullet of the card's
+`## On completion` section. The repo-root `.exchange` file is a frozen, read-only archive of
+pre-retirement results; `.exchange` steps in older cards are obsolete, record the result in the
+card instead.
 
 ---
 

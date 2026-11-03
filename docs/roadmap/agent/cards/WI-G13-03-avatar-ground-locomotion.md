@@ -60,4 +60,4 @@ dotnet test test/Panopticon.Simulation.Tests --filter "FullyQualifiedName~Avatar
 
 - Set Status above to `Done` or `Blocked` with reason; if `WI-G13-02` is `Done`, set `WI-G13-04` to `Ready`.
 - Tick G13-3 in the checklist and update the README progress row.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

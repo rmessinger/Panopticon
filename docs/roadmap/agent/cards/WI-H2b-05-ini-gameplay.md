@@ -58,4 +58,4 @@ No presentation fields, no `GameData` globals, no physics constants (cards 06 an
 
 ## On completion
 
-Set Status, tick H2b-5 in the checklist, and append the result to `.exchange`.
+Set Status, tick H2b-5 in the checklist, and add a `Result:` line as the first bullet under `## On completion`.

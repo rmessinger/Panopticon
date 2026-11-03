@@ -37,7 +37,7 @@ Import the three proof units from the install in installed tests, and capture th
 
 - [ ] Installed tests pass with the counts in step 1.
 - [ ] Captures show all three units textured and upright, facing +X, beside the Ranger.
-- [ ] Capture paths and the Ranger model name are recorded in `.exchange`.
+- [ ] Capture paths and the Ranger model name are recorded in the card's `Result:` line.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -64,4 +64,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, set C7b Status to `Done` in the track doc, tick the checklist item, and change `WI-C7c-02` to `Ready` if `WI-C7c-01` is done.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

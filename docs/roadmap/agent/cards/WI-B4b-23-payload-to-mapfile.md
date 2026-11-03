@@ -57,5 +57,5 @@ No capability gating; dev-only.
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - Unblock `WI-B4b-24` when their other prerequisites are `Done`.

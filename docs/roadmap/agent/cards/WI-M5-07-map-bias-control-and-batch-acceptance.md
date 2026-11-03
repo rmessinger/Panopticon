@@ -68,7 +68,7 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done`.
 - Tick M5-2 in the implementation checklist and update the README progress row.
-- Append a result line to repo-root `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List any follow-up cards to create here:
   - State: `Blocked` on the full-scale acceptance batches, everything else landed. Variant
     machinery: `MassBattleBatchVariant` knob (`Battle`/`Mirror`/`Swap`) applied by

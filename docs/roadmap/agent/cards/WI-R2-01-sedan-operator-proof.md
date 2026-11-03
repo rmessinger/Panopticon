@@ -96,4 +96,4 @@ PANOPTICON_GEO_PROOF_DIR="<operator data dir>" CNC_GENERALS_PATH="/home/rmessing
 
 - Set Status above to `Done` or `Blocked` with reason.
 - Tick the R2 Sedan proof item in the checklist and update the README Track R progress rows.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

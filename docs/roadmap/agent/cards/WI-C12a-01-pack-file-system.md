@@ -67,4 +67,4 @@ SHOGUN2_PATH="/mnt/pit2/Network Storage/Transfer/Shogun 2 Complete Edition" dotn
 - Set Status above to `Done` or `Blocked` with reason.
 - Set `WI-C12a-02`, `WI-C12b-01`, and `WI-C12c-01` to `Ready`.
 - If this card created `Panopticon.FileFormats.Lz4`, note it in `WI-C10a-01` so C10a reuses it.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

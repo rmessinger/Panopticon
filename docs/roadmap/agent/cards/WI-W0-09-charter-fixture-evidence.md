@@ -55,5 +55,5 @@ No W1 systems. If an assertion needs a schema change, stop and update the deep d
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
 - List follow-up cards to create: none.

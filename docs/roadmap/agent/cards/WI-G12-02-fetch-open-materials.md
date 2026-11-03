@@ -56,4 +56,4 @@ python3 scripts/textures/fetch_materials.py "<work dir>"
 ## On completion
 
 - Set Status above to `Done` or `Blocked` with reason; set `WI-G12-03` to `Ready`.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

@@ -53,7 +53,7 @@ re-tested. Known data points to check, not assume:
 Method: remove one unit from `UnmeasurableAttackReasons`, run the headless ground, and read the
 verdict (`OK`/`REGRESSED`/`TIMEOUT`). A `TIMEOUT` with zero target damage confirms the gap; restore
 the entry. An `OK`/`NEW` measurement promotes the unit to the baseline through the standard refresh
-workflow. Record each verdict in `.exchange`.
+workflow. Record each verdict in the card's `Result:` line.
 
 Exit: every bucket-B entry carries a current, target-specific verdict; promoted units are in the
 baseline.

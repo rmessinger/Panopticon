@@ -123,14 +123,14 @@ For incremental, low-effort implementation work, use the agent task-card system 
 
 - Cards live in `docs/roadmap/agent/cards/` named `<PHASE>-<NN>-<slug>.md`.
 - Each card is self-contained: exact files to read, ordered steps, acceptance criteria, and validation commands.
-- Pick a card with Status `Ready`, execute it, then mark it `Done` or `Blocked` and append a result entry to `.exchange`.
+- Pick a card with Status `Ready`, execute it, then mark it `Done` or `Blocked` and record the result in the card's `Result:` line (`## On completion`).
 - The template for new cards is `docs/roadmap/agent/task-card-template.md`.
 
 If a phase has no ready cards but needs advancing, decompose it into new cards using the template rather than executing the phase open-endedly.
 
 ## Agent Communication
 
-Agents may use the file `.exchange` in the repository root to communicate with each other across sessions and concurrently. This file is excluded from version control (`.gitignore`). Use it to share state, pass results, or coordinate work between parallel or sequential agent sessions.
+Card results are recorded in the card itself: a `Result:` line as the first bullet of the card's `## On completion` section (see `docs/roadmap/agent/README.md`). The repo-root `.exchange` file is a frozen archive of pre-retirement results.
 
 ## PR Guidelines
 

@@ -80,7 +80,7 @@ dotnet format src --verify-no-changes
   `Update`/`Step` throw, so movement and combat cannot resolve.
 - Do not weaken the live test to a warning when a unit regresses.
 - Do not fix gaps discovered by the live test in this card. Unimplemented handlers escalate to P6b;
-  spawn-versus-production differences escalate to P5. Record them in `.exchange`.
+  spawn-versus-production differences escalate to P5. Record them in the card's `Result:` line.
 
 ## On completion
 
@@ -88,7 +88,7 @@ dotnet format src --verify-no-changes
 - Tick the P9-8 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Update the P9 phase Status in [`track-p-playable-baseline.md`](../../track-p-playable-baseline.md)
   if this card completes the phase.
-- Append a result line to repo-root `.exchange`, listing any unit escalated as a gap.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards; list any unit escalated as a gap.
 
 ## Result
 

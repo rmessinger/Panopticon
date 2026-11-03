@@ -52,4 +52,4 @@ Identify what channel type 15 (`W3dAnimationChannelType.UnknownBfme`, commented 
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, change `WI-C8c-04` to `Ready` when its other prerequisites are done.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

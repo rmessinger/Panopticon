@@ -38,7 +38,7 @@ Extend `SageW3dProofScenario` with animated captures of the Gondor soldier, Muma
 
 - [ ] Installed tests pass with zero missing targets.
 - [ ] Both capture runs are byte-identical.
-- [ ] Captures show the cycles without torn joints; paths recorded in `.exchange`.
+- [ ] Captures show the cycles without torn joints; paths recorded in the card's `Result:` line.
 - [ ] `W3dImportParityTests` pass unchanged with `CNC_GENERALS_PATH` set.
 - [ ] Standard validation passes.
 
@@ -66,4 +66,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, tick C8c in `docs/roadmap/implementation-checklist.md` and set C8c `Done` in the track doc (unless a `WI-C8c-05` follow-up is open).
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

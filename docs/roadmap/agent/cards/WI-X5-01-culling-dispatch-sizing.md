@@ -73,4 +73,4 @@ python3 scripts/check_brace_newline.py
 
 - Set Status above to `Done` or `Blocked` with reason.
 - If done, tick X5-1 in `docs/roadmap/implementation-checklist.md`, set X5 `Done` in the track doc, update the README progress row, and fill "WI-X5-01 results" in the X5 plan.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
