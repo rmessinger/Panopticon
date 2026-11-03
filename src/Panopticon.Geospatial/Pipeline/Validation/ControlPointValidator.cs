@@ -643,7 +643,10 @@ public sealed class ControlPointValidator : IStagedPayloadValidator
 
             var payloadDatumIsKnown = !string.Equals(transform.VerticalDatum.Trim(), "unknown", StringComparison.OrdinalIgnoreCase);
 
-            var absoluteToleranceMeters = elevation?.VerticalAccuracyMeters ?? manifest.Tolerances.VerticalMeters;
+            // User-approved contract reconciliation: the absolute vertical tolerance binds as the
+            // operator-approved maximum of the DEM's stated accuracy and the explicit tolerance;
+            // a stricter explicit tolerance never undercuts the stated accuracy floor.
+            var absoluteToleranceMeters = Max(elevation?.VerticalAccuracyMeters, manifest.Tolerances.VerticalMeters);
 
             return new ValidationContext(
                 reader,
@@ -658,6 +661,21 @@ public sealed class ControlPointValidator : IStagedPayloadValidator
                 absoluteToleranceMeters,
                 manifest.Tolerances.RelativeVerticalMeters,
                 diagnostics);
+        }
+
+        private static double? Max(double? left, double? right)
+        {
+            if (left is null)
+            {
+                return right;
+            }
+
+            if (right is null)
+            {
+                return left;
+            }
+
+            return Math.Max(left.Value, right.Value);
         }
     }
 }

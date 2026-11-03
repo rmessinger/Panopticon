@@ -92,14 +92,16 @@ internal static class ControlPointTestSupport
         return "{ " + string.Join(", ", members) + " }";
     }
 
-    /// <summary>Injects control points, tolerances, per-source accuracies, and the unknown-DEM-datum variant.</summary>
+    /// <summary>Injects control points, tolerances, per-source accuracies, DEM vertical accuracy overrides, and the unknown-DEM-datum variant.</summary>
     public static void RewriteManifest(
         ImportProjectFixture fixture,
         string? controlPoints = null,
         string? tolerances = null,
         bool demDatumUnknown = false,
         double? demHorizontalAccuracy = null,
-        double? vectorHorizontalAccuracy = null)
+        double? vectorHorizontalAccuracy = null,
+        double? demVerticalAccuracy = null,
+        bool demVerticalAccuracyOmitted = false)
     {
         var text = File.ReadAllText(fixture.ManifestPath);
 
@@ -112,6 +114,15 @@ internal static class ControlPointTestSupport
         else if (demHorizontalAccuracy is { } demAccuracy)
         {
             text = text.Replace("\"horizontalAccuracyMeters\": 0.6", $"\"horizontalAccuracyMeters\": {Format(demAccuracy)}");
+        }
+
+        if (demVerticalAccuracyOmitted)
+        {
+            text = text.Replace(" \"verticalAccuracyMeters\": 1.5,", string.Empty);
+        }
+        else if (demVerticalAccuracy is { } demVertical)
+        {
+            text = text.Replace("\"verticalAccuracyMeters\": 1.5", $"\"verticalAccuracyMeters\": {Format(demVertical)}");
         }
 
         if (vectorHorizontalAccuracy is { } vectorAccuracy)

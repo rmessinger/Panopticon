@@ -283,8 +283,9 @@ Default validation tolerances are owned by the manifest:
 
 - horizontal: at most the greater of one output sample spacing and the source's stated horizontal
   accuracy;
-- vertical: the DEM's stated vertical accuracy when available; otherwise the operator must supply
-  a tolerance.
+- vertical: the maximum of the DEM's stated vertical accuracy and the explicit operator tolerance
+  whenever either is available; a stricter operator tolerance never undercuts the stated accuracy,
+  and with neither the absolute comparison fails with the typed missing-tolerance error.
 
 The H3 output elevation quantum must be no greater than half the vertical tolerance. An operator
 may tighten either tolerance. Absolute vertical validation requires a declared vertical datum.
