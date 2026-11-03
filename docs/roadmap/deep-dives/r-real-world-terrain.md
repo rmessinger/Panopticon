@@ -8,7 +8,7 @@
 > geospatial data. Code references are in the agent-context appendix.
 
 Purpose: generate an editable, playable Panopticon map from a bounded real-world area. Command-line
-preparation scripts (`scripts/geo/`, §8.1) fetch openly licensed elevation, imagery, benchmark, and
+preparation scripts (`scripts/geo/`, §8.1) fetch openly licensed elevation, imagery, ground-truth, and
 building footprint data from per-provider profiles (national agencies such as IGN, Europe-wide
 Copernicus), reproject it, and generate the extent KML. The importer converts those local KML/KMZ
 and GeoTIFF files into the B4a/H3 map representation. KML may also be authored by hand or in Google
@@ -581,8 +581,12 @@ Validation layers:
 
 Before R5, [`WI-R2-01`](../agent/cards/WI-R2-01-sedan-operator-proof.md) runs layers 5 and 6 on the
 R2 dev preview with real data: about 1.1 km of Sedan around the Château fort, IGN RGE ALTI 1 m
-elevation (`NGF-IGN69`), IGN BD ORTHO imagery, a generated KML extent, and IGN levelling
-benchmarks as independent vertical control. It omits the H3 package and WorldBuilder round-trip,
+elevation (`NGF-IGN69`), IGN BD ORTHO imagery, a generated KML extent, and blinded ground-truth
+cells derived from IGN LiDAR HD class-2 points as independent vertical control, selected by the
+frozen pre-DEM protocol owned by the [Sedan ground-truth protocol](r2-sedan-ground-truth.md). The
+2026-11-02 levelling-benchmark audit found 0 of 21 in-square `IGNF_GEODESIE:rn` marks
+ground-comparable, so the levelling marks are retained only as metadata and candidate-exclusion
+evidence. It omits the H3 package and WorldBuilder round-trip,
 which stay in R5. Data preparation is command-line only (`scripts/geo/prepare-sedan-proof.sh`:
 `curl` downloads, GDAL reprojection, `ogr2ogr` KML generation); no desktop tool is required.
 [`WI-R2-02`](../agent/cards/WI-R2-02-provider-source-profiles.md) then generalizes it into
