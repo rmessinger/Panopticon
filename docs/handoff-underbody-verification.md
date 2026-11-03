@@ -104,7 +104,7 @@ their cars and align with each car's floor rather than its side. No terrain is v
 an exposed underside. Cars can settle on their sides or ends because their collision shapes
 remain simple boxes.
 
-Current shared GIF (live viewer at https://files.reid-corp.com/viewer/):
+Current shared GIF (in the screenshot viewer):
 `physics_stack_underbody.gif` in `/mnt/pit2/Network Storage/temp/`.
 
 ### A/B against unpatched models

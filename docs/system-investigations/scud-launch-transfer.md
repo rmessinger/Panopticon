@@ -15,8 +15,8 @@ The reported defect is fixed. Four separate faults were involved, three of them 
 | 3 | No launch arc; missile flew straight at the target | Not an engine bug: the capture ran at 90 units, inside the weapon's `MinimumAttackRange` of 200 | `6a0bd967` (doc only) |
 | 4 | In-flight missile's pitch flipped roughly +/-45 degrees on alternating frames | `Matrix4x4Utility.CreateTransformMatrix` now builds the basis directly so row 1 is the requested direction | `8e91bb78` |
 
-Current artifact: `/mnt/pit2/Network Storage/temp/scud_launch.gif` (163 frames), viewable at
-https://files.reid-corp.com/viewer/.
+Current artifact: `/mnt/pit2/Network Storage/temp/scud_launch.gif` (163 frames), viewable in the
+screenshot viewer.
 
 ## 2. Root causes, in short
 

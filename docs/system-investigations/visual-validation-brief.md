@@ -54,7 +54,7 @@ Defender (red selection bracket when selected) fires at a China BattleMaster tan
 4. Reload pause, then repeat.
 
 Reference artifacts in the shared viewer directory (`/mnt/pit2/Network Storage/temp/`,
-served at https://files.reid-corp.com/viewer/):
+served by the screenshot viewer):
 - `vg_missile_defender.gif`: current capture (86 frames, camera height 115, 986x477 crop),
   produced by the `EngagementCapture` scenario plus `scripts/annotate_engagement_gif.py`. The
   units stand 120 units apart on a left-to-right axis, so the missile crosses the frame

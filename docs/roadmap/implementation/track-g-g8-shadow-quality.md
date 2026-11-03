@@ -90,7 +90,7 @@ construction `Scene3D.cs:298` and on preset switch `Game.cs:1068`
   term must be receiver-side, as the deep dive designs.
 - Baseline crops from the `Legacy` `shadow-casters` VR capture (1024x768, single 1024 cascade,
   `Bias = 0.002`) were written to
-  `https://files.reid-corp.com/viewer/panopticon-g8-legacy-baseline.png` (three 256x256 crops:
+  `/mnt/pit2/Network Storage/temp/panopticon-g8-legacy-baseline.png` (three 256x256 crops:
   lit ground, shadow edge, contact region). G8-02's tuning compares against this state.
 
 ## Tuning record (`WI-G8-02`, complete)

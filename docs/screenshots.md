@@ -7,7 +7,7 @@
 ## Sharing with the user
 
 Copy the PNG into `/mnt/pit2/Network Storage/temp/` (the path contains spaces; quote it). That
-directory is served read-only by the live viewer at `https://files.reid-corp.com/viewer/`, which
+directory is served read-only by the live screenshot viewer, which
 shows the newest image automatically: no refresh, upload, or login. Each iteration uses a unique
 versioned filename and frame directory. Preserve existing entries as progress evidence; no
 overwrite or removal without explicit operator approval. Historical recaptures include
