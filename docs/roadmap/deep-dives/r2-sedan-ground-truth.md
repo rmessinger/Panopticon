@@ -19,7 +19,7 @@ PASS is claimed or implied in this document.
 |---|---|
 | L1 | Roadmap/protocol amendment authorized in principle; this document is that amendment |
 | L2 | Isolated `laspy` plus `lazrs` tooling (section 4) |
-| L3 | Up to 761133878 bytes of LiDAR HD download, strictly after the RGE ALTI 2019 / BD ORTHO 2022 archive acquisition finished (it finished 2026-11-03) |
+| L3 | Up to 830532133 bytes of LiDAR HD download (user-corrected six-tile budget, section 3), strictly after the RGE ALTI 2019 / BD ORTHO 2022 archive acquisition finished (it finished 2026-11-03) |
 | L4 | First tile `LHD_FXX_0840_6958_PTS_LAMB93_IGN69.copc.laz` (128651625 bytes) passes the verification gate of section 4 before the other five tiles |
 
 Unchanged and binding: the committed tolerance rule `ab30059de` (vertical tolerance = max(stated
@@ -51,17 +51,35 @@ tile names follow `LHD_FXX_<E>_<N>_PTS_LAMB93_IGN69.copc.laz`.
 
 | File | Bytes |
 |---|---|
-| `LHD_FXX_0839_6957_PTS_LAMB93_IGN69.copc.laz` | 123676580 |
 | `LHD_FXX_0839_6958_PTS_LAMB93_IGN69.copc.laz` | 119931651 |
-| `LHD_FXX_0840_6957_PTS_LAMB93_IGN69.copc.laz` | 99814973 |
+| `LHD_FXX_0839_6959_PTS_LAMB93_IGN69.copc.laz` | 146099989 |
 | `LHD_FXX_0840_6958_PTS_LAMB93_IGN69.copc.laz` | 128651625 |
-| `LHD_FXX_0841_6957_PTS_LAMB93_IGN69.copc.laz` | 135706605 |
+| `LHD_FXX_0840_6959_PTS_LAMB93_IGN69.copc.laz` | 130615694 |
 | `LHD_FXX_0841_6958_PTS_LAMB93_IGN69.copc.laz` | 153352444 |
-| Total | 761133878 |
+| `LHD_FXX_0841_6959_PTS_LAMB93_IGN69.copc.laz` | 151880730 |
+| Total | 830532133 |
 
 Actual tile coverage is ultimately verified from each file's own header and WKT geometry at
 execution; the filename kilometre convention is not an assumption of coverage, and a separate
-catalog review is active. This document asserts no coverage claim and no first-tile gate outcome.
+catalog review concluded 2026-11-03 with the tile-set correction recorded below. This document
+asserts no coverage claim beyond the metadata rectangles proven by that audit; actual per-tile
+outcomes are owned by the physical gates (section 7).
+
+Tile-set correction, user decision of 2026-11-03: the previously approved set
+E 0839/0840/0841 x N 6957/6958 (total 761133878 bytes) missed the AOI north edge; the AOI
+Lambert-93 y maximum 6958167.624 exceeded that union top by 167.624 m, leaving 1887 of 12321 AOI
+10 m cells uncovered. The corrected set E 0839/0840/0841 x N 6958/6959 (total 830532133 bytes,
++69398255) is the minimum covering set; the remaining five tiles after the first-tile pin are
+701880508 bytes. Provenance: coverage audit
+`~/log/track-r/lidar-coverage-correction-20261103T1258-0500/` (six fresh HEAD size checks, cached
+WFS metadata, corner-containment geometry; metadata BBOX values are nominal, actual header bounds
+come from the physical per-tile gates at execution). The external v1.1 plan record keeps its
+historical list; this document supersedes it for the tile list only. Block naming is NW-corner,
+so the internal tile seams crossing the AOI remain E 840000, E 841000, N 6958000 and the frozen
+E6 list is unchanged. The +50 m window used by that audit and the first-tile probe is a
+conservative coverage diagnostic only, not a protocol margin; the protocol's buffers are the
+section 5.3 candidate window and the E1-E7 thresholds, and the 1170.432 m rounded render frame is
+a preview construct, not the LiDAR AOI.
 
 | Field | Value |
 |---|---|
@@ -111,7 +129,7 @@ mountpoint and free-space guards (packed total plus a 2147483648-byte workspace 
 | Stage | Content | Condition |
 |---|---|---|
 | 1 | Tile `0840_6958` only (128651625 bytes) | L3 active; then the first-tile gate |
-| 2 | The other five tiles | Gate PASSED on stage 1 |
+| 2 | The other five tiles (701880508 bytes) | Gate PASSED on stage 1 |
 
 First-tile verification gate: ALL items must PASS on `0840_6958` before any second tile is fetched;
 every outcome is recorded pass or fail; a fail stops the stage and nothing is auto-loosened.
@@ -262,7 +280,7 @@ inapplicable to ground cells and does not carry over.
 | Gate | State |
 |---|---|
 | GATE 1: archive acquisition completion | SATISFIED 2026-11-03: all 8 pinned archive parts present, size- and sha256-verified, 29835514326 bytes on disk (acquisition record `~/log/track-r/sedan-download-20261103T0905/`) |
-| GATE 2: LiDAR download authorization active | PENDING: first tile `0840_6958` plus the section 4 gate, then the remaining five (no LiDAR fetched and no tools installed as of 2026-11-03) |
+| GATE 2: LiDAR download authorization active | SNAPSHOT 2026-11-03: first tile `0840_6958` acquired (128651625 bytes, local sha256 19465caf3085665f94fd648315896a84cbcf8fd2d9777eca85800c131979d212, no publisher checksum claimed) and its physical section 4 gate executed once: items a, b, c, e, f PASS; item d FAIL (718 of 9494 expected cells, the AOI 10 m grid intersected with the observed header footprint, hold no class-2 point); overall physical gate NOT PASS; the remaining five tiles (701880508 bytes) are NOT authorized; the numeric tolerance decision stays pending (GATE 3); receipt `~/log/track-r/lidar-firsttile-execution-20261103T1330-0500/probe-outcome-receipt.md` |
 | GATE 3: RGE accuracy and epoch, then numeric tolerance | PENDING: RGE actual stated accuracy and content epoch are read from tile quality metadata by a NEW separately specified and separately approved guarded extraction/preparation unit (the committed `sedan_acquire.py` is download-only and owns neither extraction nor quality-mask reads), then the operator numeric tolerance decision |
 | GATE 4: this amendment | Lands with the WI-R2-01 card edit before the Sedan proof run |
 

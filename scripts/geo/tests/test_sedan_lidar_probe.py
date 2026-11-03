@@ -561,7 +561,7 @@ class Stage1OnlyTests(ProbeHarness):
         fetch_never = self.fetch_never()
         makedirs = self.instrument_makedirs()
         code, output = self.run_main(
-            "fetch", "LHD_FXX_0839_6957_PTS_LAMB93_IGN69.copc.laz",
+            "fetch", "LHD_FXX_0839_6959_PTS_LAMB93_IGN69.copc.laz",
             "--first-tile", "--execution-brief-accepted")
         self.assertEqual(lidar.EXIT_GUARD, code)
         self.assertIn("stage-2", output)

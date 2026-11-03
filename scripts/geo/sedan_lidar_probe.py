@@ -102,11 +102,11 @@ FIRST_TILE = Tile(
 )
 # Stage-2 tiles: pinned identity is recorded, but this tool must never fetch them.
 OTHER_TILES = {
-    "LHD_FXX_0839_6957_PTS_LAMB93_IGN69.copc.laz": 123_676_580,
     "LHD_FXX_0839_6958_PTS_LAMB93_IGN69.copc.laz": 119_931_651,
-    "LHD_FXX_0840_6957_PTS_LAMB93_IGN69.copc.laz": 99_814_973,
-    "LHD_FXX_0841_6957_PTS_LAMB93_IGN69.copc.laz": 135_706_605,
+    "LHD_FXX_0839_6959_PTS_LAMB93_IGN69.copc.laz": 146_099_989,
+    "LHD_FXX_0840_6959_PTS_LAMB93_IGN69.copc.laz": 130_615_694,
     "LHD_FXX_0841_6958_PTS_LAMB93_IGN69.copc.laz": 153_352_444,
+    "LHD_FXX_0841_6959_PTS_LAMB93_IGN69.copc.laz": 151_880_730,
 }
 
 USER_AGENT = "Panopticon-TrackR-Sedan-Proof/1.0 (LiDAR HD tile fetch)"
