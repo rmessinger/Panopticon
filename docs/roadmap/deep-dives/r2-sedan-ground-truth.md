@@ -28,6 +28,24 @@ DEM accuracy, explicit `tolerances.verticalMeters`)); the approved archive editi
 separate pending operator decision (section 7); the prior +1 m wall-marker allowance is
 inapplicable to ground cells and does not carry over.
 
+Protocol version 1.2, user-approved 2026-11-03 as one package: stage-1 gate items c and d are
+revised to the reviewed rows in section 4. Item c changes only its population, to the non-empty
+10 m cells of the AOI-intersect-observed-first-tile-footprint expected set; the estimator (median
+over non-empty cells) and the 4.0 threshold are unchanged, and missing cells stay reported by
+item d. Item d becomes the preliminary ground-availability floor: at least 5 eligible cells
+across at least 3 full-AOI sectors under the complete unchanged section 6 method, with the 10 m
+coverage map and all 718 hole attributions retained verbatim and preliminary candidates never
+the final frozen selection; there is no blanket class-6/9/17 hole mask. Provenance of the
+approved package: proposal
+`ad51c5155614a13c6a809db573768116e6f910ba9407e4782d4b3c621a2acd93`, row diff
+`a9a0203b21a009f6ef24d709de6f2b02733f4ebb844ec33ae30dc13482309192`, decision brief
+`0a3c2a5d238d6f89b51ce08e967b2ebea80ff2fd7e3f3382d5a4dc182f1121f2`, and the independent delta
+re-verification PASS at `~/log/track-r/review-lidar-gate-revision-20261103T1552-0500/delta-reverify.md`.
+The approval changes the protocol, not the measurements: the executed v1.1 result stands (items
+a, b, c, e, f PASS; d FAIL 718 of 9494), the revised items are not yet implemented or measured,
+no new item c median exists, no physical PASS is claimed, and the GATE 3 numeric decision has
+not run.
+
 Provenance: approved protocol record `~/log/track-r/sedan-alternative-groundtruth-20261103T0900-0500/`
 (protocol v1.1) with independent review `~/log/track-r/review-groundtruth-protocol-20261103T1000/`
 (PASS with mandatory corrections, applied); this document owns the method inside the repo.
@@ -138,8 +156,8 @@ every outcome is recorded pass or fail; a fail stops the stage and nothing is au
 |---|---|
 | a. File integrity | Byte count exactly 128651625, sha256 recorded, LAS 1.4 header parses, CRS is EPSG:2154 WKT, z in metres |
 | b. IGN69 sanity | Class-2 z over the AOI portion within the hard gate 100 to 250 m; the AOI levelling span 149.371 to 156.940 m is recorded as advisory and never gating |
-| c. Class-2 density | Median class-2 points per m2 over the AOI plus margin at least 4 (program minimum is 10 pulses per m2; ground yield under canopy and buildings is lower) |
-| d. Coverage | Every 10 m by 10 m cell of the AOI contains at least one class-2 point; holes listed |
+| c. Class-2 density | Median class-2 points per m2 over non-empty 10 m cells of the AOI-intersect-observed-first-tile-footprint expected set at least 4 (median over non-empty cells; all missing cells still reported by item d); Program minimum is 10 pulses per m2; ground yield under canopy and buildings is lower |
+| d. Ground availability (stage 1) | At least 5 preliminary eligible benchmark cells under the complete unchanged section 6 method (E1-E7 thresholds, strata, S1-hard, fallback ladder, 100 m spacing) on the canonical full-AOI 3.048 m lattice, evaluation windows fully inside the observed first-tile header footprint, across at least 3 distinct full-AOI sectors of the canonical 3 x 3 sector grid; fewer than 5 cells or fewer than 3 sectors is STOP and escalate; the 10 m coverage map and the full 718-cell attribution remain recorded verbatim; preliminary candidates are availability evidence only, never the final frozen selection. |
 | e. Lineage recheck | Bounded WFS re-query of `IGNF_LIDAR-HD_METADONNEE` still reporting mission 24LHDOD, flight 2024-11-30, IGN69, Eurosense; otherwise STOP |
 | f. Exclusion data | Classes 9 (eau) and 17 (pont) usable for exclusion rules E2/E3; if class 9 is absent over the AOI portion, the weaker fallback (density and roughness only) is recorded explicitly |
 
@@ -280,7 +298,7 @@ inapplicable to ground cells and does not carry over.
 | Gate | State |
 |---|---|
 | GATE 1: archive acquisition completion | SATISFIED 2026-11-03: all 8 pinned archive parts present, size- and sha256-verified, 29835514326 bytes on disk (acquisition record `~/log/track-r/sedan-download-20261103T0905/`) |
-| GATE 2: LiDAR download authorization active | SNAPSHOT 2026-11-03: first tile `0840_6958` acquired (128651625 bytes, local sha256 19465caf3085665f94fd648315896a84cbcf8fd2d9777eca85800c131979d212, no publisher checksum claimed) and its physical section 4 gate executed once: items a, b, c, e, f PASS; item d FAIL (718 of 9494 expected cells, the AOI 10 m grid intersected with the observed header footprint, hold no class-2 point); overall physical gate NOT PASS; the remaining five tiles (701880508 bytes) are NOT authorized; the numeric tolerance decision stays pending (GATE 3); receipt `~/log/track-r/lidar-firsttile-execution-20261103T1330-0500/probe-outcome-receipt.md` |
+| GATE 2: LiDAR download authorization active | SNAPSHOT 2026-11-03: first tile `0840_6958` acquired (128651625 bytes, local sha256 19465caf3085665f94fd648315896a84cbcf8fd2d9777eca85800c131979d212, no publisher checksum claimed) and its physical section 4 gate executed once under protocol v1.1: items a, b, c, e, f PASS; item d FAIL (718 of 9494 expected cells, the AOI 10 m grid intersected with the observed header footprint, hold no class-2 point); overall physical gate NOT PASS (v1.1 measurement retained; the v1.2 revised items c and d are not yet implemented or measured); the remaining five tiles (701880508 bytes) are NOT authorized; the numeric tolerance decision stays pending (GATE 3); receipt `~/log/track-r/lidar-firsttile-execution-20261103T1330-0500/probe-outcome-receipt.md` |
 | GATE 3: RGE accuracy and epoch, then numeric tolerance | PENDING: RGE actual stated accuracy and content epoch are read from tile quality metadata by a NEW separately specified and separately approved guarded extraction/preparation unit (the committed `sedan_acquire.py` is download-only and owns neither extraction nor quality-mask reads), then the operator numeric tolerance decision |
 | GATE 4: this amendment | Lands with the WI-R2-01 card edit before the Sedan proof run |
 
