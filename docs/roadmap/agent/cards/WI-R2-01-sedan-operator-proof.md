@@ -95,6 +95,7 @@ PANOPTICON_GEO_PROOF_DIR="<operator data dir>" CNC_GENERALS_PATH="/home/rmessing
 
 ## On completion
 
+- Result: 2026-11-03 partial: stage-1 LiDAR first-tile probe sources committed (controller, worker, 83 offline guard tests; independent safety review PASS, 83 probe + 19 acquire + 5/5 harness + 4/4 oracles, ~/log/track-r/review-lidar-firsttile-20261103T1145-0500/final-reverify-nf1.md); isolated laspy/lazrs tooling install plus the single 128,651,625-byte first-tile fetch and physical section 5 gate now executing under the reviewed runtime plan; gate outcome pending here; Status stays `Ready`, no completion claimed.
 - Result: 2026-11-03 partial: user-approved ground-truth protocol amendment committed in
   2a008bc01 (owning deep dive `docs/roadmap/deep-dives/r2-sedan-ground-truth.md`, four dictated
   card fragments, Track R and checklist phrase updates); doc validation 9/9 plus 26 synthetic
