@@ -95,6 +95,11 @@ PANOPTICON_GEO_PROOF_DIR="<operator data dir>" CNC_GENERALS_PATH="/home/rmessing
 
 ## On completion
 
+- Result: 2026-11-03 partial: user-approved ground-truth protocol amendment committed in
+  2a008bc01 (owning deep dive `docs/roadmap/deep-dives/r2-sedan-ground-truth.md`, four dictated
+  card fragments, Track R and checklist phrase updates); doc validation 9/9 plus 26 synthetic
+  prototype tests PASS; first-tile physical gate (GATE 2), final numeric tolerance (GATE 3), and
+  the proof run pending; Status stays `Ready`, no completion claimed.
 - Set Status above to `Done` or `Blocked` with reason.
 - Tick the R2 Sedan proof item in the checklist and update the README Track R progress rows.
-- Append a result line to `.exchange`.
+- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
