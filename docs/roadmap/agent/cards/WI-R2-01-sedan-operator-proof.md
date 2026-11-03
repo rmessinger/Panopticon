@@ -95,6 +95,7 @@ PANOPTICON_GEO_PROOF_DIR="<operator data dir>" CNC_GENERALS_PATH="/home/rmessing
 
 ## On completion
 
+- Result: 2026-11-03 partial: first LiDAR HD tile acquired and verified (LHD_FXX_0840_6958_PTS_LAMB93_IGN69.copc.laz, 128,651,625 bytes, local sha256 19465caf3085665f94fd648315896a84cbcf8fd2d9777eca85800c131979d212; no publisher checksum claimed) with fresh verbatim WFS lineage; worker laspy API regression fixed (chunk_iterator points_per_iteration) and proven by a real-library synthetic smoke (85 tests OK under the owned venv, 83 pass + 2 truthful stdlib skips; acquire 19; full suite 156); the ONE physical section 5 probe is PENDING and runs after this commit; Status stays `Ready`, no completion claimed.
 - Result: 2026-11-03 partial: stage-1 LiDAR first-tile probe sources committed (controller, worker, 83 offline guard tests; independent safety review PASS, 83 probe + 19 acquire + 5/5 harness + 4/4 oracles, ~/log/track-r/review-lidar-firsttile-20261103T1145-0500/final-reverify-nf1.md); isolated laspy/lazrs tooling install plus the single 128,651,625-byte first-tile fetch and physical section 5 gate now executing under the reviewed runtime plan; gate outcome pending here; Status stays `Ready`, no completion claimed.
 - Result: 2026-11-03 partial: user-approved ground-truth protocol amendment committed in
   2a008bc01 (owning deep dive `docs/roadmap/deep-dives/r2-sedan-ground-truth.md`, four dictated

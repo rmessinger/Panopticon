@@ -1654,5 +1654,143 @@ class WorkerInterpreterTests(ProbeHarness):
         self.assertNotIn("pip install", combined)
 
 
+@unittest.skipUnless(
+    importlib.util.find_spec("laspy") and importlib.util.find_spec("numpy"),
+    "requires the owned venv laspy/numpy (stdlib CI skips truthfully)")
+class RealLaspySmokeTests(unittest.TestCase):
+    """Real-laspy regression over the ACTUAL worker measurement path: a synthetic LAS
+    with known ground truth (5000 points: 3000x class 2, 1000x class 9, 1000x class 17;
+    integer-scaled coordinates near L93 values) is measured end-to-end through
+    worker.main and the real LasReader.chunk_iterator. No fakes, no signature checks.
+    Skipped truthfully under stdlib CI; runs only under the isolated lidar venv.
+    """
+
+    AOI_BBOX_L93 = {
+        "x_min": 840000.0, "y_min": 6957000.0, "x_max": 840100.0, "y_max": 6957100.0,
+    }
+    FILTER_BBOX_L93 = {
+        "x_min": 839990.0, "y_min": 6956990.0, "x_max": 840110.0, "y_max": 6957110.0,
+    }
+    CHUNK_SIZE_POINTS = 1500
+    # (classification, count, group origin x/y, point stride m, z cycle): each group
+    # spans at most 9 x stride < 10 m, so all its points land in the origin's cell.
+    GROUPS = (
+        (2, 1500, (840000.0, 6957000.0), 1.0, (150.0, 150.25)),
+        (2, 1500, (840050.0, 6957070.0), 0.5, (150.5, 150.75)),
+        (9, 1000, (840020.0, 6957030.0), 0.1, (150.0, 150.25, 150.5, 150.75)),
+        (17, 1000, (840080.0, 6957090.0), 0.5, (150.5, 151.0)),
+    )
+
+    def tmp_dir(self):
+        parent = "/tmp/opencode" if os.path.isdir("/tmp/opencode") else None
+        context = tempfile.TemporaryDirectory(prefix="sedan-lidar-smoke-", dir=parent)
+        self.addCleanup(context.cleanup)
+        return Path(context.name)
+
+    def file_descriptor_count(self):
+        return len(os.listdir("/proc/self/fd")) if os.path.isdir("/proc/self/fd") else -1
+
+    def write_synthetic_las(self, root):
+        import laspy
+        import numpy
+
+        xs, ys, zs, classes = [], [], [], []
+        for classification, count, (x0, y0), stride, z_cycle in self.GROUPS:
+            for i in range(count):
+                xs.append(x0 + (i % 10) * stride)
+                ys.append(y0 + ((i // 10) % 10) * stride)
+                zs.append(z_cycle[i % len(z_cycle)])
+                classes.append(classification)
+        las = laspy.create(file_version="1.4", point_format=6)
+        las.header.scales = [0.001, 0.001, 0.001]
+        las.header.offsets = [840000.0, 6957000.0, 150.0]
+        las.x = numpy.asarray(xs, dtype=numpy.float64)
+        las.y = numpy.asarray(ys, dtype=numpy.float64)
+        las.z = numpy.asarray(zs, dtype=numpy.float64)
+        las.classification = numpy.asarray(classes, dtype=numpy.int64)
+        path = root / "synthetic-smoke.las"
+        las.write(str(path))
+        return path
+
+    def expected_ground_cells(self):
+        cells = {}
+        x_anchor = self.AOI_BBOX_L93["x_min"]
+        y_anchor = self.AOI_BBOX_L93["y_min"]
+        for classification, count, (x0, y0), _stride, _z_cycle in self.GROUPS:
+            if classification != worker.CLASS_GROUND:
+                continue
+            key = (
+                f"{int(math.floor((x0 - x_anchor) / lidar.COVERAGE_CELL_M))},"
+                f"{int(math.floor((y0 - y_anchor) / lidar.COVERAGE_CELL_M))}"
+            )
+            cells[key] = cells.get(key, 0) + count
+        return cells
+
+    def build_request(self, root, las_path):
+        request = {
+            "tile_path": str(las_path),
+            "aoi_bbox_l93": dict(self.AOI_BBOX_L93),
+            "filter_bbox_l93": dict(self.FILTER_BBOX_L93),
+            "cell_size_m": lidar.COVERAGE_CELL_M,
+            "chunk_size_points": self.CHUNK_SIZE_POINTS,
+            "memory_budget_bytes": lidar.WORKER_MEMORY_BUDGET_BYTES,
+            "output_path": str(root / "measurements.json"),
+        }
+        path = root / "worker-request.json"
+        path.write_text(json.dumps(request), encoding="utf-8")
+        return path, root / "measurements.json"
+
+    def test_worker_measures_synthetic_las_end_to_end_with_real_chunk_iterator(self):
+        root = self.tmp_dir()
+        las_path = self.write_synthetic_las(root)
+        request_path, output_path = self.build_request(root, las_path)
+        fds_before = self.file_descriptor_count()
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            code = worker.main(["sedan_lidar_probe_worker.py", str(request_path)])
+        self.assertEqual(worker.EXIT_OK, code)
+        self.assertEqual(fds_before, self.file_descriptor_count())
+        self.assertTrue(output_path.is_file())
+        measurements = json.loads(output_path.read_text(encoding="utf-8"))
+        self.assertEqual(1, measurements["measurement_version"])
+        points = measurements["points"]
+        self.assertEqual(5000, points["total"])
+        self.assertEqual(self.CHUNK_SIZE_POINTS, points["chunk_size_points"])
+        self.assertGreaterEqual(points["chunk_count"], 2)
+        self.assertEqual(
+            {"2": 3000, "9": 1000, "17": 1000}, points["full_tile_class_histogram"])
+        aoi = measurements["aoi"]
+        self.assertEqual({"2": 3000, "9": 1000, "17": 1000}, aoi["class_histogram"])
+        self.assertEqual(3000, aoi["class2_count"])
+        self.assertEqual(1000, aoi["class9_count"])
+        self.assertEqual(1000, aoi["class17_count"])
+        self.assertEqual(
+            self.expected_ground_cells(), measurements["coverage"]["class2_cell_counts"])
+        self.assertAlmostEqual(150.0, aoi["z_min"], places=6)
+        self.assertAlmostEqual(150.75, aoi["z_max"], places=6)
+        header = measurements["header"]
+        self.assertEqual("1.4", header["las_version"])
+        self.assertEqual(6, header["point_format_id"])
+        self.assertEqual(5000, header["header_point_count"])
+        footprint = header["footprint_l93"]
+        for edge in footprint.values():
+            self.assertTrue(math.isfinite(edge))
+        self.assertLess(footprint["x_min"], footprint["x_max"])
+        self.assertLess(footprint["y_min"], footprint["y_max"])
+        self.assertAlmostEqual(840000.0, footprint["x_min"], places=6)
+        self.assertAlmostEqual(6957000.0, footprint["y_min"], places=6)
+        self.assertAlmostEqual(840084.5, footprint["x_max"], places=6)
+        self.assertAlmostEqual(6957094.5, footprint["y_max"], places=6)
+
+    def test_real_reader_chunk_iterator_takes_points_per_iteration(self):
+        import laspy
+
+        root = self.tmp_dir()
+        las_path = self.write_synthetic_las(root)
+        with laspy.open(str(las_path)) as reader:
+            chunks = list(reader.chunk_iterator(points_per_iteration=self.CHUNK_SIZE_POINTS))
+        self.assertEqual([1500, 1500, 1500, 500], [len(chunk) for chunk in chunks])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -181,7 +181,7 @@ def measure(request, laspy, numpy):
         with laspy.open(tile_path) as reader:
             header_info = scan_header(reader)
             # Documented laspy 2.x API: scaled x/y/z and classification on chunked records.
-            for chunk in reader.chunk_iterator(count=chunk_points):
+            for chunk in reader.chunk_iterator(points_per_iteration=chunk_points):
                 chunk_count += 1
                 classification = numpy.asarray(chunk.classification).astype(numpy.int64)
                 total += int(classification.size)
