@@ -1785,31 +1785,78 @@ public sealed class SedanProofArtifacts
             }
         }
 
-        if (names[0] != "freeze_validated_complete" || names.Count(name => name == "freeze_validated_complete") != 1)
+        if (!names.Contains("freeze_validated_complete", StringComparer.Ordinal))
         {
-            throw new SedanProofContractException($"chronology ledger must open with exactly one freeze_validated_complete event: {path}");
+            throw new SedanProofContractException($"chronology ledger carries no freeze_validated_complete event: {path}");
         }
 
-        if (names[^1] != "preparation_completed" || names.Count(name => name == "preparation_completed") != 1)
+        if (!string.Equals(names[0], "freeze_validated_complete", StringComparison.Ordinal))
         {
             throw new SedanProofContractException(
-                $"chronology ledger must end with exactly one preparation_completed event and no events after it: {path}");
+                $"chronology ledger opens with '{names[0]}' rather than freeze_validated_complete (unfrozen ledger opening): {path}");
         }
 
-        VerifyFreezeEvent(events[0], path, freeze, freezeVerifiedAt);
+        var attemptStart = names.FindLastIndex(name => name == "freeze_validated_complete");
+        VerifyFreezeEvent(events[attemptStart], path, freeze, freezeVerifiedAt);
 
-        var demStarts = 0;
-        var demIndex = -1;
+        var demIndices = new List<int>();
+        var completedIndices = new List<int>();
+
+        for (var index = attemptStart + 1; index < names.Count; index++)
+        {
+            if (names[index] == "dem_rasterio_start")
+            {
+                demIndices.Add(index);
+            }
+            else if (names[index] == "preparation_completed")
+            {
+                completedIndices.Add(index);
+            }
+        }
+
+        if (demIndices.Count != 1)
+        {
+            throw new SedanProofContractException(
+                $"chronology ledger current attempt must carry exactly one dem_rasterio_start event: {path}");
+        }
+
+        var demIndex = demIndices[0];
+
+        if (completedIndices.Any(index => index < demIndex))
+        {
+            throw new SedanProofContractException(
+                $"chronology ledger current attempt has preparation_completed before dem_rasterio_start: {path}");
+        }
+
+        if (completedIndices.Count == 0)
+        {
+            throw new SedanProofContractException(
+                $"chronology ledger current attempt must end with exactly one preparation_completed event and no events after it: {path}");
+        }
+
+        if (completedIndices[^1] != names.Count - 1)
+        {
+            throw new SedanProofContractException(
+                $"chronology ledger current attempt has events after its preparation_completed: {path}");
+        }
+
+        if (completedIndices.Count != 1)
+        {
+            throw new SedanProofContractException(
+                $"chronology ledger current attempt must carry exactly one preparation_completed event: {path}");
+        }
+
+        VerifyHistoryOrder(events, names, path);
+        VerifyAttemptSemantics(events, names, path);
+
         var demArgv = Array.Empty<string>();
         var firstHeightIndex = -1;
         var firstHeightArgv = Array.Empty<string>();
 
-        for (var index = 1; index < events.Count - 1; index++)
+        for (var index = attemptStart + 1; index < names.Count; index++)
         {
             if (names[index] == "dem_rasterio_start")
             {
-                demStarts++;
-                demIndex = index;
                 RequireExactKeys(events[index], DemStartKeys, "dem_rasterio_start event", path);
                 RequireEqual(RequireString(events[index], "firstDemRasterIoAt", path), firstDemRasterIoAt,
                     "ledger dem_rasterio_start.firstDemRasterIoAt", path);
@@ -1819,26 +1866,12 @@ public sealed class SedanProofArtifacts
             {
                 VerifyToolInvoked(events[index], path);
 
-                if (RequireBoolean(events[index], "heightSemantic", path))
+                if (RequireBoolean(events[index], "heightSemantic", path) && firstHeightIndex < 0)
                 {
-                    if (demStarts == 0)
-                    {
-                        throw new SedanProofContractException(
-                            $"height-semantic tool_invoked at ledger line {index + 1} precedes dem_rasterio_start: {path}");
-                    }
-
-                    if (firstHeightIndex < 0)
-                    {
-                        firstHeightIndex = index;
-                        firstHeightArgv = RequireNonEmptyArgv(events[index], "tool_invoked", path);
-                    }
+                    firstHeightIndex = index;
+                    firstHeightArgv = RequireNonEmptyArgv(events[index], "tool_invoked", path);
                 }
             }
-        }
-
-        if (demStarts != 1)
-        {
-            throw new SedanProofContractException($"chronology ledger must carry exactly one dem_rasterio_start event: {path}");
         }
 
         if (firstHeightIndex != demIndex + 1)
@@ -1865,6 +1898,79 @@ public sealed class SedanProofArtifacts
             RequireExactKeys(entry, CompletedOutputKeys, $"preparation_completed outputs.{label}", path);
             RequireEqual(RequireSha256Hex(entry, "sha256", path), outputShas[label], $"ledger outputs.{label}.sha256", path);
         }
+    }
+
+    private static void VerifyHistoryOrder(IReadOnlyList<JsonElement> events, IReadOnlyList<string> names, string path)
+    {
+        DateTimeOffset? previous = null;
+
+        for (var index = 0; index < names.Count; index++)
+        {
+            var timestamp = LedgerTimestamp(events[index], names[index], path);
+
+            if (timestamp is null)
+            {
+                continue;
+            }
+
+            if (previous is { } earlier && timestamp.Value < earlier)
+            {
+                throw new SedanProofContractException(
+                    $"chronology ledger timestamp inversion at ledger line {index + 1}: event time precedes an earlier event: {path}");
+            }
+
+            previous = timestamp;
+        }
+    }
+
+    private static void VerifyAttemptSemantics(IReadOnlyList<JsonElement> events, List<string> names, string path)
+    {
+        var starts = Enumerable.Range(0, names.Count).Where(index => names[index] == "freeze_validated_complete").ToList();
+
+        for (var position = 0; position < starts.Count; position++)
+        {
+            var begin = starts[position];
+            var end = position + 1 < starts.Count ? starts[position + 1] : names.Count;
+            var demIndex = names.FindIndex(begin + 1, end - begin - 1, name => name == "dem_rasterio_start");
+
+            for (var index = begin + 1; index < end; index++)
+            {
+                if (names[index] != "tool_invoked" || !RequireBoolean(events[index], "heightSemantic", path))
+                {
+                    continue;
+                }
+
+                if (demIndex < 0)
+                {
+                    throw new SedanProofContractException(
+                        $"chronology ledger attempt at ledger line {begin + 1} carries height-semantic tool_invoked at ledger line {index + 1} but no dem_rasterio_start: {path}");
+                }
+
+                if (index < demIndex)
+                {
+                    throw new SedanProofContractException(
+                        $"height-semantic tool_invoked at ledger line {index + 1} precedes dem_rasterio_start: {path}");
+                }
+            }
+        }
+    }
+
+    private static DateTimeOffset? LedgerTimestamp(JsonElement element, string name, string path)
+    {
+        string? key = name switch
+        {
+            "freeze_validated_complete" => "freezeVerifiedAt",
+            "dem_rasterio_start" => "firstDemRasterIoAt",
+            "preparation_completed" => "completedAt",
+            _ => null,
+        };
+
+        if (key is null)
+        {
+            return null;
+        }
+
+        return ParseChronology(RequireString(element, key, path), $"ledger {key}", path);
     }
 
     private static void VerifyFreezeEvent(JsonElement element, string path, FreezeIdentity freeze, string freezeVerifiedAt)

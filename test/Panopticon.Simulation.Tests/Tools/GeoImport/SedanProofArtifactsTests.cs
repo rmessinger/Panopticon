@@ -292,16 +292,18 @@ public sealed class SedanProofArtifactsTests : IDisposable
         var proof = BuildValidTree();
         EditLedgerLines(proof, lines => (lines[0], lines[1]) = (lines[1], lines[0]));
 
-        AssertContractFailure(proof, "must open with exactly one freeze_validated_complete event");
+        AssertContractFailure(proof, "unfrozen ledger opening");
     }
 
     [Fact]
-    public void Ledger_FreezeValidatedDuplicated_Throws()
+    public void Ledger_FreezeValidatedDuplicated_Accepts()
     {
         var proof = BuildValidTree();
         EditLedgerLines(proof, lines => lines.Insert(1, lines[0]));
 
-        AssertContractFailure(proof, "must open with exactly one freeze_validated_complete event");
+        using var loadout = SedanProofArtifacts.Load(proof);
+
+        Assert.NotNull(loadout);
     }
 
     [Fact]
@@ -440,6 +442,160 @@ public sealed class SedanProofArtifactsTests : IDisposable
         MutateReceiptText(proof, text => text.Replace(commandsSha, ZeroSha));
 
         AssertContractFailure(proof, "receipt commands_sha256");
+    }
+
+    [Fact]
+    public void Ledger_MultiAttemptActualShape_Accepts()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        var lines = File.ReadAllLines(ProofLedgerPath(proof));
+
+        Assert.Equal(63, lines.Length);
+        Assert.Equal(3, lines.Count(line => line.Contains("\"event\":\"freeze_validated_complete\"", StringComparison.Ordinal)));
+        Assert.Equal(2, lines.Count(line => line.Contains("\"event\":\"dem_rasterio_start\"", StringComparison.Ordinal)));
+        Assert.Equal(57, lines.Count(line => line.Contains("\"event\":\"tool_invoked\"", StringComparison.Ordinal)));
+        Assert.Equal(1, lines.Count(line => line.Contains("\"event\":\"preparation_completed\"", StringComparison.Ordinal)));
+
+        using var loadout = SedanProofArtifacts.Load(proof);
+
+        Assert.NotNull(loadout);
+    }
+
+    [Fact]
+    public void Ledger_LatestAttemptTruncatedAfterCompletedEarlierAttempt_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines =>
+        {
+            lines.Insert(34, lines[62]);
+            lines.RemoveAt(lines.Count - 1);
+        });
+
+        AssertContractFailure(proof, "current attempt must end with exactly one preparation_completed event and no events after it");
+    }
+
+    [Fact]
+    public void Ledger_UnknownEventInPriorAttempt_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines[5] = lines[5].Replace("\"event\":\"tool_invoked\"", "\"event\":\"mystery_event\"", StringComparison.Ordinal));
+
+        AssertContractFailure(proof, "carries unknown event 'mystery_event'");
+    }
+
+    [Fact]
+    public void Ledger_PriorAttemptHeightBeforeItsDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines =>
+        {
+            var height = lines[19];
+            lines.RemoveAt(19);
+            lines.Insert(17, height);
+        });
+
+        AssertContractFailure(proof, "height-semantic tool_invoked at ledger line 18 precedes dem_rasterio_start");
+    }
+
+    [Fact]
+    public void Ledger_PriorAttemptHeightWithoutDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines.RemoveAt(17));
+
+        AssertContractFailure(proof, "but no dem_rasterio_start");
+    }
+
+    [Fact]
+    public void Ledger_PriorAttemptTimestampInversion_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines[17] = lines[17].Replace(MultiFailedDemText, "2026-03-01T10:30:00.000-05:00", StringComparison.Ordinal));
+
+        AssertContractFailure(proof, "chronology ledger timestamp inversion at ledger line 18");
+    }
+
+    [Fact]
+    public void Ledger_ReceiptBoundToFirstAttemptFreeze_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        MutateReceiptText(proof, text => text.Replace(MultiCurrentFreezeText, MultiFirstFreezeText, StringComparison.Ordinal));
+
+        AssertContractFailure(proof, "ledger freezeVerifiedAt");
+    }
+
+    [Fact]
+    public void Ledger_ReceiptBoundToFailedAttemptDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        MutateReceiptText(proof, text => text.Replace(MultiCurrentDemText, MultiFailedDemText, StringComparison.Ordinal));
+
+        AssertContractFailure(proof, "chronology order violated");
+    }
+
+    [Fact]
+    public void Ledger_SliceFreezeAtOrAfterSliceDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        const string inverted = "2026-03-01T11:07:00.000-05:00";
+        MutateReceiptText(proof, text => text.Replace(MultiCurrentFreezeText, inverted, StringComparison.Ordinal));
+        EditLedgerLines(proof, lines => lines[34] = lines[34].Replace(MultiCurrentFreezeText, inverted, StringComparison.Ordinal));
+
+        AssertContractFailure(proof, "chronology order violated");
+    }
+
+    [Fact]
+    public void Ledger_EventAfterFinalPreparationCompleted_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines.Add(lines[61]));
+
+        AssertContractFailure(proof, "has events after its preparation_completed");
+    }
+
+    [Fact]
+    public void Ledger_TwoDemStartsInCurrentAttempt_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines.Insert(36, lines[35]));
+
+        AssertContractFailure(proof, "must carry exactly one dem_rasterio_start event");
+    }
+
+    [Fact]
+    public void Ledger_PreparationCompletedBeforeCurrentDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines.Insert(35, lines[62]));
+
+        AssertContractFailure(proof, "has preparation_completed before dem_rasterio_start");
+    }
+
+    [Fact]
+    public void Ledger_FirstHeightNotImmediatelyAfterCurrentDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines.Insert(36, Line(Invoked("gdalinfo", new[] { "gdalinfo", "synthetic-source.tif" }, heightSemantic: false))));
+
+        AssertContractFailure(proof, "must immediately precede the first height-semantic invocation");
+    }
+
+    [Fact]
+    public void Ledger_FirstHeightArgvDiffersFromCurrentDemStart_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines[36] = lines[36].Replace("EPSG:32631", "EPSG:2154", StringComparison.Ordinal));
+
+        AssertContractFailure(proof, "dem_rasterio_start argv does not equal the first height-semantic tool_invoked argv");
+    }
+
+    [Fact]
+    public void Ledger_NoFreezeEventAtAll_Throws()
+    {
+        var proof = BuildValidTree(prepared: new PreparedSpec { MultiAttempt = true });
+        EditLedgerLines(proof, lines => lines.RemoveAll(line => line.Contains("\"event\":\"freeze_validated_complete\"", StringComparison.Ordinal)));
+
+        AssertContractFailure(proof, "carries no freeze_validated_complete event");
     }
 
     [Fact]
@@ -1245,7 +1401,7 @@ public sealed class SedanProofArtifactsTests : IDisposable
         var rgbSize = new FileInfo(Path.Combine(root, SedanProofArtifacts.RgbRelativePath)).Length;
 
         var demArgv = new[] { "gdalwarp", "-t_srs", "EPSG:32631", "synthetic-source.tif", SedanProofArtifacts.DemRelativePath };
-        var ledgerLines = new[]
+        var baselineLines = new[]
         {
             Line(new
             {
@@ -1266,6 +1422,7 @@ public sealed class SedanProofArtifactsTests : IDisposable
             Line(Invoked("gdalwarp", demArgv, heightSemantic: true)),
             Line(new { @event = "preparation_completed", completedAt = PreparationCompletedAtText, outputs = completedOutputs }),
         };
+        var ledgerLines = spec.MultiAttempt ? MultiAttemptLedgerLines(digests, completedOutputs, demArgv) : baselineLines;
         var ledgerBytes = WriteBytes(Path.Combine(root, SedanProofArtifacts.CommandsLedgerRelativePath), string.Join('\n', ledgerLines) + "\n");
 
         var tiles = new Dictionary<string, object>(StringComparer.Ordinal);
@@ -1334,8 +1491,8 @@ public sealed class SedanProofArtifactsTests : IDisposable
             },
             ["chronology"] = new Dictionary<string, object>
             {
-                ["freezeVerifiedAt"] = FreezeVerifiedAtText,
-                ["firstDemRasterIoAt"] = FirstDemRasterIoAtText,
+                ["freezeVerifiedAt"] = spec.MultiAttempt ? MultiCurrentFreezeText : FreezeVerifiedAtText,
+                ["firstDemRasterIoAt"] = spec.MultiAttempt ? MultiCurrentDemText : FirstDemRasterIoAtText,
                 ["note"] = "code order guarantees freezeVerifiedAt < firstDemRasterIoAt; no hash certifies historic blindness",
             },
             ["space_estimate"] = new Dictionary<string, object>
@@ -1349,6 +1506,66 @@ public sealed class SedanProofArtifactsTests : IDisposable
         };
 
         WriteBytes(Path.Combine(root, SedanProofArtifacts.PreparationReceiptRelativePath), JsonSerializer.Serialize(receipt, Indented));
+    }
+
+    private const string MultiFirstFreezeText = "2026-03-01T10:21:56.621-05:00";
+    private const string MultiSecondFreezeText = "2026-03-01T10:39:04.905-05:00";
+    private const string MultiFailedDemText = "2026-03-01T10:40:01.753-05:00";
+    private const string MultiCurrentFreezeText = "2026-03-01T11:05:32.733-05:00";
+    private const string MultiCurrentDemText = "2026-03-01T11:06:09.949-05:00";
+
+    private static string[] MultiAttemptLedgerLines(FreezeDigests digests, Dictionary<string, object> completedOutputs, string[] demArgv)
+    {
+        var failedArgv = new[] { "gdalwarp", "-t_srs", "EPSG:32631", "synthetic-failed-source.tif", SedanProofArtifacts.DemRelativePath };
+        var lines = new List<string> { FreezeEventLine(digests, MultiFirstFreezeText) };
+
+        for (var index = 0; index < 15; index++)
+        {
+            lines.Add(Line(Invoked("gdalinfo", new[] { "gdalinfo", $"synthetic-attempt-one-{index}.tif" }, heightSemantic: false)));
+        }
+
+        lines.Add(FreezeEventLine(digests, MultiSecondFreezeText));
+        lines.Add(Line(new { @event = "dem_rasterio_start", firstDemRasterIoAt = MultiFailedDemText, argv = failedArgv }));
+
+        for (var index = 0; index < 16; index++)
+        {
+            lines.Add(index is 1 or 7
+                ? Line(Invoked("gdalwarp", failedArgv, heightSemantic: true))
+                : Line(Invoked("gdalinfo", new[] { "gdalinfo", $"synthetic-attempt-two-{index}.tif" }, heightSemantic: false)));
+        }
+
+        lines.Add(FreezeEventLine(digests, MultiCurrentFreezeText));
+        lines.Add(Line(new { @event = "dem_rasterio_start", firstDemRasterIoAt = MultiCurrentDemText, argv = demArgv }));
+
+        for (var index = 0; index < 26; index++)
+        {
+            lines.Add(index is 0 or 13
+                ? Line(Invoked("gdalwarp", demArgv, heightSemantic: true))
+                : Line(Invoked("gdalinfo", new[] { "gdalinfo", $"synthetic-attempt-three-{index}.tif" }, heightSemantic: false)));
+        }
+
+        // Shares the current dem millisecond: equal adjacent timestamps must be accepted.
+        lines.Add(Line(new { @event = "preparation_completed", completedAt = MultiCurrentDemText, outputs = completedOutputs }));
+
+        return lines.ToArray();
+    }
+
+    private static string FreezeEventLine(FreezeDigests digests, string freezeVerifiedAt)
+    {
+        return Line(new
+        {
+            @event = "freeze_validated_complete",
+            freezeVerifiedAt,
+            freezeReceiptSha256 = digests.ReceiptSha,
+            integrityManifestSha256 = digests.IntegritySha,
+            selectionTables = new
+            {
+                candidates_sha256 = digests.CandidatesSha,
+                selection_sha256 = digests.SelectionSha,
+                frozen_manifest_sha256 = digests.FrozenManifestSha,
+                canonical_digest = digests.CanonicalDigest,
+            },
+        });
     }
 
     private static string Line(object value)
@@ -1591,5 +1808,7 @@ public sealed class SedanProofArtifactsTests : IDisposable
         public int ImageryTolerance { get; set; } = 2;
 
         public int[] ImageryRgb { get; set; } = new[] { 10, 20, 30 };
+
+        public bool MultiAttempt { get; set; }
     }
 }
