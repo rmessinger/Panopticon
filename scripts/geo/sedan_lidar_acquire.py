@@ -88,7 +88,7 @@ MIN_FREE_ABSOLUTE = 4_294_967_296
 VALIDATED_COMMIT = "f2466af9e"
 SOURCE_PINS = {
     "sedan_lidar_select.py": "4570c3507c6fb99442af0691f010a7406f64306622587abce140728873e913a1",
-    "sedan_lidar_probe.py": "83efc9ea5cec9cd6a75a77e254edbad8902275c9b6b62ed056dfee10b4f82a4e",
+    "sedan_lidar_probe.py": "93c55be420124b00e8c5946a9cc09de57f0a9962d0faa77cd4859e16a88343da",
     "sedan_lidar_probe_worker.py": "5db920802e4a2da484aee02b598774bb40eb8e5152ed6328f5ff711fe0d3a6da",
     "tests/test_sedan_lidar_select.py": "fd0f1514cf751194b299081c7ea5dd178265239306a8115fa9d60caf5741e2e4",
     "tests/test_sedan_lidar_probe.py": "d9835a60a343db2f223319a7c3f822e360b04c8c34ebb7de50fab848f4a04ea3",

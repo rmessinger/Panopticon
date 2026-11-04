@@ -311,6 +311,10 @@ def layout(cache):
     }
 
 
+def resolve_root(root):
+    return CACHE_ROOT if root is None else root
+
+
 # Network seam: probe-own opener with the pinned UA. acquire.open_url setdefaults the
 # acquire UA, so the probe must never use it for its own requests.
 OPENER = urllib.request.build_opener(acquire.SameHostRedirectHandler())
@@ -323,8 +327,8 @@ def open_tile_url(url, method="GET", headers=None):
     return OPENER.open(request, timeout=acquire.DEFAULT_TIMEOUT_SECONDS)
 
 
-def check_probe_paths():
-    cache = acquire.check_path_safety(CACHE_ROOT)
+def check_probe_paths(root=None):
+    cache = acquire.check_path_safety(resolve_root(root))
     tile_dir = acquire.check_path_safety(layout(cache)["tile_dir"])
     return cache, tile_dir
 
@@ -476,17 +480,17 @@ def _parse_archive_manifest(path):
     return entries
 
 
-def archive_state_path():
-    return os.path.join(CACHE_ROOT, "state", "state.json")
+def archive_state_path(root=None):
+    return os.path.join(resolve_root(root), "state", "state.json")
 
 
-def _crosscheck_archive_state(entries):
+def _crosscheck_archive_state(entries, root=None):
     """Optional consistency cross-check against the acquire unit's completed owned
     state (state.json under the cache root). Absent state: proceed on the manifest
     alone and record the absence. Present state: every pinned part must have exactly
     one completed record whose sha256 and sizes equal the manifest record; otherwise
     the evidence is inconsistent and fails. No archive bytes are rehashed here."""
-    state_path = archive_state_path()
+    state_path = archive_state_path(root)
     if not os.path.exists(state_path):
         return f"acquire owned-state absent at {state_path}; manifest-only verification"
     _reject_symlink_components(state_path, "archive owned-state")
@@ -532,7 +536,7 @@ def _crosscheck_archive_state(entries):
     return f"acquire owned-state cross-check passed ({state_path})"
 
 
-def require_archive_evidence(path, hard):
+def require_archive_evidence(path, hard, root=None):
     """L3 ordering guard: the RGE ALTI / BD ORTHO acquisition must have FINISHED before
     any stage-1 transfer is attempted (protocol v1.1 sections 3 and 4).
 
@@ -545,7 +549,7 @@ def require_archive_evidence(path, hard):
     try:
         _reject_symlink_components(path, "archive completion evidence")
         entries = _parse_archive_manifest(path)
-        state_note = _crosscheck_archive_state(entries)
+        state_note = _crosscheck_archive_state(entries, root)
         log(
             f"archive completion evidence verified: {path} lists exactly the 8 pinned "
             f"RGE ALTI / BD ORTHO parts "
@@ -836,7 +840,7 @@ def run_fetch_guards(paths):
     return ancestor
 
 
-def run_fetch(args):
+def run_fetch(args, root=None):
     if not (args.first_tile and args.execution_brief_accepted):
         acquire.fail_guard(
             "fetch requires BOTH --first-tile AND --execution-brief-accepted; fetch and install "
@@ -850,8 +854,8 @@ def run_fetch(args):
                 f"its own reviewed brief (protocol v1.1 section 4 staging table)"
             )
         acquire.fail_guard(f"unknown tile {target!r}; this tool fetches only {FIRST_TILE.name}")
-    require_archive_evidence(args.archive_evidence, hard=True)
-    cache, _tile_dir = check_probe_paths()
+    cache, _tile_dir = check_probe_paths(root)
+    require_archive_evidence(args.archive_evidence, hard=True, root=cache)
     paths = layout(cache)
     log(f"stage-1 fetch target: {FIRST_TILE.name} ({FIRST_TILE.size} bytes, pinned {FIRST_TILE.url})")
     run_fetch_guards(paths)
@@ -881,8 +885,8 @@ def run_head_check():
     log("head-check ok: Content-Length matches the pinned first-tile size")
 
 
-def run_verify():
-    cache, _tile_dir = check_probe_paths()
+def run_verify(root=None):
+    cache, _tile_dir = check_probe_paths(root)
     paths = layout(cache)
     acquire.check_ancestor(paths["tile_dir"])
     state = load_probe_state(paths["state"])
@@ -890,8 +894,8 @@ def run_verify():
     log(f"verify ok: {paths['tile']} matches pinned length {FIRST_TILE.size} and recorded sha256 {digest}")
 
 
-def run_status():
-    cache, _tile_dir = check_probe_paths()
+def run_status(root=None):
+    cache, _tile_dir = check_probe_paths(root)
     paths = layout(cache)
     state = load_probe_state(paths["state"])
     log(f"probe state file: {paths['state']}")
@@ -915,8 +919,8 @@ def run_status():
     log(f"tools dir (planned, plan-tools prints the recipe): {paths['tools']}")
 
 
-def run_preflight(args):
-    cache, tile_dir = check_probe_paths()
+def run_preflight(args, root=None):
+    cache, tile_dir = check_probe_paths(root)
     paths = layout(cache)
     log(f"stage-1 preflight (read-only): tile dir {tile_dir}")
     verified = acquire.check_mount_realness(tile_dir)
@@ -941,7 +945,7 @@ def run_preflight(args):
     log(f"planned state file: {paths['state']}")
     log(f"planned lock file: {paths['lock']}")
     log(f"planned tools dir: {paths['tools']} (plan-tools prints the isolated venv recipe)")
-    require_archive_evidence(args.archive_evidence, hard=False)
+    require_archive_evidence(args.archive_evidence, hard=False, root=cache)
     log(f"pinned first tile: {FIRST_TILE.name} ({FIRST_TILE.size} bytes) at {FIRST_TILE.url}")
     for name, size in sorted(OTHER_TILES.items()):
         log(f"pinned stage-2 tile (never downloadable by this tool): {name} ({size} bytes)")
@@ -950,8 +954,8 @@ def run_preflight(args):
     log("preflight complete; nothing was written and no directories were created")
 
 
-def run_plan_tools():
-    tools = layout(CACHE_ROOT)["tools"]
+def run_plan_tools(root=None):
+    tools = layout(acquire.check_path_safety(resolve_root(root)))["tools"]
     lines = [
         "plan-tools: isolated LiDAR tooling recipe (print-only; NOTHING is executed here)",
         f"record: {RECORD_PATH} (protocol v1.1 section 3)",
@@ -1971,8 +1975,8 @@ def evaluate_gates(measurements, lineage, cs2cs_info, worker_run, request, tile_
     return report
 
 
-def run_probe(args):
-    cache, _tile_dir = check_probe_paths()
+def run_probe(args, root=None):
+    cache, _tile_dir = check_probe_paths(root)
     paths = layout(cache)
     acquire.check_ancestor(paths["tile_dir"])
     state = load_probe_state(paths["state"])
@@ -2052,6 +2056,11 @@ def build_parser():
             "preflight, hard guard in fetch"
         ),
     )
+    parser.add_argument(
+        "--cache-root",
+        default=None,
+        help=f"cache root directory (default {CACHE_ROOT}); overrides the module constant for this invocation",
+    )
     subparsers = parser.add_subparsers(dest="command", metavar="subcommand")
     subparsers.add_parser("preflight", help="read-only checks plus a printed plan (default)")
     subparsers.add_parser(
@@ -2108,28 +2117,29 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     command = args.command or "preflight"
+    effective_root = CACHE_ROOT if args.cache_root is None else args.cache_root
     code = EXIT_OK
     try:
         if command == "preflight":
-            run_preflight(args)
+            run_preflight(args, effective_root)
         elif command == "head-check":
             run_head_check()
         elif command == "fetch":
-            run_fetch(args)
+            run_fetch(args, effective_root)
         elif command == "verify":
-            run_verify()
+            run_verify(effective_root)
         elif command == "probe":
-            code = run_probe(args)
+            code = run_probe(args, effective_root)
         elif command == "plan-tools":
-            run_plan_tools()
+            run_plan_tools(effective_root)
         elif command == "status":
-            run_status()
+            run_status(effective_root)
         else:
             parser.error(f"unknown subcommand {command!r}")
     except Failure as failure:
         log(f"FAIL({failure.code}): {failure.message}")
         code = failure.code
-    log(f"final status: exit={code} mode={command} cache={CACHE_ROOT}")
+    log(f"final status: exit={code} mode={command} cache={effective_root}")
     return code
 
 
