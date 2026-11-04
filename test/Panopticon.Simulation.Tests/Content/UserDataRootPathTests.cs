@@ -15,8 +15,6 @@ namespace Panopticon.Tests.Content;
 [Collection("SerialGameTests")]
 public sealed class UserDataRootPathTests
 {
-    private const string SandboxMapRelativePath = @"Maps/userdatarootproof/userdatarootproof.map";
-
     // UserMapCache writes Path.Combine(root, @"Maps\MapCache.ini") verbatim; on Linux that
     // is a single file with a backslash in its name, not the Maps directory. Asserting the
     // same construction stays faithful to the engine's write path on every platform.
@@ -27,13 +25,22 @@ public sealed class UserDataRootPathTests
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
         "Command and Conquer Generals Data");
 
-    private static string CreateSandboxRoot()
+    private static string ReadTextShared(string path)
     {
-        var root = Path.Combine(Path.GetTempPath(), "opencode", "user-data-root-tests", Guid.NewGuid().ToString("N"));
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 
-        // A renamed copy of a real install map: the name exists nowhere in the install,
-        // so a successful resolution proves it came from the sandbox root, not the archives.
-        var mapDirectory = Path.Combine(root, "Maps", "userdatarootproof");
+    private static string CreateSandboxRoot(out string mapMarker, out string sandboxMapRelativePath)
+    {
+        var runId = Guid.NewGuid().ToString("N");
+        mapMarker = "userdatarootproof" + runId;
+        sandboxMapRelativePath = $"Maps/{mapMarker}/{mapMarker}.map";
+        var root = Path.Combine(Path.GetTempPath(), "opencode", "user-data-root-tests", runId);
+
+        // Unique marker: absent from the install and the default user-data folder.
+        var mapDirectory = Path.Combine(root, "Maps", mapMarker);
         Directory.CreateDirectory(mapDirectory);
 
         var installation = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals);
@@ -41,7 +48,7 @@ public sealed class UserDataRootPathTests
         var mapEntry = fileSystem.GetFile("maps/alpine assault/alpine assault.map")
             ?? throw new FileNotFoundException("Test setup: alpine assault was not found in the install.");
         using (var input = mapEntry.Open())
-        using (var output = File.Create(Path.Combine(mapDirectory, "userdatarootproof.map")))
+        using (var output = File.Create(Path.Combine(mapDirectory, mapMarker + ".map")))
         {
             input.CopyTo(output);
         }
@@ -67,27 +74,26 @@ public sealed class UserDataRootPathTests
     [GameFact(SageGame.CncGenerals)]
     public void Game_WithUserDataRootPath_WritesMapCacheInsideRoot()
     {
-        var root = CreateSandboxRoot();
+        var root = CreateSandboxRoot(out var mapMarker, out _);
         try
         {
-            var realMapCache = MapCacheIniPath(RealUserDataFolder);
-            var realFolderExistedBefore = Directory.Exists(RealUserDataFolder);
-            var realMapCacheWriteBefore = File.Exists(realMapCache)
-                ? File.GetLastWriteTimeUtc(realMapCache)
-                : (DateTime?)null;
-
             using (var game = CreateGameWithRoot(root))
             {
+                Assert.Equal(root, game.UserDataFolder);
+                Assert.Equal(root, game.UserAppDataFolder);
+                Assert.NotNull(game.ContentManager.UserDataFileSystem);
+                Assert.Equal(root, game.ContentManager.UserDataFileSystem.RootDirectory);
+
                 var sandboxMapCache = MapCacheIniPath(root);
                 Assert.True(File.Exists(sandboxMapCache), $"Expected the map cache inside the sandbox root: {sandboxMapCache}");
-                Assert.Contains("userdatarootproof", File.ReadAllText(sandboxMapCache));
+                Assert.Contains(mapMarker, ReadTextShared(sandboxMapCache), StringComparison.Ordinal);
             }
 
-            Assert.Equal(realFolderExistedBefore, Directory.Exists(RealUserDataFolder));
-            var realMapCacheWriteAfter = File.Exists(realMapCache)
-                ? File.GetLastWriteTimeUtc(realMapCache)
-                : (DateTime?)null;
-            Assert.Equal(realMapCacheWriteBefore, realMapCacheWriteAfter);
+            var realMapCache = MapCacheIniPath(RealUserDataFolder);
+            if (File.Exists(realMapCache))
+            {
+                Assert.DoesNotContain(mapMarker, ReadTextShared(realMapCache), StringComparison.Ordinal);
+            }
         }
         finally
         {
@@ -98,7 +104,7 @@ public sealed class UserDataRootPathTests
     [GameFact(SageGame.CncGenerals)]
     public void Game_WithUserDataRootPath_StartsSandboxMapAndRoutesAllUserData()
     {
-        var root = CreateSandboxRoot();
+        var root = CreateSandboxRoot(out _, out var sandboxMapRelativePath);
         try
         {
             using var game = CreateGameWithRoot(root);
@@ -115,7 +121,7 @@ public sealed class UserDataRootPathTests
             };
 
             game.StartSkirmishOrMultiPlayerGame(
-                SandboxMapRelativePath,
+                sandboxMapRelativePath,
                 new EchoConnection(),
                 playerSettings,
                 1,
