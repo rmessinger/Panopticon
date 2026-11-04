@@ -1576,11 +1576,18 @@ def reverify_completed(cache, stage):
     if not isinstance(tiles, dict) or not isinstance(artifacts, dict) \
             or not isinstance(recorded_digest, str):
         fail_state(f"completed freeze state at {state_path} carries no tiles/artifacts/digest")
+    entries, _worker_cfg, _present, manifest_problem = read_integrity_manifest(
+        integrity_manifest_path(cache))
+    if manifest_problem is not None:
+        fail_state(manifest_problem)
     for pin in TILE_PINS:
         record = tiles.get(pin["name"])
         if not isinstance(record, dict):
             fail_state(f"completed freeze state has no record for {pin['name']}")
-        path = os.path.join(cache, pin["rel"])
+        # Resolves tile paths via the manifest rel_path, as the initial freeze does (stage-2 layout).
+        entry = entries.get(pin["name"])
+        rel = resolve_tile_rel(pin, entry) if entry is not None else pin["rel"]
+        path = resolve_under_cache(cache, rel, f"tile {pin['name']}")
         if os.path.islink(path) or not os.path.isfile(path):
             fail_state(f"completed freeze reverification: tile missing at {path}")
         if os.path.getsize(path) != pin["size"]:

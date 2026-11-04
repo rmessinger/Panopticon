@@ -1851,6 +1851,89 @@ class FreezePipelineTests(FreezeTestBase):
             self.assertTrue(os.path.isfile(request["venv_python"]))
 
 
+class CompletedReverifyRelPathTests(FreezeTestBase):
+    """Idempotent reverification resolves tile paths through the manifest rel_path."""
+
+    STAGE2 = {name: f"lidarhd/stage2/{LOT}/{name}" for name in TILE_ORDER[1:]}
+
+    def completed_cache(self, rel_overrides=None):
+        cache, root = self.setup_ready_cache(rel_overrides=rel_overrides)
+        self.patch_spawn_guards()
+        self.patch_worker(write_standin_worker(root))
+        code, output = self.run_main("--freeze", str(cache))
+        self.assertEqual(freeze.EXIT_OK, code, output)
+        return cache
+
+    def rerun_without_workers(self, cache):
+        spawns = []
+
+        def failing_command(*_args):
+            spawns.append(_args)
+            raise AssertionError("worker spawned during idempotent reverification")
+
+        self.patch("worker_command", failing_command)
+        code, output = self.run_main("--freeze", str(cache))
+        self.assertEqual([], spawns)
+        return code, output
+
+    def set_manifest_rel_path(self, cache, name, rel_path):
+        path = Path(freeze.integrity_manifest_path(str(cache)))
+        entries = json.loads(path.read_text(encoding="utf-8"))
+        entries[name]["rel_path"] = rel_path
+        path.write_text(json.dumps(entries, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def test_stage2_manifest_rel_paths_reverify_without_workers(self):
+        cache = self.completed_cache(rel_overrides=self.STAGE2)
+        for name in TILE_ORDER[1:]:
+            self.assertFalse((Path(cache) / "lidarhd" / LOT / name).exists())
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_OK, code, output)
+        self.assertIn("idempotent: existing freeze returned", output)
+
+    def test_absent_manifest_falls_back_to_pinned_paths(self):
+        cache = self.completed_cache()
+        Path(freeze.integrity_manifest_path(str(cache))).unlink()
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_OK, code, output)
+        self.assertIn("idempotent: existing freeze returned", output)
+
+    def test_null_rel_path_falls_back_to_pinned_path(self):
+        cache = self.completed_cache()
+        self.set_manifest_rel_path(cache, TILE_ORDER[3], None)
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_OK, code, output)
+
+    def test_empty_rel_path_fails_state_before_worker(self):
+        cache = self.completed_cache()
+        self.set_manifest_rel_path(cache, TILE_ORDER[2], "")
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_STATE, code)
+        self.assertIn("must be a non-empty string", output)
+
+    def test_wrong_tile_name_rel_path_fails_state_before_worker(self):
+        cache = self.completed_cache(rel_overrides=self.STAGE2)
+        self.set_manifest_rel_path(cache, TILE_ORDER[5], f"lidarhd/stage2/{LOT}/{TILE_ORDER[1]}")
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_STATE, code)
+        self.assertIn("does not end with the pinned tile name", output)
+
+    def test_dotdot_rel_path_fails_state_before_worker(self):
+        cache = self.completed_cache(rel_overrides=self.STAGE2)
+        victim = TILE_ORDER[2]
+        self.set_manifest_rel_path(cache, victim, f"lidarhd/stage2/../{LOT}/{victim}")
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_STATE, code)
+        self.assertIn("has an empty, '.', or '..' component", output)
+
+    def test_absolute_rel_path_fails_state_before_worker(self):
+        cache = self.completed_cache(rel_overrides=self.STAGE2)
+        victim = TILE_ORDER[4]
+        self.set_manifest_rel_path(cache, victim, f"/tmp/opencode/elsewhere/{LOT}/{victim}")
+        code, output = self.rerun_without_workers(cache)
+        self.assertEqual(freeze.EXIT_STATE, code)
+        self.assertIn("is not a relative posix path", output)
+
+
 class RecoverLockTests(FreezeTestBase):
     def stage_with_lock(self, cache, pid, stamp="1999-01-01T00.00.00.000000+02.00"):
         stage = Path(freeze.freeze_root(str(cache))) / (freeze.STAGE_PREFIX + stamp)
