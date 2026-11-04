@@ -24,8 +24,8 @@ PASS is claimed or implied in this document.
 
 Unchanged and binding: the committed tolerance rule `ab30059de` (vertical tolerance = max(stated
 DEM accuracy, explicit `tolerances.verticalMeters`)); the approved archive editions RGE ALTI 2-0
-1M TIF D008 2019-10-14 and BD ORTHO 1-0 RVB-0M20 D008 2022-01-01; the final numeric tolerance is a
-separate pending operator decision (section 7); the prior +1 m wall-marker allowance is
+1M TIF D008 2019-10-14 and BD ORTHO 1-0 RVB-0M20 D008 2022-01-01; the final numeric tolerance is the
+operator-set 1.0 m engineering limit (section 7); the prior +1 m wall-marker allowance is
 inapplicable to ground cells and does not carry over.
 
 Protocol version 1.2, user-approved 2026-11-03 as one package: stage-1 gate items c and d are
@@ -299,10 +299,29 @@ inapplicable to ground cells and does not carry over.
 |---|---|
 | GATE 1: archive acquisition completion | SATISFIED 2026-11-03: all 8 pinned archive parts present, size- and sha256-verified, 29835514326 bytes on disk (acquisition record `~/log/track-r/sedan-download-20261103T0905/`) |
 | GATE 2: LiDAR download authorization active | SNAPSHOT 2026-11-03: first tile `0840_6958` acquired (128651625 bytes, local sha256 19465caf3085665f94fd648315896a84cbcf8fd2d9777eca85800c131979d212, no publisher checksum claimed) and its physical section 4 gate executed once under protocol v1.1: items a, b, c, e, f PASS; item d FAIL (718 of 9494 expected cells, the AOI 10 m grid intersected with the observed header footprint, hold no class-2 point); overall physical gate NOT PASS (v1.1 measurement retained as historical; the v1.2 revised items c and d are implemented and the stage-1 gate-only re-run PASSED, see LATEST below); the remaining five tiles (701880508 bytes) are NOT authorized; the numeric tolerance decision stays pending (GATE 3); receipt `~/log/track-r/lidar-firsttile-execution-20261103T1330-0500/probe-outcome-receipt.md` |
-| GATE 3: RGE accuracy and epoch, then numeric tolerance | PENDING: RGE actual stated accuracy and content epoch are read from tile quality metadata by a NEW separately specified and separately approved guarded extraction/preparation unit (the committed `sedan_acquire.py` is download-only and owns neither extraction nor quality-mask reads), then the operator numeric tolerance decision |
+| GATE 3: RGE accuracy and epoch, then numeric tolerance | PENDING: RGE actual stated accuracy and content epoch are read from tile quality metadata by a NEW separately specified and separately approved guarded extraction/preparation unit (the committed `sedan_acquire.py` is download-only and owns neither extraction nor quality-mask reads), then the operator numeric tolerance policy is SET below (1.0 m engineering limit) while the accuracy and epoch reads remain |
 | GATE 4: this amendment | Lands with the WI-R2-01 card edit before the Sedan proof run |
 
 LATEST (2026-11-03T18:21-05:00): the first tile re-ran under protocol v1.2 as a stage-1, gate-only measurement and ALL physical gates pass: a, b, c_v1_2, d_v1_2, e, f. c_v1_2 median is 11.67 class-2 points per m2 over 8776 non-empty cells of the 9494 expected (v1.1 historical 11.61 over 9351, non-gating; verbatim totals 9494/8776/718 holes retained); d_v1_2 counts 5 preliminary primaries across 4 sectors (s00, s02, s12, s22) under the unchanged section 6 method. One foreground invocation, 26.89 s, MAX RSS 827,440 kB under the frozen 1 GiB guard, exit 0 (receipt ~/log/track-r/lidar-v12-firsttile-execution-20261103T1820-0500/execution-receipt.md; local sha256 only, no publisher checksum). This is a physical-gate pass, not the numeric proof: numeric_proof_pass is FALSE, the final-six freeze is not done, and the remaining five tiles (701,880,508 bytes) are eligible but not downloaded.
 
-No proof PASS is claimed. The final numeric acceptance tolerance remains a pending operator
-decision after GATE 3, and the card stays `Ready` with physical gates holding execution only.
+Numeric acceptance, operator decision of 2026-11-03 (fresh, made BEFORE any DEM comparison; not
+the retired wall-marker accuracy-plus-one allowance): engineering acceptance only, never a
+certified source accuracy. Budget A: abs(payloadElevationMeters - frozen LiDAR referenceMeters)
+<= 1.0 m at EVERY frozen PRIMARY site across the required at least 3 sectors; all residuals and
+failures are preserved verbatim, with no residual-site pruning and no failure-based alternate
+activation (the 2 alternates are ranked pre-DEM, never a failure rescue). The generated manifest
+encodes this as `tolerances.verticalMeters` 1.0 with `source.verticalAccuracyMeters` absent,
+because the actual tile-specific RGE accuracy is unknown; the Core max(actual source accuracy,
+explicit tolerance) contract `ab30059de` is unchanged, and a genuine documented actual accuracy
+above 1.0 m must be escalated before any DEM comparison, never silently raising the operator
+limit or fabricating an accuracy value. Carried unresolved and disclosed: the 2024
+auto-classification bias and the 2012-2016 versus 2024 epoch mismatch stay non-quantifiable.
+Budget B (engine encoding) is independent: abs(E - (P - C)) <= 0.0390625 game units, one quantum,
+with no 1.0 m term added; restoredEngineMeters = Z0 + (E + C) x metersPerGameUnit /
+verticalExaggeration, where Z0 is the ACTUAL header verticalOriginMeters, never an assumed zero.
+The full six-tile final selection and freeze hash before any DEM height comparison remain
+mandatory; the current first-tile preliminary 5 primaries across 4 sectors is not final. This
+sets the numeric policy layer only: overall quality is not resolved, no proof PASS is claimed,
+and the card stays `Ready` with physical gates holding execution only. Provenance:
+`sedan-numeric-tolerance-20261103T1855.md`, sha256
+`d4e25a8f94da4f3228ed22377bb738881be50f9e20342af10bf595c675d57cbc`.
