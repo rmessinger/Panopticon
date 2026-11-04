@@ -725,7 +725,7 @@ public sealed class SedanOperatorProofTests
 
     private static string Sha256File(string path)
     {
-        return Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
+        return SedanProofHashing.Sha256FileHex(path);
     }
 
     private static string Sha256Text(string text)

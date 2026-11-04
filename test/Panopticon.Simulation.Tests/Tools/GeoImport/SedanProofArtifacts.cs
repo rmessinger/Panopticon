@@ -297,7 +297,7 @@ public sealed class SedanProofArtifacts
                 $"completed freeze artifact {label} size drifted ({info.Length} vs recorded {size})");
         }
 
-        var digest = Sha256Hex(File.ReadAllBytes(artifact.Path));
+        var digest = SedanProofHashing.Sha256FileHex(artifact.Path);
 
         if (!string.Equals(digest, artifact.Sha256, StringComparison.Ordinal))
         {
