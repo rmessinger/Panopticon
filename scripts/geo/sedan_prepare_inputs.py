@@ -946,7 +946,8 @@ def assert_points_inside_playable_area(grid, points):
 
 
 def cs2cs_argv():
-    return ["cs2cs", "EPSG:32631", "+to", "EPSG:4326"]
+    # Without -f, PROJ prints DMS; EPSG:4326 authority order is latitude, then longitude.
+    return ["cs2cs", "-f", "%.12f", "EPSG:32631", "+to", "EPSG:4326"]
 
 
 def convert_utm_batch(journal, points_easting_northing):
@@ -966,15 +967,15 @@ def convert_utm_batch(journal, points_easting_northing):
             fail_guard(f"cs2cs failed to convert a point (error line): {line.strip()!r}")
         fields = line.split()
         if len(fields) < 2:
-            fail_guard(f"cs2cs output line is not a lon/lat pair: {line.strip()!r}")
+            fail_guard(f"cs2cs output line is not a lat/lon pair: {line.strip()!r}")
         try:
-            lon, lat = float(fields[0]), float(fields[1])
+            lat, lon = float(fields[0]), float(fields[1])
         except ValueError:
             fail_guard(f"cs2cs output line is not numeric: {line.strip()!r}")
-        if not (math.isfinite(lon) and math.isfinite(lat)):
+        if not (math.isfinite(lat) and math.isfinite(lon)):
             fail_guard(f"cs2cs returned a non-finite coordinate: {line.strip()!r}")
-        if not (-180.0 <= lon <= 180.0 and -90.0 <= lat <= 90.0):
-            fail_guard(f"cs2cs returned an out-of-range coordinate: {lon}, {lat}")
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+            fail_guard(f"cs2cs returned an out-of-range coordinate: {lat}, {lon}")
         converted.append((lat, lon))
     if len(converted) != len(points_easting_northing):
         fail_guard(f"cs2cs returned {len(converted)} points for {len(points_easting_northing)} "

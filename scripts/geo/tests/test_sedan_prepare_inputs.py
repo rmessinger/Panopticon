@@ -245,10 +245,31 @@ def build_member_records():
     return records
 
 
-def fake_cs2cs_line(easting, northing):
+def fake_cs2cs_point(easting, northing):
     lon = 4.9425 + (easting - 639841.997) * 1e-5
     lat = 49.6990 + (northing - 5506768.179) * 1e-5
-    return f"{lon:.9f} {lat:.9f}"
+    return lat, lon
+
+
+def fake_cs2cs_line(easting, northing):
+    lat, lon = fake_cs2cs_point(easting, northing)
+    return f"{lat:.9f} {lon:.9f}"
+
+
+def dms_text(value, positive, negative):
+    magnitude = abs(value)
+    degrees = int(magnitude)
+    minutes_full = (magnitude - degrees) * 60.0
+    minutes = int(minutes_full)
+    seconds = (minutes_full - minutes) * 60.0
+    hemisphere = positive if value >= 0 else negative
+    return f"{degrees}d{minutes}'{seconds:.3f}\"{hemisphere}"
+
+
+def fake_cs2cs_dms_line(easting, northing):
+    """PROJ's default cs2cs rendering of EPSG:4326 (no -f): DMS, latitude first."""
+    lat, lon = fake_cs2cs_point(easting, northing)
+    return f"{dms_text(lat, 'N', 'S')}\t{dms_text(lon, 'E', 'W')} 0.000"
 
 
 def warp_geometry(argv):
@@ -292,8 +313,9 @@ class FakeGdal:
         tool = os.path.basename(argv[0])
         if tool == "cs2cs":
             lines = input_bytes.decode("ascii").strip().splitlines()
-            out = "".join(fake_cs2cs_line(float(part.split()[0]), float(part.split()[1]))
-                          + "\n" for part in lines)
+            render = fake_cs2cs_line if list(argv[1:3]) == ["-f", "%.12f"] else fake_cs2cs_dms_line
+            out = "".join(render(float(part.split()[0]), float(part.split()[1])) + "\n"
+                          for part in lines)
             return prep.ToolRun(0, out.encode("ascii"), b"", False, 0.001)
         if tool == "gdalinfo":
             return prep.ToolRun(0, self._gdalinfo_json(argv).encode("utf-8"), b"", False, 0.001)
@@ -819,6 +841,20 @@ class KmlAndChronologyTests(PreparedTestBase):
         self.assertEqual(code, prep.EXIT_GUARD)
         self.assertIn("out-of-range", message)
 
+    def test_cs2cs_dms_output_without_fixed_precision_is_refused(self):
+        self.patch("cs2cs_argv", lambda: ["cs2cs", "EPSG:32631", "+to", "EPSG:4326"])
+        journal = _SeamJournal(FakeGdal([], []))
+        code, message = fail_code(lambda: prep.convert_utm_batch(journal, PLAYABLE_CORNERS_UTM))
+        self.assertEqual(code, prep.EXIT_GUARD)
+        self.assertIn("not numeric", message)
+
+    def test_cs2cs_fixed_precision_output_is_accepted(self):
+        journal = _SeamJournal(FakeGdal([], []))
+        converted = prep.convert_utm_batch(journal, PLAYABLE_CORNERS_UTM)
+        self.assertEqual(len(converted), 4)
+        self.assertAlmostEqual(converted[0][0], 49.699, places=9)
+        self.assertAlmostEqual(converted[0][1], 4.9425, places=9)
+
     def test_subprocess_before_freeze_event_is_a_state_failure(self):
         self.patch("run_tool",
                    lambda argv, **kwargs: self.fail("run_tool must never be reached"))
@@ -827,6 +863,62 @@ class KmlAndChronologyTests(PreparedTestBase):
             lambda: journal.invoke(["cs2cs", "x"], height_semantic=False))
         self.assertEqual(code, prep.EXIT_STATE)
         self.assertIn("chronology", message)
+
+
+@unittest.skipUnless(shutil.which("cs2cs"),
+                     "cs2cs not on PATH; real-PROJ numeric regression not executed")
+class RealProjCs2csTests(PreparedTestBase):
+    """Installed cs2cs on the canonical playable corners and RGB centres (pure
+    EPSG:32631 geometry, no GDAL, no IGN data, no network)."""
+
+    OLD_ARGV = ["cs2cs", "EPSG:32631", "+to", "EPSG:4326"]
+    RGB_CENTRES_UTM = [(640134.7574, 5507060.9394), (640719.9734, 5507646.1554)]
+
+    def setUp(self):
+        self.journal = prep.RunJournal(os.path.join(self.make_cache(), "commands.jsonl"))
+        self.journal.freeze_verified_at = "2026-11-04T00:00:00.000-05:00"
+
+    def test_production_argv_carries_the_fixed_precision_pair(self):
+        argv = prep.cs2cs_argv()
+        index = argv.index("-f")
+        self.assertEqual(argv[index:index + 2], ["-f", "%.12f"])
+
+    def test_old_argv_real_dms_output_fails_closed(self):
+        self.patch("cs2cs_argv", lambda: list(self.OLD_ARGV))
+        code, message = fail_code(
+            lambda: prep.convert_utm_batch(self.journal, PLAYABLE_CORNERS_UTM))
+        self.assertEqual(code, prep.EXIT_GUARD)
+        self.assertIn("not numeric", message)
+
+    def test_production_argv_real_corners_parse_as_latitude_then_longitude(self):
+        converted = prep.convert_utm_batch(self.journal, PLAYABLE_CORNERS_UTM)
+        self.assertEqual(len(converted), 4)
+        for lat, lon in converted:
+            self.assertTrue(math.isfinite(lat) and math.isfinite(lon))
+            self.assertTrue(49.0 < lat < 50.0 and 4.0 < lon < 5.0)
+        self.assertLess(converted[0][0], converted[2][0])
+        self.assertLess(converted[0][1], converted[1][1])
+
+    def test_production_argv_real_rgb_centres_parse_as_latitude_then_longitude(self):
+        (lat0, lon0), (lat1, lon1) = prep.convert_utm_batch(self.journal, self.RGB_CENTRES_UTM)
+        self.assertTrue(49.0 < lat0 < 50.0 and 4.0 < lon0 < 5.0)
+        self.assertTrue(49.0 < lat1 < 50.0 and 4.0 < lon1 < 5.0)
+        self.assertLess(lat0, lat1)
+        self.assertLess(lon0, lon1)
+
+    def test_real_round_trip_reproduces_the_utm_points_within_gsd_epsilon(self):
+        inputs = PLAYABLE_CORNERS_UTM + self.RGB_CENTRES_UTM
+        converted = prep.convert_utm_batch(self.journal, inputs)
+        stdin = "".join(f"{lat!r} {lon!r}\n" for lat, lon in converted).encode("ascii")
+        run = prep.run_tool(["cs2cs", "-f", "%.9f", "EPSG:4326", "+to", "EPSG:32631"],
+                            input_bytes=stdin)
+        self.assertEqual(run.returncode, 0, run.stderr[:300])
+        rows = [tuple(float(value) for value in line.split()[:2])
+                for line in run.stdout.decode("ascii").splitlines() if line.strip()]
+        self.assertEqual(len(rows), len(inputs))
+        for (easting, northing), (want_e, want_n) in zip(rows, inputs):
+            self.assertLessEqual(abs(easting - want_e), prep.GSD_EPSILON_M)
+            self.assertLessEqual(abs(northing - want_n), prep.GSD_EPSILON_M)
 
 
 class ManifestGenerationTests(PreparedTestBase):
@@ -1510,7 +1602,7 @@ class PrepareEndToEndTests(PreparedTestBase):
         self.assertEqual(len(ring), 5)
         self.assertEqual(ring[0], ring[-1])
         for (lon, lat), (easting, northing) in zip(ring, PLAYABLE_CORNERS_UTM):
-            expected_lon, expected_lat = fake_cs2cs_line(easting, northing).split()
+            expected_lat, expected_lon = fake_cs2cs_line(easting, northing).split()
             self.assertEqual((lon, lat), (float(expected_lon), float(expected_lat)))
             self.assertAlmostEqual((lon - 4.9425) / 1e-5 + 639841.997, easting, places=3)
             self.assertAlmostEqual((lat - 49.6990) / 1e-5 + 5506768.179, northing, places=3)
