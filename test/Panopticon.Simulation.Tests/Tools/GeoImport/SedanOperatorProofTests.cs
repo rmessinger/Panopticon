@@ -210,8 +210,13 @@ public sealed class SedanOperatorProofTests
 
         var imageryChannelChecks = CheckImageryChannels(loadout.PreparedManifest, core.Report);
 
+        var (cameraAimEngineX, cameraAimEngineY) = SedanProofHeightSampling.PlayableCentreEngineXy(
+            reader.Metadata.Grid.ChunksX,
+            reader.Metadata.Grid.ChunksY,
+            preview.CropOriginGameX,
+            preview.CropOriginGameY);
         var shotPath = Path.Combine(shotsDir, "sedan-native-" + DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png");
-        var native = RunNativeGame(userRoot, primaries, shotPath);
+        var native = RunNativeGame(userRoot, primaries, cameraAimEngineX, cameraAimEngineY, shotPath);
 
         Assert.Equal(GeneratedMapPreviewBuilder.HeightQuantumGameUnits, SedanProofBudgets.BudgetBLimitGameUnits);
 
@@ -252,7 +257,12 @@ public sealed class SedanOperatorProofTests
             native.StartFrame,
             native.FrameAfterRun,
             native.Luminance,
-            native.ShotPath);
+            native.ShotPath,
+            native.CameraAimEngineX,
+            native.CameraAimEngineY,
+            native.CameraHeightAboveGround,
+            native.CameraAngle,
+            native.CameraPitch);
 
         var metricsJson = JsonSerializer.Serialize(metrics, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(Path.Combine(sandbox, "sedan-operator-proof.metrics.json"), metricsJson);
@@ -452,7 +462,12 @@ public sealed class SedanOperatorProofTests
         return channelChecks;
     }
 
-    private static NativeRun RunNativeGame(string userRoot, IReadOnlyList<PrimaryFact> primaries, string shotPath)
+    private static NativeRun RunNativeGame(
+        string userRoot,
+        IReadOnlyList<PrimaryFact> primaries,
+        double cameraAimEngineX,
+        double cameraAimEngineY,
+        string shotPath)
     {
         var realUserDataFolder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -472,6 +487,8 @@ public sealed class SedanOperatorProofTests
         uint frameAfterCapture;
         IReadOnlyList<float?> engineHeights;
         LuminanceStats luminance;
+        float cameraAngle;
+        float cameraPitch;
 
         try
         {
@@ -511,7 +528,7 @@ public sealed class SedanOperatorProofTests
             Assert.NotNull(game.Scene3D.Terrain);
 
             engineHeights = primaries
-                .Select(primary => game.Scene3D.Terrain.GetGroundHeight(new Vector2((float)primary.EngineX, (float)primary.EngineY)))
+                .Select(primary => SedanProofHeightSampling.SampleContinuousEngineHeight(game.Scene3D.Terrain.HeightMap, primary.EngineX, primary.EngineY))
                 .ToArray();
 
             game.IsLogicRunning = false;
@@ -520,7 +537,9 @@ public sealed class SedanOperatorProofTests
             view.InitHeightForMap();
             view.SetAngleAndPitchToDefault();
             view.SnapHeightAboveGround(CameraHeight);
-            view.LookAt(new Vector3((float)primaries[0].EngineX, (float)primaries[0].EngineY, 0f));
+            view.LookAt(new Vector3((float)cameraAimEngineX, (float)cameraAimEngineY, 0f));
+            cameraAngle = view.Angle;
+            cameraPitch = view.Pitch;
 
             for (var i = 0; i < 3; i++)
             {
@@ -558,7 +577,18 @@ public sealed class SedanOperatorProofTests
         Assert.True(File.Exists(sandboxMapCache), $"Expected the sandbox map cache: {sandboxMapCache}");
         Assert.Contains(MapName, File.ReadAllText(sandboxMapCache));
 
-        return new NativeRun(startFrame, frameAfterRun, frameAfterCapture, engineHeights, luminance, shotPath);
+        return new NativeRun(
+            startFrame,
+            frameAfterRun,
+            frameAfterCapture,
+            engineHeights,
+            luminance,
+            shotPath,
+            cameraAimEngineX,
+            cameraAimEngineY,
+            CameraHeight,
+            cameraAngle,
+            cameraPitch);
     }
 
     private static void CopyEnvironmentShot(string shotPath, string metricsJson)
@@ -757,7 +787,12 @@ public sealed class SedanOperatorProofTests
         uint FrameAfterCapture,
         IReadOnlyList<float?> EngineHeights,
         LuminanceStats Luminance,
-        string ShotPath);
+        string ShotPath,
+        double CameraAimEngineX,
+        double CameraAimEngineY,
+        float CameraHeightAboveGround,
+        float CameraAngle,
+        float CameraPitch);
 
     private sealed record ProofMetrics(
         string TimestampLocal,
@@ -778,7 +813,12 @@ public sealed class SedanOperatorProofTests
         uint StartFrame,
         uint FrameAfterRun,
         LuminanceStats Luminance,
-        string ShotPath);
+        string ShotPath,
+        double CameraAimEngineX,
+        double CameraAimEngineY,
+        float CameraHeightAboveGround,
+        float CameraAngle,
+        float CameraPitch);
 
     private sealed record LuminanceStats(
         double Min,
