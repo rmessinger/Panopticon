@@ -3,6 +3,7 @@
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using Panopticon.Geospatial;
@@ -160,6 +161,61 @@ public class ImageryChunkGeneratorTests
                 Assert.Equal(77, pixel.B);
                 Assert.Equal(255, pixel.A);
             }
+        }
+    }
+
+    [Fact]
+    public void ConstantUint8ImageryDecimatesWithoutOvershootingTheChannelRange()
+    {
+        // 0.3048 m output pixels over 0.2 m source cells decimate, so Auto area-weights
+        // each footprint; a constant source must still yield exactly 255 in every channel.
+        const double LargeOriginEasting = 639837d;
+        const double LargeOriginNorthing = 5507944d;
+        const double SourceGsd = 0.2d;
+        const int SourceCells = 220;
+        const double MetersPerGameUnit = 0.03048d;
+
+        var chunkSpanMeters = ChunkLayout.IntervalsPerChunk * ChunkLayout.SampleSpacingGameUnits * MetersPerGameUnit;
+        var gridDiagnostics = new GeoDiagnosticBag();
+        var manifest = CreateManifest(MetersPerGameUnit) with
+        {
+            TargetCoordinateSystem = new TargetCoordinateSystemSpec(ManifestCrsKind.Utm, 31, ManifestHemisphere.North),
+        };
+        var grid = LocalMapGrid.Create(
+            ProjectedSquare(LargeOriginEasting, LargeOriginNorthing, chunkSpanMeters, chunkSpanMeters),
+            SamplingTestSupport.Utm31,
+            manifest,
+            Transformer,
+            gridDiagnostics);
+        Assert.True(grid is not null, string.Join("; ", gridDiagnostics.Items.Select(d => d.Message)));
+
+        var samples = new double[SourceCells * SourceCells * 3];
+        Array.Fill(samples, 255d);
+        var imagery = new GeospatialRaster<double>(
+            SourceCells,
+            SourceCells,
+            3,
+            SamplingTestSupport.NorthUp(LargeOriginEasting - 1d, LargeOriginNorthing + 41d, SourceGsd, SourceGsd),
+            grid!.ProjectedCoordinateSystem,
+            samples,
+            sampleFormat: RasterSampleFormat.UInt8);
+
+        var diagnostics = new GeoDiagnosticBag();
+        var chunk = CreateGenerator().Generate(
+            grid!,
+            imagery,
+            new SamplingOptions(),
+            0,
+            0,
+            imageryPixelsPerSample: 1,
+            diagnostics: diagnostics);
+
+        Assert.True(chunk is not null, string.Join("; ", diagnostics.Items.Select(d => d.Message)));
+        Assert.Empty(diagnostics.Items);
+
+        foreach (var pixel in DecodePixels(chunk!))
+        {
+            Assert.Equal(new Rgba32(255, 255, 255, 255), pixel);
         }
     }
 
