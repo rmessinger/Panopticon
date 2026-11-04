@@ -10,7 +10,8 @@ binding, no real raster, no MNT height, no imagery pixel, no network, no
 installation, and no asset transfer is ever touched. One exception:
 RealGdalControlReferenceTests runs the real gdal binaries on author-created
 synthetic 0.2 m rasters only (never IGN data) and skips explicitly when they are
-absent.
+absent. RealGdalSourceMosaicTests does the same for 1 m EPSG:2154 height and mask
+stand-ins, and SourceSelectionTests pins the typed receipt selection.
 
 The consumer chain is validated through the REAL sedan_lidar_freeze validators
 (find_completed_freeze, reverify_completed, read_integrity_manifest) against
@@ -44,6 +45,7 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from types import SimpleNamespace
 
 _GEO_DIR = Path(__file__).resolve().parents[1]
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -116,20 +118,39 @@ RGE_MEMBER_PATHS = [
     f"/RGEALTI_MNT_1M_TIF_LAMB93_IGN69_D008_20210118/RGEALTI_FXX_{tile}_MNT_LAMB93_IGN69.tif"
     for tile in ("0839_6958", "0839_6959", "0840_6958", "0840_6959", "0841_6958", "0841_6959")
 ]
+RGE_SRC_MEMBER_PATHS = [
+    "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14/RGEALTI/1_DONNEES_LIVRAISON_2021-01-00150"
+    f"/RGEALTI_SRC_1M_TIF_LAMB93_IGN69_D008_20210118/RGEALTI_FXX_{tile}_SRC_LAMB93_IGN69.tif"
+    for tile in ("0839_6958", "0839_6959", "0840_6958", "0840_6959", "0841_6958", "0841_6959")
+]
 ORTHO_MEMBER_PATHS = [
     "ORTHOHR_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01/ORTHOHR/1_DONNEES_LIVRAISON_2023-06-00036"
     f"/OHR_RVB_0M20_JP2-E080_LAMB93_D08-2022/08-2022-{lot}-LA93-0M20-E080.jp2"
-    for lot in ("0835-6960", "0840-6959")
+    for lot in ("0835-6960", "0840-6960")
+]
+RGE_META_MEMBER_PATHS = [
+    "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14/RGEALTI/2_METADONNEES_LIVRAISON_2021-01-00150"
+    "/RGEALTI_MNT_1M_TIF_LAMB93_IGN69_D008_20210118/IGNF_RGEALTIr_2-0_TIF_1M_LAMB93_IGN69_D008_20210118.xml"
 ]
 RGE_AUX_MEMBER_PATHS = [
     "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14/RGEALTI/3_SUPPLEMENTS_LIVRAISON_2021-01-00150"
     f"/RGEALTI_MNT_1M_TIF_LAMB93_IGN69_D008_20210118/{name}"
     for name in ("dalles.dbf", "dalles.prj", "dalles.shp", "dalles.shx")
 ]
-BD_AUX_MEMBER_PATHS = [
+BD_TAB_MEMBER_PATHS = [
+    "ORTHOHR_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01/ORTHOHR/1_DONNEES_LIVRAISON_2023-06-00036"
+    f"/OHR_RVB_0M20_JP2-E080_LAMB93_D08-2022/08-2022-{lot}-LA93-0M20-E080.tab"
+    for lot in ("0835-6960", "0840-6960")
+]
+BD_META_MEMBER_PATHS = [
+    "ORTHOHR_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01/ORTHOHR/2_METADONNEES_LIVRAISON_2023-06-00036"
+    f"/OHR_RVB_0M20_JP2-E080_LAMB93_D08-2022/IGNF_ORTHOHR_1-0_JP2-E080_LAMB93_D08-2022{suffix}"
+    for suffix in (".xml", ".html")
+]
+BD_SUP_MEMBER_PATHS = [
     "ORTHOHR_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01/ORTHOHR/3_SUPPLEMENTS_LIVRAISON_2023-06-00036"
-    f"/{name}"
-    for name in ["dalles.shx", "index.dbf"] + [f"deci-{index}.xml" for index in range(13)]
+    f"/OHR_RVB_0M20_JP2-E080_LAMB93_D08-2022/{name}"
+    for name in ("dalles.dbf", "dalles.prj", "dalles.shp", "dalles.shx")
 ]
 
 # Prepared-raster geometry: source-corner bounds (storage +/- 4.572 m) outward-
@@ -213,25 +234,23 @@ def candidates_tsv_text():
 
 
 def build_member_records():
-    """27 synthetic extraction members mirroring the executed receipt shape:
-    6 RGEALTI MNT tifs, 2 BD ORTHO jp2s, 19 aux members; unique basenames."""
+    """27 synthetic extraction members in the executed receipt's shape: 6 RGEALTI MNT
+    tifs, 6 RGEALTI SRC tifs, 2 BD ORTHO jp2s, and 13 non-raster members. Basenames
+    repeat across the RGE and BD supplements (dalles.*)."""
+    rge = "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14.7z"
+    bd = "BDORTHO_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01.7z"
+    groups = (
+        (rge, RGE_MEMBER_PATHS, "01_rge", 1_000_000, 17),
+        (rge, RGE_SRC_MEMBER_PATHS, "02_src", 200_000, 11),
+        (bd, ORTHO_MEMBER_PATHS, "18_jp2", 5_000_000, 23),
+        (rge, RGE_META_MEMBER_PATHS + RGE_AUX_MEMBER_PATHS, "03_rge_aux", 200, 7),
+        (bd, BD_TAB_MEMBER_PATHS + BD_META_MEMBER_PATHS + BD_SUP_MEMBER_PATHS, "20_bd_aux", 300, 7),
+    )
     records = []
-    for index, path in enumerate(RGE_MEMBER_PATHS):
-        records.append({"archive": "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14.7z",
-                        "path": path, "size": 1_000_000 + 17 * index,
-                        "subdir": "01_rge"})
-    for index, path in enumerate(ORTHO_MEMBER_PATHS):
-        records.append({"archive": "BDORTHO_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01.7z",
-                        "path": path, "size": 5_000_000 + 23 * index,
-                        "subdir": "18_jp2"})
-    for index, path in enumerate(RGE_AUX_MEMBER_PATHS):
-        records.append({"archive": "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14.7z",
-                        "path": path, "size": 200 + 7 * index,
-                        "subdir": "03_sup_rge"})
-    for index, path in enumerate(BD_AUX_MEMBER_PATHS):
-        records.append({"archive": "BDORTHO_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01.7z",
-                        "path": path, "size": 300 + 7 * index,
-                        "subdir": "20_aux"})
+    for archive, paths, subdir, size_base, size_step in groups:
+        for index, path in enumerate(paths):
+            records.append({"archive": archive, "path": path,
+                            "size": size_base + size_step * index, "subdir": subdir})
     assert len(records) == 27
     # The real extracted tree legitimately carries same-basename aux sidecars in
     # different subdirectories (dalles.shx in both supplements).
@@ -522,15 +541,12 @@ class PreparedTestBase(unittest.TestCase):
         lines.append("edition: ORTHOHR 1-0 RVB-0M20 JP2-E080 LAMB93 D08-2022")
         Path(os.path.join(extract_stage, "RECEIPT.txt")).write_bytes(
             ("\n".join(lines) + "\n").encode("utf-8"))
-        raster_suffixes = prep.RASTER_SUFFIXES
         elevation = [os.path.join(extract_stage, "files", record["subdir"],
                                   record["basename"])
-                     for record in records if "RGEALTI" in record["path"]
-                     and record["basename"].lower().endswith(raster_suffixes)]
+                     for record in records if record["path"] in RGE_MEMBER_PATHS]
         imagery = [os.path.join(extract_stage, "files", record["subdir"],
                                 record["basename"])
-                   for record in records if "ORTHO" in record["path"]
-                   and record["basename"].lower().endswith(raster_suffixes)]
+                   for record in records if record["path"] in ORTHO_MEMBER_PATHS]
         return {
             "stage": stage, "manifest": manifest, "state": state,
             "tiles_sha256": tile_files, "pins": pins,
@@ -1382,6 +1398,217 @@ class RealGdalControlReferenceTests(unittest.TestCase):
         self.assertGreater(abs(10 - model_byte), prep.IMAGERY_TOLERANCE_BYTES)
 
 
+def extra_record(path, subdir, content=b"extra"):
+    return {"path": path, "subdir": subdir, "basename": os.path.basename(path),
+            "content": content}
+
+
+class SourceSelectionTests(unittest.TestCase):
+    """Typed receipt selection by pinned basename over the executed 27-member shape."""
+
+    def setUp(self):
+        os.makedirs("/tmp/opencode", exist_ok=True)
+        tmp = tempfile.TemporaryDirectory(prefix="prep-select-", dir="/tmp/opencode")
+        self.addCleanup(tmp.cleanup)
+        self.stage = os.path.join(tmp.name, "sedan-extract-fixture")
+        os.makedirs(os.path.join(self.stage, "files"))
+        self.records = build_member_records()
+
+    def write_stage(self, records):
+        for record in records:
+            target = os.path.join(self.stage, "files", record["subdir"], record["basename"])
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            Path(target).write_bytes(record["content"])
+
+    def select(self, records):
+        return prep.classify_source_members(self.stage,
+                                            [{"path": record["path"]} for record in records])
+
+    def test_selects_pinned_mnt_and_jp2_and_binds_src_and_dst_unwarped(self):
+        dst = extra_record(RGE_SRC_MEMBER_PATHS[0].replace("_SRC_LAMB93", "_DST_LAMB93"),
+                           "02_src")
+        records = self.records + [dst]
+        self.write_stage(records)
+        elevation, imagery, excluded = self.select(records)
+        basenames = [os.path.basename(path) for path in RGE_MEMBER_PATHS]
+        self.assertEqual([os.path.basename(path) for path in elevation], basenames)
+        self.assertEqual([os.path.basename(path) for path in imagery],
+                         [os.path.basename(path) for path in ORTHO_MEMBER_PATHS])
+        self.assertEqual(sorted(os.path.basename(path) for path in excluded),
+                         sorted([os.path.basename(path) for path in RGE_SRC_MEMBER_PATHS]
+                                + [dst["basename"]]))
+        self.assertFalse(any("_SRC_" in path or "_DST_" in path for path in elevation + imagery))
+        for path in elevation + imagery + excluded:
+            self.assertTrue(path.startswith(os.path.join(self.stage, "files")))
+
+    def test_missing_pinned_mnt_member_fails_closed(self):
+        records = [record for record in self.records if record["path"] != RGE_MEMBER_PATHS[3]]
+        self.write_stage(self.records)
+        code, message = fail_code(lambda: self.select(records))
+        self.assertEqual(code, prep.EXIT_STATE)
+        self.assertIn("RGEALTI_FXX_0840_6959_MNT_LAMB93_IGN69.tif", message)
+
+    def test_duplicate_pinned_mnt_member_fails_closed(self):
+        records = self.records + [dict(self.records[0])]
+        self.write_stage(records)
+        code, message = fail_code(lambda: self.select(records))
+        self.assertEqual(code, prep.EXIT_STATE)
+        self.assertIn("listed more than once", message)
+        self.assertIn(self.records[0]["basename"], message)
+
+    def test_unexpected_mnt_named_height_member_fails_closed(self):
+        extra = extra_record(RGE_MEMBER_PATHS[0].replace("FXX_0839_6958", "FXX_0842_6958"),
+                             "01_rge")
+        records = self.records + [extra]
+        self.write_stage(records)
+        code, message = fail_code(lambda: self.select(records))
+        self.assertEqual(code, prep.EXIT_STATE)
+        self.assertIn("outside the pinned MNT allowlist", message)
+
+    def test_pinned_mnt_absent_on_disk_fails_closed(self):
+        self.write_stage(self.records[1:])
+        code, message = fail_code(lambda: self.select(self.records))
+        self.assertEqual(code, prep.EXIT_STATE)
+        self.assertIn("matches 0 extracted files", message)
+
+    def test_unexpected_imagery_jp2_fails_closed(self):
+        extra = extra_record(ORTHO_MEMBER_PATHS[1].replace("0840-6960", "0841-6960"), "18_jp2")
+        records = self.records + [extra]
+        self.write_stage(records)
+        code, message = fail_code(lambda: self.select(records))
+        self.assertEqual(code, prep.EXIT_STATE)
+        self.assertIn("outside the pinned JP2 allowlist", message)
+
+    def test_pinned_jp2_absent_from_receipt_fails_closed(self):
+        records = [record for record in self.records if record["path"] != ORTHO_MEMBER_PATHS[1]]
+        self.write_stage(self.records)
+        code, message = fail_code(lambda: self.select(records))
+        self.assertEqual(code, prep.EXIT_STATE)
+        self.assertIn("08-2022-0840-6960-LA93-0M20-E080.jp2", message)
+
+    def test_warp_argv_carry_exactly_the_selected_members(self):
+        self.write_stage(self.records)
+        elevation, imagery, _excluded = self.select(self.records)
+        window = SimpleNamespace(x_min=639837.0, y_min=5506763.0, x_max=641018.0, y_max=5507944.0)
+        dem = prep.dem_warp_argv(window, 1.0, elevation, "dem.tif")
+        rgb = prep.rgb_warp_argv(window, 0.2, imagery, "rgb.tif")
+        self.assertEqual(len(elevation), 6)
+        self.assertEqual(len(imagery), 2)
+        self.assertEqual(dem[-len(elevation) - 1:-1], elevation)
+        self.assertEqual(rgb[-len(imagery) - 1:-1], imagery)
+        self.assertFalse(any("_SRC_" in part for part in dem + rgb))
+
+
+class RealGdalSourceMosaicTests(unittest.TestCase):
+    """Real gdal_translate/gdalwarp on author-created 1 m EPSG:2154 stand-ins (never IGN
+    data). Each pinned MNT name carries a distinct constant height; each SRC name is a
+    valid EPSG:2154 mask over the same 8 m footprint carrying MASK_CODE."""
+
+    TILE_M = 8
+    MASK_CODE = 7
+    ORIGIN = (839000.0, 6958000.0)
+
+    def setUp(self):
+        for tool in ("gdal_translate", "gdalwarp", "gdalinfo", "gdaltransform"):
+            if shutil.which(tool) is None:
+                self.skipTest(f"{tool} not on PATH; real-GDAL source mosaic check not executed")
+        os.makedirs("/tmp/opencode", exist_ok=True)
+        tmp = tempfile.TemporaryDirectory(prefix="prep-srcmosaic-", dir="/tmp/opencode")
+        self.addCleanup(tmp.cleanup)
+        self.root = tmp.name
+        self.stage = os.path.join(self.root, "sedan-extract-fixture")
+        os.makedirs(os.path.join(self.stage, "files"))
+        self.heights = {os.path.basename(path): 100 + 10 * index
+                        for index, path in enumerate(RGE_MEMBER_PATHS)}
+
+    def run_ok(self, argv, input_bytes=None):
+        run = prep.run_tool(argv, input_bytes=input_bytes)
+        self.assertEqual(run.returncode, 0, run.stderr[:300])
+        return run
+
+    def make_tile(self, path, subdir, index, value):
+        basename = os.path.basename(path)
+        x0 = self.ORIGIN[0] + self.TILE_M * (index % 3)
+        y0 = self.ORIGIN[1] + self.TILE_M * (index // 3)
+        rows = [" ".join([str(value)] * self.TILE_M)] * self.TILE_M
+        header = [f"ncols {self.TILE_M}", f"nrows {self.TILE_M}", f"xllcorner {x0}",
+                  f"yllcorner {y0}", "cellsize 1"]
+        asc = os.path.join(self.root, f"{basename}.asc")
+        Path(asc).write_text("\n".join(header + rows) + "\n", encoding="ascii")
+        target = os.path.join(self.stage, "files", subdir, basename)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        self.run_ok(["gdal_translate", "-q", "-of", "GTiff", "-ot", "Float32",
+                     "-a_srs", "EPSG:2154", asc, target])
+
+    def build_stage(self):
+        for index, path in enumerate(RGE_MEMBER_PATHS):
+            self.make_tile(path, "01_rge", index, self.heights[os.path.basename(path)])
+        for index, path in enumerate(RGE_SRC_MEMBER_PATHS):
+            self.make_tile(path, "02_src", index, self.MASK_CODE)
+        for path in ORTHO_MEMBER_PATHS:
+            target = os.path.join(self.stage, "files", "18_jp2", os.path.basename(path))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            Path(target).write_bytes(b"placeholder: source selection reads member names only")
+        return [{"path": path}
+                for path in RGE_MEMBER_PATHS + RGE_SRC_MEMBER_PATHS + ORTHO_MEMBER_PATHS]
+
+    def window(self):
+        ox, oy = self.ORIGIN
+        span_x, span_y = 3 * self.TILE_M, 2 * self.TILE_M
+        corners = [(ox, oy), (ox + span_x, oy), (ox, oy + span_y), (ox + span_x, oy + span_y)]
+        run = self.run_ok(["gdaltransform", "-s_srs", "EPSG:2154", "-t_srs", "EPSG:32631"],
+                          input_bytes="".join(f"{x} {y}\n" for x, y in corners).encode("ascii"))
+        utm = [tuple(float(value) for value in line.split()[:2])
+               for line in run.stdout.decode("ascii").splitlines()]
+        xs = [easting for easting, _ in utm]
+        ys = [northing for _, northing in utm]
+        return SimpleNamespace(x_min=math.floor(min(xs)) - 1.0, y_min=math.floor(min(ys)) - 1.0,
+                               x_max=math.ceil(max(xs)) + 1.0, y_max=math.ceil(max(ys)) + 1.0)
+
+    def raster_values(self, path):
+        run = self.run_ok(["gdal_translate", "-q", "-of", "AAIGrid", path, "/vsistdout/"])
+        values = set()
+        for line in run.stdout.decode("ascii").splitlines():
+            try:
+                numbers = [float(token) for token in line.split()]
+            except ValueError:
+                continue
+            values.update(round(number, 3) for number in numbers)
+        return values
+
+    def assert_epsg(self, path, code):
+        info = prep.parse_gdalinfo_json(self.run_ok(prep.gdalinfo_argv(path)), path)
+        self.assertIn(f'ID["EPSG",{code}]', info["coordinateSystem"]["wkt"])
+
+    def test_classified_dem_warp_reproduces_heights_and_never_the_mask(self):
+        lines = self.build_stage()
+        elevation, imagery, excluded = prep.classify_source_members(self.stage, lines)
+        self.assertEqual([os.path.basename(path) for path in elevation],
+                         [os.path.basename(path) for path in RGE_MEMBER_PATHS])
+        self.assertEqual(len(imagery), 2)
+        self.assertEqual(len(excluded), 6)
+        self.assert_epsg(excluded[0], 2154)
+        dem = os.path.join(self.root, "dem.tif")
+        argv = prep.dem_warp_argv(self.window(), prep.DEM_GSD_EXPECTED_M, elevation, dem)
+        self.assertEqual(argv[-len(elevation) - 1:-1], elevation)
+        self.run_ok(argv)
+        values = self.raster_values(dem)
+        expected = {float(height) for height in self.heights.values()}
+        self.assertTrue(expected <= values, sorted(values))
+        low, high = min(expected), max(expected)
+        self.assertTrue(all(low <= value <= high or value == float(prep.DEM_NODATA)
+                            for value in values), sorted(values))
+        self.assertNotIn(float(self.MASK_CODE), values)
+
+    def test_negative_control_listing_the_mask_contaminates_the_warp(self):
+        lines = self.build_stage()
+        elevation, _imagery, excluded = prep.classify_source_members(self.stage, lines)
+        dem = os.path.join(self.root, "dem-with-mask.tif")
+        self.run_ok(prep.dem_warp_argv(self.window(), prep.DEM_GSD_EXPECTED_M,
+                                       elevation + excluded, dem))
+        self.assertIn(float(self.MASK_CODE), self.raster_values(dem))
+
+
 class PrepareGuardsTests(PreparedTestBase):
     def test_missing_freeze_refuses_before_any_subprocess_or_write(self):
         cache = self.make_cache()
@@ -1621,8 +1848,9 @@ class PrepareEndToEndTests(PreparedTestBase):
         rgb_geometry = seam.warp_geometry[rgb_te[-1]]
         self.assertEqual(rgb_geometry["geoTransform"], PREPARED_RGB_GT)
         self.assertEqual(rgb_geometry["size"], [PREPARED_RGB_WIDTH, PREPARED_RGB_HEIGHT])
-        for member in facts["elevation"]:
-            self.assertIn(member, dem_calls[0]["argv"])
+        self.assertEqual(dem_calls[0]["argv"][-len(facts["elevation"]) - 1:-1], facts["elevation"])
+        self.assertFalse(any("_SRC_" in part for part in dem_calls[0]["argv"]))
+        self.assertEqual(rgb_te[-len(facts["imagery"]) - 1:-1], facts["imagery"])
         reference_calls = [call for call in seam.warp_calls() if "/vsistdout/" in call["argv"]]
         self.assertEqual(len(reference_calls), 6)
         for call in reference_calls:
@@ -1656,6 +1884,7 @@ class PrepareEndToEndTests(PreparedTestBase):
         self.assertIn("NGF-IGN69", sources_text)
         self.assertIn("nearest-valid within 3.048 m", sources_text)
         self.assertIn("preparation/receipt.json", sources_text)
+        self.assertEqual(sources_text.count("bound source member, never warped: "), 6)
 
     def test_idempotent_rerun_verifies_and_skips_without_subprocesses(self):
         cache, _facts, _seam, receipt = self.run_happy_prepare()

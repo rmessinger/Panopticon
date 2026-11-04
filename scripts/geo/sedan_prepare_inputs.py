@@ -749,7 +749,7 @@ def validate_extract_receipt(cache):
     if file_bytes != EXTRACT_TOTAL_BYTES_EXPECTED:
         fail_state(f"extract stage member bytes {file_bytes} disagree with the pinned "
                    f"{EXTRACT_TOTAL_BYTES_EXPECTED}")
-    elevation, imagery = classify_source_members(stage, member_lines)
+    elevation, imagery, excluded = classify_source_members(stage, member_lines)
     return {
         "stage": stage,
         "receipt_path": receipt_path,
@@ -759,48 +759,70 @@ def validate_extract_receipt(cache):
         "editions": editions,
         "elevation_members": elevation,
         "imagery_members": imagery,
+        "excluded_members": excluded,
     }
 
 
-ELEVATION_MEMBER_MARK = "RGEALTI"
-IMAGERY_MEMBER_MARK = "ORTHO"
 RASTER_SUFFIXES = (".tif", ".jp2")
+HEIGHT_MEMBER_MARK = "_MNT_"
+IMAGERY_MEMBER_DIR_MARK = "ORTHO"
+ELEVATION_BASENAMES = (
+    "RGEALTI_FXX_0839_6958_MNT_LAMB93_IGN69.tif",
+    "RGEALTI_FXX_0839_6959_MNT_LAMB93_IGN69.tif",
+    "RGEALTI_FXX_0840_6958_MNT_LAMB93_IGN69.tif",
+    "RGEALTI_FXX_0840_6959_MNT_LAMB93_IGN69.tif",
+    "RGEALTI_FXX_0841_6958_MNT_LAMB93_IGN69.tif",
+    "RGEALTI_FXX_0841_6959_MNT_LAMB93_IGN69.tif",
+)
+IMAGERY_BASENAMES = (
+    "08-2022-0835-6960-LA93-0M20-E080.jp2",
+    "08-2022-0840-6960-LA93-0M20-E080.jp2",
+)
 
 
 def classify_source_members(stage, member_lines):
-    """Fail-closed source classification from the receipt's archive paths: the DEM
-    warp needs RGEALTI rasters and the RGB warp needs ORTHO rasters. Only raster
-    members are resolved, and each raster basename must match exactly one
-    extracted file on disk; same-basename aux sidecars in different extracted
-    subdirectories (e.g. dalles.shx in both the RGE and BD supplements) are
-    skipped and never ambiguous."""
+    """Typed selection by pinned basename: only the ELEVATION_BASENAMES enter the DEM
+    warp and only the IMAGERY_BASENAMES enter the RGB warp. Every other raster
+    member (the RGEALTI SRC quality masks) is returned as bound but never warped.
+    Each raster must be listed exactly once in the receipt and resolve to exactly
+    one extracted file on disk; same-basename aux sidecars are not rasters and are
+    skipped."""
     disk = {}
     for dirpath, _dirnames, filenames in os.walk(os.path.join(stage, EXTRACT_FILES_DIR_REL)):
         for filename in filenames:
             disk.setdefault(filename, []).append(os.path.join(dirpath, filename))
-    elevation = []
-    imagery = []
+    listed = {}
     for member in member_lines:
         path = member["path"]
         basename = os.path.basename(path)
         if not basename.lower().endswith(RASTER_SUFFIXES):
             continue
-        candidates = disk.get(basename, [])
+        listed[basename] = listed.get(basename, 0) + 1
+        if HEIGHT_MEMBER_MARK in basename and basename not in ELEVATION_BASENAMES:
+            fail_state(f"receipt height member {basename} is outside the pinned MNT allowlist; "
+                       f"refusing to guess DEM sources")
+        if basename.lower().endswith(".jp2") and IMAGERY_MEMBER_DIR_MARK in path \
+                and basename not in IMAGERY_BASENAMES:
+            fail_state(f"receipt imagery member {basename} is outside the pinned JP2 allowlist; "
+                       f"refusing to guess imagery sources")
+    duplicates = sorted(name for name, count in listed.items() if count > 1)
+    if duplicates:
+        fail_state(f"receipt raster members listed more than once: {duplicates}")
+    for name in ELEVATION_BASENAMES + IMAGERY_BASENAMES:
+        if name not in listed:
+            fail_state(f"pinned source member {name} is absent from the extract receipt")
+    resolved = {}
+    for name in listed:
+        candidates = disk.get(name, [])
         if len(candidates) != 1:
-            fail_state(f"receipt raster member {basename} matches {len(candidates)} "
+            fail_state(f"receipt raster member {name} matches {len(candidates)} "
                        f"extracted files on disk; refusing an ambiguous source")
-        disk_path = candidates[0]
-        if ELEVATION_MEMBER_MARK in path:
-            elevation.append(disk_path)
-        elif IMAGERY_MEMBER_MARK in path:
-            imagery.append(disk_path)
-    if not elevation:
-        fail_state(f"no {ELEVATION_MEMBER_MARK} raster members in the extract receipt; "
-                   f"refusing to guess DEM sources")
-    if not imagery:
-        fail_state(f"no {IMAGERY_MEMBER_MARK} raster members in the extract receipt; "
-                   f"refusing to guess imagery sources")
-    return elevation, imagery
+        resolved[name] = candidates[0]
+    elevation = [resolved[name] for name in ELEVATION_BASENAMES]
+    imagery = [resolved[name] for name in IMAGERY_BASENAMES]
+    excluded = [resolved[name] for name in listed
+                if name not in ELEVATION_BASENAMES and name not in IMAGERY_BASENAMES]
+    return elevation, imagery, excluded
 
 
 # ---------------------------------------------------------------------------
@@ -1468,6 +1490,8 @@ def sources_txt_bytes(plan):
                  for path in plan["extract"]["elevation_members"])
     lines.extend(f"imagery source member: {os.path.basename(path)}"
                  for path in plan["extract"]["imagery_members"])
+    lines.extend(f"bound source member, never warped: {os.path.basename(path)}"
+                 for path in plan["extract"]["excluded_members"])
     lines.append(f"chronology: freezeVerifiedAt={plan['freeze_verified_at']} "
                  f"firstDemRasterIoAt={plan['first_dem_raster_io_at']}")
     lines.append(f"ledger: {plan['commands_note']}")
