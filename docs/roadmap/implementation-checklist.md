@@ -1604,7 +1604,7 @@ are not supported inputs.
 - [x] R2 Sedan real-data preview proof (`WI-R2-01`).
   - AC: an IGN RGE ALTI and BD ORTHO import of about 1.1 km of Sedan passes its IGN ground-truth
     checks and imagery control points, and its preview map runs 300 logic frames in Generals.
-- [ ] R2 Provider source profiles for data preparation (`WI-R2-02`).
+- [x] R2 Provider source profiles for data preparation (`WI-R2-02`).
   - AC: one preparation script prepares the Sedan area from both the `ign-fr` and the Europe-wide
     `copernicus-glo30` profiles, and both outputs import without errors.
 - [ ] R2 Building footprints as terrain masks (`WI-R2-03`).

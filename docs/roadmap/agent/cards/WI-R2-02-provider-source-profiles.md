@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-R2-02` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): operator data preparation beyond France |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `M` |
 | Prerequisites | `WI-R2-01` (Done; its preparation modules are the `ign-fr` delegate target) |
@@ -93,13 +93,13 @@ Not changed: `scripts/geo/prepare-sedan-proof.sh`, `scripts/geo/sedan_*`, `src/*
 
 ## Acceptance criteria
 
-- [ ] `ign-fr` through `prepare_area.py` reproduces the `WI-R2-01` Sedan inputs: same extent, CRS, resolution, band layout, and chunk grid (1100 m playable, 1170.432 m storage, 3.048 m lattice, 3 x 3 chunks).
-- [ ] `copernicus-glo30` prepares the same AOI unattended from an empty work dir, and the import reports no schema or no-data errors and no control PASS.
-- [ ] A centre whose storage extent or apron falls outside a profile's coverage fails in preflight, before any download, with a message naming the profile.
-- [ ] Other centres and sizes derive the chunk grid through the import contract with no 50 m buffer. Polar, antimeridian, and cross-zone inputs are rejected with a named error.
-- [ ] Profile parsing rejects invalid, non-finite, and untrusted identifiers before any path or network use.
-- [ ] `scripts/geo/tests/test_prepare_area.py` passes offline, and the full `scripts/geo/tests` suites pass under both the venv and stdlib interpreters.
-- [ ] Deep dive §8.1 holds the provider-addition rules with full licence obligations and both evaluation records. No source, derived, or preview data is committed.
+- [x] `ign-fr` through `prepare_area.py` reproduces the `WI-R2-01` Sedan inputs: same extent, CRS, resolution, band layout, and chunk grid (1100 m playable, 1170.432 m storage, 3.048 m lattice, 3 x 3 chunks).
+- [x] `copernicus-glo30` prepares the same AOI unattended from an empty work dir, and the import reports no schema or no-data errors and no control PASS.
+- [x] A centre whose storage extent or apron falls outside a profile's coverage fails in preflight, before any download, with a message naming the profile.
+- [x] Other centres and sizes derive the chunk grid through the import contract with no 50 m buffer. Polar, antimeridian, and cross-zone inputs are rejected with a named error.
+- [x] Profile parsing rejects invalid, non-finite, and untrusted identifiers before any path or network use.
+- [x] `scripts/geo/tests/test_prepare_area.py` passes offline, and the full `scripts/geo/tests` suites pass under both the venv and stdlib interpreters.
+- [x] Deep dive §8.1 holds the provider-addition rules with full licence obligations and both evaluation records. No source, derived, or preview data is committed.
 
 ## Validation commands
 
@@ -130,3 +130,5 @@ The first command is offline. The preflight example writes nothing. The `--prepa
 - Keep Status `Ready` until implementation starts. Set `Done` or `Blocked` only with the Architect's direction.
 - Tick the R2 provider profiles item in the checklist and update the README Track R progress rows only on `Done`.
 - Add a `Result:` line only on completion.
+
+Result: 2026-11-05. Added the bounded driver, two provider profiles, and 32 offline contract tests. Full suites: venv 782 passed; stdlib 759 passed, 23 skipped. Both operator preparations, imports, and reports exited 0; IGN reproduced the accepted payload identity, and Copernicus reported zero sampling failures or fills without control-point passes. Verified warm reuse, actual GDAL RGB scaling, and the five-primary external comparison. Evidence and limitations: [deep dive §8.1](../../deep-dives/r-real-world-terrain.md#provider-evaluation-records). No importer, existing Sedan module, or source-data changes.

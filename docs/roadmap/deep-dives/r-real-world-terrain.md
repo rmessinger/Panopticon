@@ -624,6 +624,56 @@ Scope limits, carried and not resolved by this proof:
 - No building or unit grounding: the proof is terrain-only with `SkipStartingBuildings=true`.
 - Sample sets: the 385 x 385 core spans height `0.07160953` to `261.39559937` game units (`149.4028` to `229.0544` m); the 387 x 387 outer apron holds unique samples; the 9 x 131² (154,449) aggregate stored samples contain duplicates.
 
+#### Adding a provider
+
+Entry point: `scripts/geo/prepare_area.py`. Default mode validates and prints a read-only plan; `--prepare` permits acquisition and publication. `ign-fr` delegates only the pinned Sedan request to the existing preparation pipeline. `copernicus-glo30` supports one DEM tile and one complete-AOI Sentinel-2 item per request. Profiles are not an automatic source-discovery service.
+
+- Required profile data: identifier, coverage, capabilities, download kind, source CRS, vertical datum, surface type, resampling and no-data policy, imagery selection and scaling metadata, manifest requirements, licence, and attribution. Adapter constraints and fields: [`WI-R2-02`](../agent/cards/WI-R2-02-provider-source-profiles.md#design).
+- Licence review covers source and derived notices, liability, no endorsement, obligations for subsequent users, retained intellectual property, and termination on breach. Applicable obligations are retained in `sources.txt`; Sentinel notices use the selected acquisition year. Account, API-key, RequesterPays, and interactive-acceptance providers are excluded.
+- Every new profile requires one successful operator import before listing as supported. Required evidence: source identities and retained hashes, CRS and band layout, full storage and apron coverage, kernels, no-data counts, and import report. A completed acquisition alone is not importer compatibility evidence.
+- Surface semantics remain explicit: GLO-30 is a DSM, not IGN bare earth. EGM2008 passes through unchanged. The importer performs no inter-provider datum conversion. Source LE90 is not a maximum error or a control-point acceptance result.
+- PixelIsPoint DEM inputs use GDAL's native georeferencing without a manual half-pixel shift. PixelIsArea imagery follows its embedded transform. Geometry is checked after extraction and warp.
+- The 30 m DEM is bilinearly magnified onto the 3.048 m lattice. The 10 m RGB source is magnified into imagery at ten pixels per lattice sample. Neither operation adds source detail. RGB scale and offset are applied once, clamped to the configured reflectance range, and emitted as explicit Red, Green, Blue Byte bands. Source no-data is checked before scaling; valid black remains valid.
+- Reuse requires matching request, profile and driver hashes, retained-file hashes, and completion metadata. Resumable DEM acquisition additionally requires a matching strong ETag and byte length. Failure preserves the owned stage and download cache; publication never overwrites operator files.
+
+#### Provider evaluation records
+
+Evaluation root: `/mnt/pit2/panopticon/geo-proof/provider-evaluation-r2-02-v2/`. These command-line imports do not repeat the native Sedan proof or change its frozen selection.
+
+Copernicus preparation started from an empty `cop/` directory at driver commit `1f8e6930d`. Preparation, import, and report exited `0`. Sources: full GLO-30 tile `N49_E004` (`44,369,708` B), and Sentinel-2 item `S2B_31UFR_20230907_0_L2A`. The retained STAC query covers the full source window, uses collection `sentinel-2-l2a`, dates 2023 through 2024, and cloud cover at most 20 percent. Selection reads every returned page before choosing the least-cloudy complete-AOI item, with item ID as tie-break. Source-window hashes are not whole Sentinel COG hashes.
+
+The Copernicus report records 9 chunks, 154,449 bilinear terrain samples from 30 m inputs, and 44,236,800 bilinear imagery samples from 10 m inputs. Failed samples, no-data fills, and outside fills are all `0` for both layers. Output spacing is 3.048 m for terrain and 0.3048 m for imagery. The report contains no control-point checks: `0` passed, `0` failed, `0` not evaluated. The schema-required 1.0 m tolerance is not an accuracy verdict. EGM2008 remains unchanged; no independent imagery control is claimed.
+
+Copernicus warm reuse exited `0` and reported `SKIPPED`; all 22 retained files had identical sizes and SHA-256 values before and after. A real GDAL numeric fixture separately verified scale and offset applied once, clamping to Byte, explicit RGB interpretation, and valid black pixels without a no-data tag. An earlier diagnostic preparation with grayscale photometric interpretation and an interrupted import are preserved under `provider-evaluation-r2-02-v1`; they are not accepted results.
+
+| Copernicus artifact, relative to evaluation root | SHA-256 |
+|---|---|
+| `cop/sedan-copernicus-proof.json` | `5de241204dcaa29ae1eff97c2178f8e49526a2df9da66b051995b3b7c9e8b6f4` |
+| `cop/preparation/receipt.json` | `744bd37c35a491fdc17366d0c0d991a02235a5f2ad507d7f2f017ac93387272c` |
+| `cop/acquisition/dem-tile.tif` | `79c48db88fe796c9f6395b81cb065307b32fac67dfb3d5da4451dcf26feb77e5` |
+| `cop/acquisition/stac.json` | `021c1c434fe2c007f1822360a0d705b602402a3e665494662149815abf8d7d6c` |
+| `cop/prepared/sedan-copernicus-proof-dem-32631.tif` | `0bc91bf813960a2c7869cbc8756f1215224bce175429f7df33563ab111b60132` |
+| `cop/prepared/sedan-copernicus-proof-ortho-32631.tif` | `7844004e7c7dfd9c276e7dea80dd47421415f9ab1d4c3c7506fdd5c1f9b9d8ce` |
+| `payload-cop/report.json` | `ae9945cdb2dcd3dab488e12cdeaa83683ca75a74a84f271d44390f6ea04851ba` |
+
+Reported Copernicus payload identity: `4929191f222b67142d85c830e7c0ac37fee4a16a67961b2ff3dfa846621717bc`. Operator logs: `~/log/track-r/provider-profiles-cop-rgb-20261105T122104-0500/`; warm inventory: `~/log/track-r/provider-profiles-cop-warm-20261105T122522-0500/`; numeric RGB fixture: `~/log/track-r/provider-profiles-rgb-gdal-20261105T122159-0500/`.
+
+IGN preflight and warm preparation used the existing Sedan root through the delegate. Every prepared-file hash and size remained unchanged. Import and report exited `0`, reproducing payload identity `d6cf5d001c47123e70630dcf2492041f4481762f850414bf7b365e76c5e35d35`. The report records 9 chunks, 154,449 area-weighted terrain samples from 1 m inputs, and 44,236,800 area-weighted imagery samples from 0.2 m inputs. Both layers have zero failed samples, no-data fills, and outside fills. Existing controls remain 11 passed, 31 not evaluated, and zero failed. This is a regression check, not a new native or accuracy proof.
+
+IGN report: `payload-ign/report.json`, SHA-256 `a8c44c978ab3a5651fdbed386c3943ab6924755f7f0a4ad8cc820b1737568613`. Preparation inventory: `~/log/track-r/provider-profiles-ign-operator-20261105T121641-0500/`; import and report: `~/log/track-r/provider-profiles-ign-import-20261105T122114-0500/`.
+
+The following read-only comparison samples each float32 payload continuously at the five frozen primary coordinates, interpolates its lattice values, and converts game heights back to metres using that payload's transform. These are cell-centre positions, not lattice nodes. Inactive alternatives are excluded. Differences are payload minus frozen LiDAR height.
+
+| Frozen primary | IGN difference (m) | Copernicus apparent difference (m) |
+|---|---|---|
+| `r29c117` | -0.210167 | +2.397435 |
+| `r291c342` | +0.045827 | -0.125964 |
+| `r32c280` | +0.159987 | +0.768199 |
+| `r8c320` | +0.028739 | +1.457204 |
+| `r266c285` | +0.189552 | +3.275191 |
+
+Copernicus differences mix EGM2008 versus NGF-IGN69, DSM versus bare earth, 30 m versus finer ground sampling, and acquisition epochs: TanDEM-X 2011 to 2015, RGE ALTI 2012 to 2016, and LiDAR 2024. They are not pure geoid offsets, independent control passes, or evidence of a 1 m or 4 m guarantee. Comparison receipt: `~/log/track-r/provider-profiles-evaluation-20261105-v2/five-site-comparison.json`, SHA-256 `a453039555dbb9c32e848e2fc72df0e285f8c96c84ef157079f73275aaf27e6d`; the adjacent `compare_payloads.py` records the method and hashes of the selection, metadata, reports, and terrain chunks.
+
 ## 9. Sub-phases and cards
 
 | Phase | Goal | Cards | Status |
