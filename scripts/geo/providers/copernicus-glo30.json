@@ -1,0 +1,154 @@
+{
+  "id": "copernicus-glo30",
+  "label": "Copernicus GLO-30 Europe fallback",
+  "coverage": [-10, 35, 30, 72],
+  "capabilities": ["elevation", "imagery", "surfaceModel", "stacImagery"],
+  "elevation": {
+    "download": {
+      "kind": "tile-grid",
+      "baseUrl": "https://copernicus-dem-30m.s3.amazonaws.com/",
+      "tilePattern": "Copernicus_DSM_COG_10_{NS}{lat02d}_00_{EW}{lon03d}_00_DEM/Copernicus_DSM_COG_10_{NS}{lat02d}_00_{EW}{lon03d}_00_DEM.tif",
+      "tileDegrees": 1,
+      "tileOrigin": "floor",
+      "latDigits": 2,
+      "lonDigits": 3,
+      "example": "N49_E004"
+    },
+    "strategy": "full",
+    "sourceCrs": "EPSG:4326",
+    "verticalDatum": "EGM2008",
+    "surfaceType": "surfaceModel",
+    "resampling": "bilinear",
+    "outputGsdMeters": 30.0,
+    "pixelInterpretation": "PixelIsPoint",
+    "noData": {
+      "policy": "nearest-valid",
+      "radiusMeters": 3.048,
+      "edgePolicy": "fail"
+    }
+  },
+  "imagery": {
+    "kind": "stac",
+    "catalogueUrl": "https://earth-search.aws.element84.com/v1/search",
+    "collection": "sentinel-2-l2a",
+    "dateWindow": ["2023-01-01T00:00:00Z", "2024-12-31T23:59:59Z"],
+    "cloudCoverProperty": "eo:cloud_cover",
+    "cloudCoverMax": 20,
+    "bandOrder": ["red", "green", "blue"],
+    "assetKeys": {
+      "red": "red",
+      "green": "green",
+      "blue": "blue"
+    },
+    "bandIds": {
+      "red": "B04",
+      "green": "B03",
+      "blue": "B02"
+    },
+    "bandGsdMeters": 10.0,
+    "scaleOffsetFromMetadata": true,
+    "reflectanceRange": [0, 0.2],
+    "outputRange": [0, 255],
+    "nodataValue": 0,
+    "maskBeforeScaling": true,
+    "requireFullAoi": true,
+    "outputBands": 3,
+    "outputType": "Byte",
+    "outputOrder": [1, 2, 3],
+    "publicHttpsOnly": true,
+    "bucketBaseUrl": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/",
+    "noRequesterPays": true,
+    "selection": {
+      "pages": "all",
+      "order": "leastCloud",
+      "suitable": "complete-aoi",
+      "tieBreak": "stableItemId",
+      "recordQueryItemAssetsHash": true
+    },
+    "imageryPixelsPerSample": 10,
+    "licence": {
+      "name": "Sentinel Data Legal Notice",
+      "legalNotice": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+      "freeOfCharge": true,
+      "fullAndOpen": true,
+      "rights": {
+        "reproduction": true,
+        "distribution": true,
+        "communication": true,
+        "adaptation": true,
+        "combination": true
+      },
+      "warranty": false,
+      "liabilityWaiver": true,
+      "catalogue": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a"
+    }
+  },
+  "licence": {
+    "name": "COP-DEM-GLO-30-F",
+    "description": "Free & Open",
+    "licencePdf": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N49_00_E004_00_DEM/INFO/eula_F.pdf",
+    "registry": "https://registry.opendata.aws/copernicus-dem/",
+    "readme": "https://copernicus-dem-30m.s3.amazonaws.com/readme.html",
+    "rights": {
+      "reproduction": true,
+      "distribution": true,
+      "communication": true,
+      "adaptation": true,
+      "combination": true,
+      "worldwide": true,
+      "unlimitedInTime": true,
+      "freeOfCharge": true,
+      "articles": "Art. 3 to 5"
+    },
+    "noEndorsement": true,
+    "bindSubsequent": true,
+    "asIs": true,
+    "iprStaysProvider": true,
+    "terminationOnBreach": true,
+    "productFacts": {
+      "surface": "DSM",
+      "source": "TanDEM-X 2011 to 2015",
+      "verticalAccuracy": "LE90 under 4 m (source metadata, not a maximum error)",
+      "horizontalAccuracy": "under 6 m",
+      "crs": "EPSG:4326",
+      "verticalDatum": "EGM2008 (EPSG:3855)",
+      "sampling": "Point",
+      "tile": "N49_E004 3600 x 3600 Float32 COG, about 44 MB",
+      "window": "59 x 37 window about 9 KB, 145 to 228 m"
+    }
+  },
+  "attribution": {
+    "elevation": {
+      "source": "© DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "derived": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "liability": "The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30"
+    },
+    "imagery": {
+      "source": "Copernicus Sentinel data [Year]",
+      "derived": "Contains modified Copernicus Sentinel data [Year]"
+    }
+  },
+  "manifestRequirements": {
+    "target": "utm",
+    "zoneRange": [1, 60],
+    "hemisphereRequired": true,
+    "verticalDatumPassthrough": true,
+    "tolerances": {
+      "verticalMeters": {
+        "required": true,
+        "schemaValue": 1.0,
+        "schemaValueSemantics": "validation-parameter-not-accuracy-not-evaluated-no-PASS-no-4m-from-LE90"
+      }
+    },
+    "controlPoints": {
+      "required": false,
+      "noneForCopernicus": true
+    },
+    "rasterPolicy": {
+      "noData": "nearest-valid",
+      "radiusMeters": 3.048,
+      "edgePolicy": "fail"
+    },
+    "imageryPixelsPerSample": 10
+  }
+}

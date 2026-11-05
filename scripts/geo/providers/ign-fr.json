@@ -1,0 +1,76 @@
+{
+  "id": "ign-fr",
+  "label": "IGN France Sedan D008",
+  "coverage": [4.9390, 49.6970, 4.9560, 49.7076],
+  "capabilities": ["elevation", "imagery", "bareEarth"],
+  "provenCentre": [49.702, 4.947],
+  "provenSizeMeters": 1100,
+  "provenName": "sedan-proof",
+  "provenPolicy": "reject-other-centre-size-or-name",
+  "elevation": {
+    "download": {
+      "kind": "delegate",
+      "delegateTarget": "prepare-sedan-proof.sh",
+      "delegateArgs": {
+        "preflight": ["{root}"],
+        "prepare": ["{root}", "--prepare"]
+      },
+      "pinnedArchives": [
+        "RGEALTI_2-0_1M_TIF_LAMB93-IGN69_D008_2019-10-14",
+        "BDORTHO_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01"
+      ]
+    },
+    "strategy": "delegate",
+    "sourceCrs": "EPSG:2154",
+    "verticalDatum": "NGF-IGN69",
+    "surfaceType": "bareEarth",
+    "resampling": "bilinear",
+    "noData": {
+      "policy": "nearest-valid",
+      "radiusMeters": 3.048,
+      "edgePolicy": "fail"
+    }
+  },
+  "imagery": {
+    "kind": "delegate",
+    "delegateTarget": "prepare-sedan-proof.sh",
+    "pinnedArchive": "BDORTHO_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01"
+  },
+  "licence": {
+    "name": "Licence Ouverte 2.0 (Etalab)",
+    "freeOfCharge": true,
+    "rights": {
+      "reproduction": true,
+      "distribution": true,
+      "communication": true,
+      "adaptation": true
+    },
+    "attribution": "IGN, Licence Ouverte 2.0"
+  },
+  "attribution": {
+    "source": "IGN, Licence Ouverte 2.0",
+    "derived": "IGN, Licence Ouverte 2.0"
+  },
+  "manifestRequirements": {
+    "target": "utm",
+    "zoneRange": [1, 60],
+    "hemisphereRequired": true,
+    "verticalDatumPassthrough": true,
+    "tolerances": {
+      "verticalMeters": {
+        "required": true,
+        "schemaValue": 1.0,
+        "schemaValueSemantics": "validation-parameter-not-accuracy-not-evaluated-no-PASS-no-4m-from-LE90"
+      }
+    },
+    "controlPoints": {
+      "required": false
+    },
+    "rasterPolicy": {
+      "noData": "nearest-valid",
+      "radiusMeters": 3.048,
+      "edgePolicy": "fail"
+    },
+    "imageryPixelsPerSample": 10
+  }
+}
