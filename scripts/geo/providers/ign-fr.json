@@ -2,7 +2,7 @@
   "id": "ign-fr",
   "label": "IGN France Sedan D008",
   "coverage": [4.9390, 49.6970, 4.9560, 49.7076],
-  "capabilities": ["elevation", "imagery", "bareEarth"],
+  "capabilities": ["elevation", "imagery", "bareEarth", "footprints"],
   "provenCentre": [49.702, 4.947],
   "provenSizeMeters": 1100,
   "provenName": "sedan-proof",
@@ -35,6 +35,37 @@
     "kind": "delegate",
     "delegateTarget": "prepare-sedan-proof.sh",
     "pinnedArchive": "BDORTHO_1-0_RVB-0M20_JP2-E080_LAMB93_D008_2022-01-01"
+  },
+  "footprints": {
+    "kind": "wfs",
+    "wfsUrl": "https://data.geopf.fr/wfs/ows",
+    "typeNames": "BDTOPO_V3:batiment",
+    "outputFormat": "application/json",
+    "stableIdField": "cleabs",
+    "keptAttributes": [
+      "cleabs",
+      "nature",
+      "usage_1",
+      "usage_2",
+      "hauteur"
+    ],
+    "geometry": "MultiPolygon",
+    "sourceCrs": "EPSG:4326",
+    "licence": {
+      "name": "Licence Ouverte 2.0 (Etalab)",
+      "freeOfCharge": true,
+      "rights": {
+        "reproduction": true,
+        "distribution": true,
+        "communication": true,
+        "adaptation": true
+      },
+      "attribution": "IGN, Licence Ouverte 2.0"
+    },
+    "attribution": {
+      "source": "IGN, Licence Ouverte 2.0",
+      "derived": "IGN, Licence Ouverte 2.0"
+    }
   },
   "licence": {
     "name": "Licence Ouverte 2.0 (Etalab)",

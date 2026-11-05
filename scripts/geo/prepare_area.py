@@ -3,6 +3,7 @@
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -38,6 +39,13 @@ PROVEN_ORIGIN_UTM = (639841.997, 5506768.179)
 WORKDIR_ENV = "PANOPTICON_GEO_PROOF_DIR"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROVIDERS_DIR = os.path.join(SCRIPT_DIR, "providers")
+
+FOOTPRINT_RESPONSE_CAP_BYTES = 16 * 1024 * 1024
+FOOTPRINT_TOTAL_CAP_BYTES = 64 * 1024 * 1024
+FOOTPRINT_PAGE_CAP = 100
+FOOTPRINT_FEATURE_CAP = 50000
+FOOTPRINT_TIMEOUT_SECONDS = 300.0
+DEFAULT_MIN_FOOTPRINT_M2 = 20.0
 PROVIDER_ID_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 BANDS = ("red", "green", "blue")
@@ -430,6 +438,37 @@ def validate_imagery(imagery, provider_id):
         profile_error(provider_id, "imagery bucketBaseUrl must be the public sentinel-cogs HTTPS bucket")
 
 
+def validate_footprints(footprints, provider_id):
+    if not isinstance(footprints, dict):
+        profile_error(provider_id, "footprints must be an object")
+    if footprints.get("kind") != "wfs":
+        profile_error(provider_id, "footprints kind must be wfs")
+    url = footprints.get("wfsUrl") or footprints.get("url")
+    if not (isinstance(url, str) and url.startswith("https://")):
+        profile_error(provider_id, "footprints wfsUrl must be https://")
+    if footprints.get("typeNames") != "BDTOPO_V3:batiment":
+        profile_error(provider_id, "footprints typeNames must be BDTOPO_V3:batiment")
+    if footprints.get("outputFormat") != "application/json":
+        profile_error(provider_id, "footprints outputFormat must be application/json")
+    id_field = footprints.get("stableIdField") or footprints.get("idField")
+    if id_field != "cleabs":
+        profile_error(provider_id, "footprints stable id field must be cleabs")
+    kept = footprints.get("keptAttributes")
+    if not (isinstance(kept, list) and kept == ["cleabs", "nature", "usage_1", "usage_2", "hauteur"]):
+        profile_error(provider_id, "footprints keptAttributes must be cleabs, nature, usage_1, usage_2, hauteur")
+    if footprints.get("geometry") != "MultiPolygon":
+        profile_error(provider_id, "footprints geometry must be MultiPolygon")
+    crs = footprints.get("sourceCrs") or footprints.get("crs")
+    if crs != "EPSG:4326":
+        profile_error(provider_id, "footprints source CRS must be EPSG:4326")
+    licence = footprints.get("licence")
+    if not (isinstance(licence, dict) and nonempty_str(licence.get("name"))):
+        profile_error(provider_id, "footprints licence name missing")
+    attribution = footprints.get("attribution")
+    if not (isinstance(attribution, dict) and attribution):
+        profile_error(provider_id, "footprints attribution missing")
+
+
 def validate_profile(profile, provider_id):
     if not isinstance(profile, dict):
         profile_error(provider_id, "not a JSON object")
@@ -562,6 +601,14 @@ def validate_profile(profile, provider_id):
         if legal.get("liabilityWaiver") is not True or legal.get("warranty") is not False:
             profile_error(provider_id, "missing imagery liability terms")
 
+    footprints = profile.get("footprints")
+    if "footprints" in caps:
+        if footprints is None:
+            profile_error(provider_id, "profile declares footprints capability but has no footprints block")
+        validate_footprints(footprints, provider_id)
+    elif footprints is not None:
+        profile_error(provider_id, "footprints block present without footprints capability")
+
 
 def load_profile(provider_id):
     if not PROVIDER_ID_RE.fullmatch(provider_id):
@@ -618,6 +665,35 @@ def resolve_workdir(positional):
     if "\0" in workdir:
         fail("work dir contains a null byte")
     return os.path.abspath(workdir)
+
+
+def resolve_footprint_root(explicit_root, workdir):
+    norm_work = os.path.abspath(workdir)
+    if explicit_root:
+        if "\0" in explicit_root:
+            fail("footprint root contains a null byte")
+        root = os.path.abspath(explicit_root)
+    else:
+        root = os.path.abspath(norm_work.rstrip("/\\") + "-footprints")
+    if "\0" in root:
+        fail("footprint root contains a null byte")
+    norm_root = os.path.abspath(root)
+    if os.path.islink(norm_root) or os.path.islink(norm_root.rstrip("/\\")):
+        fail(f"symlink footprint root: {norm_root}")
+    real_work = os.path.realpath(norm_work)
+    real_root = os.path.realpath(norm_root)
+    if norm_root == norm_work or real_root == real_work:
+        fail(f"footprint root cannot equal workdir: {norm_root}")
+    for r, w in ((norm_root, norm_work), (real_root, real_work)):
+        try:
+            common = os.path.commonpath([r, w])
+        except ValueError:
+            common = None
+        if common == r:
+            fail(f"footprint root cannot contain workdir: {norm_root}")
+        if common == w:
+            fail(f"footprint root cannot be inside workdir: {norm_root}")
+    return norm_root
 
 
 def computed_zone(lon):
@@ -705,7 +781,8 @@ def imagery_lines(profile, workdir):
     ]
 
 
-def print_plan(profile, provider_id, args, lat, lon, size_m, name, workdir, utm, grid):
+def print_plan(profile, provider_id, args, lat, lon, size_m, name, workdir, utm, grid,
+               footprints_enabled=False, footprint_root=None):
     zone, computed, hemisphere, epsg = utm
     elevation = profile["elevation"]
     surface = elevation["surfaceType"]
@@ -765,6 +842,20 @@ def print_plan(profile, provider_id, args, lat, lon, size_m, name, workdir, utm,
     if "provenCentre" in profile:
         argv = [os.path.join(SCRIPT_DIR, profile["elevation"]["download"]["delegateTarget"]), workdir]
         lines.append(f"delegate argv (preview, not executed): {shlex.join(argv)}")
+    if footprints_enabled and footprint_root:
+        lines += [
+            "footprints:",
+            "  stage: building-footprints (WFS live query)",
+            f"  root: {footprint_root} (not created)",
+            f"  threshold: min area {args.min_footprint_m2:g} m^2",
+            f"  caps: per-response {FOOTPRINT_RESPONSE_CAP_BYTES} B, total {FOOTPRINT_TOTAL_CAP_BYTES} B, "
+            f"pages {FOOTPRINT_PAGE_CAP}, features {FOOTPRINT_FEATURE_CAP}, time {FOOTPRINT_TIMEOUT_SECONDS:g}s",
+            "  outputs:",
+            f"    prepared/{name}-buildings.kml",
+            f"    manifest: {name}-footprints.json",
+            "    provenance/footprints-provenance.json, sources.txt",
+            "    preparation/receipt.json, preparation/commands.jsonl, preparation/COMPLETED",
+        ]
     short = SUMMARY_SHORT_NAMES.get(provider_id, provider_id)
     if surface == "bareEarth":
         summary = f"{short}/{epsg}/{grid['n_chunks']} x {grid['n_chunks']}/{storage:.3f}"
@@ -1500,6 +1591,62 @@ def run_ign_delegate(profile, provider_id, workdir):
     return EXIT_OK
 
 
+def load_footprint_stage(*, profile=None, provider_id=None, workdir=None, footprint_root=None,
+                         centre=None, size_m=None, name=None, utm=None, grid=None,
+                         min_footprint_m2=DEFAULT_MIN_FOOTPRINT_M2):
+    """Lazy stage hook for the building-footprints acquisition and masking stage.
+
+    Contract for the follow-on footprints module (`scripts/geo/footprints.py`):
+    The module must implement `run_stage(*, profile, provider_id, workdir, footprint_root,
+    centre, size_m, name, utm, grid, min_footprint_m2)`.
+
+    Required stage outputs inside footprint_root:
+    - prepared/{name}-buildings.kml: all building polygons in a folder named 'buildings'
+    - provenance/footprints-provenance.json: raw WFS pages, request log, hashes, counts
+    - sources.txt: attribution and provenance summary
+    - composed operator manifest ({name}-footprints.json): references unchanged delegate
+      DEM, ortho, and extent KML by path, vector buildings source, passability and
+      buildability rules
+    - preparation/receipt.json: binds footprint outputs and referenced delegate raster/extent
+      hashes (never delegate markers or receipts)
+    - preparation/commands.jsonl: preparation command audit ledger
+    - preparation/COMPLETED: completion marker
+
+    Delegate boundary:
+    - The stage reads delegate outputs and verifies their receipt hashes
+    - Never modifies delegate extent KML, rasters, manifests, sources.txt, or markers
+    - Receipt binds footprint outputs plus referenced delegate file hashes, never delegate markers.
+    """
+    module_path = os.path.join(SCRIPT_DIR, "footprints.py")
+    if not os.path.isfile(module_path):
+        fail(f"footprints stage module missing: {module_path}")
+    spec = importlib.util.spec_from_file_location("footprints", module_path)
+    if spec is None or spec.loader is None:
+        fail(f"could not create importlib spec for footprints module: {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as error:
+        fail(f"failed to load footprints stage module {module_path}: {error}")
+    if not hasattr(module, "run_stage") or not callable(module.run_stage):
+        fail(f"footprints stage module {module_path} missing callable run_stage")
+    if profile is None:
+        return module
+    res = module.run_stage(
+        profile=profile,
+        provider_id=provider_id,
+        workdir=workdir,
+        footprint_root=footprint_root,
+        centre=centre,
+        size_m=size_m,
+        name=name,
+        utm=utm,
+        grid=grid,
+        min_footprint_m2=min_footprint_m2,
+    )
+    return EXIT_OK if res is None else res
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
         description="Prepare a bounded area from a named provider profile. "
@@ -1510,6 +1657,13 @@ def build_parser():
     parser.add_argument("--name", required=True, help="area name")
     parser.add_argument("--utm-zone", type=int, metavar="1-60", help="override the computed UTM zone")
     parser.add_argument("--prepare", action="store_true", help="write outputs")
+    parser.add_argument("--footprints", action="store_true", default=False,
+                        help="explicitly enable building footprints stage")
+    parser.add_argument("--no-footprints", action="store_true", default=False,
+                        help="skip building footprints stage")
+    parser.add_argument("--min-footprint-m2", type=float, default=DEFAULT_MIN_FOOTPRINT_M2,
+                        help="minimum footprint area in m^2 (default: 20)")
+    parser.add_argument("--footprint-root", help="explicit footprint root directory (default: <workdir>-footprints/)")
     parser.add_argument("workdir", nargs="?", help=f"work dir (default: ${WORKDIR_ENV})")
     return parser
 
@@ -1521,6 +1675,26 @@ def run(args):
     size_m = parse_size(args.size, provider_id)
     name = validate_name(args.name, provider_id)
     workdir = resolve_workdir(args.workdir)
+
+    if args.no_footprints and args.footprint_root:
+        fail("cannot specify --footprint-root with --no-footprints")
+    if args.footprints and args.no_footprints:
+        fail("cannot specify both --footprints and --no-footprints")
+    if not is_finite_number(args.min_footprint_m2) or args.min_footprint_m2 <= 0:
+        fail(f"--min-footprint-m2 must be a finite positive number, got {args.min_footprint_m2}")
+
+    has_footprints_cap = "footprints" in profile.get("capabilities", [])
+    if args.footprints and not has_footprints_cap:
+        fail(f"provider {provider_id!r} lacks the 'footprints' capability")
+    if args.footprint_root and not has_footprints_cap:
+        fail(f"provider {provider_id!r} lacks the 'footprints' capability")
+
+    footprints_enabled = False
+    footprint_root = None
+    if has_footprints_cap and not args.no_footprints:
+        footprints_enabled = True
+        footprint_root = resolve_footprint_root(args.footprint_root, workdir)
+
     if "provenCentre" in profile:
         check_proven_only(profile, lat, lon, size_m, name, provider_id)
     grid = chunk_grid(size_m)
@@ -1534,10 +1708,27 @@ def run(args):
     utm = (zone, computed, hemisphere, epsg)
     if args.prepare:
         if "provenCentre" in profile:
-            return run_ign_delegate(profile, provider_id, workdir)
+            code = run_ign_delegate(profile, provider_id, workdir)
+            if code != EXIT_OK:
+                return code
+            if footprints_enabled:
+                return load_footprint_stage(
+                    profile=profile,
+                    provider_id=provider_id,
+                    workdir=workdir,
+                    footprint_root=footprint_root,
+                    centre=(lat, lon),
+                    size_m=size_m,
+                    name=name,
+                    utm=utm,
+                    grid=grid,
+                    min_footprint_m2=args.min_footprint_m2,
+                )
+            return code
         return prepare_copernicus(profile, provider_id, (lat, lon), size_m, name, workdir,
                                   utm, grid)
-    print_plan(profile, provider_id, args, lat, lon, size_m, name, workdir, utm, grid)
+    print_plan(profile, provider_id, args, lat, lon, size_m, name, workdir, utm, grid,
+               footprints_enabled=footprints_enabled, footprint_root=footprint_root)
     return EXIT_OK
 
 

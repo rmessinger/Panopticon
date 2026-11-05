@@ -312,6 +312,10 @@ class SelectionAndRasterTests(unittest.TestCase):
 
 
 class PreparationTests(unittest.TestCase):
+    def invoke(self, root, provider="copernicus-glo30", extra=()):
+        return area.main(["--provider", provider, "--center", "49.702,4.947", "--size", "1100",
+                          "--name", "sedan-proof", *extra, str(root)])
+
     def prepare(self, root):
         return area.prepare_copernicus(profile(), "copernicus-glo30", (49.702, 4.947), 1100,
                                        "sedan-proof", str(root), (31, 31, "north", 32631), area.chunk_grid(1100))
@@ -544,6 +548,213 @@ class PreparationTests(unittest.TestCase):
         self.assertTrue(run.timed_out)
         with self.assertRaisesRegex(area.Failure, "stdin"):
             area.run_tool([sys.executable, "-c", "pass"], input_bytes=b"x" * 4097)
+
+    def test_footprints_schema_and_capability_validation(self):
+        p = area.load_profile("ign-fr")
+        self.assertIn("footprints", p["capabilities"])
+        self.assertIsInstance(p.get("footprints"), dict)
+
+        def mutated(profile_dict, path, value):
+            target = copy.deepcopy(profile_dict)
+            parts = path.split(".")
+            curr = target
+            for part in parts[:-1]:
+                curr = curr[part]
+            if value is None:
+                del curr[parts[-1]]
+            else:
+                curr[parts[-1]] = value
+            return target
+
+        # Missing footprints block when capability present
+        p_no_block = mutated(p, "footprints", None)
+        with self.assertRaisesRegex(area.Failure, "profile declares footprints capability"):
+            area.validate_profile(p_no_block, "ign-fr")
+
+        # Footprints block present when capability missing
+        cop = area.load_profile("copernicus-glo30")
+        cop_with_fp = copy.deepcopy(cop)
+        cop_with_fp["footprints"] = copy.deepcopy(p["footprints"])
+        with self.assertRaisesRegex(area.Failure, "footprints block present without footprints capability"):
+            area.validate_profile(cop_with_fp, "copernicus-glo30")
+
+        # Kind wfs inside elevation or imagery download is rejected
+        elev_wfs = mutated(p, "elevation.download.kind", "wfs")
+        with self.assertRaisesRegex(area.Failure, "elevation download kind must be"):
+            area.validate_profile(elev_wfs, "ign-fr")
+        img_wfs = mutated(cop, "imagery.kind", "wfs")
+        with self.assertRaisesRegex(area.Failure, "imagery kind must be"):
+            area.validate_profile(img_wfs, "copernicus-glo30")
+
+        # Specific footprints block validations
+        cases = [
+            ("footprints.kind", "stac", "footprints kind must be wfs"),
+            ("footprints.wfsUrl", "http://insecure.org", "footprints wfsUrl must be https://"),
+            ("footprints.typeNames", "OTHER:layer", "footprints typeNames must be BDTOPO_V3:batiment"),
+            ("footprints.outputFormat", "text/xml", "footprints outputFormat must be application/json"),
+            ("footprints.stableIdField", "id", "footprints stable id field must be cleabs"),
+            ("footprints.keptAttributes", ["cleabs"], "footprints keptAttributes"),
+            ("footprints.geometry", "Polygon", "footprints geometry must be MultiPolygon"),
+            ("footprints.sourceCrs", "EPSG:2154", "footprints source CRS must be EPSG:4326"),
+            ("footprints.licence.name", "", "footprints licence name missing"),
+            ("footprints.attribution", {}, "footprints attribution missing"),
+            ("footprints.badNumber", float("nan"), "non-finite number"),
+        ]
+        for path, val, err_re in cases:
+            with self.subTest(path=path, val=val), self.assertRaisesRegex(area.Failure, err_re):
+                area.validate_profile(mutated(p, path, val), "ign-fr")
+
+    def test_footprints_cli_argv_and_conflicts(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "work"
+            # Conflict --footprint-root + --no-footprints
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                code = self.invoke(root, "ign-fr", ("--footprint-root", "/tmp/custom-fp", "--no-footprints"))
+                self.assertEqual(area.EXIT_GUARD, code)
+                self.assertIn("cannot specify --footprint-root with --no-footprints", err.getvalue())
+
+            # Conflict --footprints + --no-footprints
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                code = self.invoke(root, "ign-fr", ("--footprints", "--no-footprints"))
+                self.assertEqual(area.EXIT_GUARD, code)
+                self.assertIn("cannot specify both --footprints and --no-footprints", err.getvalue())
+
+            # Capability error on copernicus-glo30 with --footprints
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                code = self.invoke(root, "copernicus-glo30", ("--footprints",))
+                self.assertEqual(area.EXIT_GUARD, code)
+                self.assertIn("copernicus-glo30", err.getvalue())
+                self.assertIn("footprints", err.getvalue())
+
+            # Capability error on copernicus-glo30 with --footprint-root
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                code = self.invoke(root, "copernicus-glo30", ("--footprint-root", "/tmp/fp",))
+                self.assertEqual(area.EXIT_GUARD, code)
+                self.assertIn("copernicus-glo30", err.getvalue())
+                self.assertIn("footprints", err.getvalue())
+
+            # --min-footprint-m2 non-positive / non-finite rejections
+            for bad in ("nan", "inf", "0", "--min-footprint-m2=-inf", "--min-footprint-m2=-10"):
+                extra = (bad,) if bad.startswith("--") else ("--min-footprint-m2", bad)
+                with self.subTest(bad=bad), contextlib.redirect_stderr(io.StringIO()) as err:
+                    code = self.invoke(root, "ign-fr", extra)
+                    self.assertEqual(area.EXIT_GUARD, code)
+                    self.assertIn("--min-footprint-m2 must be a finite positive number", err.getvalue())
+
+    def test_footprint_root_safety_rejections(self):
+        with self.assertRaisesRegex(area.Failure, "null byte"):
+            area.resolve_footprint_root("/tmp/a\0b", "/tmp/work")
+        with self.assertRaisesRegex(area.Failure, "cannot equal workdir"):
+            area.resolve_footprint_root("/tmp/work", "/tmp/work")
+        with self.assertRaisesRegex(area.Failure, "cannot contain workdir"):
+            area.resolve_footprint_root("/tmp/work", "/tmp/work/nested")
+        with self.assertRaisesRegex(area.Failure, "cannot be inside workdir"):
+            area.resolve_footprint_root("/tmp/work/nested", "/tmp/work")
+        with tempfile.TemporaryDirectory() as temp:
+            real_dir = Path(temp) / "real"
+            real_dir.mkdir()
+            sym_dir = Path(temp) / "sym"
+            sym_dir.symlink_to(real_dir, target_is_directory=True)
+
+            # A symlinked workdir resolves rather than failing
+            resolved = area.resolve_footprint_root(str(Path(temp) / "fp"), str(sym_dir))
+            self.assertEqual(os.path.abspath(str(Path(temp) / "fp")), resolved)
+            default_resolved = area.resolve_footprint_root(None, str(sym_dir))
+            self.assertEqual(os.path.abspath(str(Path(temp) / "sym-footprints")), default_resolved)
+
+            # Symlinked footprint root itself is rejected
+            with self.assertRaisesRegex(area.Failure, "symlink footprint root"):
+                area.resolve_footprint_root(str(sym_dir), str(Path(temp) / "workdir"))
+
+            # Containment hiding via symlink is still rejected (workdir reached via symlink or vice versa)
+            with self.assertRaisesRegex(area.Failure, "cannot be inside workdir"):
+                area.resolve_footprint_root(str(real_dir / "nested"), str(sym_dir))
+            with self.assertRaisesRegex(area.Failure, "cannot be inside workdir"):
+                area.resolve_footprint_root(str(sym_dir / "nested"), str(real_dir))
+            with self.assertRaisesRegex(area.Failure, "cannot contain workdir"):
+                area.resolve_footprint_root(str(real_dir), str(sym_dir / "nested"))
+            with self.assertRaisesRegex(area.Failure, "cannot equal workdir"):
+                area.resolve_footprint_root(str(real_dir / "leaf"), str(sym_dir / "leaf"))
+
+    def test_footprints_preflight_purity(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "absent"
+            fp_root = Path(temp) / "absent-footprints"
+            run_tool_mock = mock.MagicMock(side_effect=AssertionError("spawn"))
+            with mock.patch.object(area, "run_tool", run_tool_mock), \
+                    mock.patch.object(area, "http_post_json", side_effect=AssertionError("network")), \
+                    contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(0, self.invoke(root, "ign-fr"))
+            self.assertEqual(0, run_tool_mock.call_count)
+            self.assertFalse(root.exists())
+            self.assertFalse(fp_root.exists())
+            val = out.getvalue()
+            self.assertIn("stage: building-footprints (WFS live query)", val)
+            self.assertIn(f"root: {fp_root} (not created)", val)
+            self.assertIn("threshold: min area 20 m^2", val)
+            self.assertIn("caps: per-response 16777216 B", val)
+            self.assertIn("prepared/sedan-proof-buildings.kml", val)
+            self.assertIn("manifest: sedan-proof-footprints.json", val)
+
+            # Preflight with --no-footprints hides footprint stage
+            with mock.patch.object(area, "run_tool", run_tool_mock), \
+                    mock.patch.object(area, "http_post_json", side_effect=AssertionError("network")), \
+                    contextlib.redirect_stdout(io.StringIO()) as out_no:
+                self.assertEqual(0, self.invoke(root, "ign-fr", ("--no-footprints",)))
+            self.assertNotIn("stage: building-footprints", out_no.getvalue())
+
+    def test_footprints_prepare_calls_hook_or_skips(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "ign"
+            root.mkdir()
+            prepared = root / "prepared"
+            prepared.mkdir()
+            for name in ("sedan-extent.kml", "sedan-dem-32631.tif", "sedan-ortho-32631.tif"):
+                (prepared / name).write_bytes(b"data")
+            (root / "sedan-ign-proof.json").write_bytes(b"{}")
+            tool_run = area.ToolRun(0, "", "", False, 0.01)
+            hook_mock = mock.MagicMock(return_value=area.EXIT_OK)
+            with mock.patch.object(area, "run_tool", return_value=tool_run), \
+                    mock.patch.object(area, "load_footprint_stage", hook_mock), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(0, self.invoke(root, "ign-fr", ("--prepare",)))
+            hook_mock.assert_called_once()
+            kwargs = hook_mock.call_args.kwargs
+            self.assertEqual("ign-fr", kwargs["provider_id"])
+            self.assertEqual(str(root.resolve()), str(kwargs["workdir"]))
+            self.assertEqual(str(root.resolve()) + "-footprints", str(kwargs["footprint_root"]))
+            self.assertEqual((49.702, 4.947), kwargs["centre"])
+            self.assertEqual(1100.0, kwargs["size_m"])
+            self.assertEqual("sedan-proof", kwargs["name"])
+            self.assertEqual(20.0, kwargs["min_footprint_m2"])
+
+            # With --no-footprints, hook is skipped
+            hook_mock.reset_mock()
+            with mock.patch.object(area, "run_tool", return_value=tool_run), \
+                    mock.patch.object(area, "load_footprint_stage", hook_mock), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(0, self.invoke(root, "ign-fr", ("--prepare", "--no-footprints")))
+            hook_mock.assert_not_called()
+
+    def test_footprints_missing_module_fails_loudly(self):
+        with self.assertRaisesRegex(area.Failure, "footprints stage module missing"):
+            area.load_footprint_stage()
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "ign"
+            root.mkdir()
+            prepared = root / "prepared"
+            prepared.mkdir()
+            for name in ("sedan-extent.kml", "sedan-dem-32631.tif", "sedan-ortho-32631.tif"):
+                (prepared / name).write_bytes(b"data")
+            (root / "sedan-ign-proof.json").write_bytes(b"{}")
+            tool_run = area.ToolRun(0, "", "", False, 0.01)
+            with mock.patch.object(area, "run_tool", return_value=tool_run), \
+                    contextlib.redirect_stderr(io.StringIO()) as err, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                code = self.invoke(root, "ign-fr", ("--prepare",))
+            self.assertEqual(area.EXIT_GUARD, code)
+            self.assertIn("footprints stage module missing", err.getvalue())
 
 
 if __name__ == "__main__":
