@@ -299,7 +299,8 @@ internal static class ImportChunkGeneration
                 maskReport.WaterRuleApplicationCount,
                 maskReport.PassabilityRuleApplicationCount,
                 maskReport.BuildabilityRuleApplicationCount,
-                maskReport.PlayableForcedCellCount);
+                maskReport.PlayableForcedCellCount,
+                maskReport.ZeroCellMappedPolygonFeatureCount);
             featureSummary = BuildFeatureSummary(generatedFeatures);
         }
         catch (ArgumentException ex)

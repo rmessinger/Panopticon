@@ -70,7 +70,8 @@ internal static class PayloadReportJson
             Require(masksDto.WaterRuleApplicationCount, "masks.waterRuleApplicationCount"),
             Require(masksDto.PassabilityRuleApplicationCount, "masks.passabilityRuleApplicationCount"),
             Require(masksDto.BuildabilityRuleApplicationCount, "masks.buildabilityRuleApplicationCount"),
-            Require(masksDto.PlayableForcedCellCount, "masks.playableForcedCellCount"));
+            Require(masksDto.PlayableForcedCellCount, "masks.playableForcedCellCount"),
+            masksDto.ZeroCellMappedPolygonFeatureCount ?? 0);
 
         var featuresDto = Require(dto.Features, "features");
         var features = new PayloadFeatureGenerationSummary(
@@ -180,6 +181,7 @@ internal static class PayloadReportJson
         writer.WriteNumber("passabilityRuleApplicationCount", masks.PassabilityRuleApplicationCount);
         writer.WriteNumber("buildabilityRuleApplicationCount", masks.BuildabilityRuleApplicationCount);
         writer.WriteNumber("playableForcedCellCount", masks.PlayableForcedCellCount);
+        writer.WriteNumber("zeroCellMappedPolygonFeatureCount", masks.ZeroCellMappedPolygonFeatureCount);
         writer.WriteEndObject();
 
         var features = report.Features;

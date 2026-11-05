@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Panopticon.Geospatial;
+using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Tests.Pipeline;
 using Panopticon.Tools.GeoImport;
 using Xunit;
@@ -159,6 +160,11 @@ public class GeoImportCliTests
         Assert.Contains(lines, line => line.StartsWith("features: ", StringComparison.Ordinal));
         Assert.Contains(lines, line => line.StartsWith("palette: ", StringComparison.Ordinal));
         Assert.Contains(lines, line => line.StartsWith("checks: ", StringComparison.Ordinal));
+
+        using var reader = GeneratedMapPayloadReader.Open(output, new GeoDiagnosticBag());
+        Assert.NotNull(reader);
+        var zeroCell = reader!.Report.Masks.ZeroCellMappedPolygonFeatureCount;
+        Assert.Contains(lines, line => line == $"masks: {zeroCell} zero-cell mapped polygon features");
     }
 
     [Fact]
