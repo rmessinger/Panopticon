@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-R2-02` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): operator data preparation beyond France |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `M` |
 | Prerequisites | `WI-R2-01` (the working IGN preparation script) |

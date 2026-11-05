@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-R2-01` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): early operator proof on the dev preview |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-B4b-24` (which needs `WI-B4b-19`, `WI-B4b-20`, `WI-B4b-23`) |
@@ -67,13 +67,13 @@ The whole run is command-line only: `curl`, `7z`, and GDAL 3.x command-line tool
 
 ## Acceptance criteria
 
-- [ ] `prepare-sedan-proof.sh` runs unattended from an empty work dir to the DEM, imagery, and KML, and a second run reuses existing downloads.
-- [ ] The example manifest validates in CI without source data.
-- [ ] Operator run: every selected ground-truth cell passes its vertical tolerance with all residuals retained, both imagery points pass, and the report records `NGF-IGN69` and the kernels.
-- [ ] The preview map loads in Generals and runs 300 logic frames with ground-truth cell heights within tolerance.
-- [ ] Screenshots show the castle promontory and the Meuse in the right place against the BD ORTHO crop.
-- [ ] §8.1 holds the recorded results; no IGN or Google-derived file is committed.
-- [ ] Standard validation passes.
+- [x] `prepare-sedan-proof.sh` runs unattended from an empty work dir to the DEM, imagery, and KML, and a second run reuses existing downloads.
+- [x] The example manifest validates in CI without source data.
+- [x] Operator run: every selected ground-truth cell passes its vertical tolerance with all residuals retained, both imagery points pass, and the report records `NGF-IGN69` and the kernels.
+- [x] The preview map loads in Generals and runs 300 logic frames with ground-truth cell heights within tolerance.
+- [x] Screenshots show the castle promontory and the Meuse in the right place against the BD ORTHO crop.
+- [x] §8.1 holds the recorded results; no IGN or Google-derived file is committed.
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -95,6 +95,7 @@ PANOPTICON_GEO_PROOF_DIR="<operator data dir>" CNC_GENERALS_PATH="/home/rmessing
 
 ## On completion
 
+- Result: 2026-11-05 done: operator proof completed at commit `03fb42f0a285d8507d9cfc37742d74026251d16e`. The fourth Interactive `SedanOperatorProofTests` case passed 1/1 with 300 logic frames; Budget A max 0.2102 m against the 1.0 m operator engineering limit (not a certified source accuracy); Budget B max 0.011486 game units against 0.0390625 game units; both imagery control points 0 B delta; warm `prepare-sedan-proof.sh` idempotence verified; native and BD ORTHO evidence verified by numerical audit and independent Vision review. Numbers, hashes, evidence filenames, and scope limits are in deep dive §8.1. Full routine validation at `bf23731d771bddaf0464fe6c2c74a28ab566ac4c` (test-only fix): fresh C# build 0 errors, 39 warnings, 0 G6-owned; format, brace, and diff checks clean; test run EXIT 1 with 4711 PASS, 10 known FAIL, 8 SKIP of 4729 across 6 TRX in `~/log/track-r/group6-post-userdata-validation-20261105T0912-0500/`; all 5 `UserDataRootPathTests` PASS; the 10 known failures are listed in `test/known-failures.json`; both Nav `PendingHandle` tests PASS this run, with their historical flakiness parent-proven, out of scope, and no manifest addition. Prior Python validation (venv 750 PASS; stdlib 727 PASS, 23 SKIP) at 03fb stands because the scripts are byte-identical at bf237; no fresh Python run is claimed. Unblocks WI-R2-02 to Ready. The R2 phase stays open for WI-R2-02 and WI-R2-03.
 - Result: 2026-11-04 partial: test-caller Budget B height query and preview camera aim fixed in SedanOperatorProofTests (SedanProofHeightSampling.SampleContinuousEngineHeight replaces the SW-corner integer lookup Terrain.GetGroundHeight(Vector2) with continuous HeightMap.GetHeight(float, float) under the unchanged GetTilePosition in-bounds guard; PlayableCentreEngineXy aims the preview capture at the generated map centre (1920, 1920) at height 560 with aim/height/angle/pitch recorded in ProofMetrics; Budget A 1.0 m, Budget B 0.0390625 game units, frame crosscheck 0.005 game units, and production Terrain/HeightMap untouched; independent diagnosis ~/log/track-r/review-sedan-budgetb-20261104T1253-0500/diagnosis.md) with 118/118 Sedan CPU tests in Simulation.Tests (9 new + 109 existing) and 15/15 in Geospatial.Tests; the fourth Interactive SedanOperatorProofTests case remains PENDING at this commit; Status stays `Ready`, no completion claimed.
 - Result: 2026-11-04 partial: real-data-exposed convex-average overshoot fixed in RasterSampler (both AreaWeighted and Bilinear clamp the finite quotient into the contributing-sample min/max; typed errors, NaN, invalid imagery, kernels, fills unchanged; independent audit PASS ~/log/track-r/review-georas001-20261104T1225-0500/audit.md) with 1244 scoped Geospatial tests, 58 sampler, 16 imagery, all pinned determinism guards unchanged; the actual proof run remains PENDING; Status stays `Ready`.
 - Result: 2026-11-04 partial: streaming-hash harness fix committed (constant-memory SHA-256 helper SedanProofHashing with BCL HashData(Stream) and owned File.OpenRead; the proof-root baseline hasher and the freeze-artifact ledger hash no longer use ReadAllBytes, whose 2 GiB limit broke the first real case during the pre-Core baseline inventory of the 4 GiB cache archive parts; inventory scope intentionally unchanged, whole proof root including archives); validation 109/109 CPU 0 failed 0 skipped including new >Int32.MaxValue virtual-stream (2 GiB+64, helper 5.70 s vs incremental reference 5.54 s), lying-length EOF-truth, 7-byte short-read, and real-file identity regressions; independent E PASS (~/log/track-r/review-dnative-hashfix-20261104T1155-0500/audit.md); the single actual Interactive SedanOperatorProofTests case remains PENDING at this commit (first attempt's pre-Core IO failure TRX and logs preserved under ~/log/track-r/sedan-operator-proof-execution-20261104T1141-0500/); Status stays `Ready`, no completion claimed.
