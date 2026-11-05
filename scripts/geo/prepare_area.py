@@ -1030,6 +1030,7 @@ def write_rgb_vrt(path, sources, width, height, gsd, xmin, ymax, epsg):
              f"  <GeoTransform>{xmin!r}, {gsd!r}, 0.0, {ymax!r}, 0.0, {-gsd!r}</GeoTransform>"]
     for index, source in enumerate(sources, start=1):
         lines += [f'  <VRTRasterBand dataType="Byte" band="{index}">',
+                  f"    <ColorInterp>{('Red', 'Green', 'Blue')[index - 1]}</ColorInterp>",
                   "    <SimpleSource>",
                    f'      <SourceFilename relativeToVRT="1">{escape(os.path.basename(source))}</SourceFilename>',
                   "      <SourceBand>1</SourceBand>",
@@ -1374,13 +1375,15 @@ def build_copernicus_stage(stage, profile, provider_id, name, centre, size_m, ut
     rgb_argv = ["gdalwarp", "-q", "-t_srs", f"EPSG:{epsg}", "-te", *[str(v) for v in window],
                 "-tr", f"{gsd_rgb:g}", f"{gsd_rgb:g}", "-r", "average", "-ot", "Byte",
                 "-dstnodata", "None",
-                "-co", "COMPRESS=NONE", vrt, os.path.join(stage, rels["rgb"])]
+                "-co", "COMPRESS=NONE", "-co", "PHOTOMETRIC=RGB", vrt, os.path.join(stage, rels["rgb"])]
     run_gdal(dem_argv, "DEM warp")
     run_gdal(rgb_argv, "RGB warp")
     verify_window(gdal_json(os.path.join(stage, rels["dem"]), stats=True), dem_window,
                   gsd_dem, epsg, "Float32", 1, "DEM output", DEM_NODATA)
     rgb_info = gdal_json(os.path.join(stage, rels["rgb"]), stats=True)
     verify_window(rgb_info, window, gsd_rgb, epsg, "Byte", 3, "RGB output")
+    if [band.get("colorInterpretation") for band in rgb_info["bands"]] != ["Red", "Green", "Blue"]:
+        fail("RGB output: expected Red, Green, Blue colour interpretations", EXIT_WORKER)
     ledger.append("warp", dem=dem_argv, rgb=rgb_argv)
 
     atomic_write_excl(os.path.join(stage, rels["kml"]), extent_kml_bytes(name, playable))

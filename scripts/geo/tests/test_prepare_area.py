@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from unittest import mock
 
 
@@ -92,6 +93,9 @@ class FakeTools:
                 info = raster(bounds, float(argv[argv.index("-tr") + 1]),
                               3 if dtype == "Byte" else 1, dtype,
                               nodata=None if dtype == "Byte" else -9999)
+                if "PHOTOMETRIC=RGB" in argv:
+                    for band, color in zip(info["bands"], ("Red", "Green", "Blue")):
+                        band["colorInterpretation"] = color
             else:
                 info = copy.deepcopy(self.rasters[argv[-2]])
                 for band in info["bands"]:
@@ -256,6 +260,16 @@ class SelectionAndRasterTests(unittest.TestCase):
         self.assertEqual("1", argv[argv.index("-exponent") + 1])
         self.assertEqual("none", argv[argv.index("-a_nodata") + 1])
 
+    def test_rgb_vrt_declares_band_order_and_escapes_paths(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = str(Path(temp) / "rgb.vrt")
+            sources = [str(Path(temp) / f"{band}&scaled.tif") for band in area.BANDS]
+            area.write_rgb_vrt(path, sources, 10, 20, 10, 640000, 5500000, 32631)
+            bands = ET.parse(path).getroot().findall("VRTRasterBand")
+            self.assertEqual(["Red", "Green", "Blue"], [b.findtext("ColorInterp") for b in bands])
+            self.assertEqual([Path(p).name for p in sources],
+                             [b.findtext("SimpleSource/SourceFilename") for b in bands])
+
     def test_every_band_requires_finite_full_validity(self):
         for value in ("99", "nan", "inf", None):
             info = raster((0, 0, 20, 20), count=3)
@@ -373,6 +387,7 @@ class PreparationTests(unittest.TestCase):
             after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
             self.assertEqual(before, after)
             rgb_warp = next(a for a in fake.calls if a[0] == "gdalwarp" and "Byte" in a)
+            self.assertIn("PHOTOMETRIC=RGB", rgb_warp)
             self.assertNotIn("-srcnodata", rgb_warp)
             self.assertEqual("None", rgb_warp[rgb_warp.index("-dstnodata") + 1])
             for band in area.BANDS:
