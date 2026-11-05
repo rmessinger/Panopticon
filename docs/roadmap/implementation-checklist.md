@@ -1596,7 +1596,7 @@ are not supported inputs.
     manifest thresholds.
 
 ### R2: Standalone payload and dev preview
-- [ ] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
+- [x] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
   - AC: a synthetic import writes the full payload transactionally and control points pass within
     tolerance.
 - [ ] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).

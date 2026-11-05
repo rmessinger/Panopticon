@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-18` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): B4b-6a standalone payload |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-02`, `WI-B4b-08`, `WI-B4b-10`, `WI-B4b-13`, `WI-B4b-14`, `WI-B4b-16`, and `WI-B4b-17` |
@@ -17,6 +17,7 @@ Wire `GeospatialImporter.Run` end to end and write/read the §6.1 payload direct
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/r-real-world-terrain.md` §6.1 (payload layout), §4 (vertical datum rule), §7, §10.4.
+- `docs/roadmap/implementation/track-r-r2-payload.md` (public API, bounded storage, reader validation, and transaction contract).
 
 ## Steps
 
