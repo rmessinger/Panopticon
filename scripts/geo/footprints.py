@@ -570,12 +570,11 @@ def query_wfs_pages(seams, profile: dict, bbox_bounds: tuple[float, float, float
             initial_timestamp = time_stamp
             initial_number_matched = number_matched
         else:
-            if time_stamp != initial_timestamp:
-                seams.fail(f"WFS response timeStamp changed between pages: {initial_timestamp} -> {time_stamp}",
-                           seams.EXIT_WORKER)
             if number_matched != initial_number_matched:
                 seams.fail(f"WFS response numberMatched changed between pages: {initial_number_matched} -> {number_matched}",
                            seams.EXIT_WORKER)
+
+        latest_timestamp = time_stamp
 
         page_record = {
             "pageIndex": len(pages),
@@ -584,6 +583,7 @@ def query_wfs_pages(seams, profile: dict, bbox_bounds: tuple[float, float, float
             "bytes": page_bytes,
             "featureCount": len(features),
             "acquiredAt": seams.now_iso(),
+            "timeStamp": time_stamp,
             "rawBytes": page_data,
             "rawContent": page_data.decode("utf-8"),
         }
@@ -648,6 +648,8 @@ def query_wfs_pages(seams, profile: dict, bbox_bounds: tuple[float, float, float
 
     provenance_meta = {
         "timeStamp": initial_timestamp,
+        "firstPageTimeStamp": initial_timestamp,
+        "lastPageTimeStamp": latest_timestamp,
         "numberMatched": initial_number_matched,
         "totalBytes": total_bytes,
         "pageCount": len(pages),
@@ -779,7 +781,7 @@ def format_sources_txt(name: str, kept_count: int, dropped_count: int, min_area_
         "Attribution: IGN, Licence Ouverte 2.0",
         "Licence: Licence Ouverte 2.0 (Etalab)",
         f"WFS Service: {wfs_meta.get('wfsUrl')} ({wfs_meta.get('typeNames')})",
-        "Live-edition caveat: The WFS service is live and not a pinned edition; response timeStamp is observed.",
+        "Live-edition caveat: The WFS service is live and not a pinned edition; response timeStamps are minted per request as observed.",
         f"Acquisition Timestamp: {wfs_meta.get('timeStamp')}",
         f"Filter Threshold: {min_area_m2:g} m^2",
         f"Features: {wfs_meta.get('totalFeatures')} acquired, {kept_count} kept, {dropped_count} dropped below threshold",
@@ -964,7 +966,12 @@ def run_stage(*, profile, provider_id, workdir, footprint_root, centre, size_m, 
             "filterThresholdM2": min_footprint_m2,
             "numberMatched": wfs_meta["numberMatched"],
             "timeStamp": wfs_meta["timeStamp"],
-            "liveEditionCaveat": "The WFS service is live and not a pinned edition; response timeStamp is observed as returned.",
+            "firstPageTimeStamp": wfs_meta["firstPageTimeStamp"],
+            "lastPageTimeStamp": wfs_meta["lastPageTimeStamp"],
+            "liveEditionCaveat": (
+                "The WFS service is live and not a pinned edition; response timeStamp values "
+                "are minted per request as observed and carry no consistent server snapshot claim."
+            ),
             "sortbyProof": f"First page features verified sorted by {stable_id_field} in ascending order.",
             "bboxWgs84": wfs_meta["bbox"],
             "bboxQueryParam": wfs_meta["bboxParam"],

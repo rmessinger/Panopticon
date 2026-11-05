@@ -467,14 +467,50 @@ class TestFootprintsStage(unittest.TestCase):
                 )
             self.assertIn("did not honor SORTBY", str(cm.exception))
 
-    def test_wfs_timestamp_or_number_matched_change_rejected(self):
-        """Changes in timeStamp or numberMatched across pages are rejected."""
+    def test_wfs_timestamp_variance_across_pages_accepted(self):
+        """Timestamp variance across WFS pages is accepted and recorded per page."""
         f1 = make_wfs_feature("BATIMENT0000000001", lon=4.947, lat=49.702)
         f2 = make_wfs_feature("BATIMENT0000000002", lon=4.948, lat=49.703)
 
         page1 = make_wfs_response([f1], number_matched=2, number_returned=1, time_stamp="2026-11-05T12:00:00Z")
-        # Page 2 has changed timeStamp
+        # Page 2 has different timeStamp (mints per request)
         page2 = make_wfs_response([f2], number_matched=2, number_returned=1, time_stamp="2026-11-05T12:00:05Z")
+
+        page1_bytes = json.dumps(page1).encode("utf-8")
+        page2_bytes = json.dumps(page2).encode("utf-8")
+        page_iter = iter([page1_bytes, page2_bytes])
+
+        def fake_run_tool(argv, **kwargs):
+            if argv[0] == "cs2cs":
+                return mock_cs2cs(argv, **kwargs)
+            if argv[0] == "curl":
+                return FakeRun(stdout=next(page_iter))
+            return FakeRun()
+
+        with mock.patch.object(self.seams, "run_tool", side_effect=fake_run_tool):
+            code = footprints.run_stage(
+                profile=self.profile, provider_id=self.provider_id,
+                workdir=self.workdir, footprint_root=self.footprint_root,
+                centre=self.centre, size_m=self.size_m, name=self.name,
+                utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
+            )
+        self.assertEqual(code, self.seams.EXIT_OK)
+
+        prov = json.loads(Path(os.path.join(self.footprint_root, "provenance", "footprints-provenance.json")).read_text())
+        self.assertEqual(prov["firstPageTimeStamp"], "2026-11-05T12:00:00Z")
+        self.assertEqual(prov["lastPageTimeStamp"], "2026-11-05T12:00:05Z")
+        self.assertEqual(prov["pages"][0]["timeStamp"], "2026-11-05T12:00:00Z")
+        self.assertEqual(prov["pages"][1]["timeStamp"], "2026-11-05T12:00:05Z")
+        self.assertIn("per request", prov["liveEditionCaveat"])
+
+    def test_wfs_number_matched_change_rejected(self):
+        """A change in numberMatched across pages is rejected as inconsistency."""
+        f1 = make_wfs_feature("BATIMENT0000000001", lon=4.947, lat=49.702)
+        f2 = make_wfs_feature("BATIMENT0000000002", lon=4.948, lat=49.703)
+
+        page1 = make_wfs_response([f1], number_matched=2, number_returned=1, time_stamp="2026-11-05T12:00:00Z")
+        # Page 2 has changed numberMatched
+        page2 = make_wfs_response([f2], number_matched=3, number_returned=1, time_stamp="2026-11-05T12:00:00Z")
 
         page1_bytes = json.dumps(page1).encode("utf-8")
         page2_bytes = json.dumps(page2).encode("utf-8")
@@ -495,7 +531,7 @@ class TestFootprintsStage(unittest.TestCase):
                     centre=self.centre, size_m=self.size_m, name=self.name,
                     utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
                 )
-            self.assertIn("timeStamp changed between pages", str(cm.exception))
+            self.assertIn("numberMatched changed between pages", str(cm.exception))
 
     def test_wfs_number_returned_mismatch_rejected(self):
         """Mismatch between numberReturned header and actual feature count fails."""
