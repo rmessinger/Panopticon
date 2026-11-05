@@ -7,7 +7,7 @@
 | Status | `Blocked` |
 | Type | `investigation` |
 | Effort | `M` |
-| Prerequisites | `WI-R2-03` (building footprints in the Sedan proof KML) |
+| Prerequisites | `WI-R2-03` (driver-owned buildings KML and its provenance record) |
 | Diagrams | none; the recommendation feeds R3 diagrams |
 
 ## Goal
@@ -17,14 +17,14 @@ Decide how R3 represents real-world buildings without a bespoke model per buildi
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.3, §5.4 (structures and candidate content sources), §8.1.
-- `docs/roadmap/agent/cards/WI-R2-03-building-footprint-masks.md` and the Sedan `sources.txt` (BD TOPO edition, kept attributes).
+- `docs/roadmap/agent/cards/WI-R2-03-building-footprint-masks.md` and the buildings KML provenance record (BD TOPO snapshot timestamp, response hashes, kept attributes).
 - `src/Panopticon.Tools.TestHarness/GltfRuntimeProofScenario.cs`, `StandaloneModelCapture.cs` (glTF import and capture path).
 - `docs/screenshots.md`.
 
 ## Questions to answer
 
-1. Which BD TOPO attributes are populated in the Sedan extent (height, roof altitudes, storeys, use), and what share of footprints has a usable height?
-2. Which roof rule works from footprint shape alone: flat, hipped from the straight skeleton, or gabled along the longest axis? How many footprints fail the rule (concave, holes, tiny)?
+1. Which kept BD TOPO attributes (`hauteur`, `nature`, `usage_1`, `usage_2`) are populated in the Sedan buildings KML, and what share of footprints has a usable height? The kept KML attributes are `cleabs`, `nature`, `usage_1`, `usage_2`, and `hauteur`; full properties, including roof altitudes, come from the raw WFS pages retained in the footprint root.
+2. Which roof rule works from footprint shape alone: flat, hipped from the straight skeleton, or gabled along the longest axis? How many footprints fail the rule (concave, holes, tiny)? Tiny footprints below the `WI-R2-03` area filter are dropped before the KML and counted in its provenance record.
 3. Do tiling CC0 materials (ambientCG, Poly Haven brick, plaster, slate, roof tile) with UVs in world meters read correctly at Generals camera distance, and does a per-building colour or material variant hide repetition?
 4. Do Kenney or Quaternius kit details (doors, windows, chimneys) placed along walls add enough to justify their style mismatch with realistic materials?
 5. Cost at the Sedan proof extent: buildings, triangles, materials, and draw calls, merged per terrain chunk versus one object per building. Frame time on the preview map for both layouts.
@@ -32,7 +32,7 @@ Decide how R3 represents real-world buildings without a bespoke model per buildi
 
 ## Steps
 
-1. From the prepared Sedan KML and `sources.txt`, tabulate attribute coverage and footprint shape statistics.
+1. From the buildings KML and its provenance record, tabulate attribute coverage and footprint shape statistics.
 2. Prototype a generator on a throwaway branch (Python script or a small C# console): footprint plus height to walls and roof, world-meter UVs, glTF 2.0 output per terrain chunk and per building. Download materials and any kit pieces into an operator work dir; commit none.
 3. Capture the merged-chunk glTF through the existing glTF import and standalone model capture path.
 4. Temporarily spawn the generated meshes at their game positions on the Sedan preview map in a scratch harness scenario, using the payload grid transform; capture an overview and an old-town close-up, and record B1 frame time with buildings off, merged, and per-building.
