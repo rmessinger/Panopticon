@@ -98,7 +98,14 @@ public static class TerrainMaskGenerator
             return null;
         }
 
-        if (!TryApplyRegions(regions, flags, baseSampleX, baseSampleY, lastSampleX, lastSampleY, context, out var waterApplications, out var passabilityApplications, out var buildabilityApplications))
+        var mappedFeatures = new HashSet<MappedFeatureIdentity>();
+        foreach (var region in regions)
+        {
+            mappedFeatures.Add(region.Identity);
+        }
+
+        var coveredFeatures = new HashSet<MappedFeatureIdentity>();
+        if (!TryApplyRegions(regions, coveredFeatures, flags, baseSampleX, baseSampleY, lastSampleX, lastSampleY, context, out var waterApplications, out var passabilityApplications, out var buildabilityApplications))
         {
             return null;
         }
@@ -136,7 +143,9 @@ public static class TerrainMaskGenerator
                 impassableCells,
                 unbuildableCells),
             slopeThresholds,
-            grid.Transform.VerticalExaggeration);
+            grid.Transform.VerticalExaggeration,
+            mappedFeatures,
+            coveredFeatures);
 
         return chunk;
 
@@ -327,7 +336,15 @@ public static class TerrainMaskGenerator
                 return false;
             }
 
-            regions.Add(new RegionEntry(feature.RuleIndex, i, feature.Kind, feature.PartId, polygon, passable, buildable));
+            regions.Add(new RegionEntry(
+                feature.RuleIndex,
+                i,
+                feature.Kind,
+                feature.PartId,
+                new MappedFeatureIdentity(feature.SourceId, feature.FeatureId),
+                polygon,
+                passable,
+                buildable));
         }
 
         regions.Sort(
@@ -371,6 +388,7 @@ public static class TerrainMaskGenerator
 
     private static bool TryApplyRegions(
         List<RegionEntry> regions,
+        HashSet<MappedFeatureIdentity> coveredFeatures,
         byte[] flags,
         int baseSampleX,
         int baseSampleY,
@@ -415,6 +433,7 @@ public static class TerrainMaskGenerator
                 continue;
             }
 
+            var applicationsBefore = waterApplications + passabilityApplications + buildabilityApplications;
             for (var gy = gyMin; gy <= gyMax && !context.Stopped; gy++)
             {
                 context.CancellationToken.ThrowIfCancellationRequested();
@@ -459,6 +478,11 @@ public static class TerrainMaskGenerator
                         buildabilityApplications++;
                     }
                 }
+            }
+
+            if (waterApplications + passabilityApplications + buildabilityApplications > applicationsBefore)
+            {
+                coveredFeatures.Add(region.Identity);
             }
 
             if (context.Stopped)
@@ -939,7 +963,7 @@ public static class TerrainMaskGenerator
         return value.ToString("R", CultureInfo.InvariantCulture);
     }
 
-    private readonly record struct RegionEntry(int RuleIndex, int Order, GeneratedFeatureKind Kind, string PartId, GeoPolygon Polygon, bool Passable, bool Buildable);
+    private readonly record struct RegionEntry(int RuleIndex, int Order, GeneratedFeatureKind Kind, string PartId, MappedFeatureIdentity Identity, GeoPolygon Polygon, bool Passable, bool Buildable);
 
     private readonly record struct PreparedRing(RingPrepStatus Status, Coordinate[]? Ring);
 
