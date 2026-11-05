@@ -737,24 +737,33 @@ class PreparationTests(unittest.TestCase):
             hook_mock.assert_not_called()
 
     def test_footprints_missing_module_fails_loudly(self):
-        with self.assertRaisesRegex(area.Failure, "footprints stage module missing"):
-            area.load_footprint_stage()
+        target_path = os.path.abspath(os.path.join(area.SCRIPT_DIR, "footprints.py"))
+        real_isfile = os.path.isfile
 
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp) / "ign"
-            root.mkdir()
-            prepared = root / "prepared"
-            prepared.mkdir()
-            for name in ("sedan-extent.kml", "sedan-dem-32631.tif", "sedan-ortho-32631.tif"):
-                (prepared / name).write_bytes(b"data")
-            (root / "sedan-ign-proof.json").write_bytes(b"{}")
-            tool_run = area.ToolRun(0, "", "", False, 0.01)
-            with mock.patch.object(area, "run_tool", return_value=tool_run), \
-                    contextlib.redirect_stderr(io.StringIO()) as err, \
-                    contextlib.redirect_stdout(io.StringIO()):
-                code = self.invoke(root, "ign-fr", ("--prepare",))
-            self.assertEqual(area.EXIT_GUARD, code)
-            self.assertIn("footprints stage module missing", err.getvalue())
+        def fake_isfile(path):
+            if os.path.abspath(str(path)) == target_path:
+                return False
+            return real_isfile(path)
+
+        with mock.patch("os.path.isfile", side_effect=fake_isfile):
+            with self.assertRaisesRegex(area.Failure, "footprints stage module missing"):
+                area.load_footprint_stage()
+
+            with tempfile.TemporaryDirectory() as temp:
+                root = Path(temp) / "ign"
+                root.mkdir()
+                prepared = root / "prepared"
+                prepared.mkdir()
+                for name in ("sedan-extent.kml", "sedan-dem-32631.tif", "sedan-ortho-32631.tif"):
+                    (prepared / name).write_bytes(b"data")
+                (root / "sedan-ign-proof.json").write_bytes(b"{}")
+                tool_run = area.ToolRun(0, "", "", False, 0.01)
+                with mock.patch.object(area, "run_tool", return_value=tool_run), \
+                        contextlib.redirect_stderr(io.StringIO()) as err, \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    code = self.invoke(root, "ign-fr", ("--prepare",))
+                self.assertEqual(area.EXIT_GUARD, code)
+                self.assertIn("footprints stage module missing", err.getvalue())
 
 
 if __name__ == "__main__":
