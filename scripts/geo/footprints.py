@@ -86,6 +86,15 @@ def check_existing_root(seams, footprint_root: str, inputs: dict, required_outpu
     receipt_path = os.path.join(prep_dir, seams.RECEIPT_NAME)
 
     if os.path.lexists(receipt_path):
+        try:
+            with open(receipt_path, encoding="utf-8") as handle:
+                rec_data = json.load(handle)
+                if isinstance(rec_data, dict):
+                    for out in rec_data.get("outputs", []):
+                        if isinstance(out, dict) and isinstance(out.get("path"), str) and out["path"].startswith("provenance/pages/"):
+                            required_outputs.add(out["path"])
+        except (OSError, ValueError):
+            pass
         verify_existing_footprint_receipt(seams, footprint_root, receipt_path, inputs, required_outputs)
         return True
 
@@ -469,8 +478,10 @@ def query_wfs_pages(seams, profile: dict, bbox_bounds: tuple[float, float, float
     stable_id_field = footprints_cfg.get("stableIdField", "cleabs")
 
     lonmin, latmin, lonmax, latmax = bbox_bounds
-    # OGC WFS 2.0 with EPSG:4326 defines latitude first, longitude second
-    bbox_param = f"{latmin:.6f},{lonmin:.6f},{latmax:.6f},{lonmax:.6f},EPSG:4326"
+    # Strict OGC WFS 2.0 specifies lat,lon for EPSG:4326, but data.geopf.fr interprets
+    # EPSG:4326 bboxes in lon,lat order, verified live 2026-11-05 (lon,lat 2425 matched;
+    # lat,lon 0 matched).
+    bbox_param = f"{lonmin:.6f},{latmin:.6f},{lonmax:.6f},{latmax:.6f},EPSG:4326"
 
     start_time = time.monotonic()
     start_index = 0
@@ -573,6 +584,7 @@ def query_wfs_pages(seams, profile: dict, bbox_bounds: tuple[float, float, float
             "bytes": page_bytes,
             "featureCount": len(features),
             "acquiredAt": seams.now_iso(),
+            "rawBytes": page_data,
             "rawContent": page_data.decode("utf-8"),
         }
         pages.append(page_record)
@@ -875,6 +887,16 @@ def run_stage(*, profile, provider_id, workdir, footprint_root, centre, size_m, 
         # 3. Query WFS pages
         all_features, pages, request_log, wfs_meta = query_wfs_pages(seams, profile, bbox_bounds, ledger)
 
+        # Write retained raw WFS pages to provenance/pages/page-{index:04d}.json
+        pages_stage_dir = os.path.join(stage, "provenance", "pages")
+        os.makedirs(pages_stage_dir, exist_ok=True)
+        for p in pages:
+            page_rel = f"provenance/pages/page-{p['pageIndex']:04d}.json"
+            p["path"] = page_rel
+            page_stage_path = os.path.join(stage, page_rel)
+            seams.atomic_write_excl(page_stage_path, p["rawBytes"])
+            ledger.append("raw_page_written", path=page_rel, bytes=p["bytes"], sha256=p["sha256"])
+
         # 4. Geometry validation & area filtering
         kept_features = []
         dropped_count = 0
@@ -892,6 +914,13 @@ def run_stage(*, profile, provider_id, workdir, footprint_root, centre, size_m, 
 
         ledger.append("footprints_filtered", total=len(all_features), kept=len(kept_features),
                       dropped=dropped_count, threshold=min_footprint_m2)
+
+        if wfs_meta.get("numberMatched") == 0 or len(kept_features) == 0:
+            print(
+                f"WARNING: building footprints stage acquired {wfs_meta.get('totalFeatures')} features "
+                f"and kept {len(kept_features)} for bbox {wfs_meta.get('bbox')}; empty area",
+                file=sys.stderr,
+            )
 
         # 5. Write buildings KML
         kept_attributes = profile.get("footprints", {}).get("keptAttributes", [
@@ -925,7 +954,7 @@ def run_stage(*, profile, provider_id, workdir, footprint_root, centre, size_m, 
             "typeNames": wfs_meta["typeNames"],
             "stableIdField": wfs_meta["stableIdField"],
             "requestLog": request_log,
-            "pages": [{k: v for k, v in p.items() if k != "rawContent"} for p in pages],
+            "pages": [{k: v for k, v in p.items() if k not in ("rawContent", "rawBytes")} for p in pages],
             "combinedPagesSha256": seams.sha256_bytes(combined_pages),
             "totalBytes": wfs_meta["totalBytes"],
             "pageCount": wfs_meta["pageCount"],
@@ -959,6 +988,13 @@ def run_stage(*, profile, provider_id, workdir, footprint_root, centre, size_m, 
             {"path": sources_rel, "sha256": seams.sha256_file(sources_stage_path),
              "sizeBytes": os.path.getsize(sources_stage_path)},
         ]
+        for p in pages:
+            output_records.append({
+                "path": p["path"],
+                "sha256": p["sha256"],
+                "sizeBytes": p["bytes"],
+            })
+            required_outputs.add(p["path"])
         for staged in staged_copies:
             staged_full = os.path.join(stage, staged["stagedPath"])
             output_records.append({

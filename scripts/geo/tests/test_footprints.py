@@ -18,6 +18,7 @@ import sys
 import tempfile
 import unittest
 from unittest import mock
+import urllib.parse
 
 # Ensure scripts/geo is in sys.path
 SCRIPT_DIR = Path(__file__).resolve().parents[1]
@@ -262,6 +263,11 @@ class TestFootprintsStage(unittest.TestCase):
         self.assertEqual(rule2["target"], "buildability")
         self.assertFalse(rule2["buildable"])
 
+        # Assert raw page file retained on disk
+        page0_path = os.path.join(self.footprint_root, "provenance", "pages", "page-0000.json")
+        self.assertTrue(os.path.isfile(page0_path), f"missing raw page file: {page0_path}")
+        self.assertEqual(Path(page0_path).read_bytes(), wfs_bytes)
+
         # Assert provenance record
         prov = json.loads(Path(prov_path).read_text(encoding="utf-8"))
         self.assertEqual(prov["featuresKept"], 2)
@@ -272,11 +278,16 @@ class TestFootprintsStage(unittest.TestCase):
         self.assertIn("sortbyProof", prov)
         self.assertEqual(len(prov["stagedCopies"]), 3)
         self.assertIn(prov["stagedCopies"][0]["method"], ("hardlink", "copy"))
+        self.assertEqual(len(prov["pages"]), 1)
+        self.assertEqual(prov["pages"][0]["path"], "provenance/pages/page-0000.json")
+        self.assertEqual(prov["pages"][0]["sha256"], hashlib.sha256(wfs_bytes).hexdigest())
 
         # Assert receipt bindings
         receipt = json.loads(Path(receipt_path).read_text(encoding="utf-8"))
         self.assertEqual(receipt["schema"], 1)
         self.assertEqual(receipt["inputs"]["minFootprintM2"], 20.0)
+        receipt_paths = {o["path"] for o in receipt["outputs"]}
+        self.assertIn("provenance/pages/page-0000.json", receipt_paths)
         completed = json.loads(Path(completed_path).read_text(encoding="utf-8"))
         self.assertEqual(completed["receiptSha256"], self.seams.sha256_file(receipt_path))
         self.assertEqual(completed["ledgerSha256"], self.seams.sha256_file(ledger_path))
@@ -811,6 +822,130 @@ class TestFootprintsStage(unittest.TestCase):
                 utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
             )
             self.assertEqual(res, self.seams.EXIT_OK)
+
+    def test_wfs_bbox_param_emits_lon_lat_order(self):
+        """Verify that the emitted WFS bbox query parameter is in lon,lat order."""
+        f1 = make_wfs_feature("BAT01")
+        wfs_bytes = json.dumps(make_wfs_response([f1])).encode("utf-8")
+        captured_urls = []
+
+        def fake_run_tool(argv, **kwargs):
+            if argv[0] == "cs2cs":
+                return mock_cs2cs(argv, **kwargs)
+            if argv[0] == "curl":
+                captured_urls.append(argv[-1])
+                return FakeRun(stdout=wfs_bytes)
+            return FakeRun()
+
+        with mock.patch.object(self.seams, "run_tool", side_effect=fake_run_tool):
+            footprints.run_stage(
+                profile=self.profile, provider_id=self.provider_id,
+                workdir=self.workdir, footprint_root=self.footprint_root,
+                centre=self.centre, size_m=self.size_m, name=self.name,
+                utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
+            )
+
+        self.assertTrue(captured_urls)
+        parsed = urllib.parse.urlparse(captured_urls[0])
+        qs = urllib.parse.parse_qs(parsed.query)
+        self.assertIn("bbox", qs)
+        bbox_parts = qs["bbox"][0].split(",")
+        self.assertEqual(len(bbox_parts), 5)
+        lonmin = float(bbox_parts[0])
+        latmin = float(bbox_parts[1])
+        lonmax = float(bbox_parts[2])
+        latmax = float(bbox_parts[3])
+        crs = bbox_parts[4]
+        self.assertEqual(crs, "EPSG:4326")
+        # Assert lon is first (~4.939) and lat is second (~49.696)
+        self.assertAlmostEqual(lonmin, 4.9391, places=3)
+        self.assertAlmostEqual(latmin, 49.6968, places=3)
+        self.assertAlmostEqual(lonmax, 4.9559, places=3)
+        self.assertAlmostEqual(latmax, 49.7078, places=3)
+
+    def test_raw_pages_retained_in_provenance_and_receipt(self):
+        """Multi-page acquisition retains all raw page JSONs, bound by provenance and receipt."""
+        f1 = make_wfs_feature("BAT01")
+        f2 = make_wfs_feature("BAT02")
+        page1 = make_wfs_response([f1], number_matched=2, number_returned=1)
+        page2 = make_wfs_response([f2], number_matched=2, number_returned=1)
+        page1_bytes = json.dumps(page1).encode("utf-8")
+        page2_bytes = json.dumps(page2).encode("utf-8")
+
+        pages_iter = iter([page1_bytes, page2_bytes])
+
+        def fake_run_tool(argv, **kwargs):
+            if argv[0] == "cs2cs":
+                return mock_cs2cs(argv, **kwargs)
+            if argv[0] == "curl":
+                return FakeRun(stdout=next(pages_iter))
+            return FakeRun()
+
+        with mock.patch.object(self.seams, "run_tool", side_effect=fake_run_tool):
+            footprints.run_stage(
+                profile=self.profile, provider_id=self.provider_id,
+                workdir=self.workdir, footprint_root=self.footprint_root,
+                centre=self.centre, size_m=self.size_m, name=self.name,
+                utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
+            )
+
+        p0_path = os.path.join(self.footprint_root, "provenance", "pages", "page-0000.json")
+        p1_path = os.path.join(self.footprint_root, "provenance", "pages", "page-0001.json")
+        self.assertTrue(os.path.isfile(p0_path))
+        self.assertTrue(os.path.isfile(p1_path))
+        self.assertEqual(Path(p0_path).read_bytes(), page1_bytes)
+        self.assertEqual(Path(p1_path).read_bytes(), page2_bytes)
+
+        prov = json.loads(Path(os.path.join(self.footprint_root, "provenance", "footprints-provenance.json")).read_text())
+        self.assertEqual(len(prov["pages"]), 2)
+        self.assertEqual(prov["pages"][0]["path"], "provenance/pages/page-0000.json")
+        self.assertEqual(prov["pages"][1]["path"], "provenance/pages/page-0001.json")
+        self.assertEqual(prov["pages"][0]["sha256"], hashlib.sha256(page1_bytes).hexdigest())
+        self.assertEqual(prov["pages"][1]["sha256"], hashlib.sha256(page2_bytes).hexdigest())
+
+        receipt = json.loads(Path(os.path.join(self.footprint_root, "preparation", "receipt.json")).read_text())
+        out_paths = {o["path"] for o in receipt["outputs"]}
+        self.assertIn("provenance/pages/page-0000.json", out_paths)
+        self.assertIn("provenance/pages/page-0001.json", out_paths)
+
+        # Deleting a raw page file invalidates receipt verification
+        os.unlink(p1_path)
+        with self.assertRaises(self.seams.Failure) as cm:
+            footprints.verify_existing_footprint_receipt(
+                self.seams, self.footprint_root,
+                os.path.join(self.footprint_root, "preparation", "receipt.json"),
+                receipt["inputs"], {"provenance/pages/page-0001.json"}
+            )
+        self.assertIn("receipt output missing", str(cm.exception))
+
+    def test_warning_emitted_on_empty_wfs_or_zero_kept(self):
+        """When numberMatched is 0 or all features are dropped, print a prominent WARNING naming bbox."""
+        empty_page = make_wfs_response([], number_matched=0, number_returned=0)
+        empty_bytes = json.dumps(empty_page).encode("utf-8")
+
+        def fake_run_tool(argv, **kwargs):
+            if argv[0] == "cs2cs":
+                return mock_cs2cs(argv, **kwargs)
+            if argv[0] == "curl":
+                return FakeRun(stdout=empty_bytes)
+            return FakeRun()
+
+        import io
+        import contextlib
+
+        with mock.patch.object(self.seams, "run_tool", side_effect=fake_run_tool):
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                code = footprints.run_stage(
+                    profile=self.profile, provider_id=self.provider_id,
+                    workdir=self.workdir, footprint_root=self.footprint_root,
+                    centre=self.centre, size_m=self.size_m, name=self.name,
+                    utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
+                )
+        self.assertEqual(code, self.seams.EXIT_OK)
+        err_val = err.getvalue()
+        self.assertIn("WARNING:", err_val)
+        self.assertIn("empty area", err_val)
+        self.assertIn("bbox", err_val)
 
 
 if __name__ == "__main__":
