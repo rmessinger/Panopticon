@@ -47,6 +47,14 @@ public sealed class Configuration
     public string SaveReplayFile { get; set; } = null;
 
     /// <summary>
+    /// When set, overrides the operating-system user-data location: user maps, MapCache.ini,
+    /// saves, and replays are read from and written under this directory only, never under the
+    /// Documents or ApplicationData folders. The directory must exist when the Game is
+    /// constructed. Null (default) keeps the OS-derived routing.
+    /// </summary>
+    public string UserDataRootPath { get; set; } = null;
+
+    /// <summary>
     /// Skips the per-player skirmish starting-building (and starting-unit) spawn and the
     /// initial camera placement on it. For sandboxes that place their own objects and aim
     /// the camera themselves (e.g. the Unit Validation Ground).

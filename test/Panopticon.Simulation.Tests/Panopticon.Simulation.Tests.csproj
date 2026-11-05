@@ -64,6 +64,9 @@
     <ProjectReference Include="..\..\src\Panopticon.Benchmarks.Simulation\Panopticon.Benchmarks.Simulation.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Tools.TestHarness\Panopticon.Tools.TestHarness.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Tools.W3dPatcher\Panopticon.Tools.W3dPatcher.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Geospatial\Panopticon.Geospatial.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Geospatial.Preview\Panopticon.Geospatial.Preview.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Tools.GeoImport\Panopticon.Tools.GeoImport.csproj" />
   </ItemGroup>
   
   <ItemGroup>

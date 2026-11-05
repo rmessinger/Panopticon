@@ -423,13 +423,35 @@ public sealed class Game : DisposableBase, IGame
         }
     }
 
-    public string UserDataFolder => UserDataLeafName != null
-        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), UserDataLeafName)
-        : null;
+    public string UserDataFolder
+    {
+        get
+        {
+            if (Configuration.UserDataRootPath is not null)
+            {
+                return Configuration.UserDataRootPath;
+            }
 
-    public string UserAppDataFolder => UserDataLeafName != null
-        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), UserDataLeafName)
-        : null;
+            return UserDataLeafName != null
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), UserDataLeafName)
+                : null;
+        }
+    }
+
+    public string UserAppDataFolder
+    {
+        get
+        {
+            if (Configuration.UserDataRootPath is not null)
+            {
+                return Configuration.UserDataRootPath;
+            }
+
+            return UserDataLeafName != null
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), UserDataLeafName)
+                : null;
+        }
+    }
 
     public GamePanel Panel { get; }
 
@@ -536,6 +558,15 @@ public sealed class Game : DisposableBase, IGame
         {
             Configuration = config;
 
+            // Argument validation precedes every native/device resource creation below:
+            // DisposableBase has no finalizer, so throwing later would leak the
+            // GraphicsDevice and shader resources already registered with it.
+            if (Configuration.UserDataRootPath is not null && !Directory.Exists(Configuration.UserDataRootPath))
+            {
+                throw new DirectoryNotFoundException(
+                    $"Configuration.UserDataRootPath does not exist: {Configuration.UserDataRootPath}");
+            }
+
             // Applied before graphics-resource construction: the shader-set store and its
             // pipelines are built from the settings once, so the initial preset must be known
             // here. Later swaps change only what the frame-boundary applier supports.
@@ -635,13 +666,17 @@ public sealed class Game : DisposableBase, IGame
             // Create file system for user data folder and load user maps.
             // This has to be done after the ContentManager is initialized and
             // the GameData.ini file has been parsed because we don't know
-            // the UserDataFolder before then.
+            // the UserDataFolder before then. The root override itself is
+            // validated at the top of the constructor.
             if (UserDataFolder is not null && Directory.Exists(UserDataFolder))
             {
                 ContentManager.UserDataFileSystem = AddDisposable(new DiskFileSystem(UserDataFolder));
             }
 
-            if (SageGame >= SageGame.Bfme && UserAppDataFolder is not null && Directory.Exists(UserAppDataFolder))
+            // An explicit user-data root replaces both operating-system locations, so
+            // app-data routing applies only to the OS-derived configuration.
+            var usesOsUserDataFolders = Configuration.UserDataRootPath is null;
+            if (usesOsUserDataFolders && SageGame >= SageGame.Bfme && UserAppDataFolder is not null && Directory.Exists(UserAppDataFolder))
             {
                 ContentManager.UserDataFileSystem = AddDisposable(new DiskFileSystem(UserAppDataFolder));
             }

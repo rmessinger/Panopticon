@@ -62,6 +62,18 @@ internal sealed record SlopePolicyDto(
     double? ImpassableSlopeDegrees = null,
     double? UnbuildableSlopeDegrees = null);
 
+internal sealed record ControlPointDto(
+    string? Name = null,
+    double? Latitude = null,
+    double? Longitude = null,
+    double? ElevationMeters = null,
+    double? ExpectedGameX = null,
+    double? ExpectedGameY = null,
+    string? FeatureId = null,
+    string? FeatureSourceId = null,
+    IReadOnlyList<int>? ImageryRgb = null,
+    int? ImageryToleranceBytes = null);
+
 internal sealed record ManifestDto(
     IReadOnlyList<ManifestSourceDto?>? Sources = null,
     TargetCoordinateSystemDto? TargetCoordinateSystem = null,
@@ -74,4 +86,5 @@ internal sealed record ManifestDto(
     IReadOnlyList<MaterialRuleDto?>? MaterialRules = null,
     IReadOnlyList<FeatureMappingDto?>? FeatureMappings = null,
     SlopePolicyDto? SlopePolicy = null,
+    IReadOnlyList<ControlPointDto?>? ControlPoints = null,
     double? MaxScaleError = null);

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-24` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): B4b-6b dev preview |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-19`, `WI-B4b-20`, `WI-B4b-23` |

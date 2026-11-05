@@ -1504,4 +1504,146 @@ public class ManifestLoaderTests
         var diagnostic = AssertSingleError(diagnostics, GeoDiagnosticCodes.ManifestValueInvalid);
         Assert.Contains("attribute", diagnostic.Message, StringComparison.Ordinal);
     }
+
+    private const string FullControlPoint = """
+        { "name": "cp", "latitude": 49.5, "longitude": 6.25, "elevationMeters": 210.5, "expectedGameX": 10.5, "expectedGameY": 20.25, "imageryRgb": [10, 20, 30], "imageryToleranceBytes": 5 }
+        """;
+
+    private static string WithControlPoints(string json, string controlPoints)
+    {
+        return json.Insert(json.IndexOf('{') + 1, "\n  \"controlPoints\": [" + controlPoints + "],");
+    }
+
+    [Fact]
+    public void ControlPoints_RoundTripToExpectedRecords()
+    {
+        var (manifest, diagnostics) = LoadJson(WithControlPoints(MinimalManifest, FullControlPoint + ", " + FullControlPoint.Replace("\"cp\"", "\"cp-two\"")));
+
+        Assert.False(diagnostics.HasErrors);
+        Assert.NotNull(manifest);
+        Assert.Equal(2, manifest!.ControlPoints.Count);
+
+        var point = manifest.ControlPoints[0];
+        Assert.Equal("cp", point.Name);
+        Assert.Equal(49.5, point.Latitude);
+        Assert.Equal(6.25, point.Longitude);
+        Assert.Equal(210.5, point.ElevationMeters);
+        Assert.Equal(10.5, point.ExpectedGameX);
+        Assert.Equal(20.25, point.ExpectedGameY);
+        Assert.Null(point.FeatureId);
+        Assert.Null(point.FeatureSourceId);
+        Assert.Equal([10, 20, 30], point.ImageryRgb!);
+        Assert.Equal(5, point.ImageryToleranceBytes);
+        Assert.Equal("cp-two", manifest.ControlPoints[1].Name);
+    }
+
+    [Fact]
+    public void Manifests_WithoutControlPoints_DefaultToEmpty()
+    {
+        var (manifest, diagnostics) = LoadJson(FullManifest);
+
+        Assert.False(diagnostics.HasErrors);
+        Assert.NotNull(manifest);
+        Assert.Empty(manifest!.ControlPoints);
+    }
+
+    [Fact]
+    public void ControlPoints_UnknownMember_RejectsSchema()
+    {
+        var (manifest, diagnostics) = LoadJson(
+            WithControlPoints(MinimalManifest, FullControlPoint.Replace(", \"imageryToleranceBytes\": 5", ", \"imageryToleranceBytes\": 5, \"altitude\": 12")));
+
+        Assert.Null(manifest);
+        Assert.Contains(GeoDiagnosticCodes.ManifestSchemaInvalid, ErrorCodes(diagnostics));
+    }
+
+    [Fact]
+    public void ControlPoints_NullEntryOrMissingRequired_ProduceMissingRequired()
+    {
+        var (nullEntry, nullDiagnostics) = LoadJson(WithControlPoints(MinimalManifest, "null"));
+        Assert.Null(nullEntry);
+        Assert.Contains(GeoDiagnosticCodes.ManifestMissingRequired, ErrorCodes(nullDiagnostics));
+
+        var (missingName, nameDiagnostics) = LoadJson(
+            WithControlPoints(MinimalManifest, "{ \"latitude\": 49.5, \"longitude\": 6.25 }"));
+        Assert.Null(missingName);
+        Assert.Contains(GeoDiagnosticCodes.ManifestMissingRequired, ErrorCodes(nameDiagnostics));
+
+        var (missingLatitude, latitudeDiagnostics) = LoadJson(
+            WithControlPoints(MinimalManifest, "{ \"name\": \"cp\", \"longitude\": 6.25 }"));
+        Assert.Null(missingLatitude);
+        Assert.Contains(GeoDiagnosticCodes.ManifestMissingRequired, ErrorCodes(latitudeDiagnostics));
+    }
+
+    [Fact]
+    public void ControlPoints_DuplicateNames_ProduceValueInvalid()
+    {
+        var (manifest, diagnostics) = LoadJson(WithControlPoints(MinimalManifest, FullControlPoint + ", " + FullControlPoint));
+
+        Assert.Null(manifest);
+        Assert.Contains(GeoDiagnosticCodes.ManifestValueInvalid, ErrorCodes(diagnostics));
+    }
+
+    [Fact]
+    public void ControlPoints_UnpairedExpectedCoordinates_ProduceValueInvalid()
+    {
+        var (manifest, diagnostics) = LoadJson(
+            WithControlPoints(MinimalManifest, FullControlPoint.Replace(", \"expectedGameY\": 20.25", "")));
+
+        Assert.Null(manifest);
+        Assert.Contains(GeoDiagnosticCodes.ManifestValueInvalid, ErrorCodes(diagnostics));
+    }
+
+    [Fact]
+    public void ControlPoints_ExpectedXYWithFeatureId_ProduceValueInvalid()
+    {
+        var json = WithControlPoints(
+            MinimalManifest,
+            "{ \"name\": \"cp\", \"latitude\": 49.5, \"longitude\": 6.25, \"featureId\": \"wp\", \"expectedGameX\": 10.5, \"expectedGameY\": 20.25 }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        Assert.Contains(GeoDiagnosticCodes.ManifestValueInvalid, ErrorCodes(diagnostics));
+    }
+
+    [Fact]
+    public void ControlPoints_FeatureSourceIdConstraints_ProduceValueInvalid()
+    {
+        var withoutFeatureId = WithControlPoints(
+            MinimalManifest,
+            "{ \"name\": \"cp\", \"latitude\": 49.5, \"longitude\": 6.25, \"featureSourceId\": \"vectors\" }");
+        var unknownSource = WithControlPoints(
+            MinimalManifest,
+            "{ \"name\": \"cp\", \"latitude\": 49.5, \"longitude\": 6.25, \"featureId\": \"wp\", \"featureSourceId\": \"no-such-source\" }");
+        var rasterSource = WithControlPoints(
+            MinimalManifest,
+            "{ \"name\": \"cp\", \"latitude\": 49.5, \"longitude\": 6.25, \"featureId\": \"wp\", \"featureSourceId\": \"dem\" }");
+
+        foreach (var json in new[] { withoutFeatureId, unknownSource, rasterSource })
+        {
+            var (manifest, diagnostics) = LoadJson(json);
+            Assert.Null(manifest);
+            Assert.Contains(GeoDiagnosticCodes.ManifestValueInvalid, ErrorCodes(diagnostics));
+        }
+    }
+
+    [Fact]
+    public void ControlPoints_ImageryShapeConstraints_ProduceDiagnostics()
+    {
+        var cases = new[]
+        {
+            (Point: FullControlPoint.Replace("[10, 20, 30]", "[10, 20]"), Code: GeoDiagnosticCodes.ManifestValueInvalid),
+            (Point: FullControlPoint.Replace("[10, 20, 30]", "[10, 256, 30]"), Code: GeoDiagnosticCodes.ManifestValueInvalid),
+            (Point: FullControlPoint.Replace(", \"imageryRgb\": [10, 20, 30]", ""), Code: GeoDiagnosticCodes.ManifestValueInvalid),
+            (Point: FullControlPoint.Replace(", \"imageryToleranceBytes\": 5", ""), Code: GeoDiagnosticCodes.ManifestMissingRequired),
+            (Point: FullControlPoint.Replace("\"imageryToleranceBytes\": 5", "\"imageryToleranceBytes\": 256"), Code: GeoDiagnosticCodes.ManifestValueInvalid),
+        };
+
+        foreach (var (point, code) in cases)
+        {
+            var (manifest, diagnostics) = LoadJson(WithControlPoints(MinimalManifest, point));
+            Assert.Null(manifest);
+            Assert.Contains(code, ErrorCodes(diagnostics));
+        }
+    }
 }

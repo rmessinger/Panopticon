@@ -13,6 +13,7 @@ using Panopticon.Geospatial.Payload.Models;
 using Panopticon.Geospatial.Pipeline;
 using Panopticon.Geospatial.Pipeline.ImportOrchestration;
 using Xunit;
+using static Panopticon.Geospatial.Tests.Validation.ControlPointTestSupport;
 
 namespace Panopticon.Geospatial.Tests.Pipeline;
 
@@ -385,6 +386,57 @@ public class GeospatialImporterTests
     private static string StageOf(ImportProjectFixture project, string output)
     {
         return Directory.GetDirectories(project.Root, $"{Path.GetFileName(output)}.tmp-*").Single();
+    }
+
+    [Fact]
+    public void Run_ControlPoints_RunBuiltinValidatorFirstThenCustomOrder()
+    {
+        using var project = ImportProjectFixture.Create();
+        RewriteManifest(project, PointJson("cp-ok"));
+        var output = project.OutputPath();
+        var first = new RecordingValidator([ValidationChecks.Passed("first")]);
+        var second = new RecordingValidator([ValidationChecks.Passed("second")]);
+
+        var result = GeospatialImporter.Run(project.ManifestPath, output, new GeoImportOptions(stagedValidators: [first, second]));
+
+        Assert.True(result.Success, string.Join("\n", result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}")));
+        Assert.Equal(
+            ["cp-ok/horizontal", "cp-ok/absolute-vertical", "cp-ok/relative-vertical", "cp-ok/red", "cp-ok/green", "cp-ok/blue", "first", "second"],
+            result.Report!.ValidationChecks.Select(static check => check.Name).ToArray());
+        Assert.Equal("control-point", result.Report.ValidationChecks[0].Category);
+        Assert.All(first.Manifests, static manifest => Assert.NotEmpty(manifest.ControlPoints));
+    }
+
+    [Fact]
+    public void Run_WithoutControlPoints_OnlyCustomValidatorsRun()
+    {
+        using var project = ImportProjectFixture.Create();
+        var output = project.OutputPath();
+
+        var result = GeospatialImporter.Run(
+            project.ManifestPath, output, new GeoImportOptions(stagedValidators: [new RecordingValidator([ValidationChecks.Passed("custom")])]));
+
+        Assert.True(result.Success);
+        Assert.Equal(["custom"], result.Report!.ValidationChecks.Select(static check => check.Name).ToArray());
+    }
+
+    [Fact]
+    public void Run_DisplacedControlPoint_BlocksCommitWithValidateError()
+    {
+        using var project = ImportProjectFixture.Create();
+        RewriteManifest(project, PointJson("cp-bad", elevationMeters: 20d));
+        var output = project.OutputPath();
+
+        var result = GeospatialImporter.Run(project.ManifestPath, output);
+
+        Assert.False(result.Success);
+        Assert.Null(result.PayloadPath);
+        Assert.False(Directory.Exists(output));
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == ImporterDiagnostics.ValidatorCheckFailed);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Stage == GeoStage.Validate && diagnostic.Message.Contains("cp-bad/absolute-vertical", StringComparison.Ordinal));
+        AssertNoStageLeftovers(project, output);
     }
 
     private static void TamperStageFile(ImportProjectFixture project, string output, string relativePath)

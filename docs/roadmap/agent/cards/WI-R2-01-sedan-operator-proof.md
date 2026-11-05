@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-R2-01` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): early operator proof on the dev preview |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-B4b-24` (which needs `WI-B4b-19`, `WI-B4b-20`, `WI-B4b-23`) |

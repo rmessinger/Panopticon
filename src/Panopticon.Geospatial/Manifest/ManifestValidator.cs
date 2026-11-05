@@ -33,6 +33,7 @@ internal static class ManifestValidator
         var materialRules = ValidateMaterialRules(context, dto.MaterialRules, sources);
         var featureMappings = ValidateFeatureMappings(context, dto.FeatureMappings, sources);
         var slopePolicy = ValidateSlopePolicy(context, dto.SlopePolicy);
+        var controlPoints = ValidateControlPoints(context, dto.ControlPoints, sources);
 
         if (!context.IsValid)
         {
@@ -52,6 +53,7 @@ internal static class ManifestValidator
             MaterialRules = materialRules.AsReadOnly(),
             FeatureMappings = featureMappings.AsReadOnly(),
             SlopePolicy = slopePolicy,
+            ControlPoints = controlPoints.AsReadOnly(),
             MaxScaleError = dto.MaxScaleError ?? 0.001,
         };
     }
@@ -694,6 +696,160 @@ internal static class ManifestValidator
         ValidateSlopeThreshold(context, dto.ImpassableSlopeDegrees, "slopePolicy.impassableSlopeDegrees");
         ValidateSlopeThreshold(context, dto.UnbuildableSlopeDegrees, "slopePolicy.unbuildableSlopeDegrees");
         return new SlopePolicy(dto.ImpassableSlopeDegrees ?? 45, dto.UnbuildableSlopeDegrees ?? 15);
+    }
+
+    private static List<ManifestControlPoint> ValidateControlPoints(
+        ValidationContext context,
+        IReadOnlyList<ControlPointDto?>? dto,
+        SourceSummary sources)
+    {
+        var points = new List<ManifestControlPoint>();
+        if (dto is null)
+        {
+            return points;
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var i = 0; i < dto.Count; i++)
+        {
+            var point = dto[i];
+            if (point is null)
+            {
+                context.MissingRequired($"controlPoints[{i}] is null.");
+                continue;
+            }
+
+            var field = $"controlPoints[{i}]";
+            var name = RequiredText(context, point.Name, $"{field}.name");
+            if (name is not null && !names.Add(name))
+            {
+                context.ValueInvalid($"Duplicate control point name '{name}'; names are unique.");
+            }
+
+            var latitude = RequiredFinite(context, point.Latitude, $"{field}.latitude");
+            var longitude = RequiredFinite(context, point.Longitude, $"{field}.longitude");
+            ValidateOptionalFinite(context, point.ElevationMeters, $"{field}.elevationMeters");
+
+            var hasExpectedX = point.ExpectedGameX is not null;
+            var hasExpectedY = point.ExpectedGameY is not null;
+            if (hasExpectedX != hasExpectedY)
+            {
+                context.ValueInvalid($"{field}.expectedGameX and {field}.expectedGameY must be supplied together.");
+            }
+
+            ValidateOptionalFinite(context, point.ExpectedGameX, $"{field}.expectedGameX");
+            ValidateOptionalFinite(context, point.ExpectedGameY, $"{field}.expectedGameY");
+
+            var featureId = NormalizeOptional(point.FeatureId);
+            if (point.FeatureId is not null && featureId is null)
+            {
+                context.ValueInvalid($"{field}.featureId must be a non-empty feature id when present.");
+            }
+
+            var featureSourceId = NormalizeOptional(point.FeatureSourceId);
+            if (point.FeatureSourceId is not null && featureSourceId is null)
+            {
+                context.ValueInvalid($"{field}.featureSourceId must be a non-empty source id when present.");
+            }
+
+            if (hasExpectedX && hasExpectedY && featureId is not null)
+            {
+                context.ValueInvalid($"{field} cannot set both expectedGameX/expectedGameY and featureId.");
+            }
+
+            if (featureSourceId is not null)
+            {
+                if (featureId is null)
+                {
+                    context.ValueInvalid($"{field}.featureSourceId requires {field}.featureId.");
+                }
+
+                if (!sources.RolesById.TryGetValue(featureSourceId, out var role))
+                {
+                    context.ValueInvalid($"{field}.featureSourceId '{featureSourceId}' does not match any declared source.");
+                }
+                else if (role != ManifestSourceRole.Vector && role != ManifestSourceRole.Extent)
+                {
+                    context.ValueInvalid($"{field}.featureSourceId '{featureSourceId}' must reference a source with role 'vector' or 'extent'.");
+                }
+            }
+
+            var rgb = ValidateImageryRgb(context, point.ImageryRgb, field);
+
+            if (rgb is not null && point.ImageryToleranceBytes is null)
+            {
+                context.MissingRequired($"{field}.imageryToleranceBytes is required when imageryRgb is present.");
+            }
+
+            if (rgb is null && point.ImageryToleranceBytes is not null)
+            {
+                context.ValueInvalid($"{field}.imageryToleranceBytes requires {field}.imageryRgb.");
+            }
+
+            if (point.ImageryToleranceBytes is { } tolerance && tolerance is < 0 or > 255)
+            {
+                context.ValueInvalid($"{field}.imageryToleranceBytes must be between 0 and 255; found {tolerance}.");
+            }
+
+            points.Add(new ManifestControlPoint(
+                name ?? string.Empty,
+                latitude ?? 0d,
+                longitude ?? 0d,
+                point.ElevationMeters,
+                point.ExpectedGameX,
+                point.ExpectedGameY,
+                featureId,
+                featureSourceId,
+                rgb is null ? null : [.. rgb],
+                point.ImageryToleranceBytes));
+        }
+
+        return points;
+    }
+
+    private static int[]? ValidateImageryRgb(ValidationContext context, IReadOnlyList<int>? rgb, string field)
+    {
+        if (rgb is null)
+        {
+            return null;
+        }
+
+        if (rgb.Count != 3)
+        {
+            context.ValueInvalid($"{field}.imageryRgb must hold exactly three channel values [R, G, B]; found {rgb.Count}.");
+            return null;
+        }
+
+        var copy = new int[rgb.Count];
+        for (var i = 0; i < rgb.Count; i++)
+        {
+            if (rgb[i] is < 0 or > 255)
+            {
+                context.ValueInvalid($"{field}.imageryRgb channel values must be between 0 and 255; found {rgb[i]}.");
+            }
+
+            copy[i] = rgb[i];
+        }
+
+        return copy;
+    }
+
+    private static double? RequiredFinite(ValidationContext context, double? value, string field)
+    {
+        if (value is null)
+        {
+            context.MissingRequired($"{field} is required.");
+            return null;
+        }
+
+        if (!double.IsFinite(value.Value))
+        {
+            context.ValueInvalid($"{field} must be a finite number; found {Format(value.Value)}.");
+            return null;
+        }
+
+        return value;
     }
 
     private static void ValidateSlopeThreshold(ValidationContext context, double? value, string field)

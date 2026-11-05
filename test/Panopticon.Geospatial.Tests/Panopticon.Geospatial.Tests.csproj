@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Panopticon.Geospatial\Panopticon.Geospatial.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Tools.GeoImport\Panopticon.Tools.GeoImport.csproj" />
   </ItemGroup>
 
 </Project>

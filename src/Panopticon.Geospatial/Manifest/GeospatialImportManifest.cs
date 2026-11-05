@@ -26,5 +26,8 @@ public sealed record GeospatialImportManifest
 
     public SlopePolicy SlopePolicy { get; init; } = new();
 
+    /// <summary>Operator control points in declared order; empty when none are declared.</summary>
+    public IReadOnlyList<ManifestControlPoint> ControlPoints { get; init; } = [];
+
     public double MaxScaleError { get; init; } = 0.001;
 }

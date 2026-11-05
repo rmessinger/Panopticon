@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4b-19` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): B4b-6a standalone payload |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B4b-18` |
