@@ -1,0 +1,87 @@
+{
+  "sources": [
+    {
+      "id": "sedan-extent-example",
+      "kind": "kml",
+      "path": "input/sedan-extent-example.kml",
+      "role": "extent",
+      "label": "generated extent KML - EXAMPLE ONLY - NOT MEASURED",
+      "attribution": "generated extent KML; no IGN content in this example"
+    },
+    {
+      "id": "rge-alti-example",
+      "kind": "geotiff",
+      "path": "input/rge-alti-1m-example.tif",
+      "role": "elevation",
+      "verticalDatum": "NGF-IGN69",
+      "label": "IGN RGE ALTI 1 m preprocessed placeholder path - EXAMPLE ONLY - NOT MEASURED; verticalAccuracyMeters intentionally omitted (unverified); tolerances.verticalMeters is an EXAMPLE ONLY placeholder, never an operator value",
+      "attribution": "IGN, Licence Ouverte 2.0"
+    },
+    {
+      "id": "bd-ortho-example",
+      "kind": "geotiff",
+      "path": "input/bd-ortho-0m20-example.tif",
+      "role": "imagery",
+      "label": "IGN BD ORTHO 20 cm preprocessed placeholder path - EXAMPLE ONLY - NOT MEASURED",
+      "attribution": "IGN, Licence Ouverte 2.0"
+    }
+  ],
+  "targetCoordinateSystem": { "type": "utm", "zone": 31, "hemisphere": "north" },
+  "metersPerGameUnit": 0.3048,
+  "defaultMaterial": "grass",
+  "extentFeatureId": "sedan-extent-example",
+  "verticalPolicy": { "originMeters": 0.0, "exaggeration": 1.0 },
+  "rasterPolicy": {
+    "noData": "nearest-valid",
+    "noDataSearchRadiusMeters": 25.0,
+    "edge": "fail",
+    "imageryPixelsPerSample": 10
+  },
+  "tolerances": { "verticalMeters": 1.0 },
+  "controlPoints": [
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED vertical-1 synthetic benchmark placeholder",
+      "latitude": 49.702,
+      "longitude": 4.947,
+      "elevationMeters": 0.0
+    },
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED vertical-2 synthetic benchmark placeholder",
+      "latitude": 49.7045361,
+      "longitude": 4.9432872,
+      "elevationMeters": 0.0
+    },
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED vertical-3 synthetic benchmark placeholder",
+      "latitude": 49.7044079,
+      "longitude": 4.9509105,
+      "elevationMeters": 0.0
+    },
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED vertical-4 synthetic benchmark placeholder",
+      "latitude": 49.699592,
+      "longitude": 4.9430899,
+      "elevationMeters": 0.0
+    },
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED vertical-5 synthetic benchmark placeholder",
+      "latitude": 49.6994638,
+      "longitude": 4.9507124,
+      "elevationMeters": 0.0
+    },
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED rgb-1 synthetic imagery placeholder",
+      "latitude": 49.7032681,
+      "longitude": 4.9451436,
+      "imageryRgb": [0, 0, 0],
+      "imageryToleranceBytes": 8
+    },
+    {
+      "name": "EXAMPLE ONLY - NOT MEASURED rgb-2 synthetic imagery placeholder",
+      "latitude": 49.7007319,
+      "longitude": 4.9488563,
+      "imageryRgb": [0, 0, 0],
+      "imageryToleranceBytes": 8
+    }
+  ]
+}

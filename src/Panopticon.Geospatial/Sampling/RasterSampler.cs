@@ -272,6 +272,8 @@ public sealed class RasterSampler
         var fractionY = centerCell.Y - rowBase;
         double sum = 0d;
         double weightSum = 0d;
+        var minValue = double.PositiveInfinity;
+        var maxValue = double.NegativeInfinity;
 
         // Row-major: rows ascending, columns ascending within each row.
         for (var rowOffset = 0; rowOffset <= 1; rowOffset++)
@@ -307,6 +309,8 @@ public sealed class RasterSampler
 
                 sum += value * weight;
                 weightSum += weight;
+                minValue = Math.Min(minValue, value);
+                maxValue = Math.Max(maxValue, value);
             }
         }
 
@@ -318,7 +322,16 @@ public sealed class RasterSampler
                 $"Band {run.Band}: bilinear weights collapsed to zero.");
         }
 
-        return Finish(run, selection, sum / weightSum);
+        // Convex combination: the exact mean lies in the contributing range, so the clamp
+        // removes only floating-point overshoot. Non-finite means keep Finish's rejection.
+        var mean = sum / weightSum;
+
+        if (double.IsFinite(mean))
+        {
+            mean = Math.Clamp(mean, minValue, maxValue);
+        }
+
+        return Finish(run, selection, mean);
     }
 
     private static RasterSampleResult SampleAreaWeighted(
@@ -367,6 +380,8 @@ public sealed class RasterSampler
 
         double sum = 0d;
         double weightSum = 0d;
+        var minValue = double.PositiveInfinity;
+        var maxValue = double.NegativeInfinity;
 
         // Row-major: rows ascending, columns ascending within each row. Cells beyond the
         // raster bounds are virtual cells carrying the edge policy.
@@ -410,6 +425,8 @@ public sealed class RasterSampler
 
                 sum += value * area;
                 weightSum += area;
+                minValue = Math.Min(minValue, value);
+                maxValue = Math.Max(maxValue, value);
             }
         }
 
@@ -421,7 +438,16 @@ public sealed class RasterSampler
                 $"Band {run.Band}: area weights collapsed to zero.");
         }
 
-        return Finish(run, selection, sum / weightSum);
+        // Convex combination: the exact mean lies in the contributing range, so the clamp
+        // removes only floating-point overshoot. Non-finite means keep Finish's rejection.
+        var mean = sum / weightSum;
+
+        if (double.IsFinite(mean))
+        {
+            mean = Math.Clamp(mean, minValue, maxValue);
+        }
+
+        return Finish(run, selection, mean);
     }
 
     /// <summary>Resolves the value of an in-raster cell, applying the no-data policy when needed.</summary>

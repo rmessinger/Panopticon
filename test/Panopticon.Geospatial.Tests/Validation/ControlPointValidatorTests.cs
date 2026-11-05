@@ -7,6 +7,7 @@ using System.Threading;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Manifest;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Panopticon.Geospatial.Pipeline.Validation;
@@ -322,8 +323,9 @@ public class ControlPointValidatorTests
             Assert.Equal(PayloadValidationStatus.Failed, beyond.Status);
             Assert.Equal(50d, beyond.Tolerance);
 
-            // The DEM's stated 1.5 m accuracy outranks the explicit 0.2 m value: a
-            // 0.5 m deviation passes, a 6.85 m deviation fails, both against 1.5 m.
+            // Max of the DEM's stated 1.5 m accuracy and the explicit 0.2 m tolerance keeps
+            // the 1.5 m floor despite the stricter explicit value: a 0.5 m deviation
+            // passes, a 6.85 m deviation fails, both against 1.5 m.
             var slight = Check(checks, "cp-slightly-off/absolute-vertical");
 
             Assert.Equal(PayloadValidationStatus.Passed, slight.Status);
@@ -332,6 +334,123 @@ public class ControlPointValidatorTests
             Assert.Equal(PayloadValidationStatus.Failed, farOff.Status);
             Assert.Equal(1.5d, farOff.Tolerance);
             Assert.Contains("beyond the 1.5 m tolerance", farOff.Message);
+        }
+    }
+
+    [Fact]
+    public void Validate_ExplicitVerticalToleranceLargerThanAccuracy_MaxApplies()
+    {
+        using var project = ImportProjectFixture.Create();
+        var (reader, _) = ImportAndOpen(project);
+        RewriteManifest(
+            project,
+            string.Join(
+                ", ",
+                PointJson("cp-within-five", elevationMeters: 18.05d),
+                PointJson("cp-beyond-five", elevationMeters: 19.15d)),
+            tolerances: "{ \"verticalMeters\": 5 }");
+        var manifest = LoadManifest(project);
+
+        using (reader)
+        {
+            var checks = Validate(reader, manifest, new GeoDiagnosticBag());
+
+            // The explicit 5 m tolerance exceeds the stated 1.5 m accuracy, so the
+            // maximum binds: a 4.9 m deviation passes, a 6 m deviation fails.
+            var within = Check(checks, "cp-within-five/absolute-vertical");
+
+            Assert.Equal(PayloadValidationStatus.Passed, within.Status);
+            Assert.Equal(5d, within.Tolerance);
+            var beyond = Check(checks, "cp-beyond-five/absolute-vertical");
+            Assert.Equal(PayloadValidationStatus.Failed, beyond.Status);
+            Assert.Equal(5d, beyond.Tolerance);
+            Assert.Contains("beyond the 5 m tolerance", beyond.Message);
+        }
+    }
+
+    [Fact]
+    public void Validate_OnlyExplicitVerticalTolerance_WithNoStatedAccuracy_AppliesExplicit()
+    {
+        using var project = ImportProjectFixture.Create();
+        var (reader, _) = ImportAndOpen(project);
+
+        // The DEM states no vertical accuracy while the declared datum stays EGM96,
+        // so the explicit 2 m tolerance alone governs the absolute comparison.
+        RewriteManifest(
+            project,
+            string.Join(
+                ", ",
+                PointJson("cp-at-one-and-half", elevationMeters: 14.65d),
+                PointJson("cp-at-three", elevationMeters: 16.15d)),
+            tolerances: "{ \"verticalMeters\": 2 }",
+            demVerticalAccuracyOmitted: true);
+        var manifest = LoadManifest(project);
+
+        using (reader)
+        {
+            var checks = Validate(reader, manifest, new GeoDiagnosticBag());
+
+            var atOneAndHalf = Check(checks, "cp-at-one-and-half/absolute-vertical");
+
+            Assert.Equal(PayloadValidationStatus.Passed, atOneAndHalf.Status);
+            Assert.Equal(2d, atOneAndHalf.Tolerance);
+            var atThree = Check(checks, "cp-at-three/absolute-vertical");
+            Assert.Equal(PayloadValidationStatus.Failed, atThree.Status);
+            Assert.Equal(2d, atThree.Tolerance);
+        }
+    }
+
+    [Fact]
+    public void Validate_KnownDatumNoAccuracyNoTolerance_FailsTyped()
+    {
+        using var project = ImportProjectFixture.Create();
+        var (reader, _) = ImportAndOpen(project);
+        RewriteManifest(project, PointJson("cp-missing"));
+
+        // The loader rejects a known-datum manifest with neither a stated accuracy nor
+        // tolerances.verticalMeters, so the both-absent case strips the elevation
+        // source's stated accuracy on the loaded manifest object: the validator must
+        // still fail the absolute comparison typed, never borrow the relative tolerance.
+        var loaded = LoadManifest(project);
+        var manifest = loaded with
+        {
+            Sources = loaded.Sources.Select(static source =>
+                source.Role == ManifestSourceRole.Elevation ? source with { VerticalAccuracyMeters = null } : source).ToArray(),
+        };
+
+        using (reader)
+        {
+            var checks = Validate(reader, manifest, new GeoDiagnosticBag());
+            var absolute = Check(checks, "cp-missing/absolute-vertical");
+
+            Assert.Equal(PayloadValidationStatus.Failed, absolute.Status);
+            Assert.Contains("missing its tolerance", absolute.Message);
+        }
+    }
+
+    [Fact]
+    public void Validate_ExplicitToleranceDoesNotAlterProvenanceAccuracy()
+    {
+        using var project = ImportProjectFixture.Create();
+        var (reader, _) = ImportAndOpen(project);
+        RewriteManifest(
+            project,
+            PointJson("cp-provenance"),
+            tolerances: "{ \"verticalMeters\": 5 }");
+        var manifest = LoadManifest(project);
+
+        using (reader)
+        {
+            var checks = Validate(reader, manifest, new GeoDiagnosticBag());
+
+            Assert.Equal(PayloadValidationStatus.Passed, Check(checks, "cp-provenance/absolute-vertical").Status);
+
+            // Tolerance selection reads the stated accuracy without rewriting it:
+            // both the opened payload provenance and the reloaded manifest keep 1.5 m.
+            var demProvenance = Assert.Single(reader.Metadata.Provenance, static entry => entry.SourceId == "dem");
+            Assert.Equal(1.5d, demProvenance.VerticalAccuracyMeters);
+            var demSource = Assert.Single(manifest.Sources, static source => source.Id == "dem");
+            Assert.Equal(1.5d, demSource.VerticalAccuracyMeters);
         }
     }
 

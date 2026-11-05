@@ -180,6 +180,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b4-spatial-pathfinding-scaling.md`](deep-dives/b4-spatial-pathfinding-scaling.md) | Track B phase B4 - Spatial and pathfinding scaling (partition hot-path budget, group movement, async path requests, gated hierarchical pathfinding). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/r-real-world-terrain.md`](deep-dives/r-real-world-terrain.md) | Track R phases R1-R6 (formerly B4b) - Offline generation of editable maps from openly licensed geospatial data prepared by command-line scripts. |
+| [`deep-dives/r2-sedan-ground-truth.md`](deep-dives/r2-sedan-ground-truth.md) | Track R phase R2 - Operator-approved LiDAR HD vertical ground-truth protocol for the WI-R2-01 Sedan proof: staged fetch and first-tile gates, blinded pre-DEM selection, frozen numerics, error budget lines, and pending operator decisions. |
 | [`deep-dives/b5-rendering-at-scale.md`](deep-dives/b5-rendering-at-scale.md) | Track B phase B5 - Rendering at scale: source-agnostic GPU instancing, distance LOD/culling, render-bucket/shadow submit improvements, and the render-scale probe. |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (fidelity registry, group aggregation contract, visualization and error reporting). |
@@ -545,12 +546,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Phase | Progress | Items |
 |---|---|---|
 | R1 - Geospatial import core | `██████████` | 6 / 6 |
-| R2 - Standalone payload and dev preview | `████░░░░░░` | 2 / 5 |
+| R2 - Standalone payload and dev preview | `██████░░░░` | 3 / 5 |
 | R3 - Map package output | `░░░░░░░░░░` | 0 / 2 |
 | R4 - WorldBuilder import workflow | `░░░░░░░░░░` | 0 / 1 |
 | R5 - Validation and scale proof | `░░░░░░░░░░` | 0 / 1 |
 | R6 - Earth curvature (later goal) | `░░░░░░░░░░` | 0 / 1 |
-| Track R total | `█████░░░░░` | 8 / 16 |
+| Track R total | `██████░░░░` | 9 / 16 |
 
 ---
 
