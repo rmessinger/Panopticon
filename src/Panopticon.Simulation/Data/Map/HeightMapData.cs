@@ -75,6 +75,45 @@ public sealed class HeightMapData : Asset
         return result;
     }
 
+    /// <summary>
+    /// Runtime-bridge factory for a validated interchange terrain layout: Area derives from the
+    /// elevation array, MinZ/MaxZ recompute exactly like <see cref="Parse"/>, and the border array
+    /// is defensively copied. The caller has already verified Area against its lattice.
+    /// </summary>
+    internal static HeightMapData FromMaterialized(uint borderWidth, ushort[,] elevations, HeightMapBorder[] borders, ushort version)
+    {
+        var width = (uint)elevations.GetLength(0);
+        var height = (uint)elevations.GetLength(1);
+
+        var result = new HeightMapData
+        {
+            Width = width,
+            Height = height,
+            BorderWidth = borderWidth,
+            Borders = (HeightMapBorder[])borders.Clone(),
+            Area = width * height,
+            Elevations = elevations,
+            Version = version,
+        };
+
+        var minZ = ushort.MaxValue;
+        var maxZ = ushort.MinValue;
+
+        for (var y = 0; y < result.Height; y++)
+        {
+            for (var x = 0; x < result.Width; x++)
+            {
+                minZ = Math.Min(minZ, elevations[x, y]);
+                maxZ = Math.Max(maxZ, elevations[x, y]);
+            }
+        }
+
+        result.MinZ = minZ * result.VerticalScale;
+        result.MaxZ = maxZ * result.VerticalScale;
+
+        return result;
+    }
+
     internal static HeightMapData Parse(BinaryReader reader, MapParseContext context)
     {
         return ParseAsset(reader, context, version =>
