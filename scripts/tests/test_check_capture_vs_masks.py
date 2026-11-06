@@ -769,6 +769,93 @@ class TestCheckCaptureVsMasks(unittest.TestCase):
         self.assertIn("carries Impassable bit", proc_demoted.stdout)
         self.assertIn("Verdict: PASS", proc_demoted.stdout)
 
+        # Floor-mapped hit: x=209 floors to impassable cell (20, 20) but rounds to free cell (21, 20)
+        floor_chunk_map = {
+            (0, 0): make_chunk_bytes(impassable_cells=[(20, 20)]),
+            (1, 0): make_chunk_bytes(),
+            (0, 1): make_chunk_bytes(),
+            (1, 1): make_chunk_bytes(),
+        }
+        create_synthetic_payload(self.payload_dir, chunks_x=2, chunks_y=2, chunk_buffers=floor_chunk_map)
+        self.profile["Actors"][0]["X"] = 150.0
+        self.profile["Actors"][0]["Y"] = 150.0
+        self.profile["Commands"][0]["X"] = 209.0
+        self.profile["Commands"][0]["Y"] = 203.0
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 150.0, "WorldY": 150.0}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 15,
+                "Actors": [{"Id": "unit-1", "WorldX": 209.0, "WorldY": 203.0}],
+            },
+        ]
+        self._write_files()
+
+        proc_floor_default = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertEqual(proc_floor_default.returncode, 1, f"STDOUT:\n{proc_floor_default.stdout}")
+        self.assertIn("[PASS] Check 1 (no impassable traversal) [gating]", proc_floor_default.stdout)
+        self.assertIn("[FAIL] Check 5 (floor-mapped impassable traversal) [gating]", proc_floor_default.stdout)
+        self.assertIn("penetration depth 1.00", proc_floor_default.stdout)
+        self.assertIn("Verdict: FAIL", proc_floor_default.stdout)
+
+        proc_floor_demoted = subprocess.run(cmd_demoted, capture_output=True, text=True)
+        self.assertEqual(proc_floor_demoted.returncode, 0, f"STDOUT:\n{proc_floor_demoted.stdout}")
+        self.assertIn("[PASS] Check 1 (no impassable traversal) [diagnostic]", proc_floor_demoted.stdout)
+        self.assertIn("[FAIL] Check 5 (floor-mapped impassable traversal) [diagnostic]", proc_floor_demoted.stdout)
+        self.assertIn("penetration depth 1.00", proc_floor_demoted.stdout)
+        self.assertIn("Verdict: PASS (gating failing: none; diagnostic failing: Check 5)", proc_floor_demoted.stdout)
+
+    def test_swept_hit_undemotable_with_flag(self) -> None:
+        """Verify --generic-mask-diagnostic-only never demotes Check 6: a swept hit still exits nonzero."""
+        fp = make_footprint_feature(
+            outer_coords=[(300.0, 300.0), (400.0, 300.0), (400.0, 400.0), (300.0, 400.0)],
+            source_id="src-bldg",
+            feature_id="bldg-1",
+            part_id="part-0",
+        )
+        create_synthetic_payload(self.payload_dir, features_items=[fp])
+
+        self.profile["Actors"][0]["X"] = 200.0
+        self.profile["Actors"][0]["Y"] = 350.0
+        self.profile["Commands"][0]["X"] = 500.0
+        self.profile["Commands"][0]["Y"] = 350.0
+        self.profile["StraightLineExemption"] = "Undemotable swept test"
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 200.0, "WorldY": 350.0}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 30,
+                "Actors": [{"Id": "unit-1", "WorldX": 500.0, "WorldY": 350.0}],
+            },
+        ]
+        self._write_files()
+
+        cmd = [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--manifest",
+            self.manifest_path,
+            "--payload",
+            self.payload_dir,
+            "--profile",
+            self.profile_path,
+            "--generic-mask-diagnostic-only",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 1, f"STDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}")
+        self.assertIn("[FAIL] Check 6 (building-interior swept exclusion) [gating]", proc.stdout)
+        self.assertIn("crosses polygon", proc.stdout)
+        self.assertIn("[PASS] Check 5 (floor-mapped impassable traversal) [diagnostic]", proc.stdout)
+        self.assertIn("Verdict: FAIL (gating failing: Check 6; diagnostic failing: none)", proc.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

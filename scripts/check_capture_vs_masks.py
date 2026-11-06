@@ -7,7 +7,8 @@ Verifies:
 2. Every ordered Move goal is reached within tolerance.
 3. Manifest actor IDs (plus Created entries from --results) equal profile actors exactly.
 4. Straight-line segment between start and goal intersects impassable cells (necessity).
-5. No recorded position falls in an Impassable cell under runtime floor mapping, with penetration depth.
+5. No recorded position falls in an Impassable cell under runtime floor mapping, with penetration depth
+   (diagnostic-only under --generic-mask-diagnostic-only).
 6. No recorded position or consecutive-sample segment enters a passability/buildability footprint interior.
 
 Also produces a summary line of frames spanned, logic-tick duration at 30 Hz,
@@ -665,7 +666,7 @@ def validate_capture(
 ) -> tuple[bool, list[CheckResult], str]:
     """Execute all six checks against the manifest, payload, profile, and optional results.
 
-    With generic_mask_diagnostic_only, Check 1 is reported but excluded from the pass verdict.
+    With generic_mask_diagnostic_only, Checks 1 and 5 are reported but excluded from the pass verdict.
     """
     manifest = load_json_file(manifest_path)
     profile = load_json_file(profile_path)
@@ -946,7 +947,13 @@ def validate_capture(
             f"{len(c5_violations)} impassable/invalid floor-cell traversals detected across "
             f"{c5_sample_count} position samples in {len(frames)} frames"
         )
-    check5 = CheckResult("floor-mapped impassable traversal", c5_passed, c5_summary, c5_violations)
+    check5 = CheckResult(
+        "floor-mapped impassable traversal",
+        c5_passed,
+        c5_summary,
+        c5_violations,
+        gating=not generic_mask_diagnostic_only,
+    )
 
     # --- Check 6: Building-interior swept exclusion ---
     footprints, footprint_item_count = load_building_footprints(payload_info["features"])
@@ -1046,7 +1053,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--generic-mask-diagnostic-only",
         action="store_true",
-        help="Report Check 1 (round-mapped mask traversal) without gating the exit code",
+        help=(
+            "Report Check 1 (round-mapped) and Check 5 (floor-mapped) mask traversal without gating "
+            "the exit code; Checks 2-4 and 6 always gate"
+        ),
     )
     return parser
 
