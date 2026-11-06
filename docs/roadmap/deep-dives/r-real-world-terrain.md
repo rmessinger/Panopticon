@@ -478,11 +478,13 @@ merged.
 | Per building, all | 1,676 | 3,352 | 30.882 (32.721) | 10.46 |
 | Merged per chunk with kit details | - | - | 4.833 (7.547) | 2.59 |
 
-Logic ms mean is 0.33 to 0.38 in every mode, as buildings are presentation-only. Dashes mark values
-not recorded in the measurement summary. Counts are render-list entries (BuildRenderList calls per
-frame: 9 merged, 1,676 per building), not GPU draw calls. Measured on this host with the headless
-harness, fixed timestep, static camera, no AI, n=50 or 110 post-warmup frames, one run per mode; the
-off-mode noise band is about 0.1 ms. Memory was not measured.
+Logic ms mean is 0.29 to 0.38 across overview modes (0.28 to 0.41 including closeups), as buildings
+are presentation-only. Dashes mark values omitted from the table rather than unmeasured (the
+metrics JSON records 1.92 s import and 50/100 model/mesh counts for 50 buildings, and 9/63 for
+kit-merged). Counts are render-list entries (BuildRenderList calls per frame: 9 merged, 1,676 per
+building), not GPU draw calls. Measured on this host with the headless harness, fixed timestep,
+static camera, no AI, n=50 or 110 post-warmup frames, one run per mode with an off-overview repeat
+run; the off-mode noise band is about 0.1 ms (1.363 vs 1.265 ms render mean). Memory was not measured.
 
 Without kit details the merged set has 40,794 triangles (walls 27,752, gable ends 1,118, roofs
 11,924). Per chunk: 1,976 to 8,333 triangles and 114 to 315 buildings.
@@ -507,9 +509,12 @@ Without kit details the merged set has 40,794 triangles (walls 27,752, gable end
   `r3-01-buildings-perbuilding-oldtown-closeup-v1.png`,
   `r3-01-buildings-kit-details-closeup-v1.png`, and `r3-01-buildings-kit-details-closeup-v2.png`.
 - Per-frame stills and all metrics JSON: `frames/r3-01-v1/`.
-- Pixel check: the off and merged overviews differ at 14,184 of 30,000 sampled pixels; the merged and
-  per-building overviews are statistically identical. An independent vision agent reviewed the
-  captures qualitatively.
+- Pixel check (sampled 30,000 random pixels, per-channel threshold 10): the off and merged
+  overviews differ at 14,184 of 30,000 sampled pixels (PIL re-check 15,204); the merged and
+  per-building overviews differ at ~7,900 of 30,000 sampled pixels (7,906 at threshold 10, 3,705 at
+  threshold 30, not identical; chunk terrain-seating offset explains the difference); kit details
+  differ at 208 of 30,000 sampled pixels (PIL re-check 465, visually indistinguishable). An
+  independent vision agent reviewed the captures qualitatively.
 
 | Source | Used for | Licence | Pin |
 |---|---|---|---|
