@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-R3-01` |
 | Roadmap phase | [Track R · R3](../../track-r-real-world-terrain.md): structure representation ahead of map package output |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `M` |
 | Prerequisites | `WI-R2-03` (Done; driver-owned buildings KML and its provenance record) |
@@ -46,10 +46,10 @@ Decide how R3 represents real-world buildings without a bespoke model per buildi
 
 ## Acceptance criteria
 
-- [ ] §5.4.2 answers all six questions with numbers from the Sedan extent.
-- [ ] Captures for merged and per-building layouts are in the screenshot viewer under versioned names.
-- [ ] Every material and kit source used is listed with its licence; nothing with an unclear licence is recommended.
-- [ ] The recommendation names the layout, roof rule, and follow-up R3 cards.
+- [x] §5.4.2 answers all six questions with numbers from the Sedan extent.
+- [x] Captures for merged and per-building layouts are in the screenshot viewer under versioned names.
+- [x] Every material and kit source used is listed with its licence; nothing with an unclear licence is recommended.
+- [x] The recommendation names the layout, roof rule, and follow-up R3 cards.
 
 ## Validation commands
 
@@ -67,6 +67,7 @@ CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" dotnet run
 
 ## On completion
 
+- Result: 2026-11-06. Measured the Sedan buildings KML and payload attributes and footprint shapes, prototyped footprint extrusion with gabled or flat roofs and CC0 tiling materials as merged chunk and per-building glTF, and recorded the captures, cost table, layout, roof rule, and sources in deep dive §5.4.2. Validation: card command exit 0; MCP test run `20261106T125446Z-8c9467e4` at prototype SHA `8c9467e40`: 4,756 passed, 10 known failures, 0 new. Follow-up cards implied, not yet carded: building placement into the H2/H3 package (blocked on H2/H3/B4a-5), roof material tone and lighting evaluation, straight-skeleton hip evaluation, high-contrast close-range detail kit for cinematics, and a bespoke landmark card for the Sedan château.
 - Set Status above to `Done` or `Blocked` with reason.
 - Tick the R3 structure investigation item in the checklist and update the README Track R progress rows.
 - Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
