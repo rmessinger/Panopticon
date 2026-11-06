@@ -9,6 +9,8 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string ChunkInventory = "chunk-inventory";
 
+    public const string LatticeDimensions = "lattice-dimensions";
+
     public const string HeightLength = "height-length";
 
     public const string HeightFinite = "height-finite";
