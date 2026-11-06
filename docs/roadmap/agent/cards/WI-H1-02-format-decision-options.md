@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-H1-02` |
 | Roadmap phase | [Track H · H1](../../track-h-storage-formats.md): format requirements |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-H1-01` |
@@ -52,5 +52,6 @@ Do not add new container options unless the audit proves a contradiction.
 
 ## On completion
 
+- Result: 2026-11-06 done: appended `Settled choices confirmed` to `deep-dives/h1-h2-map-storage.md` with a five-consumer traceability table (B4a, B4b, H2, H3, H6) mapping the settled directory-package and raw little-endian chunk choices to audit citations, every verdict `Confirmed`, plus the three format-design questions traced to their recorded answers. Validation: mermaid-cli rendered the audit (output `card-1.svg` for Markdown input), forbidden-pattern grep clean, `git diff --check` clean. Follow-up: WI-H2-01 map interchange design.
 - Set Status above to `Done` or `Blocked`.
 - Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

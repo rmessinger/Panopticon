@@ -1433,14 +1433,14 @@ Shared unit-content importing plus on-disk map and object/unit-definition storag
 from B3 (runtime unit storage) and B4a-5 (chunked terrain runtime storage), which this track
 coordinates with rather than duplicates.
 
-- [ ] H1 Format requirements & current-state audit (`.map`/`MapFile` and INI/`ObjectDefinition`
+- [x] H1 Format requirements & current-state audit (`.map`/`MapFile` and INI/`ObjectDefinition`
   limitations; format-design Decisions recorded in `open-questions.md`).
   - AC: a written audit cites every current-state limitation by file:line, and each format-design
     question (read/write scope, human-editable vs. binary, shared vs. separate containers) has a
     recorded Decision.
-- [ ] H1-1 Legacy map storage audit (`WI-H1-01`).
+- [x] H1-1 Legacy map storage audit (`WI-H1-01`).
   - AC: the audit cites each `MapFile` limitation by file and line.
-- [ ] H1-2 Confirm settled H3 format choices (`WI-H1-02`).
+- [x] H1-2 Confirm settled H3 format choices (`WI-H1-02`).
   - AC: the audit confirms or revises the directory package with raw little-endian chunks.
 - [ ] H2 Format-agnostic map interchange abstraction, mirroring the C1 pattern.
   - AC: the legacy `.map` reader loads through the map-format seam with no behavior change;
