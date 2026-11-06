@@ -1447,7 +1447,7 @@ coordinates with rather than duplicates.
     placed objects retain references to unit definitions owned by H2a.
 - [x] H2-1 Map interchange design for the package format (`WI-H2-01`).
   - AC: the design names interchange types without `MapFile` dependencies.
-- [ ] H2-2 Engine-owned interchange types (`WI-H2-02`).
+- [x] H2-2 Engine-owned interchange types (`WI-H2-02`).
   - AC: the `MapInterchange` model and validation build with no `MapFile` dependency.
 - [ ] H2-3 Reader seam and legacy adapter (`WI-H2-03`).
   - AC: the legacy adapter produces `MapInterchange` with the per-section dispositions and no load behavior change.
