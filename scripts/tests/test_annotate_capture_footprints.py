@@ -6,6 +6,7 @@ import math
 import os
 import tempfile
 import unittest
+from unittest.mock import MagicMock, patch
 from PIL import Image
 
 from scripts.annotate_capture_footprints import (
@@ -418,6 +419,157 @@ class TestAnnotateCaptureFootprints(unittest.TestCase):
             self.assertIn("retainedFrameShas", om)
             self.assertIn("clipDomainGate", om)
             self.assertIn("offsetProvenance", om)
+
+    def _create_synthetic_environment(self, temp_dir: str):
+        view, proj, viewport = make_test_matrices()
+        actor_z = 50.0 - ACTOR_CENTER_Z_OFFSET
+
+        frames_dir = os.path.join(temp_dir, "raw")
+        out_dir = os.path.join(temp_dir, "output")
+        os.makedirs(frames_dir)
+
+        for i in range(2):
+            img = Image.new("RGB", (1024, 768), color=(40, 50, 60))
+            img.save(os.path.join(frames_dir, f"frame_{i:04d}.png"))
+
+        manifest_data = {
+            "Scenario": "synthetic-e2e",
+            "Frames": [
+                {
+                    "Index": i,
+                    "File": f"frame_{i:04d}.png",
+                    "Camera": {
+                        "View": view,
+                        "Projection": proj,
+                        "Viewport": viewport,
+                    },
+                    "Actors": [
+                        {
+                            "Id": "humvee-1",
+                            "WorldX": 0.0,
+                            "WorldY": 0.0,
+                            "WorldZ": actor_z,
+                            "X": 512.0,
+                            "Y": 384.0,
+                        }
+                    ],
+                }
+                for i in range(2)
+            ],
+        }
+        manifest_path = os.path.join(temp_dir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as fh:
+            json.dump(manifest_data, fh)
+
+        sidecar_data = {
+            "scenario": "synthetic-e2e",
+            "payloadManifest": {"path": "payload.json", "sha256": "dummy"},
+            "method": "runtime-ground-sampling",
+            "polygons": [
+                {
+                    "key": "test|bldg1|#0",
+                    "outer": [
+                        [-5.0, 45.0, 45.0],
+                        [5.0, 45.0, 45.0],
+                        [5.0, 55.0, 55.0],
+                        [-5.0, 55.0, 55.0],
+                    ],
+                    "holes": [],
+                }
+            ],
+        }
+        sidecar_path = os.path.join(temp_dir, "ground-vertices.json")
+        with open(sidecar_path, "w", encoding="utf-8") as fh:
+            json.dump(sidecar_data, fh)
+
+        v_report = verify_manifest_and_sidecar(manifest_path, sidecar_path)
+        return manifest_path, sidecar_path, frames_dir, out_dir, v_report
+
+    @patch("subprocess.run")
+    def test_render_capture_artifacts_default_naming(self, mock_subprocess):
+        """Default arguments preserve legacy filenames, frames subdirectory, and omit runLabel."""
+        def fake_ffmpeg(cmd, *args, **kwargs):
+            with open(cmd[-1], "wb") as f:
+                f.write(b"FAKE_GIF")
+            return MagicMock(returncode=0)
+
+        mock_subprocess.side_effect = fake_ffmpeg
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            m_path, s_path, f_dir, out_dir, v_rep = self._create_synthetic_environment(temp_dir)
+            results = render_capture_artifacts(
+                m_path, s_path, f_dir, out_dir, verification_report=v_rep
+            )
+
+            expected_gif = os.path.join(out_dir, "r2-03-footprints-street-movement-outlines-v1.gif")
+            expected_poster = os.path.join(out_dir, "r2-03-footprints-street-movement-outlines-v1-poster.png")
+            expected_frames = os.path.join(out_dir, "frames", "r2-03-footprints-v2-outlines")
+            expected_manifest = os.path.join(expected_frames, "overlay-manifest.json")
+            expected_sums = os.path.join(expected_frames, "SHA256SUMS")
+
+            self.assertEqual(results["gif_path"], expected_gif)
+            self.assertEqual(results["poster_path"], expected_poster)
+            self.assertEqual(results["frames_dir"], expected_frames)
+            self.assertEqual(results["manifest_path"], expected_manifest)
+            self.assertEqual(results["sha256sums_path"], expected_sums)
+
+            self.assertTrue(os.path.isfile(results["gif_path"]))
+            self.assertTrue(os.path.isfile(results["poster_path"]))
+            self.assertTrue(os.path.isfile(results["manifest_path"]))
+            self.assertTrue(os.path.isfile(results["sha256sums_path"]))
+
+            with open(results["manifest_path"], "r", encoding="utf-8") as fh:
+                om = json.load(fh)
+            self.assertNotIn("runLabel", om)
+
+    @patch("subprocess.run")
+    def test_render_capture_artifacts_parameterized_naming_and_run_label(self, mock_subprocess):
+        """Custom gif_stem, frames_dir_name, and run_label flow into paths and manifest."""
+        captured_cmds = []
+
+        def fake_ffmpeg(cmd, *args, **kwargs):
+            captured_cmds.append(cmd)
+            with open(cmd[-1], "wb") as f:
+                f.write(b"FAKE_GIF")
+            return MagicMock(returncode=0)
+
+        mock_subprocess.side_effect = fake_ffmpeg
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            m_path, s_path, f_dir, out_dir, v_rep = self._create_synthetic_environment(temp_dir)
+            results = render_capture_artifacts(
+                m_path,
+                s_path,
+                f_dir,
+                out_dir,
+                verification_report=v_rep,
+                gif_stem="custom-conservative-v2",
+                frames_dir_name="custom-conservative-frames",
+                run_label="conservative-run-42",
+            )
+
+            expected_gif = os.path.join(out_dir, "custom-conservative-v2.gif")
+            expected_poster = os.path.join(out_dir, "custom-conservative-v2-poster.png")
+            expected_frames = os.path.join(out_dir, "frames", "custom-conservative-frames")
+            expected_manifest = os.path.join(expected_frames, "overlay-manifest.json")
+            expected_sums = os.path.join(expected_frames, "SHA256SUMS")
+
+            self.assertEqual(results["gif_path"], expected_gif)
+            self.assertEqual(results["poster_path"], expected_poster)
+            self.assertEqual(results["frames_dir"], expected_frames)
+            self.assertEqual(results["manifest_path"], expected_manifest)
+            self.assertEqual(results["sha256sums_path"], expected_sums)
+
+            self.assertTrue(os.path.isfile(results["gif_path"]))
+            self.assertTrue(os.path.isfile(results["poster_path"]))
+            self.assertTrue(os.path.isfile(results["manifest_path"]))
+            self.assertTrue(os.path.isfile(results["sha256sums_path"]))
+
+            self.assertTrue(any("custom-conservative-v2.gif" in str(c) for c in captured_cmds))
+
+            with open(results["manifest_path"], "r", encoding="utf-8") as fh:
+                om = json.load(fh)
+            self.assertEqual(om.get("runLabel"), "conservative-run-42")
 
 
 if __name__ == "__main__":

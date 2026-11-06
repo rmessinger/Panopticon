@@ -511,6 +511,9 @@ def render_capture_artifacts(
     output_dir: str,
     kml_path: Optional[str] = None,
     verification_report: Optional[Dict[str, Any]] = None,
+    gif_stem: str = "r2-03-footprints-street-movement-outlines-v1",
+    frames_dir_name: str = "r2-03-footprints-v2-outlines",
+    run_label: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Render 118-frame sequence, poster, 30-frame retained set, and overlay-manifest."""
     with open(manifest_path, "r", encoding="utf-8") as fh:
@@ -535,7 +538,7 @@ def render_capture_artifacts(
             kml_sha = hashlib.sha256(fh.read()).hexdigest()
 
     os.makedirs(output_dir, exist_ok=True)
-    frames_sub_dir = os.path.join(output_dir, "frames", "r2-03-footprints-v2-outlines")
+    frames_sub_dir = os.path.join(output_dir, "frames", frames_dir_name)
     os.makedirs(frames_sub_dir, exist_ok=True)
 
     retained_indices = set(range(0, 900, 30))
@@ -545,8 +548,8 @@ def render_capture_artifacts(
     raw_frame_shas: Dict[str, str] = {}
     temp_even_paths: List[str] = []
 
-    poster_path = os.path.join(output_dir, "r2-03-footprints-street-movement-outlines-v1-poster.png")
-    gif_path = os.path.join(output_dir, "r2-03-footprints-street-movement-outlines-v1.gif")
+    poster_path = os.path.join(output_dir, f"{gif_stem}-poster.png")
+    gif_path = os.path.join(output_dir, f"{gif_stem}.gif")
 
     # Render frames
     for idx in range(len(manifest.get("Frames", []))):
@@ -636,6 +639,9 @@ def render_capture_artifacts(
         ),
     }
 
+    if run_label is not None:
+        overlay_manifest["runLabel"] = run_label
+
     manifest_out_path = os.path.join(frames_sub_dir, "overlay-manifest.json")
     with open(manifest_out_path, "w", encoding="utf-8") as fh:
         json.dump(overlay_manifest, fh, indent=2)
@@ -675,6 +681,21 @@ def main() -> int:
         "--kml",
         default="/mnt/pit2/panopticon/geo-proof/r2-03-footprints-v3/prepared/sedan-proof-buildings.kml",
         help="Path to reference KML",
+    )
+    parser.add_argument(
+        "--gif-stem",
+        default="r2-03-footprints-street-movement-outlines-v1",
+        help="Stem for generated poster and GIF filenames (default: r2-03-footprints-street-movement-outlines-v1)",
+    )
+    parser.add_argument(
+        "--frames-dir-name",
+        default="r2-03-footprints-v2-outlines",
+        help="Subdirectory under output-dir/frames/ for retained frames and manifest (default: r2-03-footprints-v2-outlines)",
+    )
+    parser.add_argument(
+        "--run-label",
+        default=None,
+        help="Optional run label to record in overlay manifest",
     )
     parser.add_argument(
         "--verify-only",
@@ -725,6 +746,9 @@ def main() -> int:
         args.output_dir,
         args.kml,
         verification_report=report,
+        gif_stem=args.gif_stem,
+        frames_dir_name=args.frames_dir_name,
+        run_label=args.run_label,
     )
     print("Render complete:")
     print(f"  GIF: {art['gif_path']}")
