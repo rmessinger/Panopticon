@@ -180,7 +180,7 @@ classDiagram
 | Scb file | src/Panopticon.Simulation/Data/Scb/ScbFile.cs:22, :89-95 | Read: `MapFile.Parse` with a separate Scb root. Write: `CkMp` header, then its own map data. |
 | Round-trip test | test/Panopticon.Simulation.Tests/Data/Map/MapFileTests.cs:61-68 | Decompress, `FromStream`, `WriteTo` |
 
-The geospatial preview and GeoImport callers belong to [B4b](b4b-geospatial-map-generation.md).
+The geospatial preview and GeoImport callers belong to [B4b](r-real-world-terrain.md).
 
 ### Consumers of parsed fields
 
@@ -218,9 +218,287 @@ Checked 2026-11-06 against this audit at base `bc908cf`: the choices settled in 
 | Settled choice | Consumer | Requirement | Audit evidence | Verdict |
 |---|---|---|---|---|
 | B4a owns runtime chunk residency and paging; H3 owns the on-disk chunk encoding it adopts | B4a (B4a-5 chunk store) | Residency and paging consume the on-disk chunk encoding reserved by H3 | Runtime consumers read whole resident sections today: `TerrainVisual.cs:42-51`, `PartitionCellManager.cs:92`, `Game.cs:797, :808` | Confirmed |
-| One file per chunk per layer, mirroring the B4b payload shape | B4b (B4b-7 writes generated packages) | Generated packages write the B4b payload shape through H2 and H3 | The geospatial preview and GeoImport callers are the B4b readers: `GeneratedMapPreviewBuilder.cs:115`, `PreviewMapTransaction.cs:198` ([B4b](b4b-geospatial-map-generation.md)) | Confirmed |
+| One file per chunk per layer, mirroring the B4b payload shape | B4b (B4b-7 writes generated packages) | Generated packages write the B4b payload shape through H2 and H3 | The geospatial preview and GeoImport callers are the B4b readers: `GeneratedMapPreviewBuilder.cs:115`, `PreviewMapTransaction.cs:198` ([B4b](r-real-world-terrain.md)) | Confirmed |
 | Directory package container with `manifest.json` at the package root | H2 (map interchange) | Every payload value has a format-neutral interchange home | 29 heterogeneous sections dispatched by name-index indirection: loop `Asset.cs:41-51`, lookup `AssetNameCollection.cs:46-52`, payloads per the section inventory | Confirmed |
 | Raw little-endian arrays with JSON metadata; H3 owns manifest, schema, versioning, and chunk bytes | H3 (manifest schema, chunk reader and writer) | `manifest.json` names versions, chunk layout, layers, metadata, provenance, and hashes | Section-level ad hoc version integers per the inventory table (u16 per section, `Asset.cs:14-23`); no container version on Generals-era maps because `GlobalVersion` is Ra3-gated (`MapFile.cs:25`, `GlobalVersion.cs:10-15`) | Confirmed |
 | H3 owns the new format; H6 wires the WorldBuilder lifecycle to it | H6 (WorldBuilder authoring) | WorldBuilder authors, saves, and reloads a map in the new format | Today's write path `EditorMap.cs:61-63` calls `MapFile.WriteTo`, uncompressed only (`MapFile.cs:416-418`) in a fixed section order (`MapFile.cs:438-592`); ASCII read decode (`MapFile.cs:161`) against default write encoding (`MapFile.cs:415`); round-trip test skips listed maps (`MapFileTests.cs:25-57`) | Confirmed |
 
 The choices above answer the three format-design questions recorded for H1 on [Track H](../track-h-storage-formats.md); each answer is traced to where it was recorded, none is newly decided. Read/write scope: the new format is read and written, per the H6 milestone on [Track H](../track-h-storage-formats.md), the plan's H3 round-trip acceptance, and the plan's coordination note that H6 wires the WorldBuilder read and write lifecycle to H3 ([implementation plan](../implementation/track-h-h1-h3-map-storage.md)); the audit's Writers rows show the existing write path it replaces. Human-editable vs binary: hybrid, JSON manifest and JSON metadata beside raw little-endian binary chunk payloads ([implementation plan](../implementation/track-h-h1-h3-map-storage.md), [Decision](../open-questions.md)). Shared vs separate containers: map packages stay separate from object/unit-definition storage; H4 owns a separate format over H2a's shared representation ([Track H](../track-h-storage-formats.md), [Decision](../open-questions.md)).
+
+## H2 map interchange design
+
+This section designs the format-neutral interchange for [WI-H2-01](../agent/cards/WI-H2-01-map-interchange-design.md). It is design only. Implementation follows in the cards listed under Implementation cards.
+
+### Scope and ownership
+
+One common interchange model, `MapInterchange`, serves four roles: the legacy adapter reference read, B4b-7 generated content, the runtime bridge, and H3 read and write serialization. H6 consumes the model through H3. H3 is not the only write consumer: B4b-7 generated packages and H6 saves write the same model.
+
+Ownership follows [`r-real-world-terrain.md`](r-real-world-terrain.md) section 6:
+
+- B4b owns source parsing, coordinate normalization, generation policy, and diagnostics.
+- B4a owns chunked runtime terrain and streaming.
+- H2 owns the format-neutral interchange model and the reader-source seam.
+- H3 owns the versioned on-disk package and its serialization. Format-specific parsing never writes H3 bytes directly.
+- H6 supplies the WorldBuilder read and write lifecycle.
+
+Every source enters through the reader-source seam and produces a `MapInterchange`. Writers serialize only from `MapInterchange`. The sequence below shows the load path with its two sources.
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant Seam as Reader seam
+    participant Legacy as Legacy MapFile adapter
+    participant Pkg as H3 package source
+    participant Model as MapInterchange
+    participant Runtime as Runtime bridge
+    Caller->>Seam: Open map source
+    alt Legacy map file
+        Seam->>Legacy: Read sections
+        Legacy->>Model: Build model with section dispositions
+    else H3 package
+        Seam->>Pkg: Read manifest and chunk files
+        Pkg->>Model: Build the same model
+    end
+    Seam->>Model: Run model-level validation
+    alt Validation fails
+        Model-->>Caller: Typed diagnostics, nothing published
+    else Validation passes
+        Model->>Runtime: Materialize terrain, masks, and objects
+        Runtime-->>Caller: Loaded map
+    end
+    Note over Model: H3 writer and B4b-7 generator serialize or produce this same model
+```
+
+Failed imports publish no partial content, per the policy in [`h2a-unit-content-import.md`](h2a-unit-content-import.md).
+
+### Units, frames, and quantities
+
+Every coordinate, height, spacing, and scale value declares its unit and frame. Source values are preserved as read. A checked conversion runs only in a runtime or legacy adapter and is never implied by the contract. The contract assumes no physical unit for `GameUnit`. No metric cutover is part of this design.
+
+| Quantity kind | Declared unit | Frame | Interchange home | Source |
+|---|---|---|---|---|
+| Horizontal sample spacing (lattice) | `GameUnit` | Map local XY, origin at southwest corner | `TerrainLayout.SampleSpacing` | [`r-real-world-terrain.md`](r-real-world-terrain.md) section 4, section 5.1a |
+| Vertical height samples | `GameUnit` as float32 | Map local Z, rebased to vertical origin | `HeightLayer` | section 4 elevation formula, section 5.1a |
+| Vertical scale and datum | `Meter` with datum label, plus dimensionless exaggeration | Source vertical | `TerrainLayout.GeospatialTransform` | section 4 |
+| Source horizontal coordinates | Source CRS unit (degree for EPSG:4326, meter for UTM) | Source CRS | `Provenance.SourceRecord` | section 4 |
+| Source vertical elevations | `Meter` | Source vertical with declared datum | `Provenance.SourceRecord` | section 4 |
+| Legacy engine XY and Z | `GameUnit` | Legacy engine XY and Z | Typed section homes in the preservation table | section 6.1 |
+
+Adapter behavior, not contract:
+
+- Legacy engine XY and Z are read as `GameUnit` without conversion. Section 6.1 states that stored waypoint coordinates use engine XY, not indices.
+- Legacy elevations are 16-bit with vertical scale `0.0390625` when `ElevationsAre16Bit` is set, otherwise 8-bit with scale `0.625` (`HeightMapData.cs:15-17`). The legacy preview writes `gameZ / 0.0390625` with clamping and reported loss ([`r-real-world-terrain.md`](r-real-world-terrain.md) section 6.1).
+- Ten game units per sample is the lattice spacing in section 4 and section 5.1a. The legacy preview maps index `(i, j)` to engine XY `((i - border) * 10, (j - border) * 10)` (section 6.1).
+- The physical length of one engine unit is not a contract property. An existing feet-like reading is an adapter convention: the C4a animation notes apply the meters-to-feet factor `3.28084` to translation only ([`c4f-ee2-scale-animation.md`](c4f-ee2-scale-animation.md)).
+
+### Interchange document model
+
+The model has one root. Terrain, objects, and waypoints are components of the root, and provenance and the import report sit beside them. The interchange schema version is independent of the source payload version (see Validation and error behavior).
+
+```mermaid
+classDiagram
+    class MapInterchange
+    class MapIdentity
+    class TerrainLayout
+    class Chunk
+    class HeightLayer
+    class MaterialLayer
+    class MaskLayer
+    class ImageryLayer
+    class BlendModel
+    class PlacedObjectSet
+    class PlacedObject
+    class AssetReference
+    class WaypointSet
+    class Waypoint
+    class Provenance
+    class SourceRecord
+    class GeneratedFeature
+    class ImportReport
+    class RetainedSection
+    class ReaderSeam
+    class LegacyMapReader
+    class PackageReader
+    class GeneratorSource
+    class InterchangeWriter
+    class RuntimeBridge
+    MapInterchange *-- "1" MapIdentity
+    MapInterchange *-- "1" TerrainLayout
+    MapInterchange *-- "1" BlendModel
+    MapInterchange *-- "0..1" PlacedObjectSet
+    MapInterchange *-- "0..1" WaypointSet
+    MapInterchange *-- "1" Provenance
+    MapInterchange *-- "1" ImportReport
+    MapInterchange *-- "0..*" RetainedSection
+    TerrainLayout *-- "0..*" Chunk
+    Chunk *-- "1" HeightLayer
+    Chunk *-- "1" MaterialLayer
+    Chunk *-- "1" MaskLayer
+    Chunk *-- "0..1" ImageryLayer
+    PlacedObjectSet *-- "0..*" PlacedObject
+    PlacedObject --> AssetReference
+    WaypointSet *-- "0..*" Waypoint
+    Provenance *-- "0..*" SourceRecord
+    Provenance *-- "0..*" GeneratedFeature
+    LegacyMapReader ..|> ReaderSeam
+    PackageReader ..|> ReaderSeam
+    GeneratorSource ..> MapInterchange : produces
+    ReaderSeam ..> MapInterchange : produces
+    InterchangeWriter ..> MapInterchange : serializes
+    RuntimeBridge ..> MapInterchange : materializes
+```
+
+| Component | Contents | Notes |
+|---|---|---|
+| `MapIdentity` | Map name, source kind, legacy `GlobalVersion` value when present | Source version is provenance, not the interchange schema version |
+| `TerrainLayout` | `SampleSpacing`, core and apron dimensions, chunk grid, `GeospatialTransform`, border, nodata policy | Chunk geometry in the chunk section below |
+| `Chunk` | Chunk key `(cx, cy)` and its layers | Layers exist per chunk; `ImageryLayer` is optional |
+| `HeightLayer` | Float32 game-unit heights including apron | Finite values only in the model |
+| `MaterialLayer` | Palette indices, core only | Index space in the masks and palette section |
+| `MaskLayer` | Known mask flags, core only | Unknown bits fail validation |
+| `ImageryLayer` | RGBA8 pixels, chunk aligned | Asset-level reference; not gameplay data |
+| `BlendModel` | `MaterialPalette` entries with texture references | Palette is the material vocabulary |
+| `PlacedObjectSet` | Objects with stable IDs, positions, orientation, and `AssetReference` type | Legacy object dictionaries are preserved per object |
+| `AssetReference` | Scope and name | Resolved through AssetStore scopes at the runtime bridge |
+| `WaypointSet` | Waypoints with stable IDs and game-unit positions | Player-start Z handling per section 6.1 |
+| `Provenance` | `SourceRecord` entries with SHA-256 digests, source schema or payload version, `GeneratedFeature` entries | Byte digests of layer files are written by H3 |
+| `ImportReport` | Diagnostics, fill counts, outside-footprint counts, control-point results, kernel and sample-distance ratios | Import result, not package content |
+| `RetainedSection` | Section name, section version, and original bytes with SHA-256 digest | Used only for retained opaque sections |
+
+Roles in the class diagram: `LegacyMapReader` and `PackageReader` implement the reader seam; `GeneratorSource` is the B4b-7 generator; `InterchangeWriter` is the H3 writer; `RuntimeBridge` materializes resident terrain for B4a and the game.
+
+### Payload mapping
+
+Every item in the B4b payload ([`r-real-world-terrain.md`](r-real-world-terrain.md) section 6.1) has an interchange home. The payload version is source-schema provenance and is not the H2 interchange schema version. `report.json` is not package content; it maps to `ImportReport`, the import-result home, so diagnostics are kept without entering the package.
+
+| Payload item | Interchange home | Unit and frame | Notes |
+|---|---|---|---|
+| `payload.json` payload version | `Provenance` source schema or payload version | none | Source provenance only |
+| `payload.json` `GeospatialMapTransform`, transform fields | `TerrainLayout.GeospatialTransform` and `Provenance.SourceRecord` | Per section 4 field units | Coordinate systems go to `SourceRecord`; metersPerGameUnit, origin, vertical fields stay in the transform |
+| `payload.json` chunk layout | `TerrainLayout` core, apron, and chunk grid | `GameUnit` per section 5.1a | Chunk geometry section below |
+| `payload.json` material palette | `BlendModel.MaterialPalette` | Palette indices | Index semantics in the masks and palette section |
+| `payload.json` generated features | `Provenance.GeneratedFeature` | Source coordinates and attributes | Stable IDs retained per section 5.3 |
+| `payload.json` provenance with SHA-256 hashes | `Provenance.SourceRecord` | none | Source-level digests; per-file digests are written by H3 |
+| `terrain/<cx>_<cy>.bin`, 131 x 131 `float32` | `Chunk.HeightLayer` | `GameUnit`, chunk-local Z | Apron included |
+| `imagery/<cx>_<cy>.png`, RGBA8 | `Chunk.ImageryLayer` | Pixels, chunk aligned | Optional; consistency rules in Validation and error behavior |
+| `materials/<cx>_<cy>.bin`, 129 x 129 `byte` | `Chunk.MaterialLayer` | Palette index | Core only |
+| `masks/<cx>_<cy>.bin`, 129 x 129 bit flags | `Chunk.MaskLayer` | Known flag bits | Core only |
+| `report.json` diagnostics, kernel and sample-distance ratios, fill counts, control-point results | `ImportReport` | Per report field | Import result, not package content |
+
+### Chunk geometry, ordering, and nodata
+
+Geometry follows section 5.1a:
+
+- Lattice spacing is 10 game units. A chunk spans 128 sample intervals, 1280 game units, per axis.
+- The core has 129 lattice points per axis. Edge points are shared with the neighbouring chunk.
+- `HeightLayer` stores 131 x 131 values: the core plus one read-only apron sample per side, used for normals.
+- `MaterialLayer` and `MaskLayer` store 129 x 129 core values only.
+
+Addressing and ordering:
+
+- Chunk key `(cx, cy)` counts from the southwest origin. `+X` is east and `+Y` is north.
+- The grid covers the extent rounded outward to whole chunks. The chunk inventory must match that grid exactly: every position present, none extra.
+- Projected easting maps to `+X` and northing to `+Y`. Raster row order comes from the affine transform, so samples are stored in game order (section 4). The model indexes `(x, y)` with `x` increasing east and `y` increasing north. Serialized order is owned by [WI-H3-02](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md).
+
+Seam rules:
+
+- A shared core edge point must be equal in both neighbouring chunks. Seam validation compares every shared edge point on both axes.
+- Where a neighbour exists, each apron sample must equal the neighbour's core sample at the same lattice point. This is a design rule for the model, not a section 5.1a statement.
+
+Nodata and edge policy:
+
+- The model has no nodata sentinel. Source nodata resolves before the model is built, using the manifest policy `fail`, `nearest-valid`, or `constant` (section 4). Silent zero fill is not allowed.
+- Coverage outside a source footprint uses the separate `edgePolicy` (`fail`, bounded nearest-edge, or constant) and is counted apart from in-raster nodata (section 4).
+- Fill counts and affected bounds go to `ImportReport`. Heights in the model are finite.
+
+### Masks and palette semantics
+
+Palette index space:
+
+- `MaterialLayer` stores `byte` palette indices. A valid index is less than the entry count of `BlendModel.MaterialPalette`. The count is at most 256.
+- Every core cell carries a palette index. A source that leaves cells unmapped resolves them through its own rules before import; the model never contains an out-of-palette index.
+- Palette entries keep their assigned indices across export and import.
+
+Mask flags:
+
+- The `Impassable` flag blocks movement. Legacy `Impassability = true` is blocked (section 6.1).
+- The `Unbuildable` flag is the authoritative payload bit (section 6.1).
+- Water sets both flags. Passability and buildability rules change only their own flag (section 5.3).
+- Any bit outside the known set fails validation. Bit positions are copied from the B4b writer in [WI-H2-02](../agent/cards/WI-H2-02-interchange-types.md).
+
+Buildability polarity gate:
+
+- The later-format `BlendTileData.Buildability` field has unverified polarity and no runtime consumer. Generals version 8 does not serialize it (section 6.1).
+- Legacy adapters never derive `Unbuildable` from that field. A source that carries it fails the import with a typed diagnostic, or defers the mapping, until its polarity is verified. Generals version 8 yields no buildability values, and the preview reports unrepresented buildability cells (section 6.1).
+
+### Preservation per legacy section
+
+Each audited section takes exactly one disposition:
+
+- Typed: the section maps to interchange components.
+- Retained opaque: the section name, section version, and original bytes are kept in `RetainedSection` and round-trip byte-exact. Import accepts this only for a known section version.
+- Rejected: conversion would lose required semantics, so import fails with a typed diagnostic.
+
+Rows follow the Section inventory in this document, in dispatch order.
+
+| Section | Disposition | Home or handling | Rationale |
+|---|---|---|---|
+| AssetList | Retained opaque | `RetainedSection` | Cnc3 asset name index with no interchange home; object type references use `AssetReference` |
+| GlobalVersion | Typed | `MapIdentity` source version | Single version integer, Ra3 gated |
+| HeightMapData | Typed | `TerrainLayout` border and `HeightLayer` | Elevations and borders become `GameUnit` values through the adapter scale (`HeightMapData.cs:15-17`) |
+| BlendTileData | Retained opaque | `RetainedSection` | Version-gated texture records with no palette mapping; generated maps write `MaterialLayer` and `BlendModel` |
+| WorldInfo | Retained opaque | `RetainedSection` | No format-neutral home defined |
+| MPPositionList | Retained opaque | `RetainedSection` | Multiplayer position records with no interchange home |
+| SidesList | Rejected below version 2; retained opaque from version 2 | `RetainedSection`, import diagnostic below 2 | Round-trip cannot hold below version 2 (`SidesList.cs:58-60`) |
+| LibraryMapLists | Retained opaque | `RetainedSection` | Library references with no interchange home |
+| Teams | Retained opaque | `RetainedSection` | Team definitions referenced by sides and objects; owner IDs are mapped in WI-H2-03 |
+| PlayerScriptsList | Retained opaque | `RetainedSection` | Nested `ScriptList` version handling is not audited, so bytes and section version are kept |
+| BuildLists | Retained opaque | `RetainedSection` | Nested field set depends on version and asset-list presence (`BuildList.cs:66-74`) |
+| ObjectsList | Typed | `PlacedObjectSet` | Stable IDs, positions, orientation, and type references; unmapped per-object fields stay on `PlacedObject` |
+| PolygonTriggers | Retained opaque | `RetainedSection` | Trigger logic consumed by `GameLogic`; no interchange home |
+| TriggerAreas | Retained opaque | `RetainedSection` | Alternative to `PolygonTriggers` per game family (`MapFile.cs:51`) |
+| GlobalWaterSettings | Retained opaque | `RetainedSection` | Rendering settings with no interchange home |
+| FogSettings | Retained opaque | `RetainedSection` | Rendering settings with no interchange home |
+| MissionHotSpots | Retained opaque | `RetainedSection` | Mission data with no interchange home |
+| MissionObjectives | Retained opaque | `RetainedSection` | Mission data with no interchange home |
+| StandingWaterAreas | Retained opaque | `RetainedSection` | Read by Scene3D; generated water is carried in `MaskLayer` |
+| RiverAreas | Retained opaque | `RetainedSection` | Element version 3 and above; no interchange home |
+| StandingWaveAreas | Retained opaque | `RetainedSection` | Element versions 2 to 4; no interchange home |
+| GlobalLighting | Retained opaque | `RetainedSection` | Opaque block sized 4 or 44 bytes by version (`GlobalLighting.cs:101-103`), kept byte-exact |
+| PostEffectsChunk | Retained opaque | `RetainedSection` | Rendering settings with no interchange home |
+| EnvironmentData | Retained opaque | `RetainedSection` | Environment settings with no interchange home |
+| NamedCameras | Retained opaque | `RetainedSection` | Camera data with no interchange home |
+| CameraAnimationList | Retained opaque | `RetainedSection` | Camera data with no interchange home |
+| CastleTemplates | Retained opaque | `RetainedSection` | Read by `CastleBehavior`; no interchange home for castle templates |
+| WaypointsList | Typed | `WaypointSet` | Named waypoints with engine XY positions; path records are mapped in WI-H2-03 |
+| SkyboxSettings | Retained opaque | `RetainedSection` | Rendering settings with no interchange home |
+
+### Validation and error behavior
+
+Versioning:
+
+- `MapInterchange` carries an interchange schema version that is independent of the source payload version and of every legacy section version.
+- An unknown interchange schema version fails. An unknown source payload version fails with a typed diagnostic, because its field mapping is unknown.
+
+Model-level checks, run before any runtime materialization:
+
+- Exact chunk inventory for the rounded extent, with 131 x 131 heights and 129 x 129 core arrays. Byte lengths, safe paths, and per-file digests are H3 serialization checks.
+- Finite height values.
+- Seam equality for shared core edge points, and apron agreement with neighbouring core samples.
+- Palette indices below the palette count, with the count at most 256.
+- Known mask flags only.
+- Imagery consistency: either every chunk carries imagery or none does, and each chunk's pixel dimensions match its declared pixels per sample.
+- Unique stable IDs across placed objects, waypoints, and generated features.
+- Each retained section carries a known version for its disposition.
+
+Source digests are verified by the reader before the model is built, as part of source reading.
+
+Failure policy: any failed check returns typed diagnostics and publishes no model content. Failed imports publish no partial content, per [`h2a-unit-content-import.md`](h2a-unit-content-import.md).
+
+### Implementation cards
+
+Each card is Draft and follow-on scope from this design:
+
+- [WI-H2-02](../agent/cards/WI-H2-02-interchange-types.md): engine-owned interchange types and model-level validation, with no `MapFile` dependency.
+- [WI-H2-03](../agent/cards/WI-H2-03-legacy-reader-seam.md): reader-source seam and legacy `MapFile` adapter, with no behavior change.
+- [WI-H2-04](../agent/cards/WI-H2-04-runtime-bridge.md): runtime bridge from `MapInterchange` to resident terrain, with parity against the legacy load path.
