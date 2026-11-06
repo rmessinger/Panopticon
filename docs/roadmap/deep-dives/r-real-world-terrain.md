@@ -752,7 +752,7 @@ Artifacts published under local directory `/mnt/pit2/Network Storage/temp/` (pla
 ##### Operational failure history
 
 - Missing environment variable: initial `geoimport preview` failed when probing for the game installation; resolved by providing `CNC_GENERALS_PATH`.
-- Argument misfire: a preview run with `--out` pointed at the maps directory instead of the per-map subdirectory wrote a flat `maps/r2-03-footprints-payload-v2.map`, which was removed before the correct subdir run, fully reproducible without evidence corruption.
+- Evidence-policy violation (not clean handling): a preview run with `--out` pointed at the maps directory instead of the per-map subdirectory published a flat `maps/r2-03-footprints-payload-v2.map` at 23:10, which was then deleted before the correct subdir run published `maps/r2-03-footprints-payload-v2/r2-03-footprints-payload-v2.map` (SHA-256 `2d98c83ea86786b164bcbc3b89ba414b4559aa2c4efddcd1809ef4b2676c84f3`). The deleted file's original bytes and timestamp are unrecoverable (only its 1503656-byte size was observed; its hash was never recorded); the subdir replacement is byte-reproducible from the same inputs but that is reproduction, not preservation of the original. Impact limited to that one file; no other deletions occurred; all failed runs and prior roots remain preserved.
 - Missing sidecar on initial capture: the first capture run omitted `--payload-dir` and produced no `ground-vertices.json` sidecar. The run was preserved and passed mask verification independently, while a second run with `--payload-dir` generated the required sidecar for overlay projection.
 
 ##### Known limitations
