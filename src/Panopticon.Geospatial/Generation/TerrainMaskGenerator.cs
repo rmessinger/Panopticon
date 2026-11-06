@@ -9,6 +9,7 @@ using NetTopologySuite.Operation.Valid;
 using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Manifest;
 
 namespace Panopticon.Geospatial.Generation;
 
@@ -344,7 +345,8 @@ public static class TerrainMaskGenerator
                 new MappedFeatureIdentity(feature.SourceId, feature.FeatureId),
                 polygon,
                 passable,
-                buildable));
+                buildable,
+                feature.Coverage ?? ManifestMaskCoverage.Sample));
         }
 
         regions.Sort(
@@ -428,9 +430,26 @@ public static class TerrainMaskGenerator
                 return false;
             }
 
-            if (!TryGetLatticeRange(worldMinX, worldMinY, worldMaxX, worldMaxY, baseSampleX, baseSampleY, lastSampleX, lastSampleY, out var gxMin, out var gyMin, out var gxMax, out var gyMax))
+            // ConservativeArea implies a mask kind and polygon geometry (GeneratedFeature
+            // guard) and the non-polygon rejection above, so the footprint needs no checks.
+            var conservative = region.Coverage == ManifestMaskCoverage.ConservativeArea;
+            int gxMin, gyMin, gxMax, gyMax;
+            var inRange = conservative
+                ? TryGetConservativeLatticeRange(worldMinX, worldMinY, worldMaxX, worldMaxY, baseSampleX, baseSampleY, lastSampleX, lastSampleY, out gxMin, out gyMin, out gxMax, out gyMax)
+                : TryGetLatticeRange(worldMinX, worldMinY, worldMaxX, worldMaxY, baseSampleX, baseSampleY, lastSampleX, lastSampleY, out gxMin, out gyMin, out gxMax, out gyMax);
+            if (!inRange)
             {
                 continue;
+            }
+
+            var footprint = conservative ? CreateNtsPolygon(rings) : null;
+            var footprintWork = 0L;
+            if (footprint is not null)
+            {
+                for (var i = 0; i < rings.Length; i++)
+                {
+                    footprintWork += rings[i].Length;
+                }
             }
 
             var applicationsBefore = waterApplications + passabilityApplications + buildabilityApplications;
@@ -443,9 +462,23 @@ public static class TerrainMaskGenerator
                 {
                     // The global index is computed before any double position, so the
                     // shared edge cells of adjacent chunks evaluate bit-identically.
-                    probe.X = (gx * spacing) - originX;
-                    probe.Y = (gy * spacing) - originY;
-                    var contained = Contains(rings, probe, context, TerrainMaskDiagnosticCodes.TerrainMaskRegionInvalid, description);
+                    bool contained;
+                    if (footprint is null)
+                    {
+                        probe.X = (gx * spacing) - originX;
+                        probe.Y = (gy * spacing) - originY;
+                        contained = Contains(rings, probe, context, TerrainMaskDiagnosticCodes.TerrainMaskRegionInvalid, description);
+                    }
+                    else
+                    {
+                        // Cell bounds come from the global index, so shared edge cells match across chunks.
+                        var cell = NtsFactory.ToGeometry(new Envelope(
+                            (gx * spacing) - originX,
+                            ((gx + 1) * spacing) - originX,
+                            (gy * spacing) - originY,
+                            ((gy + 1) * spacing) - originY));
+                        contained = context.TryCharge(footprintWork) && footprint.Intersects(cell);
+                    }
 
                     if (context.Stopped)
                     {
@@ -953,6 +986,64 @@ public static class TerrainMaskGenerator
         return true;
     }
 
+    /// <summary>
+    /// Candidate floor cells for conservative coverage: a cell spans one spacing past
+    /// its node in each axis, so the range keeps every cell whose closed rect meets the
+    /// bbox, including exact-gridline touches. Intersection tests decide the rest.
+    /// </summary>
+    private static bool TryGetConservativeLatticeRange(
+        double worldMinX,
+        double worldMinY,
+        double worldMaxX,
+        double worldMaxY,
+        int baseSampleX,
+        int baseSampleY,
+        int lastSampleX,
+        int lastSampleY,
+        out int gxMin,
+        out int gyMin,
+        out int gxMax,
+        out int gyMax)
+    {
+        gxMin = gyMin = gxMax = gyMax = 0;
+        var spacing = (double)ChunkLayout.SampleSpacingGameUnits;
+        var chunkMinX = baseSampleX * spacing;
+        var chunkMinY = baseSampleY * spacing;
+        var chunkMaxX = (lastSampleX + 1) * spacing;
+        var chunkMaxY = (lastSampleY + 1) * spacing;
+        var clippedMinX = Math.Max(worldMinX, chunkMinX);
+        var clippedMinY = Math.Max(worldMinY, chunkMinY);
+        var clippedMaxX = Math.Min(worldMaxX, chunkMaxX);
+        var clippedMaxY = Math.Min(worldMaxY, chunkMaxY);
+
+        var minGx = Math.Ceiling(clippedMinX / spacing) - 1;
+        var maxGx = Math.Floor(clippedMaxX / spacing);
+        var minGy = Math.Ceiling(clippedMinY / spacing) - 1;
+        var maxGy = Math.Floor(clippedMaxY / spacing);
+        if (minGx > maxGx || minGy > maxGy || !IsFiniteQuad(minGx, minGy, maxGx, maxGy))
+        {
+            return false;
+        }
+
+        gxMin = (int)Math.Clamp(minGx, baseSampleX, lastSampleX);
+        gxMax = (int)Math.Clamp(maxGx, baseSampleX, lastSampleX);
+        gyMin = (int)Math.Clamp(minGy, baseSampleY, lastSampleY);
+        gyMax = (int)Math.Clamp(maxGy, baseSampleY, lastSampleY);
+
+        return true;
+    }
+
+    private static Polygon CreateNtsPolygon(Coordinate[][] rings)
+    {
+        var holes = new LinearRing[rings.Length - 1];
+        for (var i = 1; i < rings.Length; i++)
+        {
+            holes[i - 1] = NtsFactory.CreateLinearRing(rings[i]);
+        }
+
+        return NtsFactory.CreatePolygon(NtsFactory.CreateLinearRing(rings[0]), holes);
+    }
+
     private static bool IsFiniteQuad(double minX, double minY, double maxX, double maxY)
     {
         return double.IsFinite(minX) && double.IsFinite(minY) && double.IsFinite(maxX) && double.IsFinite(maxY);
@@ -963,7 +1054,7 @@ public static class TerrainMaskGenerator
         return value.ToString("R", CultureInfo.InvariantCulture);
     }
 
-    private readonly record struct RegionEntry(int RuleIndex, int Order, GeneratedFeatureKind Kind, string PartId, MappedFeatureIdentity Identity, GeoPolygon Polygon, bool Passable, bool Buildable);
+    private readonly record struct RegionEntry(int RuleIndex, int Order, GeneratedFeatureKind Kind, string PartId, MappedFeatureIdentity Identity, GeoPolygon Polygon, bool Passable, bool Buildable, ManifestMaskCoverage Coverage);
 
     private readonly record struct PreparedRing(RingPrepStatus Status, Coordinate[]? Ring);
 

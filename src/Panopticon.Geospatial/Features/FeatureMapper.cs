@@ -593,7 +593,8 @@ public static class FeatureMapper
                     position,
                     objectPlacement,
                     kind == GeneratedFeatureKind.Passability ? rule!.Passable : null,
-                    kind == GeneratedFeatureKind.Buildability ? rule!.Buildable : null));
+                    kind == GeneratedFeatureKind.Buildability ? rule!.Buildable : null,
+                    rule?.Coverage));
             _emittedCoordinates += _partPositions;
             return true;
         }

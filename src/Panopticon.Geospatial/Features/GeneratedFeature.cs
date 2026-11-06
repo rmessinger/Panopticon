@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Manifest;
 
 namespace Panopticon.Geospatial.Features;
 
@@ -27,8 +28,9 @@ public sealed record GeneratedFeature
         GamePosition? position = null,
         GeneratedObjectPlacement? objectPlacement = null,
         bool? passable = null,
-        bool? buildable = null)
-        : this(kind, geometry, sourceId, featureId, partId, ruleIndex, attributes, position, objectPlacement, passable, buildable, copyAttributes: true)
+        bool? buildable = null,
+        ManifestMaskCoverage? coverage = null)
+        : this(kind, geometry, sourceId, featureId, partId, ruleIndex, attributes, position, objectPlacement, passable, buildable, coverage, copyAttributes: true)
     {
     }
 
@@ -48,8 +50,9 @@ public sealed record GeneratedFeature
         GamePosition? position,
         GeneratedObjectPlacement? objectPlacement,
         bool? passable,
-        bool? buildable) =>
-        new(kind, geometry, sourceId, featureId, partId, ruleIndex, attributes, position, objectPlacement, passable, buildable, copyAttributes: false);
+        bool? buildable,
+        ManifestMaskCoverage? coverage = null) =>
+        new(kind, geometry, sourceId, featureId, partId, ruleIndex, attributes, position, objectPlacement, passable, buildable, coverage, copyAttributes: false);
 
     private GeneratedFeature(
         GeneratedFeatureKind kind,
@@ -63,11 +66,17 @@ public sealed record GeneratedFeature
         GeneratedObjectPlacement? objectPlacement,
         bool? passable,
         bool? buildable,
+        ManifestMaskCoverage? coverage,
         bool copyAttributes)
     {
         if (!Enum.IsDefined(kind))
         {
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "Undefined generated feature kind.");
+        }
+
+        if (coverage is not null && !Enum.IsDefined(coverage.Value))
+        {
+            throw new ArgumentOutOfRangeException(nameof(coverage), coverage.Value, "Undefined manifest mask coverage.");
         }
 
         ArgumentNullException.ThrowIfNull(geometry);
@@ -117,6 +126,16 @@ public sealed record GeneratedFeature
             throw new ArgumentException("The buildable flag applies to buildability regions only.", nameof(buildable));
         }
 
+        if (coverage is not null && kind != GeneratedFeatureKind.Passability && kind != GeneratedFeatureKind.Buildability)
+        {
+            throw new ArgumentException("The coverage policy applies to passability and buildability regions only.", nameof(coverage));
+        }
+
+        if (coverage is not null && geometry is not GeoPolygon)
+        {
+            throw new ArgumentException("The coverage policy applies to polygon geometry only.", nameof(coverage));
+        }
+
         Kind = kind;
         Geometry = geometry;
         SourceId = sourceId;
@@ -128,6 +147,7 @@ public sealed record GeneratedFeature
         ObjectPlacement = objectPlacement;
         Passable = passable;
         Buildable = buildable;
+        Coverage = coverage;
     }
 
     public GeneratedFeatureKind Kind { get; }
@@ -159,6 +179,9 @@ public sealed record GeneratedFeature
 
     /// <summary>Buildable flag carried by the matching rule; buildability regions only.</summary>
     public bool? Buildable { get; }
+
+    /// <summary>Coverage policy carried by the matching rule; passability and buildability regions only.</summary>
+    public ManifestMaskCoverage? Coverage { get; }
 
     private static IReadOnlyDictionary<string, string> CopyAttributes(IReadOnlyDictionary<string, string>? attributes)
     {

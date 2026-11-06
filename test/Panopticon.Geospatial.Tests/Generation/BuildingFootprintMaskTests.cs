@@ -144,6 +144,35 @@ public class BuildingFootprintMaskTests
         Assert.Equal(0L, GenerateAll(grid, []).Report.ZeroCellMappedPolygonFeatureCount);
     }
 
+    [Fact]
+    public void ConservativeAreaZeroCountsAreUniqueAcrossRulesPartsAndChunks()
+    {
+        // "dual" is covered by both conservative rules and "twins" by its first part, so
+        // only the sample-coverage "speck" stays zero. "late" is covered only in chunk (1, 0).
+        var grid = FeatureMappingTestSupport.CreateGrid();
+        var features = MapRegions(
+            grid,
+            [
+                Square("dual", 11d, 11d, 13d, 13d),
+                new GeospatialFeature(
+                    "vectors",
+                    "twins",
+                    new GeoMultiGeometry([ProjectedPolygon(11d, 11d, 13d, 13d), ProjectedPolygon(2600d, 100d, 2700d, 200d)]),
+                    FeatureMappingTestSupport.Tm4),
+                Square("late", 1300d, 100d, 1310d, 120d),
+                new GeospatialFeature("lakes", "speck", ProjectedPolygon(11d, 11d, 13d, 13d), FeatureMappingTestSupport.Tm4),
+            ],
+            [
+                new FeatureMappingRule("vectors", ManifestFeatureTarget.Passability, ManifestFeatureGeometry.Polygon, Passable: false, Coverage: ManifestMaskCoverage.ConservativeArea),
+                new FeatureMappingRule("vectors", ManifestFeatureTarget.Buildability, ManifestFeatureGeometry.Polygon, Buildable: false, Coverage: ManifestMaskCoverage.ConservativeArea),
+                new FeatureMappingRule("lakes", ManifestFeatureTarget.Water, ManifestFeatureGeometry.Polygon),
+            ]);
+
+        var report = GenerateAll(grid, features).Report;
+
+        Assert.Equal(1L, report.ZeroCellMappedPolygonFeatureCount);
+    }
+
     private static FeatureMappingRule[] WaterRules()
     {
         return [new("vectors", ManifestFeatureTarget.Water, ManifestFeatureGeometry.Polygon)];
