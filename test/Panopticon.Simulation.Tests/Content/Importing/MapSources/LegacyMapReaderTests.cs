@@ -80,7 +80,8 @@ public sealed class LegacyMapReaderTests
         Assert.Contains(model.RetainedSections, section => section.SectionName == "WorldInfo");
         Assert.Contains(model.RetainedSections, section => section.SectionName == "BlendTileData");
         Assert.Contains(model.RetainedSections, section => section.SectionName == "SidesList");
-        Assert.Equal(["BlendTileData", "WorldInfo", "SidesList", "GlobalLighting"], model.RetainedSections.Select(section => section.SectionName).ToArray());
+        Assert.Contains(model.RetainedSections, section => section.SectionName == "WaypointsList");
+        Assert.Equal(["BlendTileData", "WorldInfo", "SidesList", "GlobalLighting", "WaypointsList"], model.RetainedSections.Select(section => section.SectionName).ToArray());
         Assert.All(model.RetainedSections, section => Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(section.Bytes.Span)), section.Sha256));
 
         // Typed homes for a new empty map: empty placements and waypoint sets, no provenance.
@@ -169,8 +170,8 @@ public sealed class LegacyMapReaderTests
         var model = new LegacyMapReader(mapFile).Read();
         var waypoint = Assert.Single(model.Waypoints!.Waypoints);
 
-        // StableId and Name both come from the waypoint name; legacy waypoints carry no IDs.
-        Assert.Equal("Player_1_Start", waypoint.StableId);
+        // StableId is positional and Name carries the legacy waypoint name; legacy waypoints carry no IDs.
+        Assert.Equal("wp-0", waypoint.StableId);
         Assert.Equal("Player_1_Start", waypoint.Name);
         Assert.Equal(100, waypoint.X.Value);
         Assert.Equal(MapQuantityFrame.LegacyEngineXy, waypoint.X.Frame);
@@ -221,19 +222,35 @@ public sealed class LegacyMapReaderTests
     }
 
     [Fact]
-    public void ValidatorDiagnosticsSurfaceOnMapImportException()
+    public void DuplicateWaypointNamesGetPositionalIdsAndValidate()
     {
-        // Duplicate waypoint names are legal in legacy maps but map to duplicate stable IDs,
-        // which the model-level check rejects; the exception carries the validator's diagnostics.
+        // Legacy waypoint names are not unique; stable IDs are positional, so duplicate names
+        // yield distinct stable IDs and the model validates.
         var mapFile = CreateEmptyMap();
         mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(1, 2, 3), 1, "Start"));
         mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(4, 5, 6), 2, "Start"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(7, 8, 9), 3, "Finish"));
+
+        var model = new LegacyMapReader(mapFile).Read();
+
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+        Assert.Equal(["wp-0", "wp-1", "wp-2"], model.Waypoints!.Waypoints.Select(waypoint => waypoint.StableId).ToArray());
+        Assert.Equal(["Start", "Start", "Finish"], model.Waypoints!.Waypoints.Select(waypoint => waypoint.Name).ToArray());
+        Assert.Equal([1, 4, 7], model.Waypoints!.Waypoints.Select(waypoint => waypoint.X.Value).ToArray());
+    }
+
+    [Fact]
+    public void ValidatorDiagnosticsSurfaceOnMapImportException()
+    {
+        // Non-finite object positions fail model validation; the exception carries the validator's
+        // diagnostics verbatim.
+        var mapFile = CreateEmptyMap();
+        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(float.NaN, 20, 30), 0, RoadType.None, "AmericaTankCrusher"));
 
         var exception = Assert.Throws<MapImportException>(() => new LegacyMapReader(mapFile).Read());
 
         var diagnostic = Assert.Single(exception.Diagnostics);
-        Assert.Equal(MapInterchangeDiagnostic.StableIdDuplicate, diagnostic.Code);
-        Assert.Contains("Start", diagnostic.Message);
+        Assert.Equal(MapInterchangeDiagnostic.QuantityFinite, diagnostic.Code);
     }
 
     [Fact]
@@ -283,6 +300,12 @@ public sealed class LegacyMapReaderTests
                 var model = new LegacyMapReader(mapFile, entry.FilePath).Read();
                 validated++;
                 firstModel ??= model;
+
+                if (mapFile.WaypointsList is not null)
+                {
+                    Assert.Contains(model.RetainedSections, section => section.SectionName == "WaypointsList");
+                }
+
                 _output.WriteLine(
                     $"{entry.FilePath}: lattice {model.Layout.LatticeWidth}x{model.Layout.LatticeHeight}, chunks {model.Layout.ChunksX}x{model.Layout.ChunksY}, " +
                     $"objects {model.Objects!.Objects.Count}, waypoints {model.Waypoints!.Waypoints.Count}, retained {model.RetainedSections.Count}.");
@@ -307,6 +330,52 @@ public sealed class LegacyMapReaderTests
         Assert.NotEmpty(firstModel!.RetainedSections);
         Assert.NotNull(firstModel.Objects);
         Assert.NotNull(firstModel.Waypoints);
+    }
+
+    [Fact]
+    public void AlpineAssaultValidates()
+    {
+        // Alpine Assault carries duplicate legacy waypoint names; positional stable IDs must let it
+        // validate where name-derived IDs rejected it.
+        var found = false;
+
+        InstalledFilesTestData.ReadFiles(".map", _output, entry =>
+        {
+            if (!entry.FilePath.Contains("Alpine Assault", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            found = true;
+
+            using var entryStream = OpenOrNull(entry);
+
+            Assert.NotNull(entryStream);
+
+            using var mapStream = MapFile.Decompress(entryStream!);
+            var mapFile = MapFile.FromStream(mapStream);
+            var model = new LegacyMapReader(mapFile, entry.FilePath).Read();
+
+            Assert.Empty(MapInterchangeValidator.Validate(model));
+
+            if (mapFile.WaypointsList is not null)
+            {
+                Assert.Contains(model.RetainedSections, section => section.SectionName == "WaypointsList");
+            }
+
+            var names = model.Waypoints!.Waypoints.Select(waypoint => waypoint.Name).ToArray();
+            var ids = model.Waypoints!.Waypoints.Select(waypoint => waypoint.StableId).ToArray();
+
+            _output.WriteLine(
+                $"{entry.FilePath}: lattice {model.Layout.LatticeWidth}x{model.Layout.LatticeHeight}, chunks {model.Layout.ChunksX}x{model.Layout.ChunksY}, " +
+                $"objects {model.Objects!.Objects.Count}, waypoints {model.Waypoints.Waypoints.Count}, retained {model.RetainedSections.Count}, " +
+                $"waypoint ids [{string.Join(", ", ids)}], duplicate names {names.Length - names.Distinct().Count()}.");
+        });
+
+        if (!found)
+        {
+            _output.WriteLine("No Alpine Assault map in the installed corpus; skipped.");
+        }
     }
 
     private static MapFile CreateEmptyMap() => MapFile.CreateEmpty(PlayableWidth, PlayableHeight, BorderWidth, InitialHeight);

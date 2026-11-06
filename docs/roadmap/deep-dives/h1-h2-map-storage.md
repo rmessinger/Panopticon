@@ -477,7 +477,7 @@ Rows follow the Section inventory in this document, in dispatch order.
 | NamedCameras | Retained opaque | `RetainedSection` | Camera data with no interchange home |
 | CameraAnimationList | Retained opaque | `RetainedSection` | Camera data with no interchange home |
 | CastleTemplates | Retained opaque | `RetainedSection` | Read by `CastleBehavior`; no interchange home for castle templates |
-| WaypointsList | Typed | `WaypointSet` | Named waypoints with engine XY positions; path records are mapped in WI-H2-03 |
+| WaypointsList | Retained opaque | `RetainedSection` | Path records; named waypoint positions live in ObjectsList and map to `WaypointSet` |
 | SkyboxSettings | Retained opaque | `RetainedSection` | Rendering settings with no interchange home |
 
 ### Validation and error behavior

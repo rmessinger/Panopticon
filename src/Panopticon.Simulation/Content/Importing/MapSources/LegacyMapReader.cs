@@ -13,10 +13,9 @@ namespace Panopticon.Content.Importing.MapSources;
 
 /// <summary>
 /// Reader-source adapter from a parsed legacy map to <see cref="MapInterchange"/>. One disposition per
-/// audited section, in the legacy writer's dispatch order: HeightMapData, ObjectsList, WaypointsList,
-/// and GlobalVersion land in their typed homes; every other section present and non-null is retained
-/// opaque (SidesList only at version 2 or above; below 2 the import fails, because those versions
-/// cannot round-trip).
+/// audited section, in the legacy writer's dispatch order: HeightMapData, ObjectsList, and GlobalVersion
+/// land in their typed homes; every other section present and non-null is retained opaque (SidesList only
+/// at version 2 or above; below 2 the import fails, because those versions cannot round-trip).
 /// </summary>
 /// <remarks>
 /// Adapter conventions, per the H2 design:
@@ -28,8 +27,10 @@ namespace Panopticon.Content.Importing.MapSources;
 /// edge (adapter clamp policy). Legacy sources carry no palette or mask layers, so chunks are heights-only
 /// and <see cref="BlendModel"/> stays empty. Placed objects take stable IDs "obj-{index}" (legacy objects
 /// carry no IDs) and their property dictionaries stringified; MapObject.Angle is radians and passes
-/// through. Waypoint stable IDs and names come from the waypoint name (legacy waypoints carry no IDs and
-/// the engine keys waypoints by name), so duplicate names fail validation. Retained bytes are the section
+/// through. Waypoint stable IDs are positional "wp-{index}" over the starred waypoint objects in
+/// enumeration order (legacy waypoints carry no IDs); legacy waypoint names are not unique, so Name
+/// carries the legacy name and duplicate names validate. The WaypointsList section carries only path
+/// records and is retained opaque. Retained bytes are the section
 /// serialized exactly as the legacy writer frames it (version, back-patched size, payload); the
 /// container-level section name index is excluded, and nested name indices come from a fresh per-section
 /// name table. Legacy sources carry no geospatial transform or source digests.
@@ -39,6 +40,8 @@ public sealed class LegacyMapReader : IMapReader
     private const string DefaultSourceLabel = "legacy";
 
     private const string ObjectStableIdPrefix = "obj-";
+
+    private const string WaypointStableIdPrefix = "wp-";
 
     private const string WaypointNameProperty = "waypointName";
 
@@ -206,7 +209,8 @@ public sealed class LegacyMapReader : IMapReader
         }
 
         // Named waypoints are the starred waypoint objects in ObjectsList; the WaypointsList section
-        // itself carries only path start and end IDs, for which the interchange model has no home.
+        // itself carries only path start and end IDs and is retained opaque. Legacy waypoint names are
+        // not unique, so stable IDs are positional over the waypoint enumeration order.
         var waypoints = new List<Waypoint>();
 
         foreach (var mapObject in _mapFile.ObjectsList?.Objects ?? [])
@@ -222,7 +226,7 @@ public sealed class LegacyMapReader : IMapReader
             }
 
             waypoints.Add(new Waypoint(
-                name,
+                $"{WaypointStableIdPrefix}{waypoints.Count}",
                 name,
                 new MapQuantity(mapObject.Position.X, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
                 new MapQuantity(mapObject.Position.Y, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
@@ -355,6 +359,11 @@ public sealed class LegacyMapReader : IMapReader
         if (_mapFile.CastleTemplates is { } castleTemplates)
         {
             sections.Add(Retain(castleTemplates, CastleTemplates.AssetName, (writer, names) => castleTemplates.WriteTo(writer, names)));
+        }
+
+        if (_mapFile.WaypointsList is { } waypointsList)
+        {
+            sections.Add(Retain(waypointsList, WaypointsList.AssetName, (writer, _) => waypointsList.WriteTo(writer)));
         }
 
         if (_mapFile.SkyboxSettings is { } skyboxSettings)
