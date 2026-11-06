@@ -238,7 +238,7 @@ public static class Program
         ParseOptionalInt(args, "--n6-capture-stride", value => config.NavigationDeadlockCaptureStride = value);
         ParseOptionalString(args, "--n6-report", value => config.NavigationDeadlockReportPath = value);
 
-        Run(config, reporter);
+        Run(config, reporter, GetArgValue(args, "--payload-dir"));
     }
 
     /// <summary>
@@ -246,7 +246,7 @@ public static class Program
     /// <c>--scenario</c>) holds either a path to a capture profile JSON or the bare filename of an
     /// embedded one (e.g. <c>capture-construction.json</c>).
     /// </summary>
-    private static void RunScenarioCapture(TestHarnessConfig config, ITestHarnessReporter reporter)
+    private static void RunScenarioCapture(TestHarnessConfig config, ITestHarnessReporter reporter, string? payloadDirectory)
     {
         var installation = ScenarioBuilder.ResolveInstallation(config, reporter, ConfigFileName);
         if (installation == null)
@@ -285,7 +285,8 @@ public static class Program
             config.FullHud,
             null,
             ViewportScale: config.ViewportScale,
-            FixedRenderClock: config.FixedRenderClock);
+            FixedRenderClock: config.FixedRenderClock,
+            PayloadDirectory: payloadDirectory);
         var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
         Environment.ExitCode = result.ExitCode;
     }
@@ -400,7 +401,7 @@ public static class Program
     /// (<see cref="ReplayScenarioRunner"/> / <see cref="ValidationGroundRunner"/>), and report
     /// final status through <paramref name="reporter"/>.
     /// </summary>
-    private static void Run(TestHarnessConfig config, ITestHarnessReporter reporter)
+    private static void Run(TestHarnessConfig config, ITestHarnessReporter reporter, string? payloadDirectory)
     {
         var installation = ScenarioBuilder.ResolveInstallation(config, reporter, ConfigFileName);
         if (installation == null)
@@ -417,7 +418,7 @@ public static class Program
 
         if (config.Scenario == BuiltInScenario.ScenarioCapture)
         {
-            RunScenarioCapture(config, reporter);
+            RunScenarioCapture(config, reporter, payloadDirectory);
             return;
         }
 

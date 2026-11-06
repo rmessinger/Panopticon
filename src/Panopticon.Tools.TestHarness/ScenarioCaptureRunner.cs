@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Panopticon.Content.Importing.Units;
@@ -39,10 +40,20 @@ public static class ScenarioCaptureRunner
     private const float MinimumMarkerRadiusPixels = 6f;
     private const float ProjectileDirectionMarkerLength = 12f;
 
-    private static readonly JsonSerializerOptions ManifestJsonOptions = new()
+    internal static readonly JsonSerializerOptions ManifestJsonOptions = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    private const string PayloadFileName = "payload.json";
+    private const string GroundVerticesFileName = "ground-vertices.json";
+    private const string GroundVerticesMethod = "Terrain.GetGroundHeight per vertex, runtime map";
+
+    private static readonly JsonSerializerOptions GroundVerticesJsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
     public static CaptureRunResult Run(
@@ -102,6 +113,12 @@ public static class ScenarioCaptureRunner
             File.Delete(ownedManifest);
         }
 
+        var ownedGroundVertices = Path.Combine(outputDirectory, GroundVerticesFileName);
+        if (File.Exists(ownedGroundVertices))
+        {
+            File.Delete(ownedGroundVertices);
+        }
+
         QuietenPerFrameLogging();
 
         var viewportScale = Math.Max(1, settings.ViewportScale);
@@ -125,6 +142,24 @@ public static class ScenarioCaptureRunner
 
         game.StartSkirmishOrMultiPlayerGame(profile.MapPath, new EchoConnection(), playerSettings, 1, isMultiPlayer: false);
         game.StartRun();
+
+        if (settings.PayloadDirectory != null)
+        {
+            try
+            {
+                WriteGroundVertexSidecar(
+                    outputDirectory,
+                    profile.Name,
+                    settings.PayloadDirectory,
+                    game.Scene3D.Terrain.GetGroundHeight);
+            }
+            catch (InvalidOperationException ex)
+            {
+                reporter.Error(ex.Message);
+                return new CaptureRunResult(1, outputDirectory, null, 0, 0, [], [], null);
+            }
+        }
+
         game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
         foreach (var player in game.Scene3D.Players)
         {
@@ -375,7 +410,8 @@ public static class ScenarioCaptureRunner
                     AbsoluteLogicFrame: CurrentLogicFrame(game),
                     File: Path.GetFileName(path),
                     Actors: actorRecords,
-                    Projectiles: projectiles));
+                    Projectiles: projectiles,
+                    Camera: DescribeCamera(game)));
                 captureIndex++;
             }
 
@@ -1218,6 +1254,176 @@ public static class ScenarioCaptureRunner
         game.Render();
     }
 
+    private static CameraFrameRecord DescribeCamera(Game game)
+    {
+        var camera = game.Scene3D.Camera;
+        var viewport = camera.Viewport;
+        return new CameraFrameRecord(
+            ToRowMajor(camera.View),
+            ToRowMajor(camera.Projection),
+            new ViewportRecord(viewport.X, viewport.Y, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth));
+    }
+
+    internal static float[] ToRowMajor(Matrix4x4 matrix) =>
+    [
+        matrix.M11, matrix.M12, matrix.M13, matrix.M14,
+        matrix.M21, matrix.M22, matrix.M23, matrix.M24,
+        matrix.M31, matrix.M32, matrix.M33, matrix.M34,
+        matrix.M41, matrix.M42, matrix.M43, matrix.M44,
+    ];
+
+    /// <summary>
+    /// Writes <c>ground-vertices.json</c>: every passability/buildability footprint ring vertex lifted to
+    /// the runtime ground height. Throws <see cref="InvalidOperationException"/> without writing anything
+    /// when the payload is missing, unreadable, or malformed.
+    /// </summary>
+    internal static void WriteGroundVertexSidecar(
+        string outputDirectory,
+        string scenario,
+        string payloadDirectory,
+        Func<Vector2, float?> groundHeight)
+    {
+        var payloadPath = Path.GetFullPath(Path.Combine(payloadDirectory, PayloadFileName));
+        byte[] payloadBytes;
+        try
+        {
+            payloadBytes = File.ReadAllBytes(payloadPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new InvalidOperationException(
+                $"Ground-vertex sidecar needs a readable payload; '{payloadPath}' could not be read: {ex.Message}",
+                ex);
+        }
+
+        using var document = ParsePayload(payloadBytes, payloadPath);
+        if (!document.RootElement.TryGetProperty("features", out var features)
+            || !features.TryGetProperty("items", out var items)
+            || items.ValueKind != JsonValueKind.Array)
+        {
+            throw new InvalidOperationException($"Payload '{payloadPath}' lacks a features.items array.");
+        }
+
+        var polygons = new List<GroundVertexPolygonRecord>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var item in items.EnumerateArray())
+        {
+            var itemWhere = $"Payload '{payloadPath}' features item";
+            var kind = RequiredString(item, "kind", itemWhere);
+            if (kind is not ("passability" or "buildability"))
+            {
+                continue;
+            }
+
+            var key = string.Join('|',
+                RequiredString(item, "sourceId", itemWhere),
+                RequiredString(item, "featureId", itemWhere),
+                RequiredString(item, "partId", itemWhere));
+            if (!seen.Add(key))
+            {
+                continue;
+            }
+
+            var featureWhere = $"Payload '{payloadPath}' feature '{key}'";
+            var geometry = RequiredObject(item, "geometry", featureWhere);
+            if (RequiredString(geometry, "type", featureWhere) != "polygon")
+            {
+                throw new InvalidOperationException($"{featureWhere} is not a polygon geometry.");
+            }
+
+            var outer = SampleRing(RequiredObject(geometry, "outerRing", featureWhere), groundHeight, $"{featureWhere} outerRing");
+            var holes = new List<float[][]>();
+            if (geometry.TryGetProperty("innerRings", out var innerRings))
+            {
+                if (innerRings.ValueKind != JsonValueKind.Array)
+                {
+                    throw new InvalidOperationException($"{featureWhere} has a non-array innerRings.");
+                }
+
+                foreach (var ring in innerRings.EnumerateArray())
+                {
+                    holes.Add(SampleRing(ring, groundHeight, $"{featureWhere} innerRings"));
+                }
+            }
+
+            polygons.Add(new GroundVertexPolygonRecord(key, outer, holes.ToArray()));
+        }
+
+        var sidecar = new GroundVerticesRecord(
+            scenario,
+            new PayloadManifestRecord(payloadPath, Convert.ToHexStringLower(SHA256.HashData(payloadBytes))),
+            GroundVerticesMethod,
+            polygons);
+        File.WriteAllText(
+            Path.Combine(outputDirectory, GroundVerticesFileName),
+            JsonSerializer.Serialize(sidecar, GroundVerticesJsonOptions));
+    }
+
+    private static JsonDocument ParsePayload(byte[] payloadBytes, string payloadPath)
+    {
+        try
+        {
+            return JsonDocument.Parse(payloadBytes);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Payload '{payloadPath}' is not valid JSON: {ex.Message}", ex);
+        }
+    }
+
+    private static string RequiredString(JsonElement element, string name, string where)
+    {
+        return element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()!
+            : throw new InvalidOperationException($"{where} lacks a string '{name}'.");
+    }
+
+    private static JsonElement RequiredObject(JsonElement element, string name, string where)
+    {
+        return element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Object
+            ? value
+            : throw new InvalidOperationException($"{where} lacks an object '{name}'.");
+    }
+
+    private static float[][] SampleRing(JsonElement ring, Func<Vector2, float?> groundHeight, string where)
+    {
+        if (!ring.TryGetProperty("positions", out var positions) || positions.ValueKind != JsonValueKind.Array)
+        {
+            throw new InvalidOperationException($"{where}: ring lacks a 'positions' array.");
+        }
+
+        var vertices = new List<Vector2>();
+        foreach (var position in positions.EnumerateArray())
+        {
+            if (!position.TryGetProperty("x", out var xValue)
+                || !position.TryGetProperty("y", out var yValue)
+                || !xValue.TryGetSingle(out var x)
+                || !yValue.TryGetSingle(out var y))
+            {
+                throw new InvalidOperationException($"{where}: vertex {vertices.Count} has missing or non-numeric coordinates.");
+            }
+
+            vertices.Add(new Vector2(x, y));
+        }
+
+        if (vertices.Count > 1 && vertices[0] == vertices[^1])
+        {
+            vertices.RemoveAt(vertices.Count - 1);
+        }
+
+        if (vertices.Count < 3)
+        {
+            throw new InvalidOperationException($"{where}: ring is degenerate (fewer than 3 distinct vertices).");
+        }
+
+        return vertices.Select(vertex =>
+        {
+            var z = groundHeight(vertex)
+                ?? throw new InvalidOperationException($"{where}: vertex ({vertex.X}, {vertex.Y}) lies outside the runtime map.");
+            return new[] { vertex.X, vertex.Y, z };
+        }).ToArray();
+    }
+
     private static void QuietenPerFrameLogging()
     {
         var loggingConfig = NLog.LogManager.Configuration;
@@ -1256,7 +1462,8 @@ public sealed record CaptureRunSettings(
     int ViewportScale = 1,
     bool FixedRenderClock = false,
     bool FreezeLogicDuringCapture = false,
-    Action<Game, int>? BeforeRender = null);
+    Action<Game, int>? BeforeRender = null,
+    string? PayloadDirectory = null);
 
 public sealed record CaptureRunResult(
     int ExitCode,
@@ -1297,7 +1504,22 @@ public sealed record FrameRecord(
     long AbsoluteLogicFrame,
     string File,
     IReadOnlyList<ActorRecord> Actors,
-    IReadOnlyList<ActorRecord> Projectiles);
+    IReadOnlyList<ActorRecord> Projectiles,
+    CameraFrameRecord? Camera = null);
+
+public sealed record CameraFrameRecord(float[] View, float[] Projection, ViewportRecord Viewport);
+
+public sealed record ViewportRecord(float X, float Y, float Width, float Height, float MinDepth, float MaxDepth);
+
+public sealed record GroundVerticesRecord(
+    string Scenario,
+    PayloadManifestRecord PayloadManifest,
+    string Method,
+    IReadOnlyList<GroundVertexPolygonRecord> Polygons);
+
+public sealed record PayloadManifestRecord(string Path, string Sha256);
+
+public sealed record GroundVertexPolygonRecord(string Key, float[][] Outer, float[][][] Holes);
 
 public sealed record ActorRecord(
     string Role,
