@@ -192,16 +192,11 @@ public sealed class MapInterchangeValidationTests
     [Fact]
     public void BrokenHorizontalSeamFails()
     {
-        // Perturbs west chunk core column 128 (stored column 129) at core row 10: one stored sample.
-        // The east chunk's west apron duplicates that same core sample, so the apron diagnostic
-        // necessarily co-occurs; no stored sample breaks the seam alone.
+        // Perturbs west chunk core column 128 (stored column 129) at core row 10. No apron sample
+        // references that point (the east chunk's west apron is core column 127), so only the seam fires.
         var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(10), StoredColumn(MapChunkGeometry.CorePointsPerAxis - 1), 999.5f);
-        var model = WithChunk(BuildValidModel(), 0, chunk);
-        var codes = Codes(model);
 
-        Assert.Equal(
-            [MapInterchangeDiagnostic.ApronAgreement, MapInterchangeDiagnostic.SeamEquality],
-            codes.Order().ToArray());
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.SeamEquality);
     }
 
     [Fact]
@@ -211,6 +206,15 @@ public sealed class MapInterchangeValidationTests
         var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(10), MapChunkGeometry.StoredPointsPerAxis - 1, 777.25f);
 
         AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.ApronAgreement);
+    }
+
+    [Fact]
+    public void BrokenWestApronFails()
+    {
+        // Perturbs east chunk west apron (stored column 0) at core row 10: one stored sample.
+        var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[1], StoredRow(10), 0, 777.25f);
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 1, chunk), MapInterchangeDiagnostic.ApronAgreement);
     }
 
     [Fact]
@@ -344,7 +348,7 @@ public sealed class MapInterchangeValidationTests
         var model = BuildValidModel();
         var waypoints = new WaypointSet(
         [
-            model.Waypoints!.Waypoints[0] with { Y = new MapQuantity(25, MapQuantityUnit.GameUnit, MapQuantityFrame.SourceCrs) },
+            model.Waypoints!.Waypoints[0] with { Y = new MapQuantity(25, MapQuantityUnit.Meters, MapQuantityFrame.SourceCrs) },
         ]);
 
         AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.CoordinateFrame);
@@ -360,6 +364,144 @@ public sealed class MapInterchangeValidationTests
         ]);
 
         AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.CoordinateFrame);
+    }
+
+    [Fact]
+    public void MapInterchangeCopiesRetainedSectionsAtConstruction()
+    {
+        var model = BuildValidModel();
+        var sections = new List<RetainedSection> { model.RetainedSections[0] };
+        var copied = new MapInterchange(
+            model.SchemaVersion,
+            model.Identity,
+            model.Layout,
+            model.Blend,
+            model.Objects,
+            model.Waypoints,
+            model.Provenance,
+            model.Report,
+            sections);
+
+        sections.Clear();
+
+        Assert.Single(copied.RetainedSections);
+        Assert.Empty(MapInterchangeValidator.Validate(copied));
+    }
+
+    [Fact]
+    public void TerrainLayoutCopiesChunksAtConstruction()
+    {
+        var model = BuildValidModel();
+        var chunks = new List<Chunk>(model.Layout.Chunks);
+        var layout = new TerrainLayout(
+            model.Layout.SampleSpacing,
+            model.Layout.ChunksX,
+            model.Layout.ChunksY,
+            model.Layout.Border,
+            model.Layout.GeospatialTransform,
+            model.Layout.NodataPolicy,
+            chunks);
+        var result = model with { Layout = layout };
+
+        chunks.Clear();
+
+        Assert.Equal(2, result.Layout.Chunks.Count);
+        Assert.Empty(MapInterchangeValidator.Validate(result));
+    }
+
+    [Fact]
+    public void GeospatialOriginsInDeclaredFramesPass()
+    {
+        var model = BuildValidModel();
+        var transform = model.Layout.GeospatialTransform with
+        {
+            OriginEasting = new MapQuantity(500000, MapQuantityUnit.Meters, MapQuantityFrame.SourceCrs),
+            OriginNorthing = new MapQuantity(-12.5, MapQuantityUnit.Degrees, MapQuantityFrame.SourceCrs),
+            VerticalOrigin = new MapQuantity(0, MapQuantityUnit.Meters, MapQuantityFrame.SourceVertical),
+        };
+        var layout = model.Layout with { GeospatialTransform = transform };
+        var sources = new[] { new SourceRecord("dem", [], new MapQuantity(3.5, MapQuantityUnit.Degrees, MapQuantityFrame.SourceCrs), null) };
+        var provenance = new Provenance(null, sources, model.Provenance.GeneratedFeatures);
+
+        Assert.Empty(MapInterchangeValidator.Validate(model with { Layout = layout, Provenance = provenance }));
+    }
+
+    [Fact]
+    public void NanTransformOriginFails()
+    {
+        var model = BuildValidModel();
+        var transform = model.Layout.GeospatialTransform with
+        {
+            OriginEasting = new MapQuantity(double.NaN, MapQuantityUnit.Meters, MapQuantityFrame.SourceCrs),
+        };
+        var layout = model.Layout with { GeospatialTransform = transform };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.QuantityFinite);
+    }
+
+    [Fact]
+    public void DegreesPositionInMapLocalXyFails()
+    {
+        var model = BuildValidModel();
+        var waypoints = new WaypointSet(
+        [
+            model.Waypoints!.Waypoints[0] with { X = new MapQuantity(15, MapQuantityUnit.Degrees, MapQuantityFrame.MapLocalXy) },
+        ]);
+
+        AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.UnitFrame);
+    }
+
+    [Fact]
+    public void MetersPositionInMapLocalXyFails()
+    {
+        var model = BuildValidModel();
+        var waypoints = new WaypointSet(
+        [
+            model.Waypoints!.Waypoints[0] with { Y = new MapQuantity(25, MapQuantityUnit.Meters, MapQuantityFrame.MapLocalXy) },
+        ]);
+
+        AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.UnitFrame);
+    }
+
+    [Fact]
+    public void GameUnitSourceCrsOriginFails()
+    {
+        var model = BuildValidModel();
+
+        AssertOnlyCode(WithSourceOrigin(model, new MapQuantity(3.5, MapQuantityUnit.GameUnit, MapQuantityFrame.SourceCrs)), MapInterchangeDiagnostic.UnitFrame);
+    }
+
+    [Fact]
+    public void SourceRecordOriginWrongFrameFails()
+    {
+        var model = BuildValidModel();
+
+        AssertOnlyCode(WithSourceOrigin(model, new MapQuantity(3.5, MapQuantityUnit.Meters, MapQuantityFrame.LegacyEngineXy)), MapInterchangeDiagnostic.UnitFrame);
+    }
+
+    [Fact]
+    public void EmptyImageryDimensionsFail()
+    {
+        var model = BuildValidModel();
+        var first = WithChunk(model, 0, model.Layout.Chunks[0] with { Imagery = BuildImagery(0, 0) });
+        var second = WithChunk(first, 1, first.Layout.Chunks[1] with { Imagery = BuildImagery(0, 0) });
+
+        AssertOnlyCode(second, MapInterchangeDiagnostic.ImageryConsistency);
+    }
+
+    [Fact]
+    public void OverflowingImageryDimensionsFail()
+    {
+        var chunk = BuildValidModel().Layout.Chunks[0] with { Imagery = new ImageryLayer(65536, 65536, new byte[16]) };
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.ImageryConsistency);
+    }
+
+    private static MapInterchange WithSourceOrigin(MapInterchange model, MapQuantity originX)
+    {
+        var sources = new[] { new SourceRecord("dem", [], originX, null) };
+
+        return model with { Provenance = new Provenance(null, sources, model.Provenance.GeneratedFeatures) };
     }
 
     private static void AssertOnlyCode(MapInterchange model, string expected)
@@ -424,8 +566,8 @@ public sealed class MapInterchangeValidationTests
     {
         var layout = new TerrainLayout(
             new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
-            2,
-            1,
+            ChunksX,
+            ChunksY,
             0,
             new GeospatialTransform(null, null, null, 1.0, null, null, null),
             MapNodataPolicy.Fail,
@@ -510,27 +652,6 @@ public sealed class MapInterchangeValidationTests
     {
         var x = (cx * IntervalsPerChunkAxis) + column - 1;
         var y = (cy * IntervalsPerChunkAxis) + row - 1;
-
-        // Apron samples hold the neighbouring chunk's edge core value at the same lattice point.
-        if (column == 0 && cx > 0)
-        {
-            x = cx * IntervalsPerChunkAxis;
-        }
-
-        if (column == StoredAxis - 1 && cx < ChunksX - 1)
-        {
-            x = (cx + 1) * IntervalsPerChunkAxis;
-        }
-
-        if (row == 0 && cy > 0)
-        {
-            y = cy * IntervalsPerChunkAxis;
-        }
-
-        if (row == StoredAxis - 1 && cy < ChunksY - 1)
-        {
-            y = (cy + 1) * IntervalsPerChunkAxis;
-        }
 
         return x + y;
     }

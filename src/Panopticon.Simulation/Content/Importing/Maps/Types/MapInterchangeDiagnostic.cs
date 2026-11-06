@@ -45,5 +45,7 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string CoordinateFrame = "coordinate-frame";
 
+    public const string UnitFrame = "unit-frame";
+
     public override string ToString() => $"{Code}: {Message}";
 }

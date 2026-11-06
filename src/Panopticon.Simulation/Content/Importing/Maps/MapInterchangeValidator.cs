@@ -13,6 +13,10 @@ namespace Panopticon.Content.Importing.Maps;
 /// produce diagnostics and skip their dependent checks.
 /// </summary>
 /// <remarks>
+/// Schema boundary: the interchange schema version is validated here. Source payload schema validity
+/// and retained-section version semantic validity are reader and adapter responsibilities (WI-H2-03);
+/// this contract defines no legacy version table. Retained sections are checked for a known name, a
+/// non-negative version, non-empty bytes, and a matching SHA-256 digest.
 /// Stored height layout mirrors the Geospatial TerrainChunk contract: a row-major 131 x 131 array
 /// whose row 0 is the southern apron, row 130 the northern apron, column 0 the western apron, and
 /// column 130 the eastern apron. Core lattice point (i, j) with i and j in 0..128 maps to stored
@@ -20,10 +24,10 @@ namespace Panopticon.Content.Importing.Maps;
 /// edge point of horizontally adjacent chunks appears twice (core column 128 of the west chunk and
 /// core column 0 of the east chunk) and must hold one value; the same holds vertically for core
 /// row 128 of the south chunk and core row 0 of the north chunk. Where a neighbour exists, each
-/// apron sample equals that neighbour's core sample at the same lattice point: east apron against
-/// the east neighbour's core column 0, west apron against the west neighbour's core column 128,
-/// north apron against the north neighbour's core row 0, south apron against the south neighbour's
-/// core row 128.
+/// apron sample equals the neighbour's core sample at the lattice point one interval inside the
+/// neighbour: east apron against the east neighbour's core column 1, west apron against the west
+/// neighbour's core column 127, north apron against the north neighbour's core row 1, south apron
+/// against the south neighbour's core row 127.
 /// </remarks>
 public static class MapInterchangeValidator
 {
@@ -356,7 +360,9 @@ public static class MapInterchangeValidator
                 continue;
             }
 
-            if (imagery.Width < 0 || imagery.Height < 0 || (long)imagery.Width * imagery.Height * 4 != imagery.Rgba.Count)
+            var pixels = (long)imagery.Width * imagery.Height;
+
+            if (imagery.Width <= 0 || imagery.Height <= 0 || imagery.Rgba.Count % 4 != 0 || pixels != imagery.Rgba.Count / 4)
             {
                 diagnostics.Add(new MapInterchangeDiagnostic(
                     MapInterchangeDiagnostic.ImageryConsistency,
@@ -416,14 +422,14 @@ public static class MapInterchangeValidator
 
                 for (var j = 0; j < CoreAxis; j++)
                 {
-                    if (StoredSample(chunk, j + 1, StoredAxis - 1) == CoreSample(east, 0, j))
+                    if (StoredSample(chunk, j + 1, StoredAxis - 1) == CoreSample(east, 1, j))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} east apron row {j} differs from east neighbour {Describe(east.Key)} core column 0 at the same lattice point."));
+                        $"Chunk {name} east apron row {j} differs from east neighbour {Describe(east.Key)} core column 1 at the same lattice point."));
                     break;
                 }
             }
@@ -432,14 +438,14 @@ public static class MapInterchangeValidator
             {
                 for (var j = 0; j < CoreAxis; j++)
                 {
-                    if (StoredSample(chunk, j + 1, 0) == CoreSample(west, CoreAxis - 1, j))
+                    if (StoredSample(chunk, j + 1, 0) == CoreSample(west, CoreAxis - 2, j))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} west apron row {j} differs from west neighbour {Describe(west.Key)} core column {CoreAxis - 1} at the same lattice point."));
+                        $"Chunk {name} west apron row {j} differs from west neighbour {Describe(west.Key)} core column {CoreAxis - 2} at the same lattice point."));
                     break;
                 }
             }
@@ -461,14 +467,14 @@ public static class MapInterchangeValidator
 
                 for (var i = 0; i < CoreAxis; i++)
                 {
-                    if (StoredSample(chunk, StoredAxis - 1, i + 1) == CoreSample(north, i, 0))
+                    if (StoredSample(chunk, StoredAxis - 1, i + 1) == CoreSample(north, i, 1))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} north apron column {i} differs from north neighbour {Describe(north.Key)} core row 0 at the same lattice point."));
+                        $"Chunk {name} north apron column {i} differs from north neighbour {Describe(north.Key)} core row 1 at the same lattice point."));
                     break;
                 }
             }
@@ -477,14 +483,14 @@ public static class MapInterchangeValidator
             {
                 for (var i = 0; i < CoreAxis; i++)
                 {
-                    if (StoredSample(chunk, 0, i + 1) == CoreSample(south, i, CoreAxis - 1))
+                    if (StoredSample(chunk, 0, i + 1) == CoreSample(south, i, CoreAxis - 2))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} south apron column {i} differs from south neighbour {Describe(south.Key)} core row {CoreAxis - 1} at the same lattice point."));
+                        $"Chunk {name} south apron column {i} differs from south neighbour {Describe(south.Key)} core row {CoreAxis - 2} at the same lattice point."));
                     break;
                 }
             }
@@ -501,12 +507,13 @@ public static class MapInterchangeValidator
         }
 
         RequireFinitePositiveQuantity(layout.SampleSpacing, "TerrainLayout.SampleSpacing", diagnostics);
+        RequireUnitFrame(layout.SampleSpacing, "TerrainLayout.SampleSpacing", diagnostics);
 
-        if (layout.SampleSpacing.Unit != MapQuantityUnit.GameUnit || layout.SampleSpacing.Frame != MapQuantityFrame.MapLocalXy)
+        if (layout.SampleSpacing.Frame != MapQuantityFrame.MapLocalXy)
         {
             diagnostics.Add(new MapInterchangeDiagnostic(
                 MapInterchangeDiagnostic.CoordinateFrame,
-                $"TerrainLayout.SampleSpacing is declared {layout.SampleSpacing.Unit} in frame {layout.SampleSpacing.Frame}; it must be {nameof(MapQuantityUnit.GameUnit)} in {nameof(MapQuantityFrame.MapLocalXy)}."));
+                $"TerrainLayout.SampleSpacing is declared in frame {layout.SampleSpacing.Frame}; it must be {nameof(MapQuantityFrame.MapLocalXy)}."));
         }
 
         var transform = layout.GeospatialTransform;
@@ -529,6 +536,21 @@ public static class MapInterchangeValidator
             diagnostics.Add(new MapInterchangeDiagnostic(
                 MapInterchangeDiagnostic.QuantityFinite,
                 $"GeospatialTransform.VerticalExaggeration is {exaggeration}; it must be finite when present."));
+        }
+
+        if (transform.OriginEasting is { } originEasting)
+        {
+            RequireQuantity(originEasting, "GeospatialTransform.OriginEasting", diagnostics);
+        }
+
+        if (transform.OriginNorthing is { } originNorthing)
+        {
+            RequireQuantity(originNorthing, "GeospatialTransform.OriginNorthing", diagnostics);
+        }
+
+        if (transform.VerticalOrigin is { } verticalOrigin)
+        {
+            RequireQuantity(verticalOrigin, "GeospatialTransform.VerticalOrigin", diagnostics);
         }
     }
 
@@ -556,9 +578,9 @@ public static class MapInterchangeValidator
             }
 
             RequireUniqueStableId(stableIds, placed.StableId, diagnostics);
-            RequireFiniteQuantity(placed.X, $"PlacedObject '{placed.StableId}' X", diagnostics);
-            RequireFiniteQuantity(placed.Y, $"PlacedObject '{placed.StableId}' Y", diagnostics);
-            RequireFiniteQuantity(placed.Z, $"PlacedObject '{placed.StableId}' Z", diagnostics);
+            RequireQuantity(placed.X, $"PlacedObject '{placed.StableId}' X", diagnostics);
+            RequireQuantity(placed.Y, $"PlacedObject '{placed.StableId}' Y", diagnostics);
+            RequireQuantity(placed.Z, $"PlacedObject '{placed.StableId}' Z", diagnostics);
             RequireHorizontalFrame(placed.X.Frame, placed.Y.Frame, $"PlacedObject '{placed.StableId}'", diagnostics);
             RequireVerticalFrame(placed.Z.Frame, $"PlacedObject '{placed.StableId}'", diagnostics);
         }
@@ -588,9 +610,9 @@ public static class MapInterchangeValidator
             }
 
             RequireUniqueStableId(stableIds, waypoint.StableId, diagnostics);
-            RequireFiniteQuantity(waypoint.X, $"Waypoint '{waypoint.StableId}' X", diagnostics);
-            RequireFiniteQuantity(waypoint.Y, $"Waypoint '{waypoint.StableId}' Y", diagnostics);
-            RequireFiniteQuantity(waypoint.Z, $"Waypoint '{waypoint.StableId}' Z", diagnostics);
+            RequireQuantity(waypoint.X, $"Waypoint '{waypoint.StableId}' X", diagnostics);
+            RequireQuantity(waypoint.Y, $"Waypoint '{waypoint.StableId}' Y", diagnostics);
+            RequireQuantity(waypoint.Z, $"Waypoint '{waypoint.StableId}' Z", diagnostics);
             RequireHorizontalFrame(waypoint.X.Frame, waypoint.Y.Frame, $"Waypoint '{waypoint.StableId}'", diagnostics);
             RequireVerticalFrame(waypoint.Z.Frame, $"Waypoint '{waypoint.StableId}'", diagnostics);
         }
@@ -665,12 +687,12 @@ public static class MapInterchangeValidator
 
             if (source.OriginX is { } originX)
             {
-                RequireFiniteQuantity(originX, $"SourceRecord '{source.Kind}' OriginX", diagnostics);
+                RequireQuantity(originX, $"SourceRecord '{source.Kind}' OriginX", diagnostics);
             }
 
             if (source.OriginY is { } originY)
             {
-                RequireFiniteQuantity(originY, $"SourceRecord '{source.Kind}' OriginY", diagnostics);
+                RequireQuantity(originY, $"SourceRecord '{source.Kind}' OriginY", diagnostics);
             }
         }
     }
@@ -686,6 +708,32 @@ public static class MapInterchangeValidator
             MapInterchangeDiagnostic.StableIdDuplicate,
             $"StableId '{stableId}' is used by more than one placed object, waypoint, or generated feature."));
     }
+
+    private static void RequireQuantity(MapQuantity quantity, string field, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        RequireFiniteQuantity(quantity, field, diagnostics);
+        RequireUnitFrame(quantity, field, diagnostics);
+    }
+
+    private static void RequireUnitFrame(MapQuantity quantity, string field, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (UnitAllowed(quantity.Unit, quantity.Frame))
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.UnitFrame,
+            $"{field} is declared in unit {quantity.Unit} with frame {quantity.Frame}; that frame does not accept that unit."));
+    }
+
+    private static bool UnitAllowed(MapQuantityUnit unit, MapQuantityFrame frame) => frame switch
+    {
+        MapQuantityFrame.SourceCrs => unit is MapQuantityUnit.Meters or MapQuantityUnit.Degrees,
+        MapQuantityFrame.SourceVertical => unit == MapQuantityUnit.Meters,
+        MapQuantityFrame.MapLocalXy or MapQuantityFrame.LegacyEngineXy or MapQuantityFrame.MapLocalZ or MapQuantityFrame.LegacyEngineZ => unit == MapQuantityUnit.GameUnit,
+        _ => false,
+    };
 
     private static void RequireFiniteQuantity(MapQuantity quantity, string field, List<MapInterchangeDiagnostic> diagnostics)
     {
