@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-H2-01` |
 | Roadmap phase | [Track H · H2](../../track-h-storage-formats.md): interchange abstraction |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-H1-02` |
@@ -53,5 +53,6 @@ No H3 writer code and no object-template format design beyond map references.
 
 ## On completion
 
+- Result: 2026-11-06 done: appended the H2 map interchange design to the deep dive with unit-explicit quantities, full section 6.1 payload mapping including the `ImportReport` home, the per-section preservation table, chunk geometry and validation rules, class and sequence diagrams, and three Draft implementation cards. Validation: all 4 mermaid charts rendered via mermaid-cli, payload mapping and preservation completeness checked against the audit tables, forbidden-pattern grep and `git diff --check` clean. Follow-up: WI-H2-02, WI-H2-03, WI-H2-04.
 - Set Status above to `Done` or `Blocked`.
 - Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
