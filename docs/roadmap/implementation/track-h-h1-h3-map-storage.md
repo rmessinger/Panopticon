@@ -19,8 +19,8 @@ by `WI-H1-01`, [B4a larger maps](../deep-dives/b4a-larger-maps.md), and
 
 | Card | Sub-phase | Output | Status | Prerequisites |
 |---|---|---|---|---|
-| [`WI-H1-01`](../agent/cards/WI-H1-01-map-format-audit.md) | H1 | Legacy map audit deep dive | Ready | none |
-| [`WI-H1-02`](../agent/cards/WI-H1-02-format-decision-options.md) | H1 | Confirm settled format choices against audit | Ready | `WI-H1-01` |
+| [`WI-H1-01`](../agent/cards/WI-H1-01-map-format-audit.md) | H1 | Legacy map audit deep dive | Done | none |
+| [`WI-H1-02`](../agent/cards/WI-H1-02-format-decision-options.md) | H1 | Confirm settled format choices against audit | Done | `WI-H1-01` |
 | [`WI-H2-01`](../agent/cards/WI-H2-01-map-interchange-design.md) | H2 | H2 map interchange design | Ready | `WI-H1-02` |
 | [`WI-H3-01`](../agent/cards/WI-H3-01-map-package-manifest-schema.md) | H3 | Manifest schema | Draft | `WI-H2-01` |
 | [`WI-H3-02`](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md) | H3 | Chunk layer reader and writer | Draft | `WI-H2-01`, `WI-H3-01` |
