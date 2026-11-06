@@ -219,6 +219,7 @@ public class ImportChunkGenerationTests
             [
                 VectorPolygon("lakeA", 100d, 100d, 100d, 100d),
                 VectorPolygon("lakeB", 150d, 150d, 100d, 100d),
+                VectorPolygon("speck", 11d, 11d, 2d, 2d),
             ],
             featureMappings:
             [
@@ -242,6 +243,9 @@ public class ImportChunkGenerationTests
         Assert.Equal(484, masks.WaterRuleApplicationCount);
         Assert.Equal(0, masks.PassabilityRuleApplicationCount);
         Assert.Equal(0, masks.BuildabilityRuleApplicationCount);
+
+        // "speck" is mapped by both water rules but sets no sample cell, so it counts once.
+        Assert.Equal(1L, masks.ZeroCellMappedPolygonFeatureCount);
 
         // The extent is 1279 m wide inside a 1280 m chunk, so core sample 128 on each
         // axis lies outside the playable area: 129 x 129 - 128 x 128 = 257 forced cells.

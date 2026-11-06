@@ -867,6 +867,244 @@ public class TerrainMaskGeneratorTests
         Assert.Equal(CountCells(chunk!, TerrainMaskFlags.Unbuildable), report.UnbuildableCellCount);
     }
 
+    [Fact]
+    public void ConservativeAreaCoversCellWithNoNodeInsidePolygon()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+        var polygon = Square(12, 12, 18, 18);
+
+        var sampleReport = new TerrainMaskReport();
+        var sample = TerrainMaskGenerator.Generate(
+            grid!,
+            FlatTerrain(),
+            [Region(GeneratedFeatureKind.Passability, polygon, ruleIndex: 0, passable: false)],
+            report: sampleReport);
+
+        Assert.NotNull(sample);
+        AssertAllCells(sample!, TerrainMaskFlags.None);
+        Assert.Equal(1L, sampleReport.ZeroCellMappedPolygonFeatureCount);
+
+        var areaReport = new TerrainMaskReport();
+        var area = ConservativeChunk(grid!, polygon, areaReport);
+
+        // Floor cell 1 spans [10, 20] on both axes and holds the whole polygon.
+        AssertCells(area, TerrainMaskFlags.Impassable, Only((1, 1)));
+        Assert.Equal(0L, areaReport.ZeroCellMappedPolygonFeatureCount);
+    }
+
+    [Fact]
+    public void ConservativeAreaSetsUnbuildableOnCellWithNoNodeInsidePolygon()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+        var polygon = Square(12, 12, 18, 18);
+
+        var sampleReport = new TerrainMaskReport();
+        var sample = TerrainMaskGenerator.Generate(
+            grid!,
+            FlatTerrain(),
+            [Region(GeneratedFeatureKind.Buildability, polygon, ruleIndex: 0, buildable: false)],
+            report: sampleReport);
+
+        Assert.NotNull(sample);
+        AssertAllCells(sample!, TerrainMaskFlags.None);
+        Assert.Equal(1L, sampleReport.ZeroCellMappedPolygonFeatureCount);
+
+        var areaReport = new TerrainMaskReport();
+        var area = TerrainMaskGenerator.Generate(
+            grid!,
+            FlatTerrain(),
+            [Region(GeneratedFeatureKind.Buildability, polygon, ruleIndex: 0, buildable: false, coverage: ManifestMaskCoverage.ConservativeArea)],
+            report: areaReport);
+
+        Assert.NotNull(area);
+        AssertCells(area!, TerrainMaskFlags.Unbuildable, Only((1, 1)));
+        Assert.Equal(0L, areaReport.ZeroCellMappedPolygonFeatureCount);
+    }
+
+    [Fact]
+    public void ConservativeAreaCoversCellsCrossedByThinEdgeWithoutNodeHit()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        // The strip lies between lattice rows 10 and 20, so no node falls inside it.
+        var area = ConservativeChunk(grid!, Square(5, 12, 35, 13));
+
+        AssertCells(area, TerrainMaskFlags.Impassable, Only((0, 1), (1, 1), (2, 1), (3, 1)));
+    }
+
+    [Fact]
+    public void ConservativeAreaBlocksCellsTouchedAtExactGridline()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        // The west edge lies on x = 10: cell 0 ([0, 10]) touches it. The corner (10, 30)
+        // touches cell (0, 2) at a point, and cell (1, 2) touches along its top edge.
+        var area = ConservativeChunk(grid!, Square(10, 30, 15, 38));
+
+        AssertCells(area, TerrainMaskFlags.Impassable, Only((0, 2), (1, 2), (0, 3), (1, 3)));
+    }
+
+    [Fact]
+    public void ConservativeAreaCandidateRangeIsExactAroundSpacingBoundary()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        AssertCells(ConservativeChunk(grid!, Square(9.9, 32, 15, 38)), TerrainMaskFlags.Impassable, Only((0, 3), (1, 3)));
+        AssertCells(ConservativeChunk(grid!, Square(10, 32, 15, 38)), TerrainMaskFlags.Impassable, Only((0, 3), (1, 3)));
+        AssertCells(ConservativeChunk(grid!, Square(10.1, 32, 15, 38)), TerrainMaskFlags.Impassable, Only((1, 3)));
+        AssertCells(ConservativeChunk(grid!, Square(15, 15, 25, 25)), TerrainMaskFlags.Impassable, Only((1, 1), (2, 1), (1, 2), (2, 2)));
+    }
+
+    [Fact]
+    public void ConservativeAreaHoleInteriorStaysFreeWithBoundaryBlocked()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        // Cells (4..5, 4..5) lie strictly inside the hole. Cells on the hole boundary
+        // (index 3 or 6 along an axis) meet the polygon along an edge and stay blocked,
+        // as do cells that contain the shell edge at x = 5 or y = 5 or x = 95 or y = 95.
+        var area = ConservativeChunk(grid!, Square(5, 5, 95, 95, hole: (30, 30, 70, 70)));
+
+        AssertCells(area, TerrainMaskFlags.Impassable, (x, y) => x <= 9 && y <= 9 && !(x >= 4 && x <= 5 && y >= 4 && y <= 5));
+    }
+
+    [Fact]
+    public void ConservativeAreaOverlappingRulesFollowRuleOrder()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        var wallCells = Block(1, 6, 1, 6);
+        var holeCells = Block(3, 8, 3, 8);
+
+        // The wall (rule 0) sets Impassable first; the passable hole (rule 1) clears its
+        // overlap, so the overlap ends passable.
+        var wallFirst = TerrainMaskGenerator.Generate(
+            grid!,
+            FlatTerrain(),
+            [
+                Region(GeneratedFeatureKind.Passability, Square(20, 20, 60, 60), ruleIndex: 0, passable: false, coverage: ManifestMaskCoverage.ConservativeArea),
+                Region(GeneratedFeatureKind.Passability, Square(40, 40, 80, 80), ruleIndex: 1, passable: true, coverage: ManifestMaskCoverage.ConservativeArea),
+            ]);
+
+        Assert.NotNull(wallFirst);
+        AssertCells(wallFirst!, TerrainMaskFlags.Impassable, (x, y) => wallCells(x, y) && !holeCells(x, y));
+
+        // Swapping the rule indices reverses the winner: the wall applies last.
+        var holeFirst = TerrainMaskGenerator.Generate(
+            grid!,
+            FlatTerrain(),
+            [
+                Region(GeneratedFeatureKind.Passability, Square(40, 40, 80, 80), ruleIndex: 0, passable: true, coverage: ManifestMaskCoverage.ConservativeArea),
+                Region(GeneratedFeatureKind.Passability, Square(20, 20, 60, 60), ruleIndex: 1, passable: false, coverage: ManifestMaskCoverage.ConservativeArea),
+            ]);
+
+        Assert.NotNull(holeFirst);
+        AssertCells(holeFirst!, TerrainMaskFlags.Impassable, wallCells);
+    }
+
+    [Fact]
+    public void ConservativeAreaOutsideDomainCoversNothingAndCountsZero()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+        var diagnostics = new GeoDiagnosticBag();
+        var report = new TerrainMaskReport();
+
+        // One polygon sits left of the domain, the other above it; neither reaches a node.
+        var chunk = TerrainMaskGenerator.Generate(
+            grid!,
+            FlatTerrain(),
+            [
+                Region(GeneratedFeatureKind.Passability, Square(-30, 20, -5, 60), ruleIndex: 0, passable: false, featureId: "left", coverage: ManifestMaskCoverage.ConservativeArea),
+                Region(GeneratedFeatureKind.Passability, Square(20, 1400, 60, 1500), ruleIndex: 1, passable: false, featureId: "above", coverage: ManifestMaskCoverage.ConservativeArea),
+            ],
+            diagnostics: diagnostics,
+            report: report);
+
+        Assert.NotNull(chunk);
+        Assert.Empty(diagnostics.Items);
+        AssertAllCells(chunk!, TerrainMaskFlags.None);
+        Assert.Equal(2L, report.ZeroCellMappedPolygonFeatureCount);
+    }
+
+    [Fact]
+    public void ConservativeAreaSeamCellsAreBitIdenticalAcrossChunks()
+    {
+        var grid = CreateGrid(widthMeters: 2560d, heightMeters: 1280d);
+        Assert.NotNull(grid);
+        Assert.Equal(2, grid!.ChunksX);
+
+        // The polygon straddles the seam at x = 1280. Global cells 127 and 128 are
+        // covered; global cell 128 is the last node of chunk 0 and the base node of chunk 1.
+        var rule = Region(GeneratedFeatureKind.Passability, Square(1275, 100, 1285, 120), ruleIndex: 0, passable: false, coverage: ManifestMaskCoverage.ConservativeArea);
+        var west = TerrainMaskGenerator.Generate(grid, FlatTerrain(), [rule]);
+        var east = TerrainMaskGenerator.Generate(grid, new TerrainChunk(1, 0, FlatHeights()), [rule]);
+
+        Assert.NotNull(west);
+        Assert.NotNull(east);
+        AssertCells(west!, TerrainMaskFlags.Impassable, Block(127, 128, 9, 12));
+        AssertCells(east!, TerrainMaskFlags.Impassable, Block(0, 0, 9, 12));
+
+        for (var sy = 0; sy < ChunkLayout.PointsPerChunkAxis; sy++)
+        {
+            Assert.Equal(west!.GetFlags(128, sy), east!.GetFlags(0, sy));
+        }
+    }
+
+    [Fact]
+    public void ConservativeAreaLastRowAndColumnBlockOnlyTheLastNode()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        // Global node 128 (game 1280) is the last node; its cell spans [1280, 1290] and
+        // nothing past it exists in this chunk.
+        AssertCells(ConservativeChunk(grid!, Square(1282, 100, 1288, 120)), TerrainMaskFlags.Impassable, Block(128, 128, 9, 12));
+        AssertCells(ConservativeChunk(grid!, Square(100, 1282, 120, 1288)), TerrainMaskFlags.Impassable, Block(9, 12, 128, 128));
+    }
+
+    [Fact]
+    public void ConservativeAreaFloorCellCoversSouthWestOfNodeZero()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        // Floor cell 0 spans [0, 10]; a node-centred rect around (0, 0) would span [-5, 5]
+        // and miss this polygon.
+        AssertCells(ConservativeChunk(grid!, Square(6, 6, 9, 9)), TerrainMaskFlags.Impassable, Only((0, 0)));
+    }
+
+    [Fact]
+    public void AbsentAndExplicitSampleCoverageProduceIdenticalMasks()
+    {
+        var grid = CreateGrid();
+        Assert.NotNull(grid);
+
+        var absent = TerrainMaskGenerator.Generate(grid!, PlaneTerrain(30d), SampleFixture(coverage: null));
+        var explicitSample = TerrainMaskGenerator.Generate(grid!, PlaneTerrain(30d), SampleFixture(ManifestMaskCoverage.Sample));
+
+        Assert.NotNull(absent);
+        Assert.NotNull(explicitSample);
+        Assert.Equal(absent!.ContentSha256Hex, explicitSample!.ContentSha256Hex);
+        Assert.Equal(absent.Flags.ToArray(), explicitSample.Flags.ToArray());
+    }
+
+    private static List<GeneratedFeature> SampleFixture(ManifestMaskCoverage? coverage)
+    {
+        return
+        [
+            Region(GeneratedFeatureKind.Passability, Square(100, 100, 500, 500, hole: (200, 200, 400, 400)), ruleIndex: 0, passable: false, coverage: coverage),
+            Region(GeneratedFeatureKind.Passability, Square(450, 300, 900, 700), ruleIndex: 1, passable: true, coverage: coverage),
+        ];
+    }
+
     private static TerrainMaskChunk MaskFromGeneratedTerrain(VerticalPolicy verticalPolicy)
     {
         var grid = CreateGrid(verticalPolicy: verticalPolicy);
@@ -893,6 +1131,51 @@ public class TerrainMaskGeneratorTests
                 Assert.Equal(expected, chunk.GetFlags(x, y));
             }
         }
+    }
+
+    private static TerrainMaskChunk ConservativeChunk(LocalMapGrid grid, GeoPolygon polygon, TerrainMaskReport? report = null)
+    {
+        var diagnostics = new GeoDiagnosticBag();
+        var chunk = TerrainMaskGenerator.Generate(
+            grid,
+            FlatTerrain(),
+            [Region(GeneratedFeatureKind.Passability, polygon, ruleIndex: 0, passable: false, coverage: ManifestMaskCoverage.ConservativeArea)],
+            diagnostics: diagnostics,
+            report: report);
+
+        Assert.Empty(diagnostics.Items);
+        Assert.NotNull(chunk);
+
+        return chunk!;
+    }
+
+    private static void AssertCells(TerrainMaskChunk chunk, TerrainMaskFlags flags, Func<int, int, bool> covered)
+    {
+        var side = ChunkLayout.PointsPerChunkAxis;
+        var expected = new byte[side * side];
+
+        for (var y = 0; y < side; y++)
+        {
+            for (var x = 0; x < side; x++)
+            {
+                if (covered(x, y))
+                {
+                    expected[(y * side) + x] = (byte)flags;
+                }
+            }
+        }
+
+        Assert.Equal(expected, chunk.Flags.ToArray());
+    }
+
+    private static Func<int, int, bool> Only(params (int X, int Y)[] cells)
+    {
+        return (x, y) => Array.IndexOf(cells, (x, y)) >= 0;
+    }
+
+    private static Func<int, int, bool> Block(int minX, int maxX, int minY, int maxY)
+    {
+        return (x, y) => x >= minX && x <= maxX && y >= minY && y <= maxY;
     }
 
     private static long CountCells(TerrainMaskChunk chunk, TerrainMaskFlags bit)
@@ -950,9 +1233,16 @@ public class TerrainMaskGeneratorTests
         return heights;
     }
 
-    private static GeneratedFeature Region(GeneratedFeatureKind kind, GeoPolygon polygon, int ruleIndex, bool? passable = null, bool? buildable = null)
+    private static GeneratedFeature Region(
+        GeneratedFeatureKind kind,
+        GeoPolygon polygon,
+        int ruleIndex,
+        bool? passable = null,
+        bool? buildable = null,
+        string featureId = "region",
+        ManifestMaskCoverage? coverage = null)
     {
-        return new GeneratedFeature(kind, polygon, "vectors", "region", "vectors/region#0", ruleIndex, passable: passable, buildable: buildable);
+        return new GeneratedFeature(kind, polygon, "vectors", featureId, $"vectors/{featureId}#0", ruleIndex, passable: passable, buildable: buildable, coverage: coverage);
     }
 
     private static GeoPolygon Square(double west, double south, double east, double north, (double West, double South, double East, double North)? hole = null)

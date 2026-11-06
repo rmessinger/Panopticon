@@ -674,6 +674,95 @@ The following read-only comparison samples each float32 payload continuously at 
 
 Copernicus differences mix EGM2008 versus NGF-IGN69, DSM versus bare earth, 30 m versus finer ground sampling, and acquisition epochs: TanDEM-X 2011 to 2015, RGE ALTI 2012 to 2016, and LiDAR 2024. They are not pure geoid offsets, independent control passes, or evidence of a 1 m or 4 m guarantee. Comparison receipt: `~/log/track-r/provider-profiles-evaluation-20261105-v2/five-site-comparison.json`, SHA-256 `a453039555dbb9c32e848e2fc72df0e285f8c96c84ef157079f73275aaf27e6d`; the adjacent `compare_payloads.py` records the method and hashes of the selection, metadata, reports, and terrain chunks.
 
+#### Building footprint masks and conservative coverage (R2-03)
+
+The building footprint stage adds vector-derived terrain masks to the Sedan preview under card [`WI-R2-03`](../agent/cards/WI-R2-03-building-footprint-masks.md).
+
+##### Coverage policy contract
+
+Manifest feature mapping rules support an optional `coverage` property on vector rules:
+
+- Key: `coverage` on an entry in `featureMappings`.
+- Permitted values: omitted or `sample` (legacy point-sample rasterization), `conservative-area` (closed-cell polygon intersection rasterization).
+- Validation: allowed only on rules with `geometry: polygon` and target `passability` or `buildability`. `ManifestValidator` rejects `coverage` on line or point geometries, non-region targets, and any unrecognized coverage token.
+- Plumbing: loaded into `FeatureMappingRule.Coverage`, mapped via `FeatureMapper` to `GeneratedFeature.Coverage` and `RegionEntry.Coverage`, and consumed in `TerrainMaskGenerator`. Absence defaults to `sample`, preserving byte-identical behavior on existing manifests.
+
+##### Rationale and problem statement
+
+In v2, building footprint rasterization evaluated point inclusion at cell sampling positions (`Sample` mode). Vehicle paths smoothed around block corners clipped 3 building corners across Old Town corridors, causing 7 swept-segment penetrations and 4 point boundary crossings that failed Check 6 in the capture-vs-mask checker.
+
+##### Conservative coverage design
+
+Conservative area coverage ensures any cell overlapping a building polygon is marked blocked:
+
+- Mode: per-rule `ManifestMaskCoverage.ConservativeArea` alongside default `ManifestMaskCoverage.Sample`.
+- Cell geometry: for each candidate cell `(gx, gy)`, constructs a closed floor-cell axis-aligned bounding box `[gx * s, (gx + 1) * s]` in game units using `ChunkLayout.SampleSpacingGameUnits` (constant 10, never hardcoded literals).
+- Topology: evaluates NTS `polygon.Intersects(cellRect)` with interior rings (holes) preserved. Boundary-touching contact is treated as an intersection and marked blocked.
+- Candidate bounds: computes candidate cells from projected polygon envelopes via `ceil(min / s) - 1` to `floor(max / s)` with a `(last + 1) * s` chunk-maximum overhang, clamped to chunk bounds.
+- Invariants: the `Sample` branch remains byte-identical. Zero-cell diagnostic tracking (`ZeroCellMappedPolygonFeatureCount`) counts unique `(sourceId, featureId)` identities that intersect the map sampling domain but apply no mask cells across all chunks and rules.
+
+##### Implementation commits
+
+- Contract: commit `5f377c0da` added manifest schema, validator constraints, driver CLI opt-in, and data models (inactive).
+- Rasterization: commit `38afb9def` implemented `ManifestMaskCoverage.ConservativeArea` in `FeatureMapper`, `RegionEntry`, `TerrainMaskGenerator`, and 20 unit tests.
+- Overlay naming: commit `90f9684a7` parameterized overlay script output stems and directories for versioned artifact publishing.
+
+##### Operator fixture and provenance
+
+Operator root: `/mnt/pit2/panopticon/geo-proof/r2-03-conservative-operator-v1/`. Assembled by `assemble.py` as a derived operator fixture from parent root `/mnt/pit2/panopticon/geo-proof/r2-03-footprints-v3/`, not a new WFS acquisition. The live IGN Géoplateforme WFS service is an unpinned edition that mints per-request timestamps and cannot produce reproducible byte snapshots.
+
+- Composed manifest: `sedan-proof-footprints.json` (SHA-256 `5d122f3a4267003843c735112386c72661d1126d08844ecbf9eff7b3f66ce597`), adding `"coverage": "conservative-area"` to both featureMappings rules over parent manifest (SHA-256 `08d8179221cf0f383b73afdbb1e1d54ae1d1eace4e40296319e376b120a0c132`).
+- Prepared source files preserved byte-identical via hardlinks: buildings KML `prepared/sedan-proof-buildings.kml` (SHA-256 `a4d278db93662b0b17fb1a68b687fb382b71529bdecd7e073c6906412f66a3e4`), DEM `prepared/sedan-dem-32631.tif` (SHA-256 `93c97b48ce1e9f924abe31f24bb94c229dce495235f452b332ae988ec6b0b35e`), orthophoto `prepared/sedan-ortho-32631.tif` (SHA-256 `c544e38f33a36a0f5a4a7a1c0e1f0fa0b7f36ef5020ef36371cbd9cb3a074288`), extent KML `prepared/sedan-extent.kml` (SHA-256 `cfa7beaec9bbf89339093cf6ce2933f8306dcc8a723cf0e6854cf1f568418102`).
+- Derived provenance: recorded in `DERIVED-OPERATOR-FIXTURE.txt` with parent manifest SHA, parent receipt SHA (`a538548fab0ecee2f96beaa9f2a86d438f0fd870d09870d0e9cef4b458dc2521`), and per-file inventory.
+
+##### Payload comparison (v1 versus v2)
+
+Payload path: `/mnt/pit2/panopticon/geo-proof/r2-03-footprints-payload-v2/` (identity `11c61b56d653cc00da2fd6f0bcf6ddd37712da8d5e17c2547cfb3ee73305eff9`). Report exited `0`; import completed with publication verified and process termination observed.
+
+- Terrain and imagery chunks: byte-identical to v1.
+- Masks: strict superset of v1 coverage, cleared cells remaining 0 across all 149,769 cells (9 chunks).
+- Impassable cells: increased from 48,078 to 59,494 (+11,416 cells).
+- Unbuildable cells: increased from 59,284 to 69,980 (+10,696 cells).
+- Rule applications: increased from 28,821 to 49,532 on both passability and buildability rules.
+- Diagnostics: slope cells (impassable 3115, unbuildable 18344, unchanged from v1), outside-fill cells (0), and unmapped feature counts are identical.
+- Zero-cell mapped features: decreased from 3 to 0. Small sub-node features that fell between grid nodes in point-sample mode now intersect closed cell rectangles and receive mask coverage.
+
+##### Scenario capture and mask verification
+
+ScenarioCapture profile: `capture-sedan-footprints-conservative-v2.json`, identical to committed HEAD profile except `MapPath` (`maps/r2-03-footprints-payload-v2/r2-03-footprints-payload-v2.map`) and unique `OutputDirectory` (`/tmp/panopticon_capture_sedan-footprints-conservative-v2`).
+
+- Execution: 4 USA Humvees route across 4 Old Town corridors, duration 2,700 logic frames (900 captured frames at stride 3). Two consecutive headless test harness runs exited 0 with deterministic identical checker outcomes on both runs.
+- Mask verification: `scripts/check_capture_vs_masks.py` exited 0 with `--generic-mask-diagnostic-only`.
+- Route completion: all 4 actors reached declared goals (4 of 4 goals reached).
+- Straight-line necessity: generic impassable count 47, 65, 76, 54 cells; building-inclusive count 36, 63, 78, 55 cells (289, 466, 558, 366 game unit chord coverage, replicating generic counts).
+- Check 6 (building interior exclusion): 0 penetrations across 3,596 swept segments and 1,679 building polygons.
+- Residual diagnostics: Check 1 (7 reported) and Check 5 (48 reported) reflect raster corner-grazing with minimal penetration depth.
+- Control points: 0 passed, 0 failed, 0 evaluated. No independent ground control pass is claimed for mask payloads.
+
+##### Visualization and projection artifacts
+
+Artifacts published under local directory `/mnt/pit2/Network Storage/temp/` (plain filesystem paths only):
+
+- Annotated GIF: `r2-03-footprints-street-movement-outlines-v2.gif` (`23,676,897` bytes, SHA-256 `80b81e5993f7148f1c309595e03a8203433286b4f4df1208d911c14e5019b1bf`), 118 frames at 10 fps (11.8 s).
+- Poster still: `r2-03-footprints-street-movement-outlines-v2-poster.png` (`1,232,616` bytes, SHA-256 `8e3ba30b75814aac598f0eac19e3a061a01f309cacef40c864a41ae6fbe1ed19`).
+- Retained frames: `frames/r2-03-footprints-outlines-v2/` containing 30 annotated PNG frames, `overlay-manifest.json`, and `SHA256SUMS`.
+- Projection gate: verified recorded camera matrices (View, Projection, Viewport) against actor anchors. Maximum reprojection error on visible anchors was 0.001549 px (limit 1.0 px). 900 anchors inside camera frustum, 2,700 anchors excluded with recorded reasons.
+- Presentation limits: x-ray vector outlines projected onto terrain; 3D building geometry is not rendered. Poster crop trims humvee-1 top edge as a cosmetic artifact. Vision review verified stills pass.
+
+##### Operational failure history
+
+- Missing environment variable: initial `geoimport preview` failed when probing for the game installation; resolved by providing `CNC_GENERALS_PATH`.
+- Evidence-policy violation (not clean handling): a preview run with `--out` pointed at the maps directory instead of the per-map subdirectory published a flat `maps/r2-03-footprints-payload-v2.map` at 23:10, which was then deleted before the correct subdir run published `maps/r2-03-footprints-payload-v2/r2-03-footprints-payload-v2.map` (SHA-256 `2d98c83ea86786b164bcbc3b89ba414b4559aa2c4efddcd1809ef4b2676c84f3`). The deleted file's original bytes and timestamp are unrecoverable (only its 1503656-byte size was observed; its hash was never recorded); the subdir replacement is byte-reproducible from the same inputs but that is reproduction, not preservation of the original. Impact limited to that one file; no other deletions occurred; all failed runs and prior roots remain preserved.
+- Missing sidecar on initial capture: the first capture run omitted `--payload-dir` and produced no `ground-vertices.json` sidecar. The run was preserved and passed mask verification independently, while a second run with `--payload-dir` generated the required sidecar for overlay projection.
+
+##### Known limitations
+
+- Live WFS edition: upstream data from IGN Géoplateforme is unpinned and serves per-request timestamps.
+- Trajectory clearance: verification tests center-point trajectories only; vehicle-body width clearance is not mathematically guaranteed.
+- Navigation invariant: no changes were made to engine navigation, simulation rules, or clearance thresholds.
+- Corridor geometry: path smoothing corner ties and 8-connected diagonal traversals remain residual risks in tight corridors.
+- File volume: animation GIF size (23.7 MB) exceeds the 20 MB documentation preference, consistent with the accepted v1 precedent (23 MB).
+
 ## 9. Sub-phases and cards
 
 | Phase | Goal | Cards | Status |

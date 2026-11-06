@@ -366,6 +366,7 @@ public static class GeoImportCli
         standardOut.WriteLine($"imagery: {imagery}");
         standardOut.WriteLine($"features: {metadata.Features.Count}");
         standardOut.WriteLine($"palette: {metadata.Palette.Count} materials");
+        standardOut.WriteLine($"masks: {report.Masks.ZeroCellMappedPolygonFeatureCount} zero-cell mapped polygon features");
 
         var passed = report.ValidationChecks.Count(check => check.Status == PayloadValidationStatus.Passed);
         var failed = report.ValidationChecks.Count(check => check.Status == PayloadValidationStatus.Failed);

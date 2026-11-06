@@ -1226,6 +1226,7 @@ internal static class PayloadJsonReader
         long? passabilityRules = null;
         long? buildabilityRules = null;
         long? playableForced = null;
+        long? zeroCellMapped = null;
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
         while (NextMember(ref reader, seen, out var name))
@@ -1268,6 +1269,9 @@ internal static class PayloadJsonReader
                 case "playableForcedCellCount":
                     playableForced = Int64Value(ref reader);
                     break;
+                case "zeroCellMappedPolygonFeatureCount":
+                    zeroCellMapped = Int64Value(ref reader);
+                    break;
                 default:
                     throw UnknownMember(name, "'masks'");
             }
@@ -1285,7 +1289,8 @@ internal static class PayloadJsonReader
             waterRules,
             passabilityRules,
             buildabilityRules,
-            playableForced);
+            playableForced,
+            zeroCellMapped);
     }
 
     private static PayloadFeaturesSummaryDto ParseFeaturesSummary(ref PayloadJsonTokenReader reader, PayloadParseContext context)

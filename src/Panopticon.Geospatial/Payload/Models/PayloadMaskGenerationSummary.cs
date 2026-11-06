@@ -20,7 +20,8 @@ public sealed record PayloadMaskGenerationSummary
         long waterRuleApplicationCount,
         long passabilityRuleApplicationCount,
         long buildabilityRuleApplicationCount,
-        long playableForcedCellCount)
+        long playableForcedCellCount,
+        long zeroCellMappedPolygonFeatureCount = 0)
     {
         ValidateThreshold(impassableThresholdDegrees, nameof(impassableThresholdDegrees));
         ValidateThreshold(unbuildableThresholdDegrees, nameof(unbuildableThresholdDegrees));
@@ -42,6 +43,7 @@ public sealed record PayloadMaskGenerationSummary
         ValidateCount(passabilityRuleApplicationCount, nameof(passabilityRuleApplicationCount));
         ValidateCount(buildabilityRuleApplicationCount, nameof(buildabilityRuleApplicationCount));
         ValidateCount(playableForcedCellCount, nameof(playableForcedCellCount));
+        ValidateCount(zeroCellMappedPolygonFeatureCount, nameof(zeroCellMappedPolygonFeatureCount));
 
         ImpassableThresholdDegrees = impassableThresholdDegrees;
         UnbuildableThresholdDegrees = unbuildableThresholdDegrees;
@@ -55,6 +57,7 @@ public sealed record PayloadMaskGenerationSummary
         PassabilityRuleApplicationCount = passabilityRuleApplicationCount;
         BuildabilityRuleApplicationCount = buildabilityRuleApplicationCount;
         PlayableForcedCellCount = playableForcedCellCount;
+        ZeroCellMappedPolygonFeatureCount = zeroCellMappedPolygonFeatureCount;
     }
 
     public double ImpassableThresholdDegrees { get; }
@@ -88,6 +91,9 @@ public sealed record PayloadMaskGenerationSummary
 
     /// <summary>Cells the playable-area exterior and holes forced both bits on.</summary>
     public long PlayableForcedCellCount { get; }
+
+    /// <summary>Unique mapped water, passability, and buildability polygon features that set no mask cell; excludes unmapped source features.</summary>
+    public long ZeroCellMappedPolygonFeatureCount { get; }
 
     private static void ValidateThreshold(double degrees, string paramName)
     {

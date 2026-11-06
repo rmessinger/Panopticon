@@ -53,7 +53,8 @@ internal sealed record PayloadMaskDto(
     long? WaterRuleApplicationCount = null,
     long? PassabilityRuleApplicationCount = null,
     long? BuildabilityRuleApplicationCount = null,
-    long? PlayableForcedCellCount = null);
+    long? PlayableForcedCellCount = null,
+    long? ZeroCellMappedPolygonFeatureCount = null);
 
 internal sealed record PayloadKindCountDto(string? Kind = null, long? Count = null);
 

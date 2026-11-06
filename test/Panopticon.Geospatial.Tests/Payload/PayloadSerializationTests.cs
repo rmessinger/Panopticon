@@ -255,6 +255,80 @@ public class PayloadSerializationTests
         Assert.Equal(original, WriteReportBytes(report));
     }
 
+    [Theory]
+    [InlineData(0L)]
+    [InlineData(37L)]
+    public void ReportRoundTrip_ZeroCellCount_PreservesZeroAndPositiveValues(long zeroCellCount)
+    {
+        var original = WriteReportBytes(ReportWithZeroCellCount(zeroCellCount));
+
+        var report = ReadReport(original);
+
+        Assert.NotNull(report);
+        Assert.Equal(zeroCellCount, report!.Masks.ZeroCellMappedPolygonFeatureCount);
+        Assert.Equal(original, WriteReportBytes(report));
+    }
+
+    [Fact]
+    public void ReportWrite_EmitsZeroCellCountImmediatelyAfterPlayableForcedCount()
+    {
+        var json = Text(WriteReportBytes(ReportWithZeroCellCount(37L)));
+
+        Assert.Contains("\"playableForcedCellCount\":40,\"zeroCellMappedPolygonFeatureCount\":37", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ReportWithoutZeroCellField_ReadsAsZero()
+    {
+        var json = Text(WriteReportBytes(Report()));
+        var legacy = json.Replace(",\"zeroCellMappedPolygonFeatureCount\":0", string.Empty);
+        Assert.NotEqual(json, legacy);
+        var diagnostics = new GeoDiagnosticBag();
+
+        var report = ReadReport(BytesOf(legacy), diagnostics: diagnostics);
+
+        Assert.NotNull(report);
+        Assert.Empty(diagnostics.Items);
+        Assert.Equal(0L, report!.Masks.ZeroCellMappedPolygonFeatureCount);
+        Assert.Equal(40L, report.Masks.PlayableForcedCellCount);
+    }
+
+    [Fact]
+    public void MasksSummary_RejectsNegativeZeroCellCount()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new PayloadMaskGenerationSummary(45d, 15d, 1d, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1));
+    }
+
+    private static GeneratedMapPayloadReport ReportWithZeroCellCount(long zeroCellCount)
+    {
+        var source = Report();
+        var masks = source.Masks;
+
+        return new GeneratedMapPayloadReport(
+            source.Diagnostics,
+            source.Terrain,
+            new PayloadMaskGenerationSummary(
+                masks.ImpassableThresholdDegrees,
+                masks.UnbuildableThresholdDegrees,
+                masks.VerticalExaggeration,
+                masks.ChunkCount,
+                masks.ImpassableCellCount,
+                masks.UnbuildableCellCount,
+                masks.SlopeImpassableCellCount,
+                masks.SlopeUnbuildableCellCount,
+                masks.WaterRuleApplicationCount,
+                masks.PassabilityRuleApplicationCount,
+                masks.BuildabilityRuleApplicationCount,
+                masks.PlayableForcedCellCount,
+                zeroCellCount),
+            source.Features,
+            source.ValidationChecks,
+            source.PayloadSha256Hex,
+            source.Imagery,
+            source.ClassificationSampling);
+    }
+
     [Fact]
     public void ReportWrite_IsDeterministicAcrossInstances()
     {

@@ -919,4 +919,141 @@ public class FeatureMapperTests
         Assert.Throws<ArgumentNullException>(() => FeatureMapper.Map(parts, rules, null!, new GeoDiagnosticBag()));
         Assert.Throws<ArgumentNullException>(() => FeatureMapper.Map(parts, rules, sampler, null!));
     }
+
+    [Fact]
+    public void ConservativeAreaOnPolygonPassabilityRulePropagatesToFeature()
+    {
+        var rules = new List<FeatureMappingRule>
+        {
+            new("vectors", ManifestFeatureTarget.Passability, ManifestFeatureGeometry.Polygon, Passable: false, Coverage: ManifestMaskCoverage.ConservativeArea),
+        };
+        var part = FeatureMappingTestSupport.PolygonPart(100d, 100d, 900d, 900d);
+        var diagnostics = new GeoDiagnosticBag();
+        var results = FeatureMapper.Map([part], rules, FeatureMappingTestSupport.ConstantSampler(7d), diagnostics);
+
+        Assert.False(diagnostics.HasErrors);
+        var feature = Assert.Single(results);
+        Assert.Equal(GeneratedFeatureKind.Passability, feature.Kind);
+        Assert.False(feature.Passable);
+        Assert.Equal(ManifestMaskCoverage.ConservativeArea, feature.Coverage);
+    }
+
+    [Fact]
+    public void AbsentCoverageOnPolygonPassabilityRuleYieldsNull()
+    {
+        var rules = new List<FeatureMappingRule>
+        {
+            new("vectors", ManifestFeatureTarget.Passability, ManifestFeatureGeometry.Polygon, Passable: false),
+        };
+        var part = FeatureMappingTestSupport.PolygonPart(100d, 100d, 900d, 900d);
+        var diagnostics = new GeoDiagnosticBag();
+        var results = FeatureMapper.Map([part], rules, FeatureMappingTestSupport.ConstantSampler(7d), diagnostics);
+
+        Assert.False(diagnostics.HasErrors);
+        var feature = Assert.Single(results);
+        Assert.Equal(GeneratedFeatureKind.Passability, feature.Kind);
+        Assert.False(feature.Passable);
+        Assert.Null(feature.Coverage);
+    }
+
+    [Fact]
+    public void ExplicitSampleCoverageOnPolygonPassabilityRulePropagatesToFeature()
+    {
+        var rules = new List<FeatureMappingRule>
+        {
+            new("vectors", ManifestFeatureTarget.Passability, ManifestFeatureGeometry.Polygon, Passable: true, Coverage: ManifestMaskCoverage.Sample),
+        };
+        var part = FeatureMappingTestSupport.PolygonPart(100d, 100d, 900d, 900d);
+        var diagnostics = new GeoDiagnosticBag();
+        var results = FeatureMapper.Map([part], rules, FeatureMappingTestSupport.ConstantSampler(7d), diagnostics);
+
+        Assert.False(diagnostics.HasErrors);
+        var feature = Assert.Single(results);
+        Assert.Equal(GeneratedFeatureKind.Passability, feature.Kind);
+        Assert.True(feature.Passable);
+        Assert.Equal(ManifestMaskCoverage.Sample, feature.Coverage);
+    }
+
+    [Fact]
+    public void GeneratedFeatureRejectsCoverageOnNonMaskKind()
+    {
+        var polygon = new GeoPolygon(new GeoRing([new GeoPosition(new Vector2d(0d, 0d))]));
+        Assert.Throws<ArgumentException>(() => new GeneratedFeature(
+            GeneratedFeatureKind.Water,
+            polygon,
+            "s",
+            "f",
+            "s/f#0",
+            0,
+            coverage: ManifestMaskCoverage.ConservativeArea));
+
+        Assert.Throws<ArgumentException>(() => new GeneratedFeature(
+            GeneratedFeatureKind.Road,
+            polygon,
+            "s",
+            "f",
+            "s/f#0",
+            0,
+            coverage: ManifestMaskCoverage.ConservativeArea));
+    }
+
+    [Fact]
+    public void GeneratedFeatureRejectsCoverageOnNonPolygonGeometry()
+    {
+        var point = new GeoPointGeometry(new GeoPosition(new Vector2d(1d, 2d), 3d));
+        Assert.Throws<ArgumentException>(() => new GeneratedFeature(
+            GeneratedFeatureKind.Passability,
+            point,
+            "s",
+            "f",
+            "s/f#0",
+            0,
+            position: new GamePosition(1d, 2d, 3d),
+            passable: true,
+            coverage: ManifestMaskCoverage.ConservativeArea));
+
+        var line = new GeoLineString([new GeoPosition(new Vector2d(0d, 0d)), new GeoPosition(new Vector2d(1d, 1d))]);
+        Assert.Throws<ArgumentException>(() => new GeneratedFeature(
+            GeneratedFeatureKind.Passability,
+            line,
+            "s",
+            "f",
+            "s/f#0",
+            0,
+            passable: true,
+            coverage: ManifestMaskCoverage.ConservativeArea));
+    }
+
+    [Fact]
+    public void GeneratedFeatureRejectsUndefinedCoverageEnumValue()
+    {
+        var polygon = new GeoPolygon(new GeoRing([new GeoPosition(new Vector2d(0d, 0d))]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GeneratedFeature(
+            GeneratedFeatureKind.Passability,
+            polygon,
+            "s",
+            "f",
+            "s/f#0",
+            0,
+            passable: true,
+            coverage: (ManifestMaskCoverage)999));
+    }
+
+    [Fact]
+    public void MixedGeometryRuleWithoutCoverageYieldsNullPreservingSamplePath()
+    {
+        var rules = new List<FeatureMappingRule>
+        {
+            new("vectors", ManifestFeatureTarget.Passability, Geometry: null, Passable: false),
+        };
+        var part = FeatureMappingTestSupport.PolygonPart(100d, 100d, 900d, 900d);
+        var diagnostics = new GeoDiagnosticBag();
+        var results = FeatureMapper.Map([part], rules, FeatureMappingTestSupport.ConstantSampler(7d), diagnostics);
+
+        Assert.False(diagnostics.HasErrors);
+        var feature = Assert.Single(results);
+        Assert.Equal(GeneratedFeatureKind.Passability, feature.Kind);
+        Assert.False(feature.Passable);
+        Assert.Null(feature.Coverage);
+    }
 }

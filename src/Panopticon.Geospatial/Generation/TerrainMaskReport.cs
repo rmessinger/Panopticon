@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Panopticon.Geospatial.Generation;
 
@@ -45,19 +46,34 @@ public sealed class TerrainMaskReport
     /// <summary>Cells the playable-area exterior and holes forced both bits on; each cell counts once.</summary>
     public long PlayableForcedCellCount { get; private set; }
 
+    /// <summary>
+    /// Unique (SourceId, FeatureId) identities of mapped water, passability, and buildability
+    /// polygon features that set no mask cell in any chunk under any applicable rule.
+    /// </summary>
+    public long ZeroCellMappedPolygonFeatureCount => _mappedFeatures.Count - _coveredFeatures.Count;
+
+    private readonly HashSet<MappedFeatureIdentity> _mappedFeatures = [];
+    private readonly HashSet<MappedFeatureIdentity> _coveredFeatures = [];
+
     internal void Record(
         TerrainMaskChunk chunk,
         in TerrainMaskChunkStats stats,
         SlopeThresholds thresholds,
-        double verticalExaggeration)
+        double verticalExaggeration,
+        IReadOnlySet<MappedFeatureIdentity> mappedFeatures,
+        IReadOnlySet<MappedFeatureIdentity> coveredFeatures)
     {
         ArgumentNullException.ThrowIfNull(chunk);
         ArgumentNullException.ThrowIfNull(thresholds);
+        ArgumentNullException.ThrowIfNull(mappedFeatures);
+        ArgumentNullException.ThrowIfNull(coveredFeatures);
 
         ImpassableThresholdDegrees = thresholds.ImpassableDegrees;
         UnbuildableThresholdDegrees = thresholds.UnbuildableDegrees;
         VerticalExaggeration = verticalExaggeration;
         ChunkCount++;
+        _mappedFeatures.UnionWith(mappedFeatures);
+        _coveredFeatures.UnionWith(coveredFeatures);
         ImpassableCellCount += stats.ImpassableCells;
         UnbuildableCellCount += stats.UnbuildableCells;
         SlopeImpassableCellCount += stats.SlopeImpassableCells;
@@ -79,3 +95,5 @@ internal readonly record struct TerrainMaskChunkStats(
     long PlayableForcedCells,
     long ImpassableCells,
     long UnbuildableCells);
+
+internal readonly record struct MappedFeatureIdentity(string SourceId, string FeatureId);

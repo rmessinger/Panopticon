@@ -56,7 +56,8 @@ internal sealed record FeatureMappingDto(
     string? Material = null,
     bool? Passable = null,
     bool? Buildable = null,
-    string? LayerName = null);
+    string? LayerName = null,
+    ManifestMaskCoverage? Coverage = null);
 
 internal sealed record SlopePolicyDto(
     double? ImpassableSlopeDegrees = null,

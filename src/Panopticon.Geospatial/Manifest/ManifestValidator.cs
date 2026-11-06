@@ -637,11 +637,14 @@ internal static class ManifestValidator
                 NormalizeOptional(rule.Material),
                 rule.Passable,
                 rule.Buildable,
-                NormalizeOptional(rule.LayerName)));
+                NormalizeOptional(rule.LayerName),
+                rule.Coverage));
         }
 
         return rules;
     }
+
+    private const string MaskTargets = "target 'passability' or 'buildability'";
 
     private static void ValidateTargetParameters(ValidationContext context, FeatureMappingDto rule, string field)
     {
@@ -651,6 +654,7 @@ internal static class ManifestValidator
                 RequiredText(context, rule.Material, $"{field}.material for target 'material'");
                 RejectSupplied(context, rule.Passable is not null, $"{field}.passable", "target 'passability'");
                 RejectSupplied(context, rule.Buildable is not null, $"{field}.buildable", "target 'buildability'");
+                RejectSupplied(context, rule.Coverage is not null, $"{field}.coverage", MaskTargets);
                 break;
             case ManifestFeatureTarget.Passability:
                 if (rule.Passable is null)
@@ -658,6 +662,7 @@ internal static class ManifestValidator
                     context.MissingRequired($"{field}.passable is required for target 'passability'.");
                 }
 
+                ValidateCoverageGeometry(context, rule, field);
                 RejectSupplied(context, rule.Material is not null, $"{field}.material", "target 'material'");
                 RejectSupplied(context, rule.Buildable is not null, $"{field}.buildable", "target 'buildability'");
                 break;
@@ -667,6 +672,7 @@ internal static class ManifestValidator
                     context.MissingRequired($"{field}.buildable is required for target 'buildability'.");
                 }
 
+                ValidateCoverageGeometry(context, rule, field);
                 RejectSupplied(context, rule.Material is not null, $"{field}.material", "target 'material'");
                 RejectSupplied(context, rule.Passable is not null, $"{field}.passable", "target 'passability'");
                 break;
@@ -674,7 +680,16 @@ internal static class ManifestValidator
                 RejectSupplied(context, rule.Material is not null, $"{field}.material", "target 'material'");
                 RejectSupplied(context, rule.Passable is not null, $"{field}.passable", "target 'passability'");
                 RejectSupplied(context, rule.Buildable is not null, $"{field}.buildable", "target 'buildability'");
+                RejectSupplied(context, rule.Coverage is not null, $"{field}.coverage", MaskTargets);
                 break;
+        }
+    }
+
+    private static void ValidateCoverageGeometry(ValidationContext context, FeatureMappingDto rule, string field)
+    {
+        if (rule.Coverage is not null && rule.Geometry != ManifestFeatureGeometry.Polygon)
+        {
+            context.MissingRequired($"{field}.geometry 'polygon' is required when coverage is supplied.");
         }
     }
 
