@@ -27,6 +27,10 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string PaletteDuplicateIndex = "palette-duplicate-index";
 
+    public const string LayersConsistency = "layers-consistency";
+
+    public const string SidesListVersion = "sideslist-version";
+
     public const string ImageryConsistency = "imagery-consistency";
 
     public const string StableIdDuplicate = "stable-id-duplicate";

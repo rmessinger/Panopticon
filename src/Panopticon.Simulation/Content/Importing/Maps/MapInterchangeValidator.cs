@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace Panopticon.Content.Importing.Maps;
@@ -23,7 +24,10 @@ namespace Panopticon.Content.Importing.Maps;
 /// with (coreW + 2) columns and (coreH + 2) rows: row 0 is the southern apron, the last row the
 /// northern apron, column 0 the western apron, and the last column the eastern apron. Core lattice
 /// point (i, j) maps to stored row j + 1 and column i + 1, so rows run south to north and columns west
-/// to east. Material and mask arrays hold coreW x coreH values. The shared core edge point of
+/// to east. Material and mask arrays hold coreW x coreH values. Materials and masks are optional per
+/// chunk, but consistent only all-or-none across chunks (layers-consistency); the palette checks apply
+/// only when materials are present, and heights remain required on every chunk. The shared core edge
+/// point of
 /// horizontally adjacent chunks appears twice (core column coreW - 1 of the west chunk and core column
 /// 0 of the east chunk) and must hold one value; the same holds vertically. Where a neighbour exists,
 /// each apron sample equals the neighbouring chunk's core sample at the same lattice point. The east
@@ -211,6 +215,8 @@ public static class MapInterchangeValidator
     private static void ValidateLayers(TerrainLayout? sized, Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
     {
         var definedBits = (byte)(MapMaskFlags.Impassable | MapMaskFlags.Unbuildable);
+        var chunksWithMaterials = 0;
+        var chunksWithMasks = 0;
 
         foreach (var chunk in chunks.Values)
         {
@@ -250,28 +256,30 @@ public static class MapInterchangeValidator
 
             var materials = chunk.Materials;
 
-            if (materials is null)
+            if (materials is not null)
             {
-                AddNullComponent(diagnostics, $"Chunk {name} Materials");
-            }
-            else if (materials.Indices is null)
-            {
-                AddNullComponent(diagnostics, $"Chunk {name} Materials.Indices");
-            }
-            else if (extent is { } materialExtent && materials.Indices.Count != materialExtent.CoreCellCount)
-            {
-                diagnostics.Add(new MapInterchangeDiagnostic(
-                    MapInterchangeDiagnostic.MaterialLength,
-                    $"Chunk {name} stores {materials.Indices.Count} material indices; expected {materialExtent.CoreCellCount} ({materialExtent.CoreWidth} x {materialExtent.CoreHeight})."));
+                chunksWithMaterials++;
+
+                if (materials.Indices is null)
+                {
+                    AddNullComponent(diagnostics, $"Chunk {name} Materials.Indices");
+                }
+                else if (extent is { } materialExtent && materials.Indices.Count != materialExtent.CoreCellCount)
+                {
+                    diagnostics.Add(new MapInterchangeDiagnostic(
+                        MapInterchangeDiagnostic.MaterialLength,
+                        $"Chunk {name} stores {materials.Indices.Count} material indices; expected {materialExtent.CoreCellCount} ({materialExtent.CoreWidth} x {materialExtent.CoreHeight})."));
+                }
             }
 
             var masks = chunk.Masks;
 
             if (masks is null)
             {
-                AddNullComponent(diagnostics, $"Chunk {name} Masks");
                 continue;
             }
+
+            chunksWithMasks++;
 
             if (masks.Flags is null)
             {
@@ -300,10 +308,31 @@ public static class MapInterchangeValidator
                 break;
             }
         }
+
+        ValidateLayerConsistency(chunks.Count, chunksWithMaterials, "materials", diagnostics);
+        ValidateLayerConsistency(chunks.Count, chunksWithMasks, "masks", diagnostics);
+    }
+
+    private static void ValidateLayerConsistency(int chunkCount, int chunksWithLayer, string layerName, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (chunksWithLayer == 0 || chunksWithLayer == chunkCount)
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.LayersConsistency,
+            $"{chunksWithLayer} of {chunkCount} chunks carry {layerName}; every chunk must carry {layerName} or none may."));
     }
 
     private static void ValidatePalette(MapInterchange map, Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
     {
+        // Palette checks apply only when materials are present; heights-only chunks (legacy sources) carry no palette.
+        if (!chunks.Values.Any(chunk => chunk.Materials is not null))
+        {
+            return;
+        }
+
         var blend = map.Blend;
 
         if (blend is null)
@@ -594,7 +623,7 @@ public static class MapInterchangeValidator
 
         if (transform is null)
         {
-            AddNullComponent(diagnostics, "TerrainLayout.GeospatialTransform");
+            // Legacy sources carry no geospatial transform; absence is not a finding.
             return;
         }
 
