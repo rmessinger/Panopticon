@@ -1442,7 +1442,7 @@ coordinates with rather than duplicates.
   - AC: the audit cites each `MapFile` limitation by file and line.
 - [x] H1-2 Confirm settled H3 format choices (`WI-H1-02`).
   - AC: the audit confirms or revises the directory package with raw little-endian chunks.
-- [ ] H2 Format-agnostic map interchange abstraction, mirroring the C1 pattern.
+- [x] H2 Format-agnostic map interchange abstraction, mirroring the C1 pattern.
   - AC: the legacy `.map` reader loads through the map-format seam with no behavior change;
     placed objects retain references to unit definitions owned by H2a.
 - [x] H2-1 Map interchange design for the package format (`WI-H2-01`).
