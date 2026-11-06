@@ -1445,8 +1445,14 @@ coordinates with rather than duplicates.
 - [ ] H2 Format-agnostic map interchange abstraction, mirroring the C1 pattern.
   - AC: the legacy `.map` reader loads through the map-format seam with no behavior change;
     placed objects retain references to unit definitions owned by H2a.
-- [ ] H2-1 Map interchange design for the package format (`WI-H2-01`).
+- [x] H2-1 Map interchange design for the package format (`WI-H2-01`).
   - AC: the design names interchange types without `MapFile` dependencies.
+- [ ] H2-2 Engine-owned interchange types (`WI-H2-02`).
+  - AC: the `MapInterchange` model and validation build with no `MapFile` dependency.
+- [ ] H2-3 Reader seam and legacy adapter (`WI-H2-03`).
+  - AC: the legacy adapter produces `MapInterchange` with the per-section dispositions and no load behavior change.
+- [ ] H2-4 Runtime bridge and parity (`WI-H2-04`).
+  - AC: resident terrain, masks, and placed objects materialize from `MapInterchange` with parity against the legacy load path.
 
 ### H2a: Unit-content import layer
 
