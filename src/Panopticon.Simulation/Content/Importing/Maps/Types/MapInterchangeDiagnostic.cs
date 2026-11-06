@@ -39,5 +39,11 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string ApronAgreement = "apron-agreement";
 
+    public const string NullComponent = "null-component";
+
+    public const string QuantityFinite = "quantity-finite";
+
+    public const string CoordinateFrame = "coordinate-frame";
+
     public override string ToString() => $"{Code}: {Message}";
 }

@@ -137,7 +137,7 @@ public sealed class MapInterchangeValidationTests
     [Fact]
     public void ImageryPixelCountMismatchFails()
     {
-        var mismatched = BuildImagery(2, 2) with { Rgba = new byte[15] };
+        var mismatched = new ImageryLayer(2, 2, new byte[15]);
         var first = WithChunk(BuildValidModel(), 0, BuildValidModel().Layout.Chunks[0] with { Imagery = BuildImagery(2, 2) });
         var model = WithChunk(first, 1, first.Layout.Chunks[1] with { Imagery = mismatched });
 
@@ -148,10 +148,7 @@ public sealed class MapInterchangeValidationTests
     public void DuplicateStableIdAcrossSetsFails()
     {
         var model = BuildValidModel();
-        var waypoints = model.Waypoints! with
-        {
-            Waypoints = [model.Waypoints.Waypoints[0] with { StableId = "object-1" }],
-        };
+        var waypoints = new WaypointSet([model.Waypoints!.Waypoints[0] with { StableId = "object-1" }]);
 
         AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.StableIdDuplicate);
     }
@@ -160,7 +157,7 @@ public sealed class MapInterchangeValidationTests
     public void UnknownRetainedSectionNameFails()
     {
         var model = BuildValidModel();
-        var retained = model.RetainedSections[0] with { SectionName = "NotALegacySection" };
+        var retained = WithSection(model.RetainedSections[0], name: "NotALegacySection");
 
         AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedName);
     }
@@ -169,7 +166,7 @@ public sealed class MapInterchangeValidationTests
     public void NegativeRetainedSectionVersionFails()
     {
         var model = BuildValidModel();
-        var retained = model.RetainedSections[0] with { SectionVersion = -1 };
+        var retained = WithSection(model.RetainedSections[0], version: -1);
 
         AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedVersion);
     }
@@ -178,7 +175,7 @@ public sealed class MapInterchangeValidationTests
     public void RetainedSectionDigestMismatchFails()
     {
         var model = BuildValidModel();
-        var retained = model.RetainedSections[0] with { Sha256 = "deadbeef" };
+        var retained = WithSection(model.RetainedSections[0], sha256: "deadbeef");
 
         AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedDigest);
     }
@@ -187,7 +184,7 @@ public sealed class MapInterchangeValidationTests
     public void EmptyRetainedSectionBytesFail()
     {
         var model = BuildValidModel();
-        var retained = model.RetainedSections[0] with { Bytes = ReadOnlyMemory<byte>.Empty, Sha256 = Sha256Hex([]) };
+        var retained = WithSection(model.RetainedSections[0], bytes: ReadOnlyMemory<byte>.Empty, sha256: Sha256Hex([]));
 
         AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedDigest);
     }
@@ -229,6 +226,142 @@ public sealed class MapInterchangeValidationTests
         Assert.Equal(10, model.Objects!.Objects[0].X.Value);
     }
 
+    [Fact]
+    public void ConstructionDefensivelyCopiesCallerOwnedState()
+    {
+        var heights = BuildSampleArray(0, 0);
+        var materials = new byte[MapChunkGeometry.CoreCellsPerChunk];
+        var masks = new byte[MapChunkGeometry.CoreCellsPerChunk];
+        var palette = new List<MaterialPaletteEntry>
+        {
+            new(0, "grass", new AssetReference("terrain", "grass")),
+            new(1, "rock", new AssetReference("terrain", "rock")),
+        };
+        var legacyProperties = new Dictionary<string, string> { ["team"] = "america" };
+        var bytes = new byte[] { 1, 2, 3, 4 };
+
+        var chunk = new Chunk(new ChunkKey(0, 0), new HeightLayer(heights), new MaterialLayer(materials), new MaskLayer(masks), null);
+        var placed = new PlacedObject(
+            "object-1",
+            new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+            new MapQuantity(20, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+            new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ),
+            0.0,
+            new AssetReference("units", "infantry"),
+            legacyProperties);
+
+        var model = BuildValidModel();
+        model = WithChunk(model, 0, chunk);
+        model = model with { Blend = new BlendModel(palette), Objects = new PlacedObjectSet([placed]) };
+        model = model with { RetainedSections = [new RetainedSection("GlobalVersion", 8, bytes, Sha256Hex(bytes))] };
+
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+
+        heights[0] = 1234.5f;
+        palette.Add(new MaterialPaletteEntry(9, "late", new AssetReference("terrain", "late")));
+        legacyProperties["team"] = "mutated";
+        bytes[0] = 200;
+
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+        Assert.Equal(BuildSampleArray(0, 0)[0], model.Layout.Chunks[0].Heights.Samples[0]);
+        Assert.Equal(2, model.Blend.Palette.Count);
+        Assert.Equal("america", model.Objects!.Objects[0].LegacyProperties["team"]);
+        Assert.Equal(1, model.RetainedSections[0].Bytes.Span[0]);
+    }
+
+    [Fact]
+    public void NullBlendIsReportedWithoutThrowing()
+    {
+        AssertOnlyCode(BuildValidModel() with { Blend = null! }, MapInterchangeDiagnostic.NullComponent);
+    }
+
+    [Fact]
+    public void NullLayoutIsReportedWithoutThrowing()
+    {
+        AssertOnlyCode(BuildValidModel() with { Layout = null! }, MapInterchangeDiagnostic.NullComponent);
+    }
+
+    [Fact]
+    public void HugeDeclaredGridCompletesWithInventoryDiagnostic()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { ChunksX = int.MaxValue };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.ChunkInventory);
+    }
+
+    [Fact]
+    public void NanSpacingFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { SampleSpacing = new MapQuantity(double.NaN, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy) };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.QuantityFinite);
+    }
+
+    [Fact]
+    public void ZeroSpacingFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { SampleSpacing = new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy) };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.QuantityFinite);
+    }
+
+    [Fact]
+    public void NanWaypointZFails()
+    {
+        var model = BuildValidModel();
+        var waypoints = new WaypointSet(
+        [
+            model.Waypoints!.Waypoints[0] with { Z = new MapQuantity(double.NaN, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ) },
+        ]);
+
+        AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.QuantityFinite);
+    }
+
+    [Fact]
+    public void ZeroMetersPerGameUnitFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { GeospatialTransform = model.Layout.GeospatialTransform with { MetersPerGameUnit = 0 } };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.QuantityFinite);
+    }
+
+    [Fact]
+    public void SpacingFrameOutsideMapLocalXyFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { SampleSpacing = new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy) };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.CoordinateFrame);
+    }
+
+    [Fact]
+    public void WaypointMixedHorizontalFramesFail()
+    {
+        var model = BuildValidModel();
+        var waypoints = new WaypointSet(
+        [
+            model.Waypoints!.Waypoints[0] with { Y = new MapQuantity(25, MapQuantityUnit.GameUnit, MapQuantityFrame.SourceCrs) },
+        ]);
+
+        AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.CoordinateFrame);
+    }
+
+    [Fact]
+    public void WaypointZFrameOutsideVerticalFails()
+    {
+        var model = BuildValidModel();
+        var waypoints = new WaypointSet(
+        [
+            model.Waypoints!.Waypoints[0] with { Z = new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy) },
+        ]);
+
+        AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.CoordinateFrame);
+    }
+
     private static void AssertOnlyCode(MapInterchange model, string expected)
     {
         Assert.Equal([expected], Codes(model));
@@ -262,6 +395,11 @@ public sealed class MapInterchangeValidationTests
         chunks[index] = chunk;
 
         return model with { Layout = model.Layout with { Chunks = chunks } };
+    }
+
+    private static RetainedSection WithSection(RetainedSection section, string? name = null, int? version = null, ReadOnlyMemory<byte>? bytes = null, string? sha256 = null)
+    {
+        return new RetainedSection(name ?? section.SectionName, version ?? section.SectionVersion, bytes ?? section.Bytes, sha256 ?? section.Sha256);
     }
 
     private static ImageryLayer BuildImagery(int width, int height)
@@ -345,6 +483,16 @@ public sealed class MapInterchangeValidationTests
 
     private static Chunk BuildChunk(int cx, int cy)
     {
+        return new Chunk(
+            new ChunkKey(cx, cy),
+            new HeightLayer(BuildSampleArray(cx, cy)),
+            new MaterialLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
+            new MaskLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
+            null);
+    }
+
+    private static float[] BuildSampleArray(int cx, int cy)
+    {
         var samples = new float[MapChunkGeometry.StoredHeightSamplesPerChunk];
 
         for (var row = 0; row < StoredAxis; row++)
@@ -355,12 +503,7 @@ public sealed class MapInterchangeValidationTests
             }
         }
 
-        return new Chunk(
-            new ChunkKey(cx, cy),
-            new HeightLayer(samples),
-            new MaterialLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
-            new MaskLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
-            null);
+        return samples;
     }
 
     private static float LatticeSample(int cx, int cy, int row, int column)
