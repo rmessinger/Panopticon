@@ -37,6 +37,19 @@ Roof rules
     A hipped-from-straight-skeleton rule is NOT implemented; its approximate
     applicability (identical convexity gate) is counted into stats.json.
 
+Kit details (--kit-details, optional)
+    Adds CC0 Kenney "Prototype Textures" facade details as extra glTF material
+    slots: one door quad per building centered on the longest wall of its
+    largest part, window quads spaced along outer walls above the ground floor
+    (skipping 1 m around corners and the door span), and one chimney box on
+    gabled-baked buildings near the ridge end. Details are pure functions of
+    footprint geometry; UVs sample fixed sub-rectangles of the kit sheets
+    (door sheet texture_10, window sheet texture_11, chimney samples a plain
+    Dark-variant tile), avoiding the sheet corner labels. Materials add three
+    roles (kit_door, kit_window, kit_chimney) referencing
+    ../../materials/kenney_*.png. Running WITHOUT --kit-details emits
+    byte-identical output to the pre-kit generator.
+
 Data notes (verified against the r2-03 payload/KML)
     payload features.items carries 1x annotation (sedan-extent) plus passability
     and buildability duplicates of the same buildings; only kind == "passability"
@@ -56,6 +69,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import statistics
 import struct
 import sys
@@ -102,6 +116,49 @@ MATERIAL_TABLE = [
 ]
 CC0_URL = "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt"
 CC0_TEXT_URL = "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt"
+
+# Kenney "Prototype Textures" kit (CC0). Kenney serves downloads through a
+# signed two-step flow: the asset page embeds a hex download id, the
+# download-link endpoint (Referer required) resolves it to an expiring URL.
+# Sheets are 1024x1024 PNG grids; texture_10 is the DOOR sheet, texture_11 the
+# WINDOW sheet, both with a text label in the top-left corner that the sampled
+# sub-rectangles avoid. The chimney samples one plain Dark-variant tile.
+KENNEY_KIT = {
+    "slug": "prototype-textures",
+    "name": "Prototype Textures",
+    "page_url": "https://kenney.nl/assets/prototype-textures",
+    "download_id_hex": "6173736574732f70726f746f747970652d7465787475726573",
+    "variant_door": "Light",
+    "variant_window": "Light",
+    "variant_chimney": "Dark",
+    "sheet_door": "PNG/Light/texture_10.png",
+    "sheet_window": "PNG/Light/texture_11.png",
+    "sheet_chimney": "PNG/Dark/texture_01.png",
+    "sheet_size_px": 1024,
+    # Sampled sub-rectangles in sheet pixels (x0, y0, x1, y1), verified against
+    # the rendered sheets; v maps top-left origin like glTF UV convention.
+    "cell_door_px": [300, 310, 725, 1010],
+    "cell_window_px": [300, 300, 725, 725],
+    "cell_chimney_px": [6, 6, 122, 122],
+    "target_files": {
+        "door": "kenney_door.png",
+        "window": "kenney_window.png",
+        "chimney": "kenney_chimney.png",
+    },
+}
+
+# Kit detail dimensions (meters unless suffixed _game = game units).
+DOOR_WIDTH_M = 1.0
+DOOR_HEIGHT_M = 2.1
+WINDOW_WIDTH_M = 1.0
+WINDOW_HEIGHT_M = 1.2
+WINDOW_SILL_M = 1.0
+WINDOW_SPACING_M = 3.0
+WINDOW_CORNER_MARGIN_M = 1.0
+WINDOW_ROW_SPACING_M = 3.0
+CHIMNEY_SIDE_M = 0.6
+CHIMNEY_HEIGHT_M = 0.8
+DETAIL_INSET_GAME = 0.1  # offset from the wall plane, game units
 
 DEFAULT_PROVENANCE = (
     "/mnt/pit2/panopticon/geo-proof/r2-03-footprints-v3/provenance/footprints-provenance.json"
@@ -541,16 +598,17 @@ def flat_roof(mesh: MeshBuilder, outer: list[tuple[float, float]],
 
 def gabled_roof(mesh_roof: MeshBuilder, mesh_wall: MeshBuilder,
                 outer: list[tuple[float, float]], h_game: float,
-                meters_per_game: float, tile_m: float) -> tuple[int, int]:
+                meters_per_game: float, tile_m: float) -> tuple[int, int, dict | None]:
     """Gabled roof for a convex hole-free footprint.
 
     Ridge runs along the longer side direction of the minimum rotated rectangle
     through the footprint center at h + tan(pitch) * half-width. Returns
-    (roof triangles, gable-end wall triangles).
+    (roof triangles, gable-end wall triangles, ridge frame or None). The frame
+    carries the (u, t) parameterization used for chimney placement.
     """
     hull = unique_points(strip_collinear(convex_hull(outer)))
     if len(hull) < 4 or not is_convex(hull):
-        return 0, 0
+        return 0, 0, None
     _, (ux, uy) = min_rot_rect(hull)
     vx, vy = -uy, ux
     cx = sum(p[0] for p in hull) / len(hull)
@@ -561,6 +619,12 @@ def gabled_roof(mesh_roof: MeshBuilder, mesh_wall: MeshBuilder,
     t_max = max(max(abs(t) for t in ts), EPS)
     ridge_z = h_game + pitch * t_max
     u_min, u_max = min(us), max(us)
+    frame = {
+        "ux": ux, "uy": uy, "vx": vx, "vy": vy,
+        "cx": cx, "cy": cy,
+        "u_min": u_min, "u_max": u_max,
+        "t_max": t_max, "ridge_z": ridge_z, "pitch": pitch,
+    }
     inv_tile = 1.0 / tile_m
 
     def uv_plan(x: float, y: float) -> tuple[float, float]:
@@ -620,7 +684,7 @@ def gabled_roof(mesh_roof: MeshBuilder, mesh_wall: MeshBuilder,
             flip=flip,
         )
         gable_tris += 1
-    return roof_tris, gable_tris
+    return roof_tris, gable_tris, frame
 
 
 # ---------------------------------------------------------------------------
@@ -934,6 +998,91 @@ def parse_kml(path: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def fetch_url(url: str, headers: dict | None = None, timeout: int = 120) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+def download_kit(mat_dir: str) -> dict:
+    """Download the pinned Kenney kit through the signed two-step flow.
+
+    Returns manifest info (urls, sha256, licence text, extracted map files).
+    """
+    page_headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
+    try:
+        page_html = fetch_url(KENNEY_KIT["page_url"], page_headers, timeout=60).decode("utf-8", "replace")
+    except (OSError, ValueError) as exc:
+        fail("ERR-NET-KIT-PAGE", f"cannot fetch {KENNEY_KIT['page_url']}: {exc}")
+    match = re.search(r"data-download-id=['\"]([0-9a-fA-F]+)['\"]", page_html)
+    download_id = match.group(1) if match else KENNEY_KIT["download_id_hex"]
+    try:
+        bytes.fromhex(download_id).decode("ascii")
+    except ValueError:
+        fail("ERR-NET-KIT-ID", f"download id {download_id!r} is not hex")
+    link_endpoint = f"https://kenney.nl/download-link/{download_id}"
+    link_headers = {
+        **page_headers,
+        "Referer": KENNEY_KIT["page_url"],
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    try:
+        link_json = json.loads(fetch_url(link_endpoint, link_headers, timeout=60).decode("utf-8", "replace"))
+    except (OSError, ValueError) as exc:
+        fail("ERR-NET-KIT-LINK", f"cannot resolve {link_endpoint}: {exc}")
+    resolved_url = link_json.get("url") if isinstance(link_json, dict) else None
+    if not resolved_url:
+        fail("ERR-NET-KIT-LINK", f"download-link response lacks a url: {link_json}")
+    zips_dir = os.path.join(mat_dir, "zips")
+    os.makedirs(zips_dir, exist_ok=True)
+    zip_path = os.path.join(zips_dir, f"kenney_{KENNEY_KIT['slug']}.zip")
+    print(f"downloading Kenney {KENNEY_KIT['name']} -> {zip_path}")
+    try:
+        data = fetch_url(resolved_url, page_headers, timeout=180)
+    except (OSError, ValueError) as exc:
+        fail("ERR-NET-KIT-DOWNLOAD", f"cannot download {resolved_url}: {exc}")
+    if data[:2] != b"PK":
+        fail("ERR-NET-KIT-DOWNLOAD", f"{resolved_url} did not return a zip (first bytes: {data[:4]!r})")
+    with open(zip_path, "wb") as fh:
+        fh.write(data)
+    digest = sha256_file(zip_path)
+    with zipfile.ZipFile(zip_path) as zf:
+        try:
+            license_text = zf.read("License.txt").decode("utf-8", "replace")
+        except KeyError:
+            fail("ERR-KIT-LICENSE", "kit zip lacks License.txt")
+        targets = {}
+        for role, member in (("door", KENNEY_KIT["sheet_door"]),
+                             ("window", KENNEY_KIT["sheet_window"]),
+                             ("chimney", KENNEY_KIT["sheet_chimney"])):
+            if member not in zf.namelist():
+                fail("ERR-KIT-ZIP", f"kit zip lacks {member}")
+            target = KENNEY_KIT["target_files"][role]
+            with zf.open(member) as src, open(os.path.join(mat_dir, target), "wb") as dst:
+                dst.write(src.read())
+            targets[role] = target
+    return {
+        "slug": KENNEY_KIT["slug"],
+        "name": KENNEY_KIT["name"],
+        "page_url": KENNEY_KIT["page_url"],
+        "download_link_endpoint": link_endpoint,
+        "resolved_url": resolved_url,
+        "resolved_url_note": "Kenney download URLs are signed and expiring; content is pinned by zip_sha256.",
+        "zip_sha256": digest,
+        "zip_bytes": len(data),
+        "license": "CC0-1.0",
+        "license_text_first_line": license_text.strip().splitlines()[1].strip() if license_text.strip() else "",
+        "license_text": license_text,
+        "files": targets,
+        "cells_px": {
+            "door": KENNEY_KIT["cell_door_px"],
+            "window": KENNEY_KIT["cell_window_px"],
+            "chimney": KENNEY_KIT["cell_chimney_px"],
+        },
+        "sheet_size_px": KENNEY_KIT["sheet_size_px"],
+    }
+
+
 def download_materials(out_dir: str) -> None:
     mat_dir = os.path.join(out_dir, "materials")
     zips_dir = os.path.join(mat_dir, "zips")
@@ -958,6 +1107,7 @@ def download_materials(out_dir: str) -> None:
         if "basecolor" not in maps:
             fail("ERR-MATERIAL-ZIP", f"{asset} zip lacks a Color map")
         entries.append({**spec, "zip_sha256": digest, "zip_bytes": len(data), "maps": maps})
+    kit = download_kit(mat_dir)
     try:
         req = urllib.request.Request(CC0_URL, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=60) as resp:
@@ -966,6 +1116,7 @@ def download_materials(out_dir: str) -> None:
         cc0_text = CC0_FALLBACK_TEXT
     manifest = {
         "materials": entries,
+        "kit": kit,
         "license": "CC0-1.0",
         "license_text_url": CC0_TEXT_URL,
     }
@@ -973,6 +1124,8 @@ def download_materials(out_dir: str) -> None:
         fh.write((json.dumps(manifest, sort_keys=True, indent=1) + "\n").encode("utf-8"))
     with open(os.path.join(mat_dir, "LICENSES.md"), "wb") as fh:
         fh.write(render_licenses(entries, cc0_text).encode("utf-8"))
+    with open(os.path.join(mat_dir, "KIT-LICENSE.md"), "wb") as fh:
+        fh.write(render_kit_license(kit).encode("utf-8"))
     print(f"materials written under {mat_dir}")
 
 
@@ -1028,6 +1181,31 @@ def render_licenses(entries: list[dict], cc0_text: str) -> str:
     return "\n".join(lines)
 
 
+def render_kit_license(kit: dict) -> str:
+    lines = [
+        "# WI-R3-01 prototype kit license (Kenney)",
+        "",
+        f"Kit: {kit['name']} ({kit['slug']})",
+        f"Asset page: {kit['page_url']}",
+        f"Download endpoint: {kit['download_link_endpoint']}",
+        f"Resolved URL: {kit['resolved_url']}",
+        f"Zip SHA-256: `{kit['zip_sha256']}`",
+        "",
+        "Kenney serves asset downloads through signed expiring URLs; the",
+        "downloaded zip content is pinned by its SHA-256 above. Kenney states",
+        "the kit is CC0 on the asset page and ships the license statement",
+        "below inside the zip (License.txt), reproduced verbatim.",
+        "",
+        "## Verbatim License.txt from the kit zip",
+        "",
+        "```",
+        kit["license_text"].rstrip(),
+        "```",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 CC0_FALLBACK_TEXT = (
     "Creative Commons Legal Code\n\nCC0 1.0 Universal\n\n"
     "OFFICIAL TEXT retrieved failure fallback: see "
@@ -1037,7 +1215,7 @@ CC0_FALLBACK_TEXT = (
 )
 
 
-def load_material_manifest(materials_dir: str) -> list[dict]:
+def load_material_manifest(materials_dir: str, want_kit: bool = False) -> tuple[list[dict], dict | None]:
     path = os.path.join(materials_dir, "materials.json")
     if not os.path.isfile(path):
         fail("ERR-MATERIAL-MISSING",
@@ -1066,7 +1244,33 @@ def load_material_manifest(materials_dir: str) -> list[dict]:
     roles = {s["name"] for s in mat_specs}
     if roles != {e["role"] for e in MATERIAL_TABLE}:
         fail("ERR-MATERIAL-SHAPE", f"unexpected material roles: {sorted(roles)}")
-    return mat_specs
+    kit_info = None
+    if want_kit:
+        kit = manifest.get("kit")
+        if not isinstance(kit, dict) or not kit.get("files") or not kit.get("cells_px"):
+            fail("ERR-MATERIAL-KIT-MISSING",
+                 f"{materials_dir} lacks the kit section in materials.json; "
+                 "run --download-materials (kit-enabled) before --kit-details")
+        for role, target in kit["files"].items():
+            if not os.path.isfile(os.path.join(materials_dir, target)):
+                fail("ERR-MATERIAL-KIT-MISSING", f"kit texture missing: {target}")
+        sheet = float(kit.get("sheet_size_px") or KENNEY_KIT["sheet_size_px"])
+        cells = {}
+        for role, rect in kit["cells_px"].items():
+            x0, y0, x1, y1 = (float(v) for v in rect)
+            if not (0 <= x0 < x1 <= sheet and 0 <= y0 < y1 <= sheet):
+                fail("ERR-MATERIAL-KIT-SHAPE", f"kit cell rect for {role} invalid: {rect}")
+            cells[role] = (x0 / sheet, y0 / sheet, x1 / sheet, y1 / sheet)
+        kit_info = {
+            "specs": [
+                {"name": "kit_door", "image": f"../../materials/{kit['files']['door']}"},
+                {"name": "kit_window", "image": f"../../materials/{kit['files']['window']}"},
+                {"name": "kit_chimney", "image": f"../../materials/{kit['files']['chimney']}"},
+            ],
+            "cells": cells,
+            "meta": {k: kit.get(k) for k in ("slug", "name", "page_url", "zip_sha256", "license")},
+        }
+    return mat_specs, kit_info
 
 
 # ---------------------------------------------------------------------------
@@ -1088,6 +1292,203 @@ def gable_failure(part: dict, tiny_area_m2: float, meters_per_game: float) -> st
     if area_m2 < tiny_area_m2:
         return "tiny-area"
     return None
+
+
+# ---------------------------------------------------------------------------
+# Kit details (doors, windows, chimneys) -- pure functions of geometry
+# ---------------------------------------------------------------------------
+
+
+def normalize_ring_ccw(ring: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    pts = list(ring)
+    if ring_area_open(pts) < 0:
+        pts.reverse()
+    return pts
+
+
+def longest_edge(pts: list[tuple[float, float]]) -> tuple[int, float]:
+    best_i = 0
+    best_len = -1.0
+    n = len(pts)
+    for i in range(n):
+        ax, ay = pts[i]
+        bx, by = pts[(i + 1) % n]
+        length = math.hypot(bx - ax, by - ay)
+        if length > best_len + EPS:
+            best_len = length
+            best_i = i
+    return best_i, best_len
+
+
+def detail_quad(pts: list[tuple[float, float]], edge_index: int, s_center: float,
+                half_w: float, z0: float, z1: float, inset: float) -> tuple[
+        tuple[tuple[float, float, float], ...], tuple[float, float, float]]:
+    """Vertical detail quad parallel to wall edge `edge_index`.
+
+    pts must be a CCW ring. Returns (corners bl, br, tr, tl, outward normal).
+    """
+    n = len(pts)
+    ax, ay = pts[edge_index % n]
+    bx, by = pts[(edge_index + 1) % n]
+    ex, ey = bx - ax, by - ay
+    length = math.hypot(ex, ey)
+    dx, dy = ex / length, ey / length
+    nx, ny = dy, -dx  # outward for a CCW ring (right of travel)
+    ox, oy = nx * inset, ny * inset
+    s0 = max(0.0, s_center - half_w)
+    s1 = min(length, s_center + half_w)
+    bl = (ax + dx * s0 + ox, ay + dy * s0 + oy, z0)
+    br = (ax + dx * s1 + ox, ay + dy * s1 + oy, z0)
+    tr = (br[0], br[1], z1)
+    tl = (bl[0], bl[1], z1)
+    return (bl, br, tr, tl), (nx, ny, 0.0)
+
+
+def emit_quad(mesh: MeshBuilder, bl, br, tr, tl, expected_normal,
+              cell: tuple[float, float, float, float]) -> int:
+    """Emit one quad as two triangles with cell UVs (v top-left origin).
+
+    Returns triangles emitted (0 for degenerate quads)."""
+    u0, v0, u1, v1 = cell
+    nrm = _tri_normal(bl, br, tr)
+    dot = nrm[0] * expected_normal[0] + nrm[1] * expected_normal[1] + nrm[2] * expected_normal[2]
+    if dot < 0:
+        bl, br, tr, tl = br, bl, tl, tr
+        nrm = _tri_normal(bl, br, tr)
+    mesh.tri(bl, nrm, (u0, v1), br, nrm, (u1, v1), tr, nrm, (u1, v0))
+    mesh.tri(bl, nrm, (u0, v1), tr, nrm, (u1, v0), tl, nrm, (u0, v0))
+    return 2
+
+
+def door_placement(ring: list[tuple[float, float]],
+                   meters_per_game: float) -> tuple[dict | None, str | None]:
+    """One door quad centered on the longest wall at ground level."""
+    pts = normalize_ring_ccw(ring)
+    if len(pts) < 3:
+        return None, "no-ring"
+    edge_index, length = longest_edge(pts)
+    need = (DOOR_WIDTH_M / meters_per_game) + 1.2
+    if length < need:
+        return None, "wall-too-short"
+    w_game = DOOR_WIDTH_M / meters_per_game
+    h_game = DOOR_HEIGHT_M / meters_per_game
+    quad, normal = detail_quad(pts, edge_index, length / 2.0, w_game / 2.0,
+                               0.0, h_game, DETAIL_INSET_GAME)
+    return {
+        "edge_index": edge_index,
+        "edge_length": length,
+        "s_center": length / 2.0,
+        "half_w": w_game / 2.0,
+        "quad": quad,
+        "normal": normal,
+    }, None
+
+
+def window_sills(height_m: float) -> list[float]:
+    """Ground-floor-above sill heights in meters for a building of `height_m`."""
+    sills = []
+    k = 0
+    while True:
+        sill = WINDOW_SILL_M + WINDOW_ROW_SPACING_M * k
+        if sill + WINDOW_HEIGHT_M > height_m - 0.5:
+            break
+        sills.append(sill)
+        k += 1
+    return sills
+
+
+def window_placements(ring: list[tuple[float, float]], height_m: float,
+                      meters_per_game: float,
+                      door: dict | None) -> list[dict]:
+    """Window quads along outer walls above the ground floor.
+
+    Spacing runs along each wall every WINDOW_SPACING_M, skipping
+    WINDOW_CORNER_MARGIN_M around corners and the door span on the door edge.
+    """
+    pts = normalize_ring_ccw(ring)
+    sills = window_sills(height_m)
+    if not sills:
+        return []
+    margin = WINDOW_CORNER_MARGIN_M / meters_per_game
+    spacing = WINDOW_SPACING_M / meters_per_game
+    w_game = WINDOW_WIDTH_M / meters_per_game
+    h_game = WINDOW_HEIGHT_M / meters_per_game
+    skip_half = door["half_w"] + 0.5 / meters_per_game if door else 0.0
+    out: list[dict] = []
+    n = len(pts)
+    for i in range(n):
+        ax, ay = pts[i]
+        bx, by = pts[(i + 1) % n]
+        length = math.hypot(bx - ax, by - ay)
+        usable = length - 2 * margin
+        if usable < w_game:
+            continue
+        count = min(int(usable // w_game), max(1, int(usable / spacing + 0.5)))
+        for j in range(count):
+            s = margin + (j + 0.5) * usable / count
+            if door and door["edge_index"] == i and abs(s - door["s_center"]) <= skip_half:
+                continue
+            for sill_m in sills:
+                quad, normal = detail_quad(pts, i, s, w_game / 2.0,
+                                           sill_m / meters_per_game,
+                                           (sill_m + WINDOW_HEIGHT_M) / meters_per_game,
+                                           DETAIL_INSET_GAME)
+                out.append({"edge_index": i, "s_center": s, "quad": quad,
+                            "normal": normal, "sill_m": sill_m})
+    return out
+
+
+def chimney_placement(frame: dict, meters_per_game: float) -> dict:
+    """Chimney box near the ridge end of a gabled roof (ridge frame units).
+
+    Center sits at 75% of the ridge span on the +t side; the half-sizes clamp
+    to roof fractions so the box stays on the roof for any footprint size.
+    """
+    u_span = frame["u_max"] - frame["u_min"]
+    u_c = frame["u_min"] + 0.75 * u_span
+    t_c = 0.35 * frame["t_max"]
+    half = CHIMNEY_SIDE_M / 2.0 / meters_per_game
+    hu = min(half, 0.12 * u_span)
+    hn = min(half, 0.25 * frame["t_max"])
+    bottom = frame["ridge_z"] - frame["pitch"] * (t_c + hn)
+    top = (frame["ridge_z"] - frame["pitch"] * t_c) + CHIMNEY_HEIGHT_M / meters_per_game
+    return {
+        "frame": frame, "u_c": u_c, "t_c": t_c, "hu": hu, "hn": hn,
+        "bottom": bottom, "top": top,
+    }
+
+
+def emit_chimney(mesh: MeshBuilder, place: dict,
+                 cell: tuple[float, float, float, float]) -> int:
+    """Chimney box: four sides plus a top cap (bottom open onto the roof)."""
+    frame = place["frame"]
+    u_c, t_c, hu, hn = place["u_c"], place["t_c"], place["hu"], place["hn"]
+    bottom, top = place["bottom"], place["top"]
+
+    def world(du: float, dt: float, z: float) -> tuple[float, float, float]:
+        return (frame["cx"] + (u_c + du) * frame["ux"] + (t_c + dt) * frame["vx"],
+                frame["cy"] + (u_c + du) * frame["uy"] + (t_c + dt) * frame["vy"],
+                z)
+
+    tris = 0
+    faces = [
+        (((-hu, -hn), (hu, -hn)), (-frame["vx"], -frame["vy"], 0.0)),
+        (((hu, hn), (-hu, hn)), (frame["vx"], frame["vy"], 0.0)),
+        (((-hu, -hn), (-hu, hn)), (-frame["ux"], -frame["uy"], 0.0)),
+        (((hu, -hn), (hu, hn)), (frame["ux"], frame["uy"], 0.0)),
+    ]
+    for (d0, d1), expected in faces:
+        bl = world(d0[0], d0[1], bottom)
+        br = world(d1[0], d1[1], bottom)
+        tr = world(d1[0], d1[1], top)
+        tl = world(d0[0], d0[1], top)
+        tris += emit_quad(mesh, bl, br, tr, tl, expected, cell)
+    top_bl = world(-hu, -hn, top)
+    top_br = world(hu, -hn, top)
+    top_tr = world(hu, hn, top)
+    top_tl = world(-hu, hn, top)
+    tris += emit_quad(mesh, top_bl, top_br, top_tr, top_tl, (0.0, 0.0, 1.0), cell)
+    return tris
 
 
 # ---------------------------------------------------------------------------
@@ -1195,13 +1596,29 @@ def cmd_generate(args) -> None:
         roof = "roof_slate" if d[1] < 128 else "roof_clay"
         return wall, roof
 
-    mat_specs = load_material_manifest(args.materials_dir)
+    mat_specs, kit_info = load_material_manifest(args.materials_dir, want_kit=args.kit_details)
     tile_of = {s["name"]: s["tile_size_meters"] for s in mat_specs}
+    emission_specs = mat_specs + (kit_info["specs"] if kit_info else [])
+    kit_cells = kit_info["cells"] if kit_info else None
 
     # Build geometry per part (shared by both layouts so totals agree).
     buildings: dict[str, list[dict]] = {}
     for p in emit_parts:
         buildings.setdefault(p["cleabs"], []).append(p)
+
+    # Kit doors: one per building, on the longest wall of its largest part.
+    main_part_id: dict[str, str] = {}
+    door_by_cleabs: dict[str, dict | None] = {}
+    door_skip_by_cleabs: dict[str, str] = {}
+    if args.kit_details:
+        for cleabs in sorted(buildings):
+            ordered = sorted(buildings[cleabs], key=lambda q: q["part_id"])
+            main = max(ordered, key=lambda q: abs(shoelace(q["outer"])))
+            main_part_id[cleabs] = main["part_id"]
+            place, reason = door_placement(main["outer"], mpg)
+            door_by_cleabs[cleabs] = place
+            if reason:
+                door_skip_by_cleabs[cleabs] = reason
     per_part_geo: dict[str, dict] = {}
     tri_by_chunk: dict[tuple[int, int], int] = {}
     parts_by_chunk: dict[tuple[int, int], int] = {}
@@ -1213,8 +1630,11 @@ def cmd_generate(args) -> None:
         "triangles": 0,
         "gable_baked": 0,
         "gable_fallback_flat": 0,
+        "kit_triangles": 0,
     }
     tri_by_material: dict[str, int] = {}
+    kit_run = {"doors": 0, "windows": 0, "chimneys": 0}
+    kit_bld = {c: {"door": 0, "windows": 0, "chimney": 0} for c in sorted(buildings)}
     for cleabs in sorted(buildings):
         wall_role, roof_role = variant(cleabs)
         for p in sorted(buildings[cleabs], key=lambda q: q["part_id"]):
@@ -1227,8 +1647,9 @@ def cmd_generate(args) -> None:
             for hole in p["holes"]:
                 quads += extrude_walls(wm, hole, h_game, mpg, wall_tile, is_hole=True)
             use_gable = args.roof_rule == "gabled" and p["gable"] == "eligible"
+            gable_frame = None
             if use_gable:
-                _, gable_tris = gabled_roof(rm, wm, p["outer"], h_game, mpg, roof_tile)
+                _, gable_tris, gable_frame = gabled_roof(rm, wm, p["outer"], h_game, mpg, roof_tile)
                 totals["gable_end_triangles"] += gable_tris
                 totals["gable_baked"] += 1
             else:
@@ -1236,23 +1657,55 @@ def cmd_generate(args) -> None:
                 if args.roof_rule == "gabled":
                     totals["gable_fallback_flat"] += 1
             roof_tris = len(rm.idx) // 3
-            tris = len(wm.idx) // 3 + roof_tris
+            details: list[tuple[str, MeshBuilder]] = []
+            if args.kit_details:
+                is_main = p["part_id"] == main_part_id[cleabs]
+                door = door_by_cleabs.get(cleabs)
+                if is_main and door:
+                    dm = MeshBuilder()
+                    emit_quad(dm, *door["quad"], door["normal"], kit_cells["door"])
+                    details.append(("kit_door", dm))
+                    kit_run["doors"] += 1
+                    kit_bld[cleabs]["door"] = 1
+                wins = window_placements(p["outer"], p["height_m"], mpg,
+                                         door if is_main else None)
+                if wins:
+                    km = MeshBuilder()
+                    for wq in wins:
+                        emit_quad(km, *wq["quad"], wq["normal"], kit_cells["window"])
+                    details.append(("kit_window", km))
+                    kit_run["windows"] += len(wins)
+                    kit_bld[cleabs]["windows"] += len(wins)
+                if is_main and gable_frame is not None:
+                    cm = MeshBuilder()
+                    emit_chimney(cm, chimney_placement(gable_frame, mpg), kit_cells["chimney"])
+                    if cm.idx:
+                        details.append(("kit_chimney", cm))
+                        kit_run["chimneys"] += 1
+                        kit_bld[cleabs]["chimney"] = 1
+            kit_tris = sum(len(m.idx) // 3 for _, m in details)
+            tris = len(wm.idx) // 3 + roof_tris + kit_tris
             cx = min(grid["chunks_x"] - 1, max(0, int(math.floor(p["center_x"] / chunk_size))))
             cy = min(grid["chunks_y"] - 1, max(0, int(math.floor(p["center_y"] / chunk_size))))
             per_part_geo[p["part_id"]] = {
                 "cleabs": cleabs, "chunk": (cx, cy),
                 "wall": (wall_role, wm), "roof": (roof_role, rm),
+                "details": details,
                 "triangles": tris, "height_m": p["height_m"],
                 "roof_rule_applied": "gabled" if use_gable else "flat",
+                "gable_frame": gable_frame,
             }
             tri_by_chunk[(cx, cy)] = tri_by_chunk.get((cx, cy), 0) + tris
             parts_by_chunk[(cx, cy)] = parts_by_chunk.get((cx, cy), 0) + 1
             bld_by_chunk.setdefault((cx, cy), set()).add(cleabs)
             totals["wall_quads"] += quads
             totals["roof_triangles"] += roof_tris
+            totals["kit_triangles"] += kit_tris
             totals["triangles"] += tris
             tri_by_material[wall_role] = tri_by_material.get(wall_role, 0) + len(wm.idx) // 3
             tri_by_material[roof_role] = tri_by_material.get(roof_role, 0) + len(rm.idx) // 3
+            for role, m in details:
+                tri_by_material[role] = tri_by_material.get(role, 0) + len(m.idx) // 3
 
     # Emit glTFs.
     layouts = [s.strip() for s in args.layouts.split(",") if s.strip()]
@@ -1268,15 +1721,14 @@ def cmd_generate(args) -> None:
             geo = per_part_geo[pid]
             cx, cy = geo["chunk"]
             slots = chunk_slots.setdefault((cx, cy), {})
-            for role_key in ("wall", "roof"):
-                role, mesh = geo[role_key]
+            for role, mesh in [geo["wall"], geo["roof"], *geo["details"]]:
                 slots.setdefault(role, MeshBuilder()).merge(mesh)
         for (cx, cy) in sorted(chunk_slots):
             slots = chunk_slots[(cx, cy)]
             write_gltf_pair(
                 os.path.join(gltf_root, "merged", f"chunk_{cx}_{cy}.gltf"),
                 [(role, mesh) for role, mesh in sorted(slots.items())],
-                mat_specs,
+                emission_specs,
             )
             merged_tris += sum(len(m.idx) for m in slots.values()) // 3
     if "perbuilding" in layouts:
@@ -1285,24 +1737,24 @@ def cmd_generate(args) -> None:
             geo_list = [per_part_geo[p["part_id"]] for p in sorted(buildings[cleabs], key=lambda q: q["part_id"])]
             by_role: dict[str, MeshBuilder] = {}
             for geo in geo_list:
-                for role_key in ("wall", "roof"):
-                    role, mesh = geo[role_key]
+                for role, mesh in [geo["wall"], geo["roof"], *geo["details"]]:
                     by_role.setdefault(role, MeshBuilder()).merge(mesh)
             if not all(c.isalnum() or c in "_-." for c in cleabs):
                 fail("ERR-NAME", f"cleabs {cleabs!r} is not filesystem-safe")
             write_gltf_pair(
                 os.path.join(gltf_root, "perbuilding", f"{cleabs}.gltf"),
                 [(role, mesh) for role, mesh in sorted(by_role.items())],
-                mat_specs,
+                emission_specs,
             )
             perbuilding_tris += sum(len(m.idx) for m in by_role.values()) // 3
     if merged_tris and perbuilding_tris and merged_tris != perbuilding_tris:
         fail("ERR-TRIANGLE-MISMATCH", f"merged {merged_tris} != perbuilding {perbuilding_tris}")
-    accounted = totals["wall_quads"] * 2 + totals["gable_end_triangles"] + totals["roof_triangles"]
+    accounted = (totals["wall_quads"] * 2 + totals["gable_end_triangles"]
+                 + totals["roof_triangles"] + totals["kit_triangles"])
     if accounted != totals["triangles"]:
         fail("ERR-TRIANGLE-ACCOUNTING",
              f"wall {totals['wall_quads'] * 2}+gable {totals['gable_end_triangles']}+roof "
-             f"{totals['roof_triangles']} != total {totals['triangles']}")
+             f"{totals['roof_triangles']}+kit {totals['kit_triangles']} != total {totals['triangles']}")
     triangle_total = merged_tris or perbuilding_tris or totals["triangles"]
 
     # Stats.
@@ -1319,6 +1771,7 @@ def cmd_generate(args) -> None:
             "sources": os.path.abspath(args.sources) if sources_line else None,
             "roof_rule_baked": args.roof_rule,
             "layouts": layouts,
+            "kit_details": bool(args.kit_details),
         },
         "acquisition": {
             "provenance_features": {
@@ -1414,9 +1867,12 @@ def cmd_generate(args) -> None:
         },
         "materials": {
             "dir": os.path.abspath(args.materials_dir),
-            "roles": [{"name": s["name"], "image": s["image"], "tile_size_meters": s["tile_size_meters"]} for s in mat_specs],
+            "roles": [{"name": s["name"], "image": s["image"],
+                       "tile_size_meters": s.get("tile_size_meters")} for s in emission_specs],
             "pinned_sources": [{k: e[k] for k in ("role", "asset_id", "url")} for e in MATERIAL_TABLE],
         },
+        "kit_details": _kit_stats_section(args, kit_info, kit_run, kit_bld,
+                                          door_skip_by_cleabs, totals, mpg),
         "determinism": {
             "byte_identical_gltf": True,
             "method": "sorted JSON keys, little-endian struct packs, cleabs/partId-ordered iteration, stable sha256 material variants, no timestamps inside glTF/bin",
@@ -1433,7 +1889,46 @@ def cmd_generate(args) -> None:
         "wall_quads": totals["wall_quads"],
         "roof_triangles": totals["roof_triangles"],
         "gabled_applicable": len(gable_eligible),
+        "kit_triangles": totals["kit_triangles"],
     }))
+
+
+def _kit_stats_section(args, kit_info, kit_run, kit_bld, door_skip_by_cleabs,
+                       totals, mpg) -> dict:
+    section: dict = {"enabled": bool(args.kit_details and kit_info)}
+    if not section["enabled"]:
+        return section
+    buildings = kit_bld
+    section.update({
+        "kit": {
+            "slug": kit_info["meta"].get("slug"),
+            "name": kit_info["meta"].get("name"),
+            "page_url": kit_info["meta"].get("page_url"),
+            "zip_sha256": kit_info["meta"].get("zip_sha256"),
+            "license": kit_info["meta"].get("license"),
+            "license_summary": "Kenney Prototype Textures, Creative Commons Zero (CC0 1.0); verbatim statement in materials/KIT-LICENSE.md",
+        },
+        "doors_placed": kit_run["doors"],
+        "door_skip_reasons": dict(sorted(door_skip_by_cleabs.items())),
+        "buildings_with_doors": sum(1 for v in buildings.values() if v["door"]),
+        "windows_placed": kit_run["windows"],
+        "buildings_with_windows": sum(1 for v in buildings.values() if v["windows"]),
+        "chimneys_placed": kit_run["chimneys"],
+        "buildings_with_chimneys": sum(1 for v in buildings.values() if v["chimney"]),
+        "added_triangles": totals["kit_triangles"],
+        "added_materials": 3,
+        "placement_note": "Doors center on the longest wall of the largest part; windows run along outer walls every 3 m above the ground floor skipping 1 m at corners and the door span; one chimney per building on the gabled-baked main part.",
+        "parameters_m": {
+            "door": {"width": DOOR_WIDTH_M, "height": DOOR_HEIGHT_M},
+            "window": {"width": WINDOW_WIDTH_M, "height": WINDOW_HEIGHT_M,
+                       "sill": WINDOW_SILL_M, "spacing": WINDOW_SPACING_M,
+                       "corner_margin": WINDOW_CORNER_MARGIN_M,
+                       "row_spacing": WINDOW_ROW_SPACING_M},
+            "chimney": {"side": CHIMNEY_SIDE_M, "height": CHIMNEY_HEIGHT_M},
+            "inset_game_units": DETAIL_INSET_GAME,
+        },
+    })
+    return section
 
 
 def _variant_distribution(buildings: dict, variant) -> dict:
@@ -1472,9 +1967,11 @@ def self_test() -> None:
     h_game = 4.0 / mpg
     quads = extrude_walls(wm, sq, h_game, mpg, tile, is_hole=False)
     check("square wall quads", quads == 4, f"got {quads}")
-    roof_tris, gable_tris = gabled_roof(rm, wm, sq, h_game, mpg, tile)
+    roof_tris, gable_tris, frame = gabled_roof(rm, wm, sq, h_game, mpg, tile)
     check("square roof tris", roof_tris == 4, f"got {roof_tris}")
     check("square gable ends", gable_tris == 2, f"got {gable_tris}")
+    check("square frame", frame is not None and abs(frame["t_max"] - span / 2.0) < 1e-9,
+          f"frame {frame}")
     total_area = sum(
         _tri_area(rm.pos[rm.idx[i]], rm.pos[rm.idx[i + 1]], rm.pos[rm.idx[i + 2]])
         for i in range(0, len(rm.idx), 3))
@@ -1581,6 +2078,73 @@ def self_test() -> None:
                            [[(8.0, 4.0), (12.0, 4.0), (12.0, 6.0), (8.0, 6.0)]])
     check("bridge vertices", len(bridged) >= 8, f"got {len(bridged)}")
 
+    # 10. Kit details on a tall square: door, windows, chimney.
+    cell = (0.1, 0.2, 0.7, 0.9)
+    big = [(0.0, 0.0), (200.0, 0.0), (200.0, 200.0), (0.0, 200.0)]
+    big_m = 200.0 * mpg  # 60.96 m
+    door, door_reason = door_placement(big, mpg)
+    check("kit door placed", door is not None and door_reason is None,
+          f"{door_reason}")
+    if door:
+        bl, br, tr, tl = door["quad"]
+        n = door["normal"]
+        width = math.dist(bl[:2], br[:2]) * mpg
+        height = (tr[2] - br[2]) * mpg
+        check("kit door width", abs(width - DOOR_WIDTH_M) < 1e-9, f"{width}")
+        check("kit door height", abs(height - DOOR_HEIGHT_M) < 1e-9, f"{height}")
+        check("kit door ground", bl[2] == 0.0 and br[2] == 0.0, f"z {bl[2]} {br[2]}")
+        # door sits on the longest wall: its edge is 200 game units
+        check("kit door longest wall", abs(door["edge_length"] - 200.0) < 1e-9,
+              f"{door['edge_length']}")
+        # inset: quad plane offset 0.1 game units outward from the edge line
+        edge_pts = normalize_ring_ccw(big)
+        i = door["edge_index"]
+        ax, ay = edge_pts[i]
+        bx, by = edge_pts[(i + 1) % len(edge_pts)]
+        dist = abs((bl[0] - ax) * (by - ay) - (bl[1] - ay) * (bx - ax)) / 200.0
+        check("kit door inset", abs(dist - DETAIL_INSET_GAME) < 1e-9, f"{dist}")
+        dm = MeshBuilder()
+        emit_quad(dm, *door["quad"], door["normal"], cell)
+        check("kit door tris", len(dm.idx) == 6, f"{len(dm.idx)}")
+        uv = dm.uv[dm.idx[0]]
+        check("kit door uv cell", abs(uv[0] - cell[0]) < 1e-9 and abs(uv[1] - cell[3]) < 1e-9,
+              f"{uv}")
+    wins = window_placements(big, 12.0, mpg, door)
+    check("kit windows placed", len(wins) > 0, "none")
+    margin = WINDOW_CORNER_MARGIN_M / mpg
+    w_game = WINDOW_WIDTH_M / mpg
+    ok_span = all(margin <= w["s_center"] <= 200.0 - margin for w in wins)
+    check("kit window corner margins", ok_span, "window inside corner margin")
+    door_edge = door["edge_index"] if door else -1
+    skip_half = door["half_w"] + 0.5 / mpg if door else 0.0
+    on_door = [w for w in wins if w["edge_index"] == door_edge
+               and abs(w["s_center"] - door["s_center"]) <= skip_half]
+    check("kit windows skip door span", not on_door, f"{len(on_door)} overlap")
+    sills = window_sills(12.0)
+    check("kit window rows", sills == [1.0, 4.0, 7.0, 10.0], f"{sills}")
+    sill_ok = all(abs((w["quad"][2][2] * mpg) - (w["sill_m"] + WINDOW_HEIGHT_M)) < 1e-9
+                  for w in wins)
+    check("kit window heights", sill_ok, "top mismatch")
+    flat_wins = window_placements(big, 2.0, mpg, door)
+    check("kit windows short building", flat_wins == [], f"{len(flat_wins)}")
+    if frame:
+        place = chimney_placement(frame, mpg)
+        cm = MeshBuilder()
+        tris = emit_chimney(cm, place, cell)
+        check("kit chimney tris", len(cm.idx) // 3 == 10, f"{len(cm.idx) // 3}")
+        check("kit chimney emit count", tris == 10, f"{tris}")
+        f = frame
+        check("kit chimney on roof", place["bottom"] <= place["top"]
+              and f["u_min"] <= place["u_c"] - place["hu"]
+              and place["u_c"] + place["hu"] <= f["u_max"]
+              and abs(place["t_c"]) + place["hn"] <= f["t_max"],
+              "chimney outside roof extent")
+        surface_top = f["ridge_z"] - f["pitch"] * abs(place["t_c"])
+        check("kit chimney height", abs((place["top"] - surface_top) * mpg - CHIMNEY_HEIGHT_M) < 1e-9,
+              f"{place['top']} vs {surface_top}")
+    # flat roof buildings get no chimney: frame is None there (checked via the
+    # gabled_roof early return in test 2's L-shape flat path).
+
     if failures:
         for f in failures:
             print(f"SELF-TEST FAIL: {f}", file=sys.stderr)
@@ -1624,6 +2188,9 @@ def main(argv: list[str]) -> None:
                     help="roof rule baked into the glTFs; both rules' applicability is always counted")
     ap.add_argument("--layouts", default="merged,perbuilding",
                     help="comma-separated layouts: merged,perbuilding")
+    ap.add_argument("--kit-details", action="store_true",
+                    help="add Kenney CC0 kit details (doors, windows, chimneys); "
+                         "requires a kit-enabled materials dir (see --download-materials)")
     args = ap.parse_args(argv)
 
     if args.self_test:
