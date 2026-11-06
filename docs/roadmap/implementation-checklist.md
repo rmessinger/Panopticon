@@ -1686,7 +1686,7 @@ are not supported inputs.
 ### R3: Map package output (depends on B4a-5, H3)
 - [ ] B4b-7 H3 package output through the H2 interchange (blocked on H2/H3, B4a-5).
   - AC: TBD by `WI-H2-01`.
-- [ ] R3 Procedural buildings from footprints, investigation (`WI-R3-01`).
+- [x] R3 Procedural buildings from footprints, investigation (`WI-R3-01`).
   - AC: the Sedan footprints are extruded with CC0 materials, merged and per-building layouts are
     measured, and the deep dive records the recommended layout, roof rule, and sources.
 
