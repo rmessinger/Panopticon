@@ -157,8 +157,8 @@ public sealed class LegacyMapReaderTests
         Assert.Equal(1.5, placed.OrientationRadians);
         Assert.Equal(new AssetReference("legacy", "AmericaTankCrusher"), placed.Type);
         Assert.Equal(2, placed.LegacyProperties.Count);
-        Assert.Equal("400", placed.LegacyProperties["hitpoints"]);
-        Assert.Equal("crusher", placed.LegacyProperties["caption"]);
+        Assert.Equal(new MapPropertyValue.IntegerValue(400), placed.LegacyProperties["hitpoints"]);
+        Assert.Equal(new MapPropertyValue.AsciiStringValue("crusher"), placed.LegacyProperties["caption"]);
     }
 
     [Fact]
@@ -178,6 +178,85 @@ public sealed class LegacyMapReaderTests
         Assert.Equal(200, waypoint.Y.Value);
         Assert.Equal(0, waypoint.Z.Value);
         Assert.Equal(MapQuantityFrame.LegacyEngineZ, waypoint.Z.Frame);
+    }
+
+    [Fact]
+    public void LegacyPropertyKindsRoundTripAsTypedValues()
+    {
+        var mapFile = CreateEmptyMap();
+        var mapObject = new MapObject(new Vector3(1, 2, 3), 0, RoadType.None, "AmericaTankCrusher");
+        mapObject.Properties.AddBoolean("enabled", true);
+        mapObject.Properties.AddInteger("hitpoints", -400);
+        mapObject.Properties.AddReal("scale", 0.625f);
+        mapObject.Properties.AddAsciiString("caption", "crusher");
+        mapObject.Properties.AddUnicodeString("displayName", "Brücke 日本語 ☃");
+        mapFile.ObjectsList.AddObject(mapObject);
+
+        var model = new LegacyMapReader(RoundTrip(mapFile)).Read();
+        var properties = Assert.Single(model.Objects!.Objects).LegacyProperties;
+
+        Assert.Equal(5, properties.Count);
+        Assert.Equal(new MapPropertyValue.BooleanValue(true), properties["enabled"]);
+        Assert.Equal(new MapPropertyValue.IntegerValue(-400), properties["hitpoints"]);
+        Assert.Equal(new MapPropertyValue.RealValue(0.625f), properties["scale"]);
+        Assert.Equal(new MapPropertyValue.AsciiStringValue("crusher"), properties["caption"]);
+        Assert.Equal(new MapPropertyValue.UnicodeStringValue("Brücke 日本語 ☃"), properties["displayName"]);
+    }
+
+    [Fact]
+    public void RoadTypeBitsPassThroughUnmasked()
+    {
+        var mapFile = CreateEmptyMap();
+        mapFile.ObjectsList.AddObject(new MapObject(Vector3.Zero, 0, RoadType.TightCurve, "RoadTightCurve"));
+        mapFile.ObjectsList.AddObject(new MapObject(Vector3.Zero, 0, RoadType.Start | RoadType.Angled | RoadType.Unknown3 | RoadType.Unknown4, "RoadCombined"));
+
+        var model = new LegacyMapReader(RoundTrip(mapFile)).Read();
+        var placed = model.Objects!.Objects;
+
+        Assert.Equal(64u, placed[0].RoadType);
+        Assert.Equal(2u | 8u | 256u | 512u, placed[1].RoadType);
+    }
+
+    [Fact]
+    public void TerrainBordersAreaAndVersionCarryVerbatim()
+    {
+        var mapFile = CreateEmptyMap();
+
+        var model = new LegacyMapReader(mapFile).Read();
+
+        Assert.Equal(new MapTerrainBorder(0, 0, 210, 210), Assert.Single(model.Layout.TerrainBorders));
+        Assert.Equal(211u * 211u, model.Layout.MapArea);
+        Assert.Equal((int)mapFile.HeightMapData.Version, model.Layout.HeightSectionVersion);
+    }
+
+    [Fact]
+    public void UnknownPropertyKindRejectsImport()
+    {
+        var mapFile = CreateEmptyMap();
+        var mapObject = new MapObject(Vector3.Zero, 0, RoadType.None, "AmericaTankCrusher");
+        mapObject.Properties.Add(new AssetProperty("legacyUnknown", AssetPropertyType.Unknown, "payload"));
+        mapFile.ObjectsList.AddObject(mapObject);
+
+        var exception = Assert.Throws<MapImportException>(() => new LegacyMapReader(mapFile).Read());
+
+        var diagnostic = Assert.Single(exception.Diagnostics);
+        Assert.Equal(MapInterchangeDiagnostic.PropertyType, diagnostic.Code);
+    }
+
+    [Fact]
+    public void ObjectsKeepEnumerationOrderWithPositionalIds()
+    {
+        var mapFile = CreateEmptyMap();
+        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(1, 0, 0), 0, RoadType.None, "TypeA"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(2, 0, 0), 1, "Start"));
+        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(3, 0, 0), 0, RoadType.None, "TypeB"));
+
+        var model = new LegacyMapReader(mapFile).Read();
+        var placed = model.Objects!.Objects;
+
+        Assert.Equal(["obj-0", "obj-1", "obj-2"], placed.Select(item => item.StableId).ToArray());
+        Assert.Equal(["TypeA", Panopticon.Scripting.Waypoint.ObjectTypeName, "TypeB"], placed.Select(item => item.Type.Name).ToArray());
+        Assert.Equal([1, 2, 3], placed.Select(item => item.X.Value).ToArray());
     }
 
     [Fact]
@@ -379,6 +458,13 @@ public sealed class LegacyMapReaderTests
     }
 
     private static MapFile CreateEmptyMap() => MapFile.CreateEmpty(PlayableWidth, PlayableHeight, BorderWidth, InitialHeight);
+
+    private static MapFile RoundTrip(MapFile mapFile)
+    {
+        using var written = new MemoryStream();
+        mapFile.WriteTo(written);
+        return MapFile.FromStream(new MemoryStream(written.ToArray()));
+    }
 
     private static HeightLayer Heights(MapInterchange model, int cx, int cy)
     {
