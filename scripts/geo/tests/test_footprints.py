@@ -599,6 +599,57 @@ class TestFootprintsStage(unittest.TestCase):
                 )
             self.assertIn("returned 0 features before numberMatched (10) was reached", str(cm.exception))
 
+    def test_wfs_truncated_body_rejected_without_publish(self):
+        """A page body cut off mid-object fails closed and publishes no manifest, COMPLETED, or receipt."""
+        f1 = make_wfs_feature("BATIMENT0000000001", lon=4.947, lat=49.702)
+        f2 = make_wfs_feature("BATIMENT0000000002", lon=4.948, lat=49.703)
+        full_bytes = json.dumps(make_wfs_response([f1, f2])).encode("utf-8")
+        truncated_bytes = full_bytes[: len(full_bytes) // 2]
+
+        def fake_run_tool(argv, **kwargs):
+            if argv[0] == "cs2cs":
+                return mock_cs2cs(argv, **kwargs)
+            if argv[0] == "curl":
+                return FakeRun(stdout=truncated_bytes)
+            return FakeRun()
+
+        with mock.patch.object(self.seams, "run_tool", side_effect=fake_run_tool):
+            with self.assertRaises(self.seams.Failure) as cm:
+                footprints.run_stage(
+                    profile=self.profile, provider_id=self.provider_id,
+                    workdir=self.workdir, footprint_root=self.footprint_root,
+                    centre=self.centre, size_m=self.size_m, name=self.name,
+                    utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
+                )
+            self.assertIn("unparseable or truncated", str(cm.exception))
+
+        self.assertFalse(os.path.exists(os.path.join(self.footprint_root, f"{self.name}-footprints.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.footprint_root, "preparation", "COMPLETED")))
+        self.assertFalse(os.path.exists(os.path.join(self.footprint_root, "preparation", "receipt.json")))
+
+    def test_wfs_features_exceeding_number_matched_rejected(self):
+        """A page holding more features than numberMatched fails the final consistency check."""
+        f1 = make_wfs_feature("BATIMENT0000000001", lon=4.947, lat=49.702)
+        f2 = make_wfs_feature("BATIMENT0000000002", lon=4.948, lat=49.703)
+        wfs_bytes = json.dumps(make_wfs_response([f1, f2], number_matched=1)).encode("utf-8")
+
+        def fake_run_tool(argv, **kwargs):
+            if argv[0] == "cs2cs":
+                return mock_cs2cs(argv, **kwargs)
+            if argv[0] == "curl":
+                return FakeRun(stdout=wfs_bytes)
+            return FakeRun()
+
+        with mock.patch.object(self.seams, "run_tool", side_effect=fake_run_tool):
+            with self.assertRaises(self.seams.Failure) as cm:
+                footprints.run_stage(
+                    profile=self.profile, provider_id=self.provider_id,
+                    workdir=self.workdir, footprint_root=self.footprint_root,
+                    centre=self.centre, size_m=self.size_m, name=self.name,
+                    utm=self.utm, grid=self.grid, min_footprint_m2=20.0,
+                )
+            self.assertIn("retrieved 2 features but numberMatched was 1", str(cm.exception))
+
     def test_geometry_rejections(self):
         """Unsupported geometry types, unclosed rings, <4 positions, or non-finite coords fail."""
         # 1. Non-MultiPolygon (e.g. Polygon)

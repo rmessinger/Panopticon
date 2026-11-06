@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-R2-03` |
 | Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): real-world structures as impassable regions |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `M` |
 | Prerequisites | `WI-R2-02` (Done; provides `prepare_area.py`, the `ign-fr` profile, and the receipt and ledger contract) |
@@ -76,15 +76,15 @@ Not changed: `scripts/geo/prepare-sedan-proof.sh`, `scripts/geo/sedan_*`, `scrip
 
 ## Acceptance criteria
 
-- [ ] `prepare_area.py --provider ign-fr --prepare` writes the buildings KML, provenance record, `sources.txt`, composed operator manifest, and receipt into a fresh footprint root. The delegate root's extent KML, rasters, manifests, `sources.txt`, and markers are hash-identical before and after, and any wrapper-owned writes are listed in the provenance record.
-- [ ] Warm delegate reuse leaves existing hash-bound roots valid, and the delegate receipt still verifies.
-- [ ] Preflight without `--prepare` writes nothing, spawns nothing, makes no network request, and reports the planned footprint stage.
-- [ ] `--no-footprints` reproduces the delegate behaviour. `--footprints` on `copernicus-glo30` fails with the named capability error. The Copernicus path is unchanged and needs no rerun.
-- [ ] WFS acquisition rejects duplicate IDs, no-progress pages, truncated responses, and inconsistent pages; enforces every cap; and records the Design provenance. The snapshot is reported as observed, never as consistent.
-- [ ] The synthetic mask tests pass, and the zero-cell counter matches the Design semantics in every case listed in step 6.
-- [ ] The operator run records the mask overlay still with metrics and the scripted GIF. The GIF uses only actual Move orders, and the per-frame assertions in step 9 pass.
-- [ ] The operator cleanliness check (`git status --porcelain`) shows only intended files; no WFS response, raw page, buildings KML, or other data file is added.
-- [ ] Standard validation passes.
+- [x] `prepare_area.py --provider ign-fr --prepare` writes the buildings KML, provenance record, `sources.txt`, composed operator manifest, and receipt into a fresh footprint root. The delegate root's extent KML, rasters, manifests, `sources.txt`, and markers are hash-identical before and after, and any wrapper-owned writes are listed in the provenance record.
+- [x] Warm delegate reuse leaves existing hash-bound roots valid, and the delegate receipt still verifies.
+- [x] Preflight without `--prepare` writes nothing, spawns nothing, makes no network request, and reports the planned footprint stage.
+- [x] `--no-footprints` reproduces the delegate behaviour. `--footprints` on `copernicus-glo30` fails with the named capability error. The Copernicus path is unchanged and needs no rerun.
+- [x] WFS acquisition rejects duplicate IDs, no-progress pages, truncated responses, and inconsistent pages; enforces every cap; and records the Design provenance. The snapshot is reported as observed, never as consistent.
+- [x] The synthetic mask tests pass, and the zero-cell counter matches the Design semantics in every case listed in step 6.
+- [x] The operator run records the mask overlay still with metrics and the scripted GIF. The GIF uses only actual Move orders, and the per-frame assertions in step 9 pass.
+- [x] The operator cleanliness check (`git status --porcelain`) shows only intended files; no WFS response, raw page, buildings KML, or other data file is added.
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -121,3 +121,5 @@ The preflight example writes nothing. `--prepare` runs and the `--footprints` ru
 - Keep Status `Ready` until implementation starts. Set `Done` or `Blocked` only with the Architect's direction.
 - Tick the R2 building footprints item in the checklist and update the README Track R progress rows only on `Done`.
 - Add a `Result:` line only on completion: date, what changed, validation outcome, follow-up cards.
+
+Result: 2026-11-05. Added the `ign-fr` `footprints` block and capability, the footprint stage in `prepare_area.py` (paged WFS fetch, caps, projected area filter, provenance, receipt), the `--footprints`, `--no-footprints`, `--min-footprint-m2`, and `--footprint-root` CLI, the `ZeroCellMappedPolygonFeatureCount` counter, and `BuildingFootprintMaskTests.cs`. The accepted v3 operator run wrote the buildings KML, provenance record, `sources.txt`, composed manifest, and receipt into a fresh root, left the delegate root hash-identical, and verified warm delegate reuse. The overlay still and outlines-v2 GIF were rendered from actual Move orders, and the per-frame checker (Checks 1 to 6, 3600 samples) exited 0. This external evidence is not committed, because the card forbids committing IGN-derived data. Validation: solution suite 4681 passed, 2 failed (the known TF-07 failure and an order-dependent flake proven on base `b36c8c08`, neither in R2-03 areas), 7 install-gated skips, 4690 total; geo stdlib 811 (788 passed, 23 skipped); geo venv 811 passed; `scripts/tests` 53 of 53; solution build 0 errors; `dotnet format` verify clean. Step 4's literal fixture `test/Panopticon.Geospatial.Tests/Examples/building-footprints.json` was not created and is superseded: its intent (both rule shapes and deserialization) is covered by `ManifestLoaderTests`, the exact-dict assertions on both building rules in `test_footprints.py`, and the `FeatureMapperTests` propagation tests. WFS rejection and cap evidence is in `scripts/geo/tests/test_footprints.py`: `test_wfs_duplicate_cleabs_rejected`, `test_wfs_no_progress_rejected`, `test_wfs_truncated_body_rejected_without_publish`, `test_wfs_features_exceeding_number_matched_rejected`, `test_wfs_number_returned_mismatch_rejected`, `test_wfs_number_matched_change_rejected`, and the per-response, total-bytes, page, feature, and timeout cap tests. A live three-page sorted run recorded per-request timestamps as observed. Follow-up: `WI-R3-01` unblocked. Evidence and limits: [deep dive §8.1](../../deep-dives/r-real-world-terrain.md#81-early-operator-proof-r2).

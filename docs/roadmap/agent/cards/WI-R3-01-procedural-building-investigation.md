@@ -4,10 +4,10 @@
 |---|---|
 | Card ID | `WI-R3-01` |
 | Roadmap phase | [Track R · R3](../../track-r-real-world-terrain.md): structure representation ahead of map package output |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `investigation` |
 | Effort | `M` |
-| Prerequisites | `WI-R2-03` (driver-owned buildings KML and its provenance record) |
+| Prerequisites | `WI-R2-03` (Done; driver-owned buildings KML and its provenance record) |
 | Diagrams | none; the recommendation feeds R3 diagrams |
 
 ## Goal
