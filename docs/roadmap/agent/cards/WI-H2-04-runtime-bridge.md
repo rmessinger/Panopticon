@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2-04` |
 | Roadmap phase | [Track H · H2](../../track-h-storage-formats.md): interchange abstraction |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `M` |
 | Prerequisites | `WI-H2-03` |
@@ -37,10 +37,10 @@ Materialize resident terrain, masks, and placed objects from `MapInterchange` at
 
 ## Acceptance criteria
 
-- [ ] The load path resolves a map source through the seam and materializes resident terrain, masks, and placed objects from `MapInterchange`.
-- [ ] `TerrainVisual`, `PartitionCellManager`, and `Scene3D` consume the same resident structures as before the bridge.
-- [ ] Interchange loading matches legacy loading for the suite maps per `MapFileTests` and the P0 assertion layer.
-- [ ] Failed model validation publishes no resident content and reports typed diagnostics.
+- [x] The load path resolves a map source through the seam and materializes resident terrain, masks, and placed objects from `MapInterchange`.
+- [x] `TerrainVisual`, `PartitionCellManager`, and `Scene3D` consume the same resident structures as before the bridge.
+- [x] Interchange loading matches legacy loading for the suite maps per `MapFileTests` and the P0 assertion layer.
+- [x] Failed model validation publishes no resident content and reports typed diagnostics.
 
 ## Validation commands
 
@@ -56,5 +56,6 @@ No chunk residency or paging (B4a owns it), no H3 serialization, no write path, 
 
 ## On completion
 
+- Result: 2026-11-06 done: added `RuntimeBridge` (`src/Panopticon.Simulation/Content/Importing/MapSources/RuntimeBridge.cs`) that materializes heights, borders, area, `RoadType`, typed map properties, placed objects, and the `Impassable` feed from a validated `MapInterchange`; `HeightMapData.FromMaterialized`; a `Navigation` impassability feed overload; the `Game.LoadMap` seam (`MapReaderFactory`) with `Scene3D` and `Terrain` wiring. Transitional backend: `BlendTileData`, water areas, `GlobalLighting`, `NamedCameras`, `WaypointsList` paths, and Sides/Teams/Scripts remain on the parsed `MapFile`. Validation: `dotnet build src/Panopticon.Simulation -v minimal` 0 errors, 0 warnings; focused `FullyQualifiedName~MapFile|RuntimeBridge|LegacyMapReader|MapInterchange` with `CNC_GENERALS_PATH` set: 114 passed, 1 failed, 0 skipped of 115. The failure is `MapFileTests.CanRoundtripMaps`, tracked as `TF-06` in `test/known-failures.json` since `82b2804` with identical expected and actual values (2908861 and 2908978). Follow-up: package readers `WI-H3-01` and `WI-H3-02`, with the must-supply list in the H2 runtime bridge responsibilities section of the deep dive. MCP:PENDING
 - Set Status above to `Done` or `Blocked`.
 - Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

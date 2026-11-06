@@ -24,7 +24,7 @@ by `WI-H1-01`, [B4a larger maps](../deep-dives/b4a-larger-maps.md), and
 | [`WI-H2-01`](../agent/cards/WI-H2-01-map-interchange-design.md) | H2 | H2 map interchange design | Done | `WI-H1-02` |
 | [`WI-H2-02`](../agent/cards/WI-H2-02-interchange-types.md) | H2 | Interchange types | Done | `WI-H2-01` |
 | [`WI-H2-03`](../agent/cards/WI-H2-03-legacy-reader-seam.md) | H2 | Reader seam and legacy adapter | Done | `WI-H2-02` |
-| [`WI-H2-04`](../agent/cards/WI-H2-04-runtime-bridge.md) | H2 | Runtime bridge and parity | Draft | `WI-H2-03` |
+| [`WI-H2-04`](../agent/cards/WI-H2-04-runtime-bridge.md) | H2 | Runtime bridge and parity | Done | `WI-H2-03` |
 | [`WI-H3-01`](../agent/cards/WI-H3-01-map-package-manifest-schema.md) | H3 | Manifest schema | Draft | `WI-H2-01` |
 | [`WI-H3-02`](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md) | H3 | Chunk layer reader and writer | Draft | `WI-H2-01`, `WI-H3-01` |
 | [`WI-H3-03`](../agent/cards/WI-H3-03-legacy-to-package-importer-hooks.md) | H3 | Legacy `MapFile` to package hooks | Draft | `WI-H2-01`, `WI-H3-01`, `WI-H3-02` |
