@@ -411,6 +411,13 @@ Nodata and edge policy:
 - Coverage outside a source footprint uses the separate `edgePolicy` (`fail`, bounded nearest-edge, or constant) and is counted apart from in-raster nodata (section 4).
 - Fill counts and affected bounds go to `ImportReport`. Heights in the model are finite.
 
+Adapter rules for legacy maps, implemented behind the reader seam:
+
+- The layout declares whole-map lattice dimensions; chunks tile that lattice, and edge chunks carry partial cores of `min(129, lattice - chunk * 128)` points per axis.
+- A chunk stores its core plus one apron sample per side.
+- Apron samples are compared by lattice point between real neighbours; map-edge aprons are the adapter's clamp policy and are not compared.
+- Legacy maps carry heights-only chunks: materials and masks are absent from every chunk or from none.
+
 ### Masks and palette semantics
 
 Palette index space:

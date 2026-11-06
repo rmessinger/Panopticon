@@ -321,10 +321,45 @@ public sealed class MapInterchangeValidationTests
 
         Assert.Equal(131 * 131, chunks[0].Heights.Samples.Count);
         Assert.Equal(74 * 131, chunks[1].Heights.Samples.Count);
-        Assert.Equal(129 * 129, chunks[0].Materials.Indices.Count);
-        Assert.Equal(72 * 129, chunks[1].Materials.Indices.Count);
-        Assert.Equal(72 * 129, chunks[1].Masks.Flags.Count);
+        Assert.Equal(129 * 129, chunks[0].Materials!.Indices.Count);
+        Assert.Equal(72 * 129, chunks[1].Materials!.Indices.Count);
+        Assert.Equal(72 * 129, chunks[1].Masks!.Flags.Count);
         Assert.Empty(MapInterchangeValidator.Validate(model));
+    }
+
+    [Fact]
+    public void HeightsOnlyChunksPass()
+    {
+        var model = WithoutMaterialsAndMasks(BuildValidModel());
+
+        Assert.All(model.Layout.Chunks, chunk => Assert.Null(chunk.Materials));
+        Assert.All(model.Layout.Chunks, chunk => Assert.Null(chunk.Masks));
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+    }
+
+    [Fact]
+    public void PartialMaterialCoverageFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { Chunks = [StripLayers(model.Layout.Chunks[0]), model.Layout.Chunks[1]] };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LayersConsistency);
+    }
+
+    [Fact]
+    public void PartialMaskCoverageFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { Chunks = [model.Layout.Chunks[0], StripLayers(model.Layout.Chunks[1])] };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LayersConsistency);
+    }
+
+    private static Chunk StripLayers(Chunk chunk) => chunk with { Materials = null, Masks = null };
+
+    private static MapInterchange WithoutMaterialsAndMasks(MapInterchange model)
+    {
+        return model with { Layout = model.Layout with { Chunks = [.. model.Layout.Chunks.Select(StripLayers)] } };
     }
 
     [Fact]
