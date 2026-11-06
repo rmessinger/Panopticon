@@ -42,11 +42,42 @@ def make_chunk_bytes(
     return bytes(buf)
 
 
+def make_footprint_feature(
+    outer_coords: list[tuple[float, float]],
+    inner_holes: list[list[tuple[float, float]]] | None = None,
+    kind: str = "passability",
+    source_id: str = "src-1",
+    feature_id: str = "feat-1",
+    part_id: str = "part-0",
+    rule_index: int = 0,
+) -> dict[str, Any]:
+    """Create a synthetic building footprint feature item with game-coordinate polygon geometry."""
+    outer_positions = [{"x": x, "y": y} for x, y in outer_coords]
+    inner_rings = []
+    if inner_holes:
+        for hole in inner_holes:
+            inner_rings.append({"positions": [{"x": x, "y": y} for x, y in hole]})
+    return {
+        "kind": kind,
+        "sourceId": source_id,
+        "featureId": feature_id,
+        "partId": part_id,
+        "ruleIndex": rule_index,
+        "geometry": {
+            "type": "polygon",
+            "outerRing": {"positions": outer_positions},
+            "innerRings": inner_rings,
+        },
+    }
+
+
 def create_synthetic_payload(
     payload_dir: str,
     chunks_x: int = 2,
     chunks_y: int = 2,
     chunk_buffers: dict[tuple[int, int], bytes] | None = None,
+    features: dict[str, Any] | None = None,
+    features_items: list[dict[str, Any]] | None = None,
 ) -> str:
     """Write synthetic payload.json and mask files."""
     masks_dir = os.path.join(payload_dir, "masks")
@@ -73,6 +104,12 @@ def create_synthetic_payload(
                 },
             })
 
+    if features is None:
+        if features_items is not None:
+            features = {"items": features_items}
+        else:
+            features = {"items": []}
+
     payload_json = {
         "kind": "panopticon-geospatial-payload",
         "schemaVersion": 1,
@@ -86,6 +123,7 @@ def create_synthetic_payload(
             },
         },
         "chunks": chunks_list,
+        "features": features,
     }
 
     payload_json_path = os.path.join(payload_dir, "payload.json")
@@ -182,7 +220,7 @@ class TestCheckCaptureVsMasks(unittest.TestCase):
             json.dump(self.manifest, f, indent=2)
 
     def test_pass_case(self) -> None:
-        """Verify standard scenario passes all 4 checks and outputs summary line."""
+        """Verify standard scenario passes all 6 checks and outputs summary line."""
         passed, checks, summary = checker_mod.validate_capture(
             manifest_path=self.manifest_path,
             payload_path=self.payload_dir,
@@ -190,7 +228,7 @@ class TestCheckCaptureVsMasks(unittest.TestCase):
             tolerance=60.0,
         )
         self.assertTrue(passed)
-        self.assertEqual(len(checks), 4)
+        self.assertEqual(len(checks), 6)
         for check in checks:
             self.assertTrue(check.passed, f"Check failed: {check.name} - {check.summary}")
 
@@ -427,6 +465,8 @@ class TestCheckCaptureVsMasks(unittest.TestCase):
         self.assertIn("[PASS] Check 2", proc.stdout)
         self.assertIn("[PASS] Check 3", proc.stdout)
         self.assertIn("[PASS] Check 4", proc.stdout)
+        self.assertIn("[PASS] Check 5", proc.stdout)
+        self.assertIn("[PASS] Check 6", proc.stdout)
         self.assertIn("Summary:", proc.stdout)
 
         # Invalidate goal to test exit code 1
@@ -436,6 +476,298 @@ class TestCheckCaptureVsMasks(unittest.TestCase):
         proc_fail = subprocess.run(cmd, capture_output=True, text=True)
         self.assertEqual(proc_fail.returncode, 1)
         self.assertIn("[FAIL] Check 2", proc_fail.stdout)
+
+    def test_round_hit_floor_miss_graze(self) -> None:
+        """Verify fractional coordinate in floor-free cell fails Check 1 but passes Check 5."""
+        # Cell (col 21, row 20) is Impassable, cell (col 20, row 20) is free.
+        # At X=207.0, Y=200.0 (spacing=10.0):
+        # round(207.0 / 10.0) = 21 -> cell (21, 20) (impassable -> Check 1 fails)
+        # floor(207.0 / 10.0) = 20 -> cell (20, 20) (free -> Check 5 passes)
+        c00 = make_chunk_bytes(impassable_cells=[(20, 21)])
+        chunk_map = {
+            (0, 0): c00,
+            (1, 0): make_chunk_bytes(),
+            (0, 1): make_chunk_bytes(),
+            (1, 1): make_chunk_bytes(),
+        }
+        create_synthetic_payload(self.payload_dir, chunks_x=2, chunks_y=2, chunk_buffers=chunk_map)
+
+        self.profile["Actors"][0]["X"] = 200.0
+        self.profile["Actors"][0]["Y"] = 200.0
+        self.profile["Commands"][0]["X"] = 207.0
+        self.profile["Commands"][0]["Y"] = 200.0
+        self.profile["StraightLineExemption"] = "Round vs floor graze test"
+
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 200.0, "WorldY": 200.0}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 15,
+                "Actors": [{"Id": "unit-1", "WorldX": 207.0, "WorldY": 200.0}],
+            },
+        ]
+        self._write_files()
+
+        passed, checks, _ = checker_mod.validate_capture(
+            manifest_path=self.manifest_path,
+            payload_path=self.payload_dir,
+            profile_path=self.profile_path,
+        )
+        self.assertFalse(passed)
+        self.assertFalse(checks[0].passed, "Check 1 should fail on round-mapped cell")
+        self.assertIn("carries Impassable bit", checks[0].details[0])
+        self.assertTrue(checks[4].passed, "Check 5 should pass on floor-mapped cell")
+
+    def test_swept_segment_crossing_polygon_interior_fails(self) -> None:
+        """Verify segment crossing polygon interior fails Check 6 even with both endpoints outside."""
+        fp = make_footprint_feature(
+            outer_coords=[(300.0, 300.0), (400.0, 300.0), (400.0, 400.0), (300.0, 400.0)],
+            source_id="src-bldg",
+            feature_id="bldg-1",
+            part_id="part-0",
+        )
+        create_synthetic_payload(self.payload_dir, features_items=[fp])
+
+        # Start at (200, 350) and end at (500, 350) - both strictly outside [300, 400]x[300, 400]
+        self.profile["Actors"][0]["X"] = 200.0
+        self.profile["Actors"][0]["Y"] = 350.0
+        self.profile["Commands"][0]["X"] = 500.0
+        self.profile["Commands"][0]["Y"] = 350.0
+        self.profile["StraightLineExemption"] = "Swept interior crossing test"
+
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 200.0, "WorldY": 350.0}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 30,
+                "Actors": [{"Id": "unit-1", "WorldX": 500.0, "WorldY": 350.0}],
+            },
+        ]
+        self._write_files()
+
+        passed, checks, _ = checker_mod.validate_capture(
+            manifest_path=self.manifest_path,
+            payload_path=self.payload_dir,
+            profile_path=self.profile_path,
+        )
+        self.assertFalse(passed)
+        self.assertFalse(checks[5].passed, "Check 6 should fail on swept segment crossing polygon interior")
+        self.assertTrue(any("crosses polygon" in d for d in checks[5].details))
+        self.assertFalse(any(d.startswith("point:") for d in checks[5].details))
+
+    def test_swept_segment_graze_outside_passes(self) -> None:
+        """Verify segment passing <= 0.5 units outside polygon edge passes Check 6."""
+        fp = make_footprint_feature(
+            outer_coords=[(300.0, 300.0), (400.0, 300.0), (400.0, 400.0), (300.0, 400.0)],
+            source_id="src-bldg",
+            feature_id="bldg-1",
+            part_id="part-0",
+        )
+        create_synthetic_payload(self.payload_dir, features_items=[fp])
+
+        # Top edge is at Y=400.0. Segment passes at Y=400.5 (0.5u outside)
+        self.profile["Actors"][0]["X"] = 200.0
+        self.profile["Actors"][0]["Y"] = 400.5
+        self.profile["Commands"][0]["X"] = 500.0
+        self.profile["Commands"][0]["Y"] = 400.5
+        self.profile["StraightLineExemption"] = "Swept graze outside test"
+
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 200.0, "WorldY": 400.5}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 30,
+                "Actors": [{"Id": "unit-1", "WorldX": 500.0, "WorldY": 400.5}],
+            },
+        ]
+        self._write_files()
+
+        passed, checks, _ = checker_mod.validate_capture(
+            manifest_path=self.manifest_path,
+            payload_path=self.payload_dir,
+            profile_path=self.profile_path,
+        )
+        self.assertTrue(passed)
+        self.assertTrue(checks[5].passed, "Check 6 should pass when segment is outside polygon edge")
+        self.assertEqual(len(checks[5].details), 0)
+
+    def test_swept_segment_through_hole_passes(self) -> None:
+        """Verify segment moving through polygon hole (innerRings) passes Check 6."""
+        # Outer ring 100..700, inner hole 300..500
+        fp = make_footprint_feature(
+            outer_coords=[(100.0, 100.0), (700.0, 100.0), (700.0, 700.0), (100.0, 700.0)],
+            inner_holes=[[(300.0, 300.0), (500.0, 300.0), (500.0, 500.0), (300.0, 500.0)]],
+            source_id="src-bldg",
+            feature_id="bldg-hole",
+            part_id="part-0",
+        )
+        create_synthetic_payload(self.payload_dir, features_items=[fp])
+
+        # Segment runs from (350, 400) to (450, 400) entirely inside the hole
+        self.profile["Actors"][0]["X"] = 350.0
+        self.profile["Actors"][0]["Y"] = 400.0
+        self.profile["Commands"][0]["X"] = 450.0
+        self.profile["Commands"][0]["Y"] = 400.0
+        self.profile["StraightLineExemption"] = "Inside hole test"
+
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 350.0, "WorldY": 400.0}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 30,
+                "Actors": [{"Id": "unit-1", "WorldX": 450.0, "WorldY": 400.0}],
+            },
+        ]
+        self._write_files()
+
+        passed, checks, _ = checker_mod.validate_capture(
+            manifest_path=self.manifest_path,
+            payload_path=self.payload_dir,
+            profile_path=self.profile_path,
+        )
+        self.assertTrue(passed)
+        self.assertTrue(checks[5].passed, "Check 6 should pass when segment is entirely in polygon hole")
+        self.assertEqual(len(checks[5].details), 0)
+
+    def test_spawn_sample_inside_polygon_fails(self) -> None:
+        """Verify spawn sample inside a polygon fails Check 6."""
+        fp = make_footprint_feature(
+            outer_coords=[(200.0, 200.0), (400.0, 200.0), (400.0, 400.0), (200.0, 400.0)],
+            source_id="src-bldg",
+            feature_id="bldg-spawn",
+            part_id="part-0",
+        )
+        create_synthetic_payload(self.payload_dir, features_items=[fp])
+
+        # Unit spawns at (300, 300) inside the footprint
+        self.profile["Actors"][0]["X"] = 300.0
+        self.profile["Actors"][0]["Y"] = 300.0
+        self.profile["Commands"][0]["X"] = 300.0
+        self.profile["Commands"][0]["Y"] = 300.0
+        self.profile["StraightLineExemption"] = "Spawn inside test"
+
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 300.0, "WorldY": 300.0}],
+            },
+        ]
+        self._write_files()
+
+        passed, checks, _ = checker_mod.validate_capture(
+            manifest_path=self.manifest_path,
+            payload_path=self.payload_dir,
+            profile_path=self.profile_path,
+        )
+        self.assertFalse(passed)
+        self.assertFalse(checks[5].passed, "Check 6 should fail when spawn position is inside polygon")
+        self.assertTrue(any(d.startswith("point:") and "inside polygon" in d for d in checks[5].details))
+
+    def test_non_finite_polygon_coord_fails_closed(self) -> None:
+        """Verify non-finite polygon coordinate fails closed with CaptureCheckerError."""
+        bad_feature = {
+            "kind": "passability",
+            "sourceId": "src-bad",
+            "featureId": "feat-bad",
+            "partId": "part-0",
+            "ruleIndex": 0,
+            "geometry": {
+                "type": "polygon",
+                "outerRing": {
+                    "positions": [
+                        {"x": float("nan"), "y": 200.0},
+                        {"x": 300.0, "y": 200.0},
+                        {"x": 300.0, "y": 300.0},
+                    ]
+                },
+                "innerRings": [],
+            },
+        }
+        create_synthetic_payload(self.payload_dir, features_items=[bad_feature])
+
+        with self.assertRaises(checker_mod.CaptureCheckerError) as cm:
+            checker_mod.validate_capture(
+                manifest_path=self.manifest_path,
+                payload_path=self.payload_dir,
+                profile_path=self.profile_path,
+            )
+        self.assertIn("non-finite coordinates", str(cm.exception))
+
+    def test_demotion_flag_cli_execution(self) -> None:
+        """Verify CLI exits nonzero on round hit by default, and zero with --generic-mask-diagnostic-only."""
+        c00 = make_chunk_bytes(impassable_cells=[(20, 21)])
+        chunk_map = {
+            (0, 0): c00,
+            (1, 0): make_chunk_bytes(),
+            (0, 1): make_chunk_bytes(),
+            (1, 1): make_chunk_bytes(),
+        }
+        create_synthetic_payload(self.payload_dir, chunks_x=2, chunks_y=2, chunk_buffers=chunk_map)
+
+        self.profile["Actors"][0]["X"] = 200.0
+        self.profile["Actors"][0]["Y"] = 200.0
+        self.profile["Commands"][0]["X"] = 207.0
+        self.profile["Commands"][0]["Y"] = 200.0
+        self.profile["StraightLineExemption"] = "Demotion CLI test"
+
+        self.manifest["Frames"] = [
+            {
+                "Index": 0,
+                "AbsoluteLogicFrame": 0,
+                "Actors": [{"Id": "unit-1", "WorldX": 200.0, "WorldY": 200.0}],
+            },
+            {
+                "Index": 1,
+                "AbsoluteLogicFrame": 15,
+                "Actors": [{"Id": "unit-1", "WorldX": 207.0, "WorldY": 200.0}],
+            },
+        ]
+        self._write_files()
+
+        cmd = [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--manifest",
+            self.manifest_path,
+            "--payload",
+            self.payload_dir,
+            "--profile",
+            self.profile_path,
+        ]
+
+        # By default, Check 1 is gating -> exits 1
+        proc_default = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertEqual(proc_default.returncode, 1, f"STDOUT:\n{proc_default.stdout}\nSTDERR:\n{proc_default.stderr}")
+        self.assertIn("[FAIL] Check 1", proc_default.stdout)
+        self.assertIn("[gating]", proc_default.stdout)
+        self.assertIn("carries Impassable bit", proc_default.stdout)
+        self.assertIn("Verdict: FAIL", proc_default.stdout)
+
+        # With --generic-mask-diagnostic-only, Check 1 is diagnostic -> exits 0 while still printing diagnostic
+        cmd_demoted = cmd + ["--generic-mask-diagnostic-only"]
+        proc_demoted = subprocess.run(cmd_demoted, capture_output=True, text=True)
+        self.assertEqual(proc_demoted.returncode, 0, f"STDOUT:\n{proc_demoted.stdout}\nSTDERR:\n{proc_demoted.stderr}")
+        self.assertIn("[FAIL] Check 1", proc_demoted.stdout)
+        self.assertIn("[diagnostic]", proc_demoted.stdout)
+        self.assertIn("carries Impassable bit", proc_demoted.stdout)
+        self.assertIn("Verdict: PASS", proc_demoted.stdout)
 
 
 if __name__ == "__main__":
