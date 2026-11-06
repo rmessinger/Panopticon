@@ -9,6 +9,8 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string ChunkInventory = "chunk-inventory";
 
+    public const string LatticeDimensions = "lattice-dimensions";
+
     public const string HeightLength = "height-length";
 
     public const string HeightFinite = "height-finite";
@@ -24,6 +26,10 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
     public const string PaletteIndex = "palette-index";
 
     public const string PaletteDuplicateIndex = "palette-duplicate-index";
+
+    public const string LayersConsistency = "layers-consistency";
+
+    public const string SidesListVersion = "sideslist-version";
 
     public const string ImageryConsistency = "imagery-consistency";
 

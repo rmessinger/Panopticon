@@ -7,6 +7,8 @@ public static class MapChunkGeometry
 {
     public const int CorePointsPerAxis = 129;
 
+    public const int IntervalsPerChunkAxis = CorePointsPerAxis - 1;
+
     public const int ApronSamplesPerSide = 1;
 
     public const int StoredPointsPerAxis = CorePointsPerAxis + 2 * ApronSamplesPerSide;

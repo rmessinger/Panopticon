@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace Panopticon.Content.Importing.Maps;
@@ -17,23 +18,28 @@ namespace Panopticon.Content.Importing.Maps;
 /// and retained-section version semantic validity are reader and adapter responsibilities (WI-H2-03);
 /// this contract defines no legacy version table. Retained sections are checked for a known name, a
 /// non-negative version, non-empty bytes, and a matching SHA-256 digest.
-/// Stored height layout mirrors the Geospatial TerrainChunk contract: a row-major 131 x 131 array
-/// whose row 0 is the southern apron, row 130 the northern apron, column 0 the western apron, and
-/// column 130 the eastern apron. Core lattice point (i, j) with i and j in 0..128 maps to stored
-/// row j + 1 and column i + 1, so rows run south to north and columns west to east. The shared core
-/// edge point of horizontally adjacent chunks appears twice (core column 128 of the west chunk and
-/// core column 0 of the east chunk) and must hold one value; the same holds vertically for core
-/// row 128 of the south chunk and core row 0 of the north chunk. Where a neighbour exists, each
-/// apron sample equals the neighbour's core sample at the lattice point one interval inside the
-/// neighbour: east apron against the east neighbour's core column 1, west apron against the west
-/// neighbour's core column 127, north apron against the north neighbour's core row 1, south apron
-/// against the south neighbour's core row 127.
+/// Chunk (cx, cy) covers whole-map lattice points from cx * 128 horizontally and cy * 128 vertically.
+/// Its core spans coreW = min(129, LatticeWidth - cx * 128) columns and coreH = min(129, LatticeHeight -
+/// cy * 128) rows. Adjacent chunks share one edge lattice point. The stored height array is row-major
+/// with (coreW + 2) columns and (coreH + 2) rows: row 0 is the southern apron, the last row the
+/// northern apron, column 0 the western apron, and the last column the eastern apron. Core lattice
+/// point (i, j) maps to stored row j + 1 and column i + 1, so rows run south to north and columns west
+/// to east. Material and mask arrays hold coreW x coreH values. Materials and masks are optional per
+/// chunk, but consistent only all-or-none across chunks (layers-consistency); the palette checks apply
+/// only when materials are present, and heights remain required on every chunk. The shared core edge
+/// point of
+/// horizontally adjacent chunks appears twice (core column coreW - 1 of the west chunk and core column
+/// 0 of the east chunk) and must hold one value; the same holds vertically. Where a neighbour exists,
+/// each apron sample equals the neighbouring chunk's core sample at the same lattice point. The east
+/// apron lies on lattice column (cx + 1) * 128 + 1, core column 1 of the east neighbour; the west apron
+/// on lattice column cx * 128 - 1, core column 127 of the west neighbour; the north and south aprons
+/// follow by lattice row (north core row 1, south core row 127). Map-edge aprons follow the adapter's
+/// clamp policy and are not validated. Seam and apron checks run only between chunks that are lattice
+/// neighbours.
 /// </remarks>
 public static class MapInterchangeValidator
 {
-    private const int StoredAxis = MapChunkGeometry.StoredPointsPerAxis;
-
-    private const int CoreAxis = MapChunkGeometry.CorePointsPerAxis;
+    private const int IntervalsPerChunkAxis = MapChunkGeometry.IntervalsPerChunkAxis;
 
     private const int MaxPaletteEntries = 256;
 
@@ -50,11 +56,13 @@ public static class MapInterchangeValidator
         RequireComponent(map.Report, nameof(MapInterchange.Report), diagnostics);
         RequireComponent(map.RetainedSections, nameof(MapInterchange.RetainedSections), diagnostics);
 
+        ValidateLatticeDimensions(map.Layout, diagnostics);
+        TerrainLayout? sized = map.Layout is { } layout && LatticeIsPositive(layout) ? layout : null;
         var chunks = ValidateChunkInventory(map, diagnostics);
-        ValidateLayers(chunks, diagnostics);
+        ValidateLayers(sized, chunks, diagnostics);
         ValidatePalette(map, chunks, diagnostics);
         ValidateImagery(chunks, diagnostics);
-        ValidateSeamsAndAprons(chunks, diagnostics);
+        ValidateSeamsAndAprons(sized, chunks, diagnostics);
         ValidateLayoutQuantities(map, diagnostics);
         var stableIds = new HashSet<string>();
         ValidatePlacements(map, stableIds, diagnostics);
@@ -92,6 +100,38 @@ public static class MapInterchangeValidator
             MapInterchangeDiagnostic.NullComponent,
             $"Required component '{name}' is null; its dependent checks are skipped."));
     }
+
+    private static void ValidateLatticeDimensions(TerrainLayout? layout, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (layout is null)
+        {
+            return;
+        }
+
+        if (!LatticeIsPositive(layout))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.LatticeDimensions,
+                $"TerrainLayout lattice is {layout.LatticeWidth} x {layout.LatticeHeight} points; both must be positive."));
+            return;
+        }
+
+        var expectedChunksX = ChunksForLattice(layout.LatticeWidth);
+        var expectedChunksY = ChunksForLattice(layout.LatticeHeight);
+
+        if (layout.ChunksX == expectedChunksX && layout.ChunksY == expectedChunksY)
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.LatticeDimensions,
+            $"Chunk grid {layout.ChunksX} x {layout.ChunksY} does not tile the {layout.LatticeWidth} x {layout.LatticeHeight} lattice; the grid requires {expectedChunksX} x {expectedChunksY}."));
+    }
+
+    private static bool LatticeIsPositive(TerrainLayout layout) => layout.LatticeWidth > 0 && layout.LatticeHeight > 0;
+
+    private static long ChunksForLattice(int latticePoints) => (latticePoints - 1L + IntervalsPerChunkAxis - 1) / IntervalsPerChunkAxis;
 
     private static Dictionary<ChunkKey, Chunk> ValidateChunkInventory(MapInterchange map, List<MapInterchangeDiagnostic> diagnostics)
     {
@@ -172,13 +212,16 @@ public static class MapInterchangeValidator
         return chunks;
     }
 
-    private static void ValidateLayers(Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
+    private static void ValidateLayers(TerrainLayout? sized, Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
     {
         var definedBits = (byte)(MapMaskFlags.Impassable | MapMaskFlags.Unbuildable);
+        var chunksWithMaterials = 0;
+        var chunksWithMasks = 0;
 
         foreach (var chunk in chunks.Values)
         {
             var name = Describe(chunk.Key);
+            ChunkExtent? extent = sized is null ? null : ChunkExtent.Of(sized, chunk.Key);
             var heights = chunk.Heights;
 
             if (heights is null)
@@ -189,11 +232,11 @@ public static class MapInterchangeValidator
             {
                 AddNullComponent(diagnostics, $"Chunk {name} Heights.Samples");
             }
-            else if (heights.Samples.Count != MapChunkGeometry.StoredHeightSamplesPerChunk)
+            else if (extent is { } heightExtent && heights.Samples.Count != heightExtent.StoredSampleCount)
             {
                 diagnostics.Add(new MapInterchangeDiagnostic(
                     MapInterchangeDiagnostic.HeightLength,
-                    $"Chunk {name} stores {heights.Samples.Count} height samples; expected {MapChunkGeometry.StoredHeightSamplesPerChunk} ({StoredAxis} x {StoredAxis})."));
+                    $"Chunk {name} stores {heights.Samples.Count} height samples; expected {heightExtent.StoredSampleCount} ({heightExtent.StoredWidth} x {heightExtent.StoredHeight})."));
             }
             else
             {
@@ -213,28 +256,30 @@ public static class MapInterchangeValidator
 
             var materials = chunk.Materials;
 
-            if (materials is null)
+            if (materials is not null)
             {
-                AddNullComponent(diagnostics, $"Chunk {name} Materials");
-            }
-            else if (materials.Indices is null)
-            {
-                AddNullComponent(diagnostics, $"Chunk {name} Materials.Indices");
-            }
-            else if (materials.Indices.Count != MapChunkGeometry.CoreCellsPerChunk)
-            {
-                diagnostics.Add(new MapInterchangeDiagnostic(
-                    MapInterchangeDiagnostic.MaterialLength,
-                    $"Chunk {name} stores {materials.Indices.Count} material indices; expected {MapChunkGeometry.CoreCellsPerChunk} ({CoreAxis} x {CoreAxis})."));
+                chunksWithMaterials++;
+
+                if (materials.Indices is null)
+                {
+                    AddNullComponent(diagnostics, $"Chunk {name} Materials.Indices");
+                }
+                else if (extent is { } materialExtent && materials.Indices.Count != materialExtent.CoreCellCount)
+                {
+                    diagnostics.Add(new MapInterchangeDiagnostic(
+                        MapInterchangeDiagnostic.MaterialLength,
+                        $"Chunk {name} stores {materials.Indices.Count} material indices; expected {materialExtent.CoreCellCount} ({materialExtent.CoreWidth} x {materialExtent.CoreHeight})."));
+                }
             }
 
             var masks = chunk.Masks;
 
             if (masks is null)
             {
-                AddNullComponent(diagnostics, $"Chunk {name} Masks");
                 continue;
             }
+
+            chunksWithMasks++;
 
             if (masks.Flags is null)
             {
@@ -242,11 +287,11 @@ public static class MapInterchangeValidator
                 continue;
             }
 
-            if (masks.Flags.Count != MapChunkGeometry.CoreCellsPerChunk)
+            if (extent is { } maskExtent && masks.Flags.Count != maskExtent.CoreCellCount)
             {
                 diagnostics.Add(new MapInterchangeDiagnostic(
                     MapInterchangeDiagnostic.MaskLength,
-                    $"Chunk {name} stores {masks.Flags.Count} mask bytes; expected {MapChunkGeometry.CoreCellsPerChunk} ({CoreAxis} x {CoreAxis})."));
+                    $"Chunk {name} stores {masks.Flags.Count} mask bytes; expected {maskExtent.CoreCellCount} ({maskExtent.CoreWidth} x {maskExtent.CoreHeight})."));
                 continue;
             }
 
@@ -263,10 +308,31 @@ public static class MapInterchangeValidator
                 break;
             }
         }
+
+        ValidateLayerConsistency(chunks.Count, chunksWithMaterials, "materials", diagnostics);
+        ValidateLayerConsistency(chunks.Count, chunksWithMasks, "masks", diagnostics);
+    }
+
+    private static void ValidateLayerConsistency(int chunkCount, int chunksWithLayer, string layerName, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (chunksWithLayer == 0 || chunksWithLayer == chunkCount)
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.LayersConsistency,
+            $"{chunksWithLayer} of {chunkCount} chunks carry {layerName}; every chunk must carry {layerName} or none may."));
     }
 
     private static void ValidatePalette(MapInterchange map, Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
     {
+        // Palette checks apply only when materials are present; heights-only chunks (legacy sources) carry no palette.
+        if (!chunks.Values.Any(chunk => chunk.Materials is not null))
+        {
+            return;
+        }
+
         var blend = map.Blend;
 
         if (blend is null)
@@ -394,103 +460,140 @@ public static class MapInterchangeValidator
         }
     }
 
-    private static void ValidateSeamsAndAprons(Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
+    private static void ValidateSeamsAndAprons(TerrainLayout? sized, Dictionary<ChunkKey, Chunk> chunks, List<MapInterchangeDiagnostic> diagnostics)
     {
+        if (sized is null)
+        {
+            return;
+        }
+
         foreach (var (key, chunk) in chunks)
         {
-            if (!HasStoredHeights(chunk))
+            var extent = ChunkExtent.Of(sized, key);
+
+            if (!HasStoredHeights(chunk, extent))
             {
                 continue;
             }
 
             var name = Describe(key);
 
-            if (chunks.TryGetValue(new ChunkKey(key.Cx + 1, key.Cy), out var east) && HasStoredHeights(east))
+            if (chunks.TryGetValue(new ChunkKey(key.Cx + 1, key.Cy), out var east) && HasStoredHeights(east, ChunkExtent.Of(sized, east.Key)))
             {
-                for (var j = 0; j < CoreAxis; j++)
+                var eastExtent = ChunkExtent.Of(sized, east.Key);
+                var seamX = extent.OriginX + extent.CoreWidth - 1;
+                var apronX = seamX + 1;
+                var rows = Math.Min(extent.CoreHeight, eastExtent.CoreHeight);
+
+                for (var j = 0; j < rows; j++)
                 {
-                    if (CoreSample(chunk, CoreAxis - 1, j) == CoreSample(east, 0, j))
+                    var y = extent.OriginY + j;
+
+                    if (!Conflicts(chunk, extent, east, eastExtent, seamX, y))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.SeamEquality,
-                        $"Chunk {name} core column {CoreAxis - 1} row {j} differs from east neighbour {Describe(east.Key)} core column 0 at the shared seam."));
+                        $"Chunk {name} core column {extent.CoreWidth - 1} row {j} differs from east neighbour {Describe(east.Key)} core column {seamX - eastExtent.OriginX} at the shared seam."));
                     break;
                 }
 
-                for (var j = 0; j < CoreAxis; j++)
+                for (var j = 0; j < rows; j++)
                 {
-                    if (StoredSample(chunk, j + 1, StoredAxis - 1) == CoreSample(east, 1, j))
+                    var y = extent.OriginY + j;
+
+                    if (!Conflicts(chunk, extent, east, eastExtent, apronX, y))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} east apron row {j} differs from east neighbour {Describe(east.Key)} core column 1 at the same lattice point."));
+                        $"Chunk {name} east apron row {j} differs from east neighbour {Describe(east.Key)} core column {apronX - eastExtent.OriginX} at the same lattice point."));
                     break;
                 }
             }
 
-            if (chunks.TryGetValue(new ChunkKey(key.Cx - 1, key.Cy), out var west) && HasStoredHeights(west))
+            if (chunks.TryGetValue(new ChunkKey(key.Cx - 1, key.Cy), out var west) && HasStoredHeights(west, ChunkExtent.Of(sized, west.Key)))
             {
-                for (var j = 0; j < CoreAxis; j++)
+                var westExtent = ChunkExtent.Of(sized, west.Key);
+                var apronX = extent.OriginX - 1;
+                var rows = Math.Min(extent.CoreHeight, westExtent.CoreHeight);
+
+                for (var j = 0; j < rows; j++)
                 {
-                    if (StoredSample(chunk, j + 1, 0) == CoreSample(west, CoreAxis - 2, j))
+                    var y = extent.OriginY + j;
+
+                    if (!Conflicts(chunk, extent, west, westExtent, apronX, y))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} west apron row {j} differs from west neighbour {Describe(west.Key)} core column {CoreAxis - 2} at the same lattice point."));
+                        $"Chunk {name} west apron row {j} differs from west neighbour {Describe(west.Key)} core column {apronX - westExtent.OriginX} at the same lattice point."));
                     break;
                 }
             }
 
-            if (chunks.TryGetValue(new ChunkKey(key.Cx, key.Cy + 1), out var north) && HasStoredHeights(north))
+            if (chunks.TryGetValue(new ChunkKey(key.Cx, key.Cy + 1), out var north) && HasStoredHeights(north, ChunkExtent.Of(sized, north.Key)))
             {
-                for (var i = 0; i < CoreAxis; i++)
+                var northExtent = ChunkExtent.Of(sized, north.Key);
+                var seamY = extent.OriginY + extent.CoreHeight - 1;
+                var apronY = seamY + 1;
+                var columns = Math.Min(extent.CoreWidth, northExtent.CoreWidth);
+
+                for (var i = 0; i < columns; i++)
                 {
-                    if (CoreSample(chunk, i, CoreAxis - 1) == CoreSample(north, i, 0))
+                    var x = extent.OriginX + i;
+
+                    if (!Conflicts(chunk, extent, north, northExtent, x, seamY))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.SeamEquality,
-                        $"Chunk {name} core row {CoreAxis - 1} column {i} differs from north neighbour {Describe(north.Key)} core row 0 at the shared seam."));
+                        $"Chunk {name} core row {extent.CoreHeight - 1} column {i} differs from north neighbour {Describe(north.Key)} core row {seamY - northExtent.OriginY} at the shared seam."));
                     break;
                 }
 
-                for (var i = 0; i < CoreAxis; i++)
+                for (var i = 0; i < columns; i++)
                 {
-                    if (StoredSample(chunk, StoredAxis - 1, i + 1) == CoreSample(north, i, 1))
+                    var x = extent.OriginX + i;
+
+                    if (!Conflicts(chunk, extent, north, northExtent, x, apronY))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} north apron column {i} differs from north neighbour {Describe(north.Key)} core row 1 at the same lattice point."));
+                        $"Chunk {name} north apron column {i} differs from north neighbour {Describe(north.Key)} core row {apronY - northExtent.OriginY} at the same lattice point."));
                     break;
                 }
             }
 
-            if (chunks.TryGetValue(new ChunkKey(key.Cx, key.Cy - 1), out var south) && HasStoredHeights(south))
+            if (chunks.TryGetValue(new ChunkKey(key.Cx, key.Cy - 1), out var south) && HasStoredHeights(south, ChunkExtent.Of(sized, south.Key)))
             {
-                for (var i = 0; i < CoreAxis; i++)
+                var southExtent = ChunkExtent.Of(sized, south.Key);
+                var apronY = extent.OriginY - 1;
+                var columns = Math.Min(extent.CoreWidth, southExtent.CoreWidth);
+
+                for (var i = 0; i < columns; i++)
                 {
-                    if (StoredSample(chunk, 0, i + 1) == CoreSample(south, i, CoreAxis - 2))
+                    var x = extent.OriginX + i;
+
+                    if (!Conflicts(chunk, extent, south, southExtent, x, apronY))
                     {
                         continue;
                     }
 
                     diagnostics.Add(new MapInterchangeDiagnostic(
                         MapInterchangeDiagnostic.ApronAgreement,
-                        $"Chunk {name} south apron column {i} differs from south neighbour {Describe(south.Key)} core row {CoreAxis - 2} at the same lattice point."));
+                        $"Chunk {name} south apron column {i} differs from south neighbour {Describe(south.Key)} core row {apronY - southExtent.OriginY} at the same lattice point."));
                     break;
                 }
             }
@@ -520,7 +623,7 @@ public static class MapInterchangeValidator
 
         if (transform is null)
         {
-            AddNullComponent(diagnostics, "TerrainLayout.GeospatialTransform");
+            // Legacy sources carry no geospatial transform; absence is not a finding.
             return;
         }
 
@@ -809,11 +912,47 @@ public static class MapInterchangeValidator
         }
     }
 
-    private static bool HasStoredHeights(Chunk chunk) => chunk.Heights?.Samples is not null && chunk.Heights.Samples.Count == MapChunkGeometry.StoredHeightSamplesPerChunk;
+    private static bool HasStoredHeights(Chunk chunk, ChunkExtent extent) => chunk.Heights?.Samples is not null && chunk.Heights.Samples.Count == extent.StoredSampleCount;
 
-    private static float CoreSample(Chunk chunk, int i, int j) => chunk.Heights.Samples[((j + 1) * StoredAxis) + i + 1];
+    private static float? HeightAt(Chunk chunk, ChunkExtent extent, long latticeX, long latticeY)
+    {
+        var column = latticeX - extent.OriginX + 1;
+        var row = latticeY - extent.OriginY + 1;
 
-    private static float StoredSample(Chunk chunk, int row, int col) => chunk.Heights.Samples[(row * StoredAxis) + col];
+        if (column < 0 || column >= extent.StoredWidth || row < 0 || row >= extent.StoredHeight)
+        {
+            return null;
+        }
+
+        return chunk.Heights.Samples[(int)((row * extent.StoredWidth) + column)];
+    }
+
+    private static bool Conflicts(Chunk chunk, ChunkExtent extent, Chunk neighbour, ChunkExtent neighbourExtent, long latticeX, long latticeY)
+    {
+        var own = HeightAt(chunk, extent, latticeX, latticeY);
+        var other = HeightAt(neighbour, neighbourExtent, latticeX, latticeY);
+
+        return own is { } ownHeight && other is { } otherHeight && ownHeight != otherHeight;
+    }
 
     private static string Describe(ChunkKey key) => $"{key.Cx}_{key.Cy}";
+
+    private readonly record struct ChunkExtent(long OriginX, long OriginY, int CoreWidth, int CoreHeight)
+    {
+        public int StoredWidth => CoreWidth + (2 * MapChunkGeometry.ApronSamplesPerSide);
+
+        public int StoredHeight => CoreHeight + (2 * MapChunkGeometry.ApronSamplesPerSide);
+
+        public int StoredSampleCount => StoredWidth * StoredHeight;
+
+        public int CoreCellCount => CoreWidth * CoreHeight;
+
+        public static ChunkExtent Of(TerrainLayout layout, ChunkKey key) => new(
+            (long)key.Cx * IntervalsPerChunkAxis,
+            (long)key.Cy * IntervalsPerChunkAxis,
+            AxisExtent(layout.LatticeWidth, key.Cx),
+            AxisExtent(layout.LatticeHeight, key.Cy));
+
+        private static int AxisExtent(int latticePoints, int index) => (int)Math.Clamp(latticePoints - ((long)index * IntervalsPerChunkAxis), 0, MapChunkGeometry.CorePointsPerAxis);
+    }
 }

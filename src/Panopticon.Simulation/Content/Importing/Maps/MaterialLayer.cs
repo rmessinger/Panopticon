@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Panopticon.Content.Importing.Maps;
 
-/// <summary>129 x 129 core-only palette indices into <see cref="BlendModel.Palette"/>. Indices are copied at construction.</summary>
+/// <summary>Core-only palette indices into <see cref="BlendModel.Palette"/>, core per axis = min(129, <see cref="TerrainLayout"/> lattice - chunk * 128). Indices are copied at construction.</summary>
 public sealed record MaterialLayer
 {
     public MaterialLayer(IReadOnlyList<byte> indices)
