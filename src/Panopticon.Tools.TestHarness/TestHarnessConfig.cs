@@ -450,4 +450,40 @@ public sealed class TestHarnessConfig
     /// <summary>WI-N9-01: spread selection goals into destination slots (default false).</summary>
     [HarnessParameter("NavigationDeadlock", "NavigationDeadlockDestinationSlots.", nameof(BuiltInScenario.NavigationDeadlock))]
     public bool NavigationDeadlockDestinationSlots { get; set; } = false;
+
+    // ── R3 building prototype (WI-R3-01, scratch) ──────────────────────────
+
+    /// <summary>Root directory of the generator output (contains gltf/merged and gltf/perbuilding).</summary>
+    [HarnessParameter("R3 Prototype", "R3BuildingsRoot.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public string R3BuildingsRoot { get; set; } = "/mnt/pit2/panopticon/geo-proof/r3-01-buildings-prototype-v1";
+
+    /// <summary>Building import mode: Off (no buildings), Merged (9 chunk glTFs), or PerBuilding.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("R3 Prototype", "R3BuildingsMode.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public R3BuildingMode R3BuildingsMode { get; set; } = R3BuildingMode.Off;
+
+    /// <summary>Map path, relative to the game data directory.</summary>
+    [HarnessParameter("R3 Prototype", "R3MapPath.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public string R3MapPath { get; set; } = "maps/r2-03-footprints-payload-v2/r2-03-footprints-payload-v2.map";
+
+    /// <summary>Total logic and render frames to run.</summary>
+    [HarnessParameter("R3 Prototype", "R3Frames.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public int R3Frames { get; set; } = 60;
+
+    /// <summary>Leading frames excluded from timing statistics.</summary>
+    [HarnessParameter("R3 Prototype", "R3WarmupFrames.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public int R3WarmupFrames { get; set; } = 10;
+
+    /// <summary>Caps the PerBuilding import to the first N files in name order; 0 imports all.</summary>
+    [HarnessParameter("R3 Prototype", "R3PerBuildingLimit.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public int R3PerBuildingLimit { get; set; } = 0;
+
+    /// <summary>Camera framing for the captures.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("R3 Prototype", "R3Camera.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public R3CameraView R3Camera { get; set; } = R3CameraView.Overview;
+
+    /// <summary>Directory for PNG captures and metrics.json.</summary>
+    [HarnessParameter("R3 Prototype", "R3OutputDirectory.", nameof(BuiltInScenario.R3BuildingPrototype))]
+    public string R3OutputDirectory { get; set; } = "artifacts/r3-01";
 }

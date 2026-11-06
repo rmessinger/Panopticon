@@ -513,6 +513,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.R3BuildingPrototype)
+        {
+            Environment.ExitCode = R3BuildingPrototypeScenario.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.Aoe3GrannyProof)
         {
             Environment.ExitCode = Aoe3GrannyProofScenario.Run(installation, config, reporter);

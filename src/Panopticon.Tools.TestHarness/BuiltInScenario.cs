@@ -28,6 +28,7 @@ public enum BuiltInScenario
     RoutingChoke,
     PathfindingLoad,
     NavigationDeadlock,
+    R3BuildingPrototype,
 }
 
 
