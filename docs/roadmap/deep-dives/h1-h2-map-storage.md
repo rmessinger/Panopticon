@@ -538,7 +538,7 @@ Runtime loading from a non-legacy (H3 package) source is not claimed as supporte
 
 ### Implementation cards
 
-Each card is Draft and follow-on scope from this design:
+Each card below is follow-on scope from this design:
 
 - [WI-H2-02](../agent/cards/WI-H2-02-interchange-types.md): engine-owned interchange types and model-level validation, with no `MapFile` dependency.
 - [WI-H2-03](../agent/cards/WI-H2-03-legacy-reader-seam.md): reader-source seam and legacy `MapFile` adapter, with no behavior change.
