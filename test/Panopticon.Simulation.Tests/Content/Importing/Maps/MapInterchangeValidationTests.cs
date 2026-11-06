@@ -258,7 +258,7 @@ public sealed class MapInterchangeValidationTests
             new(0, "grass", new AssetReference("terrain", "grass")),
             new(1, "rock", new AssetReference("terrain", "rock")),
         };
-        var legacyProperties = new Dictionary<string, string> { ["team"] = "america" };
+        var legacyProperties = new Dictionary<string, MapPropertyValue> { ["team"] = new MapPropertyValue.AsciiStringValue("america") };
         var bytes = new byte[] { 1, 2, 3, 4 };
 
         var chunk = new Chunk(new ChunkKey(0, 0), new HeightLayer(heights), new MaterialLayer(materials), new MaskLayer(masks), null);
@@ -269,6 +269,7 @@ public sealed class MapInterchangeValidationTests
             new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ),
             0.0,
             new AssetReference("units", "infantry"),
+            0u,
             legacyProperties);
 
         var model = BuildValidModel();
@@ -280,13 +281,13 @@ public sealed class MapInterchangeValidationTests
 
         heights[0] = 1234.5f;
         palette.Add(new MaterialPaletteEntry(9, "late", new AssetReference("terrain", "late")));
-        legacyProperties["team"] = "mutated";
+        legacyProperties["team"] = new MapPropertyValue.AsciiStringValue("mutated");
         bytes[0] = 200;
 
         Assert.Empty(MapInterchangeValidator.Validate(model));
         Assert.Equal(BuildSampleArray(0, 0)[0], model.Layout.Chunks[0].Heights.Samples[0]);
         Assert.Equal(2, model.Blend.Palette.Count);
-        Assert.Equal("america", model.Objects!.Objects[0].LegacyProperties["team"]);
+        Assert.Equal(new MapPropertyValue.AsciiStringValue("america"), model.Objects!.Objects[0].LegacyProperties["team"]);
         Assert.Equal(1, model.RetainedSections[0].Bytes.Span[0]);
     }
 
@@ -515,6 +516,9 @@ public sealed class MapInterchangeValidationTests
             model.Layout.Border,
             model.Layout.GeospatialTransform,
             model.Layout.NodataPolicy,
+            3,
+            (uint)(model.Layout.LatticeWidth * model.Layout.LatticeHeight),
+            [new MapTerrainBorder(0, 0, (uint)(model.Layout.LatticeWidth - 1), (uint)(model.Layout.LatticeHeight - 1))],
             chunks);
         var result = model with { Layout = layout };
 
@@ -690,6 +694,9 @@ public sealed class MapInterchangeValidationTests
             0,
             new GeospatialTransform(null, null, null, 1.0, null, null, null),
             MapNodataPolicy.Fail,
+            3,
+            (uint)(grid.LatticeWidth * grid.LatticeHeight),
+            [new MapTerrainBorder(0, 0, (uint)(grid.LatticeWidth - 1), (uint)(grid.LatticeHeight - 1))],
             [BuildChunk(grid, 0, 0), BuildChunk(grid, 1, 0)]);
 
         var blend = new BlendModel(
@@ -707,7 +714,8 @@ public sealed class MapInterchangeValidationTests
                 new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ),
                 0.0,
                 new AssetReference("units", "infantry"),
-                new Dictionary<string, string>()),
+                0u,
+                new Dictionary<string, MapPropertyValue>()),
         ]);
 
         var waypoints = new WaypointSet(

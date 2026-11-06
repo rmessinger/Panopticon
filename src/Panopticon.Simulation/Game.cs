@@ -6,6 +6,8 @@ using System.Numerics;
 using Panopticon.Audio;
 using Panopticon.Client;
 using Panopticon.Content;
+using Panopticon.Content.Importing.Maps;
+using Panopticon.Content.Importing.MapSources;
 using Panopticon.Data;
 using Panopticon.Data.Apt;
 using Panopticon.Data.Map;
@@ -788,6 +790,9 @@ public sealed class Game : DisposableBase, IGame
         }
     }
 
+    internal static Func<FileSystemEntry, MapFile, IMapReader> MapReaderFactory { get; set; } =
+        (entry, mapFile) => new LegacyMapReader(mapFile, entry.FilePath);
+
     private void LoadMap(
         string mapPath,
         PlayerSetting[] playerSettings,
@@ -795,6 +800,14 @@ public sealed class Game : DisposableBase, IGame
     {
         var entry = ContentManager.GetMapEntry(mapPath);
         var mapFile = MapFile.FromFileSystemEntry(entry);
+
+        // Interchange failures throw before any resident mutation; scene construction failures are not rolled back.
+        var model = MapReaderFactory(entry, mapFile).Read();
+        var heightMapData = RuntimeBridge.MaterializeHeightMapData(model);
+        var mapObjects = RuntimeBridge.MaterializeMapObjects(model);
+        var useMaskFeed = RuntimeBridge.TryGetMaskFeed(model, out var maskFeed);
+
+        mapFile.HeightMapData = heightMapData;
 
         SidesListUtility.SetupGameSides(
             this,
@@ -805,7 +818,7 @@ public sealed class Game : DisposableBase, IGame
             out var mapTeams,
             out var mapScriptLists);
 
-        TerrainLogic.SetHeightMapData(mapFile.HeightMapData);
+        TerrainLogic.SetHeightMapData(heightMapData);
 
         new Scene3D(
             this,
@@ -815,7 +828,9 @@ public sealed class Game : DisposableBase, IGame
             mapTeams,
             mapScriptLists,
             gameType,
-            playerSettings);
+            playerSettings,
+            mapObjects,
+            useMaskFeed ? maskFeed : null);
     }
 
     public Window LoadWindow(string wndFileName)

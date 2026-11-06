@@ -15,6 +15,12 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string HeightFinite = "height-finite";
 
+    public const string HeightRepresentable = "height-representable";
+
+    public const string ObjectRepresentable = "object-representable";
+
+    public const string PropertyType = "property-type";
+
     public const string MaterialLength = "material-length";
 
     public const string MaskLength = "mask-length";

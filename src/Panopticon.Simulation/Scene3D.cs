@@ -133,8 +133,10 @@ public sealed class Scene3D : DisposableBase, IScene3D
         Data.Map.Team[] mapTeams,
         ScriptList[] mapScriptLists,
         GameType gameType,
-        PlayerSetting[] playerSettings = null)
-        : this(game, () => game.Viewport, game.InputMessageBuffer, false, mapFile, mapPath)
+        PlayerSetting[] playerSettings = null,
+        MapObject[] materializedObjects = null,
+        bool[,] maskFeed = null)
+        : this(game, () => game.Viewport, game.InputMessageBuffer, false, mapFile, mapPath, maskFeed)
     {
         game.Scene3D = this;
 
@@ -146,10 +148,11 @@ public sealed class Scene3D : DisposableBase, IScene3D
             mapFile.GlobalLighting.LightingConfigurations.ToLightSettingsDictionary(),
             mapFile.GlobalLighting.Time);
 
+        // Lighting, water, cameras, and paths remain on the parsed MapFile until the retained-sections backend is replaced.
         LoadObjects(
             game.AssetStore.LoadContext,
             Terrain.HeightMap,
-            mapFile.ObjectsList.Objects,
+            materializedObjects ?? mapFile.ObjectsList.Objects,
             MapFile.NamedCameras,
             out var waypoints,
             out var roads,
@@ -283,7 +286,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
         IEditorCameraController cameraController,
         WorldLighting lighting,
         bool isDiagnosticScene = false)
-        : this(game, getViewport, inputMessageBuffer, isDiagnosticScene, null, null)
+        : this(game, getViewport, inputMessageBuffer, isDiagnosticScene, null, null, null)
     {
         WaterAreas = AddDisposable(new WaterAreaCollection());
         Lighting = lighting;
@@ -296,7 +299,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
         EditorCameraController = cameraController;
     }
 
-    private Scene3D(IGame game, Func<Viewport> getViewport, InputMessageBuffer inputMessageBuffer, bool isDiagnosticScene, MapFile mapFile, string mapPath)
+    private Scene3D(IGame game, Func<Viewport> getViewport, InputMessageBuffer inputMessageBuffer, bool isDiagnosticScene, MapFile mapFile, string mapPath, bool[,] maskFeed)
     {
         Game = game;
 
@@ -314,8 +317,11 @@ public sealed class Scene3D : DisposableBase, IScene3D
         {
             MapFile = mapFile;
             Terrain = AddDisposable(new Terrain.Terrain(mapFile, game.TerrainLogic.HeightMap, game.AssetStore.LoadContext, RenderScene));
+            Terrain.ImpassabilityOverride = maskFeed;
             WaterAreas = AddDisposable(new WaterAreaCollection(mapFile.PolygonTriggers, mapFile.StandingWaterAreas, mapFile.StandingWaveAreas, game.AssetStore.LoadContext));
-            Navigation = new Navigation.Navigation(mapFile.BlendTileData, Terrain.HeightMap);
+            Navigation = maskFeed != null
+                ? new Navigation.Navigation(maskFeed, Terrain.HeightMap)
+                : new Navigation.Navigation(mapFile.BlendTileData, Terrain.HeightMap);
         }
 
         if (!isDiagnosticScene)
