@@ -53,6 +53,6 @@ No format decision and no implementation.
 
 ## On completion
 
-- Result: 2026-11-06 done: added `deep-dives/h1-h2-map-storage.md` with the container format, a 29-row section inventory with version handling and file:line citations, nested-type, reader, writer, and consumer tables, limitations, and one load flowchart. Validation: mermaid-cli rendered the single flowchart (output `card-1.svg` for Markdown input), forbidden-pattern grep clean, `git diff --check` clean. Follow-up: WI-H1-02 format decision options.
+- Result: 2026-11-06 done: added `deep-dives/h1-h2-map-storage.md` with the container format, a 29-row section inventory with version handling and file:line citations, nested-type, reader, writer, and consumer tables, limitations, a load flowchart, and a section composition class diagram. Validation: mermaid-cli rendered both diagrams (outputs `card-1.svg` and `card-2.svg` for Markdown input), forbidden-pattern grep clean, `git diff --check` clean. Follow-up: WI-H1-02 format decision options.
 - Set Status above to `Done` or `Blocked`.
 - Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.

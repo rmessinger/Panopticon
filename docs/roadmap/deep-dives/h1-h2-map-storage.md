@@ -87,6 +87,43 @@ All 29 top-level section classes call `ParseAsset` and `WriteAssetTo`. The Gate 
 
 Sections written without a null check (MapFile.cs:452-459, :467-468, :494-495, :551-552, :584-585) are HeightMapData, BlendTileData, WorldInfo, SidesList, ObjectsList, GlobalLighting, and WaypointsList. Every other section is written only when its property is non-null.
 
+### Composition
+
+Relations use cardinality 0..1 because the write path null-guards most section properties (MapFile.cs:438-592).
+
+```mermaid
+classDiagram
+    MapFile *-- "0..1" AssetList
+    MapFile *-- "0..1" GlobalVersion
+    MapFile *-- "0..1" HeightMapData
+    MapFile *-- "0..1" BlendTileData
+    MapFile *-- "0..1" WorldInfo
+    MapFile *-- "0..1" MPPositionList
+    MapFile *-- "0..1" SidesList
+    MapFile *-- "0..1" LibraryMapLists
+    MapFile *-- "0..1" Teams
+    MapFile *-- "0..1" PlayerScriptsList
+    MapFile *-- "0..1" BuildLists
+    MapFile *-- "0..1" ObjectsList
+    MapFile *-- "0..1" PolygonTriggers
+    MapFile *-- "0..1" TriggerAreas
+    MapFile *-- "0..1" GlobalWaterSettings
+    MapFile *-- "0..1" FogSettings
+    MapFile *-- "0..1" MissionHotSpots
+    MapFile *-- "0..1" MissionObjectives
+    MapFile *-- "0..1" StandingWaterAreas
+    MapFile *-- "0..1" RiverAreas
+    MapFile *-- "0..1" StandingWaveAreas
+    MapFile *-- "0..1" GlobalLighting
+    MapFile *-- "0..1" PostEffectsChunk
+    MapFile *-- "0..1" EnvironmentData
+    MapFile *-- "0..1" NamedCameras
+    MapFile *-- "0..1" CameraAnimationList
+    MapFile *-- "0..1" CastleTemplates
+    MapFile *-- "0..1" WaypointsList
+    MapFile *-- "0..1" SkyboxSettings
+```
+
 ## Nested types
 
 | Type | File | Parse | WriteTo | Version handling |
@@ -149,7 +186,7 @@ The geospatial preview and GeoImport callers belong to [B4b](b4b-geospatial-map-
 
 | Consumer | Location | Fields used |
 |---|---|---|
-| Scene3D | src/Panopticon.Simulation/Scene3D.cs:313-318 | PolygonTriggers, StandingWaterAreas, StandingWaveAreas, BlendTileData, HeightMapData |
+| Scene3D | src/Panopticon.Simulation/Scene3D.cs:313-318 | PolygonTriggers, StandingWaterAreas, StandingWaveAreas, BlendTileData |
 | Terrain | src/Panopticon.Simulation/Terrain/Terrain.cs:64, :79 | Holds the `MapFile` reference |
 | TerrainVisual | src/Panopticon.Simulation/Terrain/TerrainVisual.cs:42-51 | HeightMapData Area, Width, Height, Elevations |
 | PartitionCellManager | src/Panopticon.Simulation/Logic/PartitionCellManager.cs:92 | HeightMapData Borders[0] |
