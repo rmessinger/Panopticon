@@ -1,15 +1,31 @@
 {
-  // Sedan old town on the footprint preview map: four USA Humvees in a 2x2 platoon drive
-  // ESE across the dense block field with real Move orders. Run with:
-  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
-  //     --built-in-scenario ScenarioCapture --scenario capture-sedan-footprints.json
-  // Placements derive from masks/*.bin (flag 1 Impassable, 2 Unbuildable; 385x385 samples,
-  // sample (sx, sy) at game (10 sx, 10 sy), row = north). Old town: densest impassable block
-  // field (6-sample block census), samples x 100-200, y 150-240. Starts and goals are 3x3
-  // non-impassable cells in one 4-connected free component (largest of 285, 96023 cells).
-  // Each straight segment crosses 73-83 impassable cells. 4-connected free-cell routes are
-  // 156-158 samples (1.41-1.43x the 1103-unit straight line); 3x3-clearance routes are 204-212.
-  // Lead humvee-1 is the most advanced unit along the heading (-44.3 degrees, ESE).
+  "//": [
+    "Sedan old town on the footprint preview map: four USA Humvees route simultaneously along four",
+    "distinct parallel corridors across the dense block field without mutual footprint deadlock. Run with:",
+    "  dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \\",
+    "    --built-in-scenario ScenarioCapture --scenario capture-sedan-footprints.json",
+    "ROOT CAUSE & 33.8-CLEARANCE RATIONALE: Humvee BoundingCircleRadius=15.652 requires 33.8 world",
+    "units mutual footprint exclusion clearance; BlockedUnitResolution defaults OFF so sustained mutual",
+    "block leads to a permanent quad deadlock with zero velocity. The old 40-unit platoon spacing and",
+    "identical smoothed waypoints funneled all four units into a single corridor, violating the 33.8-unit",
+    "clearance at frame 45. To eliminate funneling, the four units are separated into four distinct ESE",
+    "corridors across old town samples x[80,260] y[120,260] with pairwise BFS route separations of 197.0",
+    "to 1120.4 world units, far exceeding the 60-unit constraint and 33.8-unit mutual clearance.",
+    "DERIVATION & METRICS:",
+    "Placements derive from masks/*.bin (flag 1 Impassable, 2 Unbuildable; 385x385 samples, 10 units/sample).",
+    "Center flag == 0 for all spawns/goals; all 25 cells in 5x5 spawn pockets and 9 in 3x3 goal pockets clear.",
+    "Pairwise spawn separations: 270.2, 370.0, 581.8, 640.1, 838.2, 1196.4 units (all >= 100).",
+    "Pairwise goal separations: 270.2, 394.6, 600.3, 661.9, 841.5, 1230.8 units (all >= 100).",
+    "Straight-line distances: 1003.2 - 1102.2 units (all >= 700).",
+    "Straight-line Bresenham necessity: 41 - 58 impassable cells (all >= 40).",
+    "4-connected BFS route lengths: 149 - 175 samples (all >= 40).",
+    "Pairwise minimum route separations: 197.0 - 1120.4 units (all >= 60).",
+    "Lead humvee-1 is the most advanced unit along heading (spawn X=1100 vs 850-860, heading 356.4 deg).",
+    "CAMERA FRAMING RATIONALE: SubjectActorIds is narrowed to humvee-1 only. The 1170-unit span across four corridors",
+    "exceeds the 839px safe viewport at MaxCameraHeight 160 (~2900px needed, causing camera fit exit 4). Single-subject",
+    "Follow skips multi-subject autofit, centers humvee-1 at InitialCameraHeight 90, and re-centers every frame.",
+    "All four actors remain Tracked by default; manifest displacement proof and overlay coverage are unaffected."
+  ],
   "Name": "sedan-footprints",
   "MapPath": "maps/r2-03-footprints-payload-v1/r2-03-footprints-payload-v1.map",
   "DurationFrames": 2700,
@@ -24,53 +40,53 @@
       "Id": "humvee-1",
       "Definition": "AmericaVehicleHumvee",
       "Owner": "usa",
-      "X": 1250,
-      "Y": 2370,
-      "FacingDegrees": 315.7,
+      "X": 1100,
+      "Y": 2540,
+      "FacingDegrees": 356.4,
       "Role": "subject"
     },
     {
       "Id": "humvee-2",
       "Definition": "AmericaVehicleHumvee",
       "Owner": "usa",
-      "X": 1250,
-      "Y": 2410,
-      "FacingDegrees": 315.7,
+      "X": 860,
+      "Y": 2010,
+      "FacingDegrees": 356.7,
       "Role": "subject"
     },
     {
       "Id": "humvee-3",
       "Definition": "AmericaVehicleHumvee",
       "Owner": "usa",
-      "X": 1210,
-      "Y": 2370,
-      "FacingDegrees": 315.7,
+      "X": 850,
+      "Y": 1740,
+      "FacingDegrees": 356.8,
       "Role": "subject"
     },
     {
       "Id": "humvee-4",
       "Definition": "AmericaVehicleHumvee",
       "Owner": "usa",
-      "X": 1210,
-      "Y": 2410,
-      "FacingDegrees": 315.7,
+      "X": 850,
+      "Y": 1370,
+      "FacingDegrees": 355.4,
       "Role": "subject"
     }
   ],
   "Camera": {
     "Mode": "Follow",
     "FollowActorId": "humvee-1",
-    "SubjectActorIds": [ "humvee-1", "humvee-2", "humvee-3", "humvee-4" ],
+    "SubjectActorIds": [ "humvee-1" ],
     "DesiredSpanFraction": 0.45,
     "InitialCameraHeight": 90,
     "MinCameraHeight": 60,
     "MaxCameraHeight": 160
   },
   "Commands": [
-    { "Type": "Move", "Frame": 0, "ActorId": "humvee-1", "X": 2040, "Y": 1600 },
-    { "Type": "Move", "Frame": 0, "ActorId": "humvee-2", "X": 2040, "Y": 1640 },
-    { "Type": "Move", "Frame": 0, "ActorId": "humvee-3", "X": 2000, "Y": 1600 },
-    { "Type": "Move", "Frame": 0, "ActorId": "humvee-4", "X": 2000, "Y": 1640 }
+    { "Type": "Move", "Frame": 0, "ActorId": "humvee-1", "X": 2200, "Y": 2470 },
+    { "Type": "Move", "Frame": 0, "ActorId": "humvee-2", "X": 1900, "Y": 1950 },
+    { "Type": "Move", "Frame": 0, "ActorId": "humvee-3", "X": 1910, "Y": 1680 },
+    { "Type": "Move", "Frame": 0, "ActorId": "humvee-4", "X": 1850, "Y": 1290 }
   ],
   "Expectations": [
     { "Type": "MinDisplacement", "ActorId": "humvee-1", "MinDisplacement": 300 },

@@ -45,9 +45,76 @@ COLOR_TEXT_PRIMARY = (240, 245, 250)
 COLOR_TEXT_SECONDARY = (170, 185, 200)
 COLOR_TEXT_MUTED = (140, 155, 170)
 
+TRACK_PALETTE = [
+    {"name": "Humvee 1", "stroke": (0, 225, 255, 255), "casing": (10, 15, 20, 220)},   # Cyan
+    {"name": "Humvee 2", "stroke": (50, 235, 90, 255), "casing": (10, 15, 20, 220)},   # Lime
+    {"name": "Humvee 3", "stroke": (255, 220, 0, 255), "casing": (10, 15, 20, 220)},   # Yellow
+    {"name": "Humvee 4", "stroke": (255, 60, 180, 255), "casing": (10, 15, 20, 220)},  # Magenta
+]
+
+COLOR_GRAZE_STROKE = (255, 235, 50, 255)
+COLOR_GRAZE_FILL = (255, 235, 50, 90)
+
 
 class FootprintOverlayError(Exception):
     """Raised when overlay rendering fails validation or processing."""
+
+
+def load_manifest_tracks(manifest_path: str) -> dict[str, list[tuple[float, float]]]:
+    """Load per-actor world tracks from a capture manifest JSON."""
+    if not os.path.isfile(manifest_path):
+        raise FootprintOverlayError(f"Manifest file not found: {manifest_path}")
+
+    with open(manifest_path, "r", encoding="utf-8") as fh:
+        try:
+            data = json.load(fh)
+        except json.JSONDecodeError as ex:
+            raise FootprintOverlayError(f"Invalid JSON in manifest {manifest_path}: {ex}") from ex
+
+    frames = data.get("Frames") or data.get("frames", [])
+    if not isinstance(frames, list):
+        raise FootprintOverlayError(f"Manifest missing 'Frames' list: {manifest_path}")
+
+    tracks: dict[str, list[tuple[float, float]]] = {}
+    for frame in frames:
+        actors = frame.get("Actors") or frame.get("actors", [])
+        for actor in actors:
+            aid = actor.get("Id") or actor.get("id") or actor.get("Label")
+            if not aid:
+                continue
+            wx = actor.get("WorldX") if "WorldX" in actor else actor.get("worldX")
+            wy = actor.get("WorldY") if "WorldY" in actor else actor.get("worldY")
+            if wx is not None and wy is not None:
+                tracks.setdefault(str(aid), []).append((float(wx), float(wy)))
+
+    return tracks
+
+
+def parse_graze_cells(graze_args: list[str] | None) -> list[tuple[int, int]]:
+    """Parse cell coordinates from CLI strings such as '134,260' or '134 260'."""
+    if not graze_args:
+        return []
+
+    tokens: list[str] = []
+    for arg in graze_args:
+        parts = arg.replace(",", " ").split()
+        tokens.extend(parts)
+
+    if len(tokens) % 2 != 0:
+        raise FootprintOverlayError(
+            f"Graze cells must be coordinate pairs (col, row); found {len(tokens)} numbers: {graze_args}"
+        )
+
+    cells: list[tuple[int, int]] = []
+    for i in range(0, len(tokens), 2):
+        try:
+            col = int(tokens[i])
+            row = int(tokens[i + 1])
+            cells.append((col, row))
+        except ValueError as ex:
+            raise FootprintOverlayError(f"Invalid integer cell coordinate in {graze_args}: {ex}") from ex
+
+    return cells
 
 
 def read_and_validate_mask_chunk(file_path: str, chunk_x: int = 0, chunk_y: int = 0) -> bytes:
@@ -331,6 +398,8 @@ def render_footprint_overlay(
     crop_game: tuple[float, float, float, float] | None = None,
     ortho_bounds: tuple[float, float, float, float] | None = None,
     title: str | None = None,
+    manifest_path: str | None = None,
+    graze_cells: list[tuple[int, int]] | None = None,
 ) -> Image.Image:
     """Render a still image overlaying payload mask cells on ortho GeoTIFF with framing."""
     payload_info = load_payload_metadata_and_masks(payload_dir)
@@ -339,6 +408,9 @@ def render_footprint_overlay(
     m_per_gu = payload_info["meters_per_game_unit"]
     spacing = payload_info["sample_spacing_game_units"]
     cells = payload_info["cells"]
+
+    tracks = load_manifest_tracks(manifest_path) if manifest_path else {}
+    graze = list(graze_cells) if graze_cells else []
 
     if crop_game is None:
         # Default crop: whole storage extent
@@ -429,6 +501,93 @@ def render_footprint_overlay(
 
     blended_scene = Image.alpha_composite(cropped_ortho, mask_layer)
 
+    # Unit tracks and graze cell markers layer
+    if tracks or graze:
+        tracks_layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        draw_tracks = ImageDraw.Draw(tracks_layer)
+
+        # Draw graze cells
+        for col, row in graze:
+            gx = col * spacing
+            gy = row * spacing
+            c_min_e = origin_e + (gx - spacing / 2.0) * m_per_gu
+            c_max_e = origin_e + (gx + spacing / 2.0) * m_per_gu
+            c_min_n = origin_n + (gy - spacing / 2.0) * m_per_gu
+            c_max_n = origin_n + (gy + spacing / 2.0) * m_per_gu
+
+            cx0 = (c_min_e - ortho_min_e) / scale_x - int_box[0]
+            cx1 = (c_max_e - ortho_min_e) / scale_x - int_box[0]
+            cy0 = (ortho_max_n - c_max_n) / scale_y - int_box[1]
+            cy1 = (ortho_max_n - c_min_n) / scale_y - int_box[1]
+
+            if cx1 <= 0 or cx0 >= w or cy1 <= 0 or cy0 >= h:
+                continue
+
+            draw_tracks.rectangle((cx0, cy0, cx1, cy1), fill=COLOR_GRAZE_FILL, outline=COLOR_GRAZE_STROKE, width=2)
+            draw_tracks.line([(cx0 - 4, cy0), (cx0, cy0), (cx0, cy0 - 4)], fill=COLOR_GRAZE_STROKE, width=2)
+            draw_tracks.line([(cx1 + 4, cy0), (cx1, cy0), (cx1, cy0 - 4)], fill=COLOR_GRAZE_STROKE, width=2)
+            draw_tracks.line([(cx0 - 4, cy1), (cx0, cy1), (cx0, cy1 + 4)], fill=COLOR_GRAZE_STROKE, width=2)
+            draw_tracks.line([(cx1 + 4, cy1), (cx1, cy1), (cx1, cy1 + 4)], fill=COLOR_GRAZE_STROKE, width=2)
+
+            label = f"Graze ({col},{row})"
+            font_badge = ImageFont.load_default(10)
+            tw = draw_tracks.textlength(label, font=font_badge)
+            bx = cx1 + 8
+            by = cy0 - 18
+            if bx + tw + 10 > w:
+                bx = cx0 - tw - 16
+            if by < 4:
+                by = cy1 + 6
+            center_x = (cx0 + cx1) / 2.0
+            center_y = (cy0 + cy1) / 2.0
+            draw_tracks.line([(center_x, center_y), (bx if bx > cx1 else bx + tw + 8, by + 8)], fill=COLOR_GRAZE_STROKE, width=1)
+            draw_tracks.rounded_rectangle((bx, by, bx + tw + 8, by + 16), radius=3, fill=(15, 20, 26, 230), outline=COLOR_GRAZE_STROKE, width=1)
+            draw_tracks.text((bx + 4, by + 2), label, fill=COLOR_GRAZE_STROKE, font=font_badge)
+
+        # Draw routes
+        for idx, (aid, raw_pts) in enumerate(sorted(tracks.items())):
+            palette = TRACK_PALETTE[idx % len(TRACK_PALETTE)]
+            pixel_pts: list[tuple[float, float]] = []
+            for gx, gy in raw_pts:
+                c_e = origin_e + gx * m_per_gu
+                c_n = origin_n + gy * m_per_gu
+                px = (c_e - ortho_min_e) / scale_x - int_box[0]
+                py = (ortho_max_n - c_n) / scale_y - int_box[1]
+                if not pixel_pts or math.hypot(px - pixel_pts[-1][0], py - pixel_pts[-1][1]) >= 1.0:
+                    pixel_pts.append((px, py))
+
+            if not pixel_pts:
+                continue
+
+            if len(pixel_pts) >= 2:
+                draw_tracks.line(pixel_pts, fill=palette["casing"], width=6)
+                draw_tracks.line(pixel_pts, fill=palette["stroke"], width=3)
+
+            font_marker = ImageFont.load_default(10)
+
+            # Start marker
+            sx, sy = pixel_pts[0]
+            draw_tracks.ellipse((sx - 7, sy - 7, sx + 7, sy + 7), fill=(0, 0, 0, 220), outline=palette["casing"])
+            draw_tracks.ellipse((sx - 5, sy - 5, sx + 5, sy + 5), fill=palette["stroke"])
+            draw_tracks.ellipse((sx - 2, sy - 2, sx + 2, sy + 2), fill=(255, 255, 255, 255))
+            s_tag = f"S{idx + 1}"
+            stw = draw_tracks.textlength(s_tag, font=font_marker)
+            draw_tracks.rounded_rectangle((sx + 8, sy - 8, sx + 14 + stw, sy + 6), radius=3, fill=(15, 20, 26, 220), outline=palette["stroke"], width=1)
+            draw_tracks.text((sx + 11, sy - 7), s_tag, fill=COLOR_TEXT_PRIMARY, font=font_marker)
+
+            # Goal marker
+            gx, gy = pixel_pts[-1]
+            draw_tracks.ellipse((gx - 9, gy - 9, gx + 9, gy + 9), fill=(0, 0, 0, 220), outline=palette["casing"])
+            draw_tracks.ellipse((gx - 7, gy - 7, gx + 7, gy + 7), fill=palette["stroke"])
+            draw_tracks.ellipse((gx - 4, gy - 4, gx + 4, gy + 4), fill=(15, 20, 26, 255))
+            draw_tracks.ellipse((gx - 2, gy - 2, gx + 2, gy + 2), fill=(255, 255, 255, 255))
+            g_tag = f"G{idx + 1}"
+            gtw = draw_tracks.textlength(g_tag, font=font_marker)
+            draw_tracks.rounded_rectangle((gx + 10, gy - 8, gx + 16 + gtw, gy + 6), radius=3, fill=(15, 20, 26, 220), outline=palette["stroke"], width=1)
+            draw_tracks.text((gx + 13, gy - 7), g_tag, fill=COLOR_TEXT_PRIMARY, font=font_marker)
+
+        blended_scene = Image.alpha_composite(blended_scene, tracks_layer)
+
     # In-scene cartographic elements
     if w >= 60 and h >= 60:
         draw_north_arrow(blended_scene, w - 24, 28)
@@ -436,8 +595,9 @@ def render_footprint_overlay(
         draw_scale_bar(blended_scene, 18, h - 22, m_per_px, w)
 
     # Framing: Header and Footer
+    has_extensions = bool(tracks or graze)
     header_h = 56
-    footer_h = 56
+    footer_h = 76 if has_extensions else 56
     canvas_w = max(w, 480)
     canvas_h = header_h + h + footer_h
     canvas = Image.new("RGB", (canvas_w, canvas_h), COLOR_HEADER_BG)
@@ -453,10 +613,15 @@ def render_footprint_overlay(
     # Header text
     payload_name = os.path.basename(os.path.abspath(payload_dir))
     header_title = title if title else f"Footprint Overlay: {payload_name}"
-    header_sub = (
-        f"Game BBox: [{min_gx:g}, {min_gy:g}, {max_gx:g}, {max_gy:g}]  |  "
-        f"UTM: [{crop_min_e:.1f}, {crop_min_n:.1f}, {crop_max_e:.1f}, {crop_max_n:.1f}]"
-    )
+    sub_parts = [
+        f"Game BBox: [{min_gx:g}, {min_gy:g}, {max_gx:g}, {max_gy:g}]",
+        f"UTM: [{crop_min_e:.1f}, {crop_min_n:.1f}, {crop_max_e:.1f}, {crop_max_n:.1f}]",
+    ]
+    if tracks:
+        sub_parts.append(f"Routes: {len(tracks)}")
+    if graze:
+        sub_parts.append(f"Graze Cells: {len(graze)}")
+    header_sub = "  |  ".join(sub_parts)
     draw_canvas.text((12, 10), header_title, fill=COLOR_TEXT_PRIMARY, font=font_title)
     draw_canvas.text((12, 32), header_sub, fill=COLOR_TEXT_SECONDARY, font=font_sub)
 
@@ -464,24 +629,56 @@ def render_footprint_overlay(
     footer_top = header_h + h
     font_legend = ImageFont.load_default(10)
 
-    # Impassable swatch
-    draw_canvas.rectangle((12, footer_top + 10, 22, footer_top + 20), fill=(235, 45, 45), outline=(255, 70, 70))
-    imp_text = f"Impassable: {metrics['impassable_count']} ({metrics['impassable_share']*100:.1f}%)"
-    draw_canvas.text((28, footer_top + 9), imp_text, fill=COLOR_TEXT_PRIMARY, font=font_legend)
+    if not has_extensions:
+        # Impassable swatch
+        draw_canvas.rectangle((12, footer_top + 10, 22, footer_top + 20), fill=(235, 45, 45), outline=(255, 70, 70))
+        imp_text = f"Impassable: {metrics['impassable_count']} ({metrics['impassable_share']*100:.1f}%)"
+        draw_canvas.text((28, footer_top + 9), imp_text, fill=COLOR_TEXT_PRIMARY, font=font_legend)
 
-    # Unbuildable swatch
-    draw_canvas.rectangle((12, footer_top + 30, 22, footer_top + 40), fill=(255, 160, 20), outline=(255, 180, 40))
-    unb_text = f"Unbuildable: {metrics['unbuildable_only_count']} ({metrics['unbuildable_only_share']*100:.1f}%)"
-    draw_canvas.text((28, footer_top + 29), unb_text, fill=COLOR_TEXT_PRIMARY, font=font_legend)
+        # Unbuildable swatch
+        draw_canvas.rectangle((12, footer_top + 30, 22, footer_top + 40), fill=(255, 160, 20), outline=(255, 180, 40))
+        unb_text = f"Unbuildable: {metrics['unbuildable_only_count']} ({metrics['unbuildable_only_share']*100:.1f}%)"
+        draw_canvas.text((28, footer_top + 29), unb_text, fill=COLOR_TEXT_PRIMARY, font=font_legend)
 
-    # Summary
-    sum_text = f"Masked: {metrics['masked_count']}/{metrics['total_cells']} ({metrics['masked_share']*100:.1f}%)"
-    draw_canvas.text((210, footer_top + 9), sum_text, fill=COLOR_TEXT_SECONDARY, font=font_legend)
+        # Summary
+        sum_text = f"Masked: {metrics['masked_count']}/{metrics['total_cells']} ({metrics['masked_share']*100:.1f}%)"
+        draw_canvas.text((210, footer_top + 9), sum_text, fill=COLOR_TEXT_SECONDARY, font=font_legend)
 
-    # Attribution line on the right
-    attr_len = draw_canvas.textlength(ATTRIBUTION_TEXT, font=font_legend)
-    attr_x = max(210.0, canvas_w - attr_len - 14)
-    draw_canvas.text((attr_x, footer_top + 29), ATTRIBUTION_TEXT, fill=COLOR_TEXT_MUTED, font=font_legend)
+        # Attribution line on the right
+        attr_len = draw_canvas.textlength(ATTRIBUTION_TEXT, font=font_legend)
+        attr_x = max(210.0, canvas_w - attr_len - 14)
+        draw_canvas.text((attr_x, footer_top + 29), ATTRIBUTION_TEXT, fill=COLOR_TEXT_MUTED, font=font_legend)
+    else:
+        # Row 1: Mask layers, totals, and attribution
+        draw_canvas.rectangle((12, footer_top + 10, 22, footer_top + 20), fill=(235, 45, 45), outline=(255, 70, 70))
+        imp_text = f"Impassable: {metrics['impassable_count']} ({metrics['impassable_share']*100:.1f}%)"
+        draw_canvas.text((28, footer_top + 9), imp_text, fill=COLOR_TEXT_PRIMARY, font=font_legend)
+
+        draw_canvas.rectangle((190, footer_top + 10, 200, footer_top + 20), fill=(255, 160, 20), outline=(255, 180, 40))
+        unb_text = f"Unbuildable: {metrics['unbuildable_only_count']} ({metrics['unbuildable_only_share']*100:.1f}%)"
+        draw_canvas.text((206, footer_top + 9), unb_text, fill=COLOR_TEXT_PRIMARY, font=font_legend)
+
+        sum_text = f"Masked: {metrics['masked_count']}/{metrics['total_cells']} ({metrics['masked_share']*100:.1f}%)"
+        draw_canvas.text((370, footer_top + 9), sum_text, fill=COLOR_TEXT_SECONDARY, font=font_legend)
+
+        attr_len = draw_canvas.textlength(ATTRIBUTION_TEXT, font=font_legend)
+        attr_x = max(550.0, canvas_w - attr_len - 14)
+        draw_canvas.text((attr_x, footer_top + 9), ATTRIBUTION_TEXT, fill=COLOR_TEXT_MUTED, font=font_legend)
+
+        # Row 2: Route tracks and graze markers
+        cur_x = 12.0
+        for idx, (aid, _) in enumerate(sorted(tracks.items())):
+            palette = TRACK_PALETTE[idx % len(TRACK_PALETTE)]
+            draw_canvas.line([(cur_x, footer_top + 39), (cur_x + 16, footer_top + 39)], fill=palette["stroke"], width=3)
+            draw_canvas.ellipse((cur_x + 6, footer_top + 37, cur_x + 10, footer_top + 41), fill=(255, 255, 255))
+            r_label = f"Route {idx + 1} ({aid})"
+            draw_canvas.text((cur_x + 22, footer_top + 34), r_label, fill=COLOR_TEXT_PRIMARY, font=font_legend)
+            cur_x += draw_canvas.textlength(r_label, font=font_legend) + 36
+
+        if graze:
+            draw_canvas.rectangle((cur_x, footer_top + 33, cur_x + 12, footer_top + 45), fill=COLOR_GRAZE_FILL, outline=COLOR_GRAZE_STROKE, width=2)
+            g_label = f"Checker-Graze ({len(graze)} cells: 134,260; 125,185; 190,243)" if len(graze) == 3 else f"Checker-Graze ({len(graze)} cells)"
+            draw_canvas.text((cur_x + 18, footer_top + 34), g_label, fill=COLOR_GRAZE_STROKE, font=font_legend)
 
     return canvas
 
@@ -523,6 +720,15 @@ def main() -> None:
         "--title",
         help="Optional title override",
     )
+    parser.add_argument(
+        "--manifest",
+        help="Optional capture manifest JSON containing unit tracks to overlay",
+    )
+    parser.add_argument(
+        "--graze-cells",
+        nargs="*",
+        help="Optional graze cell coordinates to highlight (e.g. '134,260 125,185 190,243')",
+    )
     # Positional fallbacks
     parser.add_argument("pos_payload", nargs="?", help=argparse.SUPPRESS)
     parser.add_argument("pos_ortho", nargs="?", help=argparse.SUPPRESS)
@@ -539,6 +745,7 @@ def main() -> None:
 
     crop_game = tuple(args.crop) if args.crop is not None else None
     ortho_bounds = tuple(args.ortho_bounds) if args.ortho_bounds is not None else None
+    graze_cells = parse_graze_cells(args.graze_cells)
 
     try:
         overlay = render_footprint_overlay(
@@ -547,6 +754,8 @@ def main() -> None:
             crop_game=crop_game,
             ortho_bounds=ortho_bounds,
             title=args.title,
+            manifest_path=args.manifest,
+            graze_cells=graze_cells,
         )
         os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
         overlay.save(out_path, format="PNG")
