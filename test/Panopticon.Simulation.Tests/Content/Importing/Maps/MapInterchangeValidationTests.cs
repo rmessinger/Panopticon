@@ -1,0 +1,394 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using Panopticon.Content.Importing.Maps;
+using Xunit;
+
+namespace Panopticon.Tests.Content.Importing.Maps;
+
+/// <summary>
+/// WI-H2-02: model-level validation of MapInterchange per the H2 deep dive check list. The
+/// synthetic 2x1 model is pure-unit and boots no game files. Stored samples are filled from one
+/// shared lattice value function so seams and aprons agree by construction.
+/// </summary>
+public sealed class MapInterchangeValidationTests
+{
+    [Fact]
+    public void ValidSyntheticModelPasses()
+    {
+        Assert.Empty(MapInterchangeValidator.Validate(BuildValidModel()));
+    }
+
+    [Fact]
+    public void WrongSchemaVersionFails()
+    {
+        AssertOnlyCode(BuildValidModel() with { SchemaVersion = MapInterchange.CurrentSchemaVersion + 1 }, MapInterchangeDiagnostic.SchemaVersion);
+    }
+
+    [Fact]
+    public void MissingChunkFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { Chunks = [model.Layout.Chunks[0]] };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.ChunkInventory);
+    }
+
+    [Fact]
+    public void ExtraChunkFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { Chunks = [.. model.Layout.Chunks, BuildChunk(2, 0)] };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.ChunkInventory);
+    }
+
+    [Fact]
+    public void TruncatedHeightLayerFails()
+    {
+        var chunk = MutateHeights(BuildValidModel().Layout.Chunks[0], samples => [.. samples.Take(MapChunkGeometry.StoredHeightSamplesPerChunk - 1)]);
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.HeightLength);
+    }
+
+    [Fact]
+    public void NonFiniteHeightFails()
+    {
+        // Interior core point (i=5, j=5): untouched by seam and apron comparisons.
+        var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(5), StoredColumn(5), float.NaN);
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.HeightFinite);
+    }
+
+    [Fact]
+    public void TruncatedMaterialLayerFails()
+    {
+        var chunk = BuildValidModel().Layout.Chunks[0] with
+        {
+            Materials = new MaterialLayer(new byte[MapChunkGeometry.CoreCellsPerChunk - 1]),
+        };
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.MaterialLength);
+    }
+
+    [Fact]
+    public void TruncatedMaskLayerFails()
+    {
+        var chunk = BuildValidModel().Layout.Chunks[0] with
+        {
+            Masks = new MaskLayer(new byte[MapChunkGeometry.CoreCellsPerChunk - 1]),
+        };
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.MaskLength);
+    }
+
+    [Fact]
+    public void UnknownMaskBitFails()
+    {
+        var flags = new byte[MapChunkGeometry.CoreCellsPerChunk];
+        flags[100] = 0x80;
+        var chunk = BuildValidModel().Layout.Chunks[0] with { Masks = new MaskLayer(flags) };
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.MaskBits);
+    }
+
+    [Fact]
+    public void OversizedPaletteFails()
+    {
+        var palette = Enumerable.Range(0, 257)
+            .Select(i => new MaterialPaletteEntry((byte)(i % 256), $"material-{i}", new AssetReference("terrain", $"material-{i}")))
+            .ToArray();
+        var blend = new BlendModel(palette);
+
+        AssertOnlyCode(BuildValidModel() with { Blend = blend }, MapInterchangeDiagnostic.PaletteCount);
+    }
+
+    [Fact]
+    public void MaterialIndexOutsidePaletteFails()
+    {
+        var indices = new byte[MapChunkGeometry.CoreCellsPerChunk];
+        indices[42] = 5;
+        var chunk = BuildValidModel().Layout.Chunks[1] with { Materials = new MaterialLayer(indices) };
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 1, chunk), MapInterchangeDiagnostic.PaletteIndex);
+    }
+
+    [Fact]
+    public void DuplicatePaletteIndexFails()
+    {
+        var blend = new BlendModel(
+        [
+            new MaterialPaletteEntry(0, "grass", new AssetReference("terrain", "grass")),
+            new MaterialPaletteEntry(0, "rock", new AssetReference("terrain", "rock")),
+        ]);
+
+        AssertOnlyCode(BuildValidModel() with { Blend = blend }, MapInterchangeDiagnostic.PaletteDuplicateIndex);
+    }
+
+    [Fact]
+    public void PartialImageryCoverageFails()
+    {
+        var chunk = BuildValidModel().Layout.Chunks[0] with { Imagery = BuildImagery(4, 4) };
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.ImageryConsistency);
+    }
+
+    [Fact]
+    public void ImageryPixelCountMismatchFails()
+    {
+        var mismatched = BuildImagery(2, 2) with { Rgba = new byte[15] };
+        var first = WithChunk(BuildValidModel(), 0, BuildValidModel().Layout.Chunks[0] with { Imagery = BuildImagery(2, 2) });
+        var model = WithChunk(first, 1, first.Layout.Chunks[1] with { Imagery = mismatched });
+
+        AssertOnlyCode(model, MapInterchangeDiagnostic.ImageryConsistency);
+    }
+
+    [Fact]
+    public void DuplicateStableIdAcrossSetsFails()
+    {
+        var model = BuildValidModel();
+        var waypoints = model.Waypoints! with
+        {
+            Waypoints = [model.Waypoints.Waypoints[0] with { StableId = "object-1" }],
+        };
+
+        AssertOnlyCode(model with { Waypoints = waypoints }, MapInterchangeDiagnostic.StableIdDuplicate);
+    }
+
+    [Fact]
+    public void UnknownRetainedSectionNameFails()
+    {
+        var model = BuildValidModel();
+        var retained = model.RetainedSections[0] with { SectionName = "NotALegacySection" };
+
+        AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedName);
+    }
+
+    [Fact]
+    public void NegativeRetainedSectionVersionFails()
+    {
+        var model = BuildValidModel();
+        var retained = model.RetainedSections[0] with { SectionVersion = -1 };
+
+        AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedVersion);
+    }
+
+    [Fact]
+    public void RetainedSectionDigestMismatchFails()
+    {
+        var model = BuildValidModel();
+        var retained = model.RetainedSections[0] with { Sha256 = "deadbeef" };
+
+        AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedDigest);
+    }
+
+    [Fact]
+    public void EmptyRetainedSectionBytesFail()
+    {
+        var model = BuildValidModel();
+        var retained = model.RetainedSections[0] with { Bytes = ReadOnlyMemory<byte>.Empty, Sha256 = Sha256Hex([]) };
+
+        AssertOnlyCode(model with { RetainedSections = [retained] }, MapInterchangeDiagnostic.RetainedDigest);
+    }
+
+    [Fact]
+    public void BrokenHorizontalSeamFails()
+    {
+        // Perturbs west chunk core column 128 (stored column 129) at core row 10: one stored sample.
+        // The east chunk's west apron duplicates that same core sample, so the apron diagnostic
+        // necessarily co-occurs; no stored sample breaks the seam alone.
+        var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(10), StoredColumn(MapChunkGeometry.CorePointsPerAxis - 1), 999.5f);
+        var model = WithChunk(BuildValidModel(), 0, chunk);
+        var codes = Codes(model);
+
+        Assert.Equal(
+            [MapInterchangeDiagnostic.ApronAgreement, MapInterchangeDiagnostic.SeamEquality],
+            codes.Order().ToArray());
+    }
+
+    [Fact]
+    public void BrokenEastApronFails()
+    {
+        // Perturbs west chunk east apron (stored column 130) at core row 10: one stored sample.
+        var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(10), MapChunkGeometry.StoredPointsPerAxis - 1, 777.25f);
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.ApronAgreement);
+    }
+
+    [Fact]
+    public void ValidatePreservesSourceQuantities()
+    {
+        var model = BuildValidModel();
+        var spacing = model.Layout.SampleSpacing;
+
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+
+        Assert.Equal(new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy), model.Layout.SampleSpacing);
+        Assert.Equal(spacing, model.Layout.SampleSpacing);
+        Assert.Equal(10, model.Objects!.Objects[0].X.Value);
+    }
+
+    private static void AssertOnlyCode(MapInterchange model, string expected)
+    {
+        Assert.Equal([expected], Codes(model));
+    }
+
+    private static string[] Codes(MapInterchange model)
+    {
+        return MapInterchangeValidator.Validate(model).Select(d => d.Code).Distinct().ToArray();
+    }
+
+    private static int StoredRow(int coreJ) => coreJ + 1;
+
+    private static int StoredColumn(int coreI) => coreI + 1;
+
+    private static Chunk MutateStoredSample(Chunk chunk, int row, int column, float value)
+    {
+        var samples = chunk.Heights.Samples.ToArray();
+        samples[(row * MapChunkGeometry.StoredPointsPerAxis) + column] = value;
+
+        return chunk with { Heights = new HeightLayer(samples) };
+    }
+
+    private static Chunk MutateHeights(Chunk chunk, Func<IReadOnlyList<float>, IReadOnlyList<float>> mutate)
+    {
+        return chunk with { Heights = new HeightLayer(mutate(chunk.Heights.Samples)) };
+    }
+
+    private static MapInterchange WithChunk(MapInterchange model, int index, Chunk chunk)
+    {
+        var chunks = model.Layout.Chunks.ToArray();
+        chunks[index] = chunk;
+
+        return model with { Layout = model.Layout with { Chunks = chunks } };
+    }
+
+    private static ImageryLayer BuildImagery(int width, int height)
+    {
+        return new ImageryLayer(width, height, new byte[width * height * 4]);
+    }
+
+    private static string Sha256Hex(byte[] bytes)
+    {
+        return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+    }
+
+    private const int IntervalsPerChunkAxis = MapChunkGeometry.CorePointsPerAxis - 1;
+
+    private const int StoredAxis = MapChunkGeometry.StoredPointsPerAxis;
+
+    private const int ChunksX = 2;
+
+    private const int ChunksY = 1;
+
+    private static MapInterchange BuildValidModel()
+    {
+        var layout = new TerrainLayout(
+            new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+            2,
+            1,
+            0,
+            new GeospatialTransform(null, null, null, 1.0, null, null, null),
+            MapNodataPolicy.Fail,
+            [BuildChunk(0, 0), BuildChunk(1, 0)]);
+
+        var blend = new BlendModel(
+        [
+            new MaterialPaletteEntry(0, "grass", new AssetReference("terrain", "grass")),
+            new MaterialPaletteEntry(1, "rock", new AssetReference("terrain", "rock")),
+        ]);
+
+        var objects = new PlacedObjectSet(
+        [
+            new PlacedObject(
+                "object-1",
+                new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+                new MapQuantity(20, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+                new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ),
+                0.0,
+                new AssetReference("units", "infantry"),
+                new Dictionary<string, string>()),
+        ]);
+
+        var waypoints = new WaypointSet(
+        [
+            new Waypoint(
+                "waypoint-1",
+                "start",
+                new MapQuantity(15, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+                new MapQuantity(25, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
+                new MapQuantity(0, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ)),
+        ]);
+
+        var provenance = new Provenance(
+            null,
+            [],
+            [new GeneratedFeature("feature-1", "lake", new Dictionary<string, string>())]);
+
+        var report = new ImportReport([], [], 0, 0, []);
+
+        var bytes = new byte[] { 1, 2, 3, 4 };
+        var retained = new RetainedSection("GlobalVersion", 8, bytes, Sha256Hex(bytes));
+
+        return new MapInterchange(
+            MapInterchange.CurrentSchemaVersion,
+            new MapIdentity("synthetic", MapSourceKind.Generated, null),
+            layout,
+            blend,
+            objects,
+            waypoints,
+            provenance,
+            report,
+            [retained]);
+    }
+
+    private static Chunk BuildChunk(int cx, int cy)
+    {
+        var samples = new float[MapChunkGeometry.StoredHeightSamplesPerChunk];
+
+        for (var row = 0; row < StoredAxis; row++)
+        {
+            for (var column = 0; column < StoredAxis; column++)
+            {
+                samples[(row * StoredAxis) + column] = LatticeSample(cx, cy, row, column);
+            }
+        }
+
+        return new Chunk(
+            new ChunkKey(cx, cy),
+            new HeightLayer(samples),
+            new MaterialLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
+            new MaskLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
+            null);
+    }
+
+    private static float LatticeSample(int cx, int cy, int row, int column)
+    {
+        var x = (cx * IntervalsPerChunkAxis) + column - 1;
+        var y = (cy * IntervalsPerChunkAxis) + row - 1;
+
+        // Apron samples hold the neighbouring chunk's edge core value at the same lattice point.
+        if (column == 0 && cx > 0)
+        {
+            x = cx * IntervalsPerChunkAxis;
+        }
+
+        if (column == StoredAxis - 1 && cx < ChunksX - 1)
+        {
+            x = (cx + 1) * IntervalsPerChunkAxis;
+        }
+
+        if (row == 0 && cy > 0)
+        {
+            y = cy * IntervalsPerChunkAxis;
+        }
+
+        if (row == StoredAxis - 1 && cy < ChunksY - 1)
+        {
+            y = (cy + 1) * IntervalsPerChunkAxis;
+        }
+
+        return x + y;
+    }
+}
