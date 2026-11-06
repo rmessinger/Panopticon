@@ -36,12 +36,17 @@ internal static class R3BuildingPrototypeScenario
     private const float OverviewStandoff = 385f;
     private const float OverviewEyeHeight = 600f;
     private const float OverviewTargetLift = 50f;
-    private const float CloseupStandoff = 80f;
-    private const float CloseupEyeLift = 45f;
-    private const float CloseupTargetLift = 18f;
+    private const float CloseupStandoff = 92f;
+    private const float CloseupEyeLift = 42f;
+    private const float CloseupTargetLift = 17f;
+    private const float CloseupBuildingHeight = 34.81f;
     private const string MetricsFileName = "metrics.json";
 
     private static readonly Vector2 OverviewFocus = new(1900f, 1900f);
+
+    // BATIMENT0000002275658305 footprint center and half extents, from its glTF position bounds.
+    private static readonly Vector2 CloseupFocus = new(1779.45f, 1949.50f);
+    private static readonly Vector2 CloseupHalfExtents = new(15.74f, 15.57f);
 
     // The importer maps glTF (x, y, z) to engine (z, x, y), but the generator already wrote engine axes.
     // This matrix maps the imported engine coordinates back to the generator's engine axes.
@@ -200,6 +205,11 @@ internal static class R3BuildingPrototypeScenario
             }
         }
 
+        if (config.R3Camera == R3CameraView.Closeup)
+        {
+            ReportCornerProjection(game, reporter);
+        }
+
         var logicMs = Summarize(logicSamples);
         var renderMs = Summarize(renderSamples);
         var metrics = new R3Metrics(
@@ -315,11 +325,45 @@ internal static class R3BuildingPrototypeScenario
 
     private static (Vector3 Eye, Vector3 Target) CloseupView(Game game)
     {
-        var ground = GroundHeight(game, new Vector3(OverviewFocus, 0f));
-        var target = new Vector3(OverviewFocus, ground + CloseupTargetLift);
+        var ground = GroundHeight(game, new Vector3(CloseupFocus, 0f));
+        var target = new Vector3(CloseupFocus, ground + CloseupTargetLift);
         var standoff = CloseupStandoff * MathF.Sqrt(0.5f);
-        var eye = new Vector3(OverviewFocus.X - standoff, OverviewFocus.Y - standoff, ground + CloseupEyeLift);
+        var eye = new Vector3(CloseupFocus.X + standoff, CloseupFocus.Y - standoff, ground + CloseupEyeLift);
         return (eye, target);
+    }
+
+    private static void ReportCornerProjection(Game game, ITestHarnessReporter reporter)
+    {
+        var camera = game.Scene3D.Camera;
+        var viewProjection = camera.View * camera.Projection;
+        var baseZ = GroundHeight(game, new Vector3(CloseupFocus, 0f)) - BaseSinkUnits;
+        var worstExtent = 0f;
+        var allInside = true;
+        var corners = new List<string>(8);
+        foreach (var sx in new[] { -1f, 1f })
+        {
+            foreach (var sy in new[] { -1f, 1f })
+            {
+                foreach (var z in new[] { 0f, CloseupBuildingHeight })
+                {
+                    var corner = new Vector3(
+                        CloseupFocus.X + sx * CloseupHalfExtents.X,
+                        CloseupFocus.Y + sy * CloseupHalfExtents.Y,
+                        baseZ + z);
+                    var clip = Vector4.Transform(new Vector4(corner, 1f), viewProjection);
+                    var ndcX = clip.X / clip.W;
+                    var ndcY = clip.Y / clip.W;
+                    var extent = MathF.Max(MathF.Abs(ndcX), MathF.Abs(ndcY));
+                    allInside &= clip.W > 0f && extent <= 0.95f;
+                    worstExtent = MathF.Max(worstExtent, extent);
+                    corners.Add($"({ndcX:F3},{ndcY:F3})");
+                }
+            }
+        }
+
+        reporter.Info(
+            $"R3 closeup corner NDC: {string.Join(" ", corners)}; worst |ndc| {worstExtent:F3}; " +
+            $"all inside 5% margin: {allInside}");
     }
 
     private static TimingSummary Summarize(List<double> samples)
