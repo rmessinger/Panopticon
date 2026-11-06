@@ -43,6 +43,14 @@ public enum ManifestFeatureOrientation
     AlongFeature,
 }
 
+/// <summary>Height cell lookup adds the map border shift (HeightMap.cs:148-149), then truncates toward zero with C# (int) (HeightMap.cs:150), so shifted coordinates in (-1, 0) map to cell 0; importer domain clipping does not reproduce that alias.</summary>
+public enum ManifestMaskCoverage
+{
+    Sample = 0,
+
+    ConservativeArea,
+}
+
 public sealed record FeatureMappingRule(
     string SourceId,
     ManifestFeatureTarget Target,
@@ -55,7 +63,8 @@ public sealed record FeatureMappingRule(
     string? Material = null,
     bool? Passable = null,
     bool? Buildable = null,
-    string? LayerName = null)
+    string? LayerName = null,
+    ManifestMaskCoverage? Coverage = null)
 {
     public static bool IsTargetCompatible(ManifestFeatureTarget target, ManifestFeatureGeometry geometry) =>
         (target, geometry) switch

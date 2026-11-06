@@ -256,12 +256,32 @@ class TestFootprintsStage(unittest.TestCase):
         self.assertEqual(rule1["geometry"], "polygon")
         self.assertEqual(rule1["target"], "passability")
         self.assertFalse(rule1["passable"])
+        self.assertEqual(rule1["coverage"], "conservative-area")
+        self.assertEqual(rule1, {
+            "sourceId": f"{self.name}-buildings",
+            "layerName": "buildings",
+            "geometry": "polygon",
+            "target": "passability",
+            "passable": False,
+            "coverage": "conservative-area",
+        })
+        self.assertEqual(set(rule1.keys()), {"sourceId", "layerName", "geometry", "target", "passable", "coverage"})
 
         self.assertEqual(rule2["sourceId"], f"{self.name}-buildings")
         self.assertEqual(rule2["layerName"], "buildings")
         self.assertEqual(rule2["geometry"], "polygon")
         self.assertEqual(rule2["target"], "buildability")
         self.assertFalse(rule2["buildable"])
+        self.assertEqual(rule2["coverage"], "conservative-area")
+        self.assertEqual(rule2, {
+            "sourceId": f"{self.name}-buildings",
+            "layerName": "buildings",
+            "geometry": "polygon",
+            "target": "buildability",
+            "buildable": False,
+            "coverage": "conservative-area",
+        })
+        self.assertEqual(set(rule2.keys()), {"sourceId", "layerName", "geometry", "target", "buildable", "coverage"})
 
         # Assert raw page file retained on disk
         page0_path = os.path.join(self.footprint_root, "provenance", "pages", "page-0000.json")

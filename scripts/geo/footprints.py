@@ -740,6 +740,7 @@ def compose_operator_manifest(name: str, delegate_manifest: dict, staged_copies:
             "geometry": "polygon",
             "target": "passability",
             "passable": False,
+            "coverage": "conservative-area",
         },
         {
             "sourceId": buildings_source_id,
@@ -747,6 +748,7 @@ def compose_operator_manifest(name: str, delegate_manifest: dict, staged_copies:
             "geometry": "polygon",
             "target": "buildability",
             "buildable": False,
+            "coverage": "conservative-area",
         },
     ]
 

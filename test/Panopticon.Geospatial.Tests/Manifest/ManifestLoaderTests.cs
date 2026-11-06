@@ -197,6 +197,90 @@ public class ManifestLoaderTests
     }
 
     [Fact]
+    public void ConservativeAreaCoverage_OnPolygonPassabilityRule_IsAccepted()
+    {
+        var json = FullManifest.Replace(
+            "\"passable\": false }",
+            "\"passable\": false, \"coverage\": \"conservative-area\" }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.False(diagnostics.HasErrors);
+        var loaded = Assert.IsType<GeospatialImportManifest>(manifest);
+        Assert.Equal(ManifestMaskCoverage.ConservativeArea, loaded.FeatureMappings[4].Coverage);
+    }
+
+    [Fact]
+    public void ConservativeAreaCoverage_RoundTripsIntoFeatureMappingRule()
+    {
+        var json = FullManifest.Replace(
+            "\"passable\": false }",
+            "\"passable\": false, \"coverage\": \"conservative-area\" }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.False(diagnostics.HasErrors);
+        var loaded = Assert.IsType<GeospatialImportManifest>(manifest);
+        Assert.Equal(
+            new FeatureMappingRule("vectors", ManifestFeatureTarget.Passability, ManifestFeatureGeometry.Polygon, "zone", "keep", null, null, null, null, false, null, Coverage: ManifestMaskCoverage.ConservativeArea),
+            loaded.FeatureMappings[4]);
+    }
+
+    [Fact]
+    public void AbsentOrExplicitSampleCoverage_ResolveToSample()
+    {
+        var explicitJson = FullManifest.Replace(
+            "\"passable\": false }",
+            "\"passable\": false, \"coverage\": \"sample\" }");
+        var (explicitManifest, explicitDiagnostics) = LoadJson(explicitJson);
+        var (absentManifest, absentDiagnostics) = LoadJson(FullManifest);
+
+        Assert.False(explicitDiagnostics.HasErrors);
+        Assert.False(absentDiagnostics.HasErrors);
+        var explicitRule = Assert.IsType<GeospatialImportManifest>(explicitManifest).FeatureMappings[4];
+        var absentRule = Assert.IsType<GeospatialImportManifest>(absentManifest).FeatureMappings[4];
+        Assert.Equal(ManifestMaskCoverage.Sample, explicitRule.Coverage);
+        Assert.Null(absentRule.Coverage);
+        Assert.Equal(ManifestMaskCoverage.Sample, absentRule.Coverage ?? ManifestMaskCoverage.Sample);
+    }
+
+    [Theory]
+    [InlineData("\"material\": \"forest\" }", "\"material\": \"forest\", \"coverage\": \"conservative-area\" }")]
+    [InlineData("\"target\": \"landmark\" }", "\"target\": \"landmark\", \"coverage\": \"sample\" }")]
+    public void CoverageOnNonMaskTarget_ProducesValueInvalidDiagnostic(string from, string to)
+    {
+        var json = FullManifest.Replace(from, to);
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        var diagnostic = AssertSingleError(diagnostics, GeoDiagnosticCodes.ManifestValueInvalid);
+        Assert.Contains("coverage", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CoverageWithoutGeometry_ProducesMissingRequiredDiagnostic()
+    {
+        var json = FullManifest.Replace(
+            "\"geometry\": \"polygon\", \"attribute\": \"zone\", \"value\": \"keep\", \"target\": \"passability\", \"passable\": false }",
+            "\"attribute\": \"zone\", \"value\": \"keep\", \"target\": \"passability\", \"passable\": false, \"coverage\": \"conservative-area\" }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        var diagnostic = AssertSingleError(diagnostics, GeoDiagnosticCodes.ManifestMissingRequired);
+        Assert.Contains("geometry", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CoverageWithNonPolygonGeometry_ProducesMissingRequiredDiagnostic()
+    {
+        var json = FullManifest.Replace(
+            "\"geometry\": \"polygon\", \"attribute\": \"zone\", \"value\": \"keep\", \"target\": \"passability\", \"passable\": false }",
+            "\"geometry\": \"point\", \"attribute\": \"zone\", \"value\": \"keep\", \"target\": \"passability\", \"passable\": false, \"coverage\": \"conservative-area\" }");
+        var (manifest, diagnostics) = LoadJson(json);
+
+        Assert.Null(manifest);
+        Assert.Contains(GeoDiagnosticCodes.ManifestMissingRequired, ErrorCodes(diagnostics));
+    }
+
+    [Fact]
     public void UnknownDatumManifest_LoadsWithRelativeTolerance()
     {
         var (manifest, diagnostics) = LoadJson(UnknownDatumManifest);
@@ -269,6 +353,7 @@ public class ManifestLoaderTests
         { FullManifest.Replace("\"target\": \"water\"", "\"target\": \"wall\""), "ManifestFeatureTarget" },
         { FullManifest.Replace("\"geometry\": \"polygon\"", "\"geometry\": \"square\""), "ManifestFeatureGeometry" },
         { FullManifest.Replace("\"orientation\": \"fixed\"", "\"orientation\": \"sideways\""), "ManifestFeatureOrientation" },
+        { FullManifest.Replace("\"passable\": false }", "\"passable\": false, \"coverage\": \"interpolate\" }"), "ManifestMaskCoverage" },
     };
 
     [Theory]
