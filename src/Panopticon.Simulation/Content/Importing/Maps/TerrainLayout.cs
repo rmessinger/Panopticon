@@ -6,11 +6,18 @@ using System.Linq;
 
 namespace Panopticon.Content.Importing.Maps;
 
-/// <summary>Terrain grid: lattice spacing, chunk grid, border, source transform, nodata policy, and chunks. Chunks are copied at construction.</summary>
+/// <summary>
+/// Terrain grid: lattice spacing, whole-map lattice point counts, chunk grid, border, source
+/// transform, nodata policy, and chunks. Lattice counts are border-inclusive whole-map point
+/// counts; chunks tile the lattice with one shared edge point between neighbours. Chunks are
+/// copied at construction.
+/// </summary>
 public sealed record TerrainLayout
 {
     public TerrainLayout(
         MapQuantity sampleSpacing,
+        int latticeWidth,
+        int latticeHeight,
         int chunksX,
         int chunksY,
         int border,
@@ -20,6 +27,8 @@ public sealed record TerrainLayout
     {
         ArgumentNullException.ThrowIfNull(chunks);
         SampleSpacing = sampleSpacing;
+        LatticeWidth = latticeWidth;
+        LatticeHeight = latticeHeight;
         ChunksX = chunksX;
         ChunksY = chunksY;
         Border = border;
@@ -29,6 +38,10 @@ public sealed record TerrainLayout
     }
 
     public MapQuantity SampleSpacing { get; init; }
+
+    public int LatticeWidth { get; init; }
+
+    public int LatticeHeight { get; init; }
 
     public int ChunksX { get; init; }
 
