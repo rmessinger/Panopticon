@@ -1,59 +1,7 @@
 # Task Card `WI-W3b-05`: Run W2 evidence on generated sector
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-W3b-05` |
-| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
-| Status | `Draft` |
-| Type | `test-addition` |
-| Effort | `S` |
-| Prerequisites | `WI-W3b-04`, W2 evidence cards |
-| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/918
 
-## Goal
+Canonical card ID: `WI-W3b-05`
 
-Draft: flip to Ready once `WI-W3b-04` and W2 evidence cards are Done.
-
-Run the W2 promotion and demotion evidence against generated cells.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/w3b-somme-sector.md` §3.
-- `docs/roadmap/deep-dives/w2-fidelity-promotion.md` §8.
-
-## Steps
-
-1. Choose one contested generated region pair.
-2. Promote tactical soldiers on generated cells.
-3. Run the all-tactical reference and mixed activation arms.
-4. Reuse W2 conservation and transition assertions.
-
-## Files likely to change
-
-- Western Front evidence tests
-
-## Acceptance criteria
-
-- [ ] W2 transition evidence passes on generated topology.
-- [ ] The all-tactical reference uses the same generated cell bounds as the mixed run.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~GeneratedSectorW2Evidence"
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No visual rendering changes.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked` with reason.
-- Update the roadmap phase Status if this card completes it.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List any follow-up cards to create here:
-  - none
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

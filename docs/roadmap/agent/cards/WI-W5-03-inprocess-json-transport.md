@@ -1,60 +1,7 @@
 # Task Card `WI-W5-03`: Add in-process JSON boundary transport
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-W5-03` |
-| Roadmap phase | [Track W · W5](../../track-w-western-front.md): distributed regional simulation |
-| Status | `Draft` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-B6-03`, `WI-W5-02` |
-| Diagrams | [W5 §7](../../deep-dives/w5-distributed-regional-simulation.md#7-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/928
 
-## Goal
+Canonical card ID: `WI-W5-03`
 
-Draft: flip to Ready once `WI-B6-03` and `WI-W5-02` are Done.
-
-Implement the W5 JSON transport for frame-ordered in-process boundary messages.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/w5-distributed-regional-simulation.md` §4.
-- `docs/roadmap/deep-dives/b6-distributed-simulation.md` §5.
-
-## Steps
-
-1. Add JSON serialization for `WesternFrontBoundaryMessage`.
-2. Queue messages by frame, source, and target.
-3. Reject duplicate and out-of-order messages.
-4. Add round-trip and ordering tests.
-
-## Files likely to change
-
-- Western Front transport files
-- Tests
-
-## Acceptance criteria
-
-- [ ] Messages round-trip exactly for deterministic JSON fixtures.
-- [ ] Duplicate or out-of-order frame delivery is diagnosed.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~WesternFrontJsonTransport"
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No multi-process transport.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked` with reason.
-- Update the roadmap phase Status if this card completes it.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List any follow-up cards to create here:
-  - none
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

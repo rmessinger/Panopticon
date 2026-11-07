@@ -1,57 +1,7 @@
 # Task Card `WI-B4b-24`: Dev preview CLI verb and play evidence
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-B4b-24` |
-| Roadmap phase | [Track R · R2](../../track-r-real-world-terrain.md): B4b-6b dev preview |
-| Status | `Done` |
-| Type | `test-addition` |
-| Effort | `S` |
-| Prerequisites | `WI-B4b-19`, `WI-B4b-20`, `WI-B4b-23` |
-| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
+Ticket: https://projects.reid-corp.com/work_packages/385
 
-## Goal
+Canonical card ID: `WI-B4b-24`
 
-Add a `preview` verb and a game-backed test proving a generated map loads and runs.
-
-## Context to read (and only this)
-
-- `src/Panopticon.Tools.GeoImport/`.
-- `docs/screenshots.md`.
-- An existing `[GameFact(SageGame.CncGenerals)]` test that starts a skirmish, for the fixture pattern.
-
-## Steps
-
-1. Add `preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] --out <maps dir>` writing the `.map`.
-2. Add a `[GameFact(SageGame.CncGenerals)]` test that builds the synthetic payload, writes the preview map, starts a skirmish on it, runs 300 logic frames, and asserts terrain height at a control point.
-3. Capture one screenshot of the generated map per `docs/screenshots.md` and attach it to the PR.
-
-## Files likely to change
-
-- `src/Panopticon.Tools.GeoImport/`
-- `test/Panopticon.Simulation.Tests/` or the preview test folder
-
-## Acceptance criteria
-
-- [ ] `preview` writes a `.map` the engine loads.
-- [ ] The game-backed test passes locally with `CNC_GENERALS_PATH` set.
-- [ ] A screenshot shows the generated terrain.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~GeneratedMapPreview"
-dotnet test src --filter Category!=Interactive
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No operator real-world proof (B4b-9).
-
-## On completion
-
-- Set Status above to `Done` or `Blocked`.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

@@ -1,60 +1,7 @@
 # Task Card `WI-B6-06`: Implement JSON boundary transport
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-B6-06` |
-| Roadmap phase | [Track B · B6](../../track-b-scale.md): distributed simulation |
-| Status | `Draft` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-B6-03`, `WI-B6-05` |
-| Diagrams | [B6 §9](../../deep-dives/b6-distributed-simulation.md#9-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/396
 
-## Goal
+Canonical card ID: `WI-B6-06`
 
-Draft: flip to Ready once `WI-B6-03` and `WI-B6-05` are Done.
-
-Serialize and deliver B6-2 in-process boundary messages as JSON.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/b6-distributed-simulation.md` §5.
-- Boundary message design from `WI-B6-03`.
-
-## Steps
-
-1. Add JSON encoder and decoder for boundary messages.
-2. Preserve deterministic field ordering where the serializer permits it.
-3. Add corruption, duplicate, and out-of-order diagnostics.
-4. Integrate with the in-process transport queue.
-
-## Files likely to change
-
-- B6 transport files
-- Tests
-
-## Acceptance criteria
-
-- [ ] JSON fixtures round-trip to the same semantic message.
-- [ ] Duplicate or out-of-order messages fail before apply.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~JsonBoundaryTransport"
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No compact binary encoding.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked` with reason.
-- Update the roadmap phase Status if this card completes it.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List any follow-up cards to create here:
-  - none
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

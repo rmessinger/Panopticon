@@ -1,57 +1,7 @@
 # Task Card `WI-B7-01`: Add the fidelity model and registry
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-B7-01` |
-| Roadmap phase | [Track B · B7](../../track-b-scale.md): variable simulation fidelity |
-| Status | `Ready` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | none |
-| Diagrams | [B7 §9](../../deep-dives/b7-variable-fidelity.md#9-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/401
 
-## Goal
+Canonical card ID: `WI-B7-01`
 
-Add `SimulationFidelityLevel`, `FidelityState`, and `FidelityRegistry` in `Panopticon.Simulation`.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/b7-variable-fidelity.md`: owning B7 design.
-- `src/Panopticon.Simulation/Logic/GameLogic.cs`: live object enumeration and creation.
-- `src/Panopticon.Simulation/IGame.cs:149-153`: object destruction event.
-
-## Steps
-
-1. Add the enum and immutable state record.
-2. Add a registry keyed by `ObjectId` with current level, requested level, dwell counters, reason, and last transition frame.
-3. Subscribe or expose removal for destroyed object ids.
-4. Add unit tests for set, query, hysteresis state, and removal.
-
-## Files likely to change
-
-- `src/Panopticon.Simulation/Fidelity/`
-- `test/Panopticon.Simulation.Tests/Fidelity/`
-
-## Acceptance criteria
-
-- [ ] Registry stores per-object current and requested levels.
-- [ ] Registry tracks hysteresis state.
-- [ ] Destroyed object ids are removed or ignored deterministically.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter Category!=Interactive
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No temporal LOD, simplified physics, aggregation, or visualization.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked` with reason.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

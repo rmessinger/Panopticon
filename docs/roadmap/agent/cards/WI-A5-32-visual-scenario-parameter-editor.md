@@ -1,74 +1,7 @@
 # Task Card `WI-A5-32`: Add visual scenario-parameter editing
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-A5-32` |
-| Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 visual authoring |
-| Status | `Done` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-A5-03`, `WI-A5-10`, `WI-A5-12` |
-| Diagrams | [A5 §8](../../deep-dives/a5-visualization.md#8-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/328
 
-## Goal
+Canonical card ID: `WI-A5-32`
 
-Edit domain parameters, seam selections, seed, stop conditions, probes, and recording options from
-schema-driven controls without hard-coding RTS fields.
-
-## Context to read (and only this)
-
-- Parameter-editing contract in the A5 implementation plan.
-- Versioned scenario model from `WI-A5-03`.
-- Validator from `WI-A5-10`.
-- Domain parameter/descriptor projection from `WI-A5-12`.
-- Existing ReplaySketch Core/MAUI settings patterns.
-
-## Steps
-
-1. Add a Core form model from scenario and domain parameter descriptors.
-2. Support the documented scalar, enum, list, and implementation-selection value types.
-3. Validate before committing an edit.
-4. Bind controls in the scenario-authoring surface.
-5. Add round-trip, invalid-value, domain-switch, and screenshot tests.
-
-## Files likely to change
-
-- ReplaySketch Core authoring models
-- Narrow ReplaySketch MAUI files
-- ReplaySketch tests
-
-## Acceptance criteria
-
-- [x] All versioned scenario parameter groups are editable.
-  - Scalars (seed, sample/snapshot intervals, frame cap), enum (recording mode), list
-    (parameters add/remove), and implementation selection (domain combo over
-    `ScenarioParametersViewModel.KnownDomains`).
-- [x] Domain switches replace domain-specific fields without stale values.
-  - The scenario carries no domain-specific fields beyond `DomainId`;
-    `DomainSwitch_ReplacesDomainWithoutStaleValues` proves the switch applies cleanly.
-- [x] Invalid edits do not mutate the scenario.
-  - Edits parse and validate against a candidate clone; only a fully valid edit commits
-    (`InvalidEdits_DoNotMutateScenario`, parse errors + validator field paths reported).
-- [x] Save/reload preserves edited values.
-  - Applied edits serialize and reload through `ReplayScenarioLoader.Load`
-    (`RoundTrip_SaveAndReloadPreservesEdits`, incl. domain switch and recording options).
-- [x] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~ScenarioParameterEditor"
-dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-parameters.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No matrix-axis editing or topology drawing.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

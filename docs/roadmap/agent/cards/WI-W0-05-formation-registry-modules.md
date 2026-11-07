@@ -1,60 +1,7 @@
 # Task Card `WI-W0-05`: Add state modules and the formation registry
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-W0-05` |
-| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
-| Status | `Ready` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-W0-02` |
-| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/849
 
-## Goal
+Canonical card ID: `WI-W0-05`
 
-Add data-only behavior modules for W0 state and a registry mapping stable keys to objects.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/w0-charter-fixture.md` §2 and §4.
-- `src/Panopticon.Simulation/Simulation/Transport/TransportVehicleUpdate.cs:15-27`: data-only module pattern.
-- `src/Panopticon.Simulation.WesternFront/State/` from `WI-W0-02`.
-
-## Steps
-
-1. Add state records for formation, soldier, depot, region, aggregate, pool, ledger, and link state.
-2. Add `FormationBehavior`, `SoldierBehavior`, `DepotBehavior`, and `RegionControllerBehavior` with no per-frame update.
-3. Add `FormationRegistry` mapping formation, soldier, depot, and region keys to object ids.
-4. Add tests for registration, lookup, stable ordering, and soldier-to-formation membership.
-
-## Files likely to change
-
-- `src/Panopticon.Simulation.WesternFront/Runtime/*.cs`
-- `src/Panopticon.Simulation.WesternFront/State/*.cs`
-- `test/Panopticon.Simulation.Tests/WesternFront/FormationRegistryTests.cs`
-
-## Acceptance criteria
-
-- [ ] Registry maps one soldier key to its platoon formation.
-- [ ] No W0 behavior module advances state per logic frame.
-- [ ] Registry enumeration is ordinal by stable key.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~FormationRegistry"
-dotnet test src --filter Category!=Interactive
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No scenario construction or ledger mutation rules.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked`.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List follow-up cards to create: none.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

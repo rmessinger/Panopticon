@@ -1,61 +1,7 @@
 # Task Card `WI-W3a-05`: Derive 1000 m regions and 125 m cells
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-W3a-05` |
-| Roadmap phase | [Track W · W3a](../../track-w-western-front.md): Sedan 1870 |
-| Status | `Draft` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-W3a-04`, `WI-B4b-06` |
-| Diagrams | [W3a §13](../../deep-dives/w3a-sedan-1870.md#13-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/887
 
-## Goal
+Canonical card ID: `WI-W3a-05`
 
-Draft: flip to Ready once `WI-W3a-04` and `WI-B4b-06` are Done and `LocalMapGrid` exists.
-
-Implement the region and cell grid over the B4b projected extent.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/w3a-sedan-1870.md` §1 and §4.
-- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.1a.
-
-## Steps
-
-1. Use projected meters from `LocalMapGrid`.
-2. Create 1000 m regions clipped to the payload extent.
-3. Create 8 x 8 cells per region, 125 m per cell.
-4. Expose projected and game-unit bounds for each record.
-5. Test expected sizes and key coverage.
-
-## Files likely to change
-
-- Western Front topology grid files
-- Western Front tests
-
-## Acceptance criteria
-
-- [ ] Region and cell dimensions match 1000 m and 125 m within projection tolerance.
-- [ ] Keys cover the playable extent without duplicate cells.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~WesternFrontRegionGrid"
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No vector feature mapping.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked` with reason.
-- Update the roadmap phase Status if this card completes it.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List any follow-up cards to create here:
-  - none
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

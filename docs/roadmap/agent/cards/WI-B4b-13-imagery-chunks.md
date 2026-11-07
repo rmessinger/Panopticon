@@ -1,58 +1,7 @@
 # Task Card `WI-B4b-13`: Imagery chunk generator
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-B4b-13` |
-| Roadmap phase | [Track R · R1](../../track-r-real-world-terrain.md): B4b-5 terrain and imagery generation |
-| Status | `Done` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-B4b-12` |
-| Diagrams | [B4b §10.3](../../deep-dives/r-real-world-terrain.md#103-standalone-pipeline-and-dev-preview-types) |
+Ticket: https://projects.reid-corp.com/work_packages/374
 
-## Goal
+Canonical card ID: `WI-B4b-13`
 
-Resample imagery rasters into chunk-aligned RGBA8 PNGs at `imageryPixelsPerSample`.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/r-real-world-terrain.md` §5.2.
-- `src/Panopticon.Geospatial/Generation/TerrainChunkGenerator.cs` (traversal pattern).
-
-## Steps
-
-1. Add `ImageryChunkGenerator.Generate(grid, imagery, policy, cx, cy)` producing a `(128 * pps)` square RGBA8 buffer, north row first in the PNG.
-2. Accept 3-band (alpha 255) and 4-band `uint8` rasters; reject other layouts with a `Raster` error.
-3. Encode with `SixLabors.ImageSharp` PNG encoder using fixed settings; hash the encoded bytes.
-4. Add `test/Panopticon.Geospatial.Tests/Generation/ImageryChunkGeneratorTests.cs` using the `Imagery(controlPixels)` fixture.
-
-## Files likely to change
-
-- `src/Panopticon.Geospatial/Generation/ImageryChunk*.cs`
-- `src/Panopticon.Geospatial/Panopticon.Geospatial.csproj`
-- `test/Panopticon.Geospatial.Tests/Generation/`
-
-## Acceptance criteria
-
-- [ ] Control pixels match the source after declared resampling within 1 per channel.
-- [ ] Encoded bytes are identical across two runs.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~ImageryChunkGenerator"
-dotnet test src --filter Category!=Interactive
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No in-game display.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
-- Unblock `WI-B4b-18` when their other prerequisites are `Done`.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.
