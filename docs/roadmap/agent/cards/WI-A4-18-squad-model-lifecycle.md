@@ -1,64 +1,7 @@
 # Task Card `WI-A4-18`: Add squad model and lifecycle
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-A4-18` |
-| Roadmap phase | [Track A · A4](../../track-a-foundations.md): A4-3a rank and command hierarchy |
-| Status | `Done` |
-| Type | `pattern-replication` |
-| Effort | `S` |
-| Prerequisites | `WI-A4-17` |
-| Diagrams | [Hierarchy §9](../../deep-dives/a4-decentralized-hierarchical-ai.md#9-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/269
 
-## Goal
+Canonical card ID: `WI-A4-18`
 
-Add stable squad identity, membership, commander selection, spawn assignment, death promotion, and
-empty-squad cleanup.
-
-## Context to read (and only this)
-
-- `docs/roadmap/implementation/track-a-a4-hierarchical-ai.md`: A4-3a contract.
-- `src/Panopticon.Simulation/Logic/Team.cs`, `Player.cs`, and `GameLogic.cs`.
-- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`: identity and lifecycle.
-- Existing object ownership and destruction tests.
-
-## Steps
-
-1. Add the squad identifiers and manager named by the design.
-2. Derive initial membership from the chosen simulation-owned grouping.
-3. Handle spawn, transfer, death, promotion, and empty-squad removal.
-4. Apply the documented stable commander ordering and tie-break.
-5. Add lifecycle tests.
-
-## Files likely to change
-
-- New hierarchy files under `src/Panopticon.Simulation/Logic/AI/`
-- Narrow lifecycle integration in `src/Panopticon.Simulation/Logic/`
-- New tests under `test/Panopticon.Simulation.Tests/Logic/AI/`
-
-## Acceptance criteria
-
-- [ ] Each eligible object belongs to at most one squad.
-- [ ] Commander death promotes exactly the documented survivor.
-- [ ] Ownership transfer and empty squads leave no stale membership.
-- [ ] Stable identifiers do not depend on collection iteration order.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~Squad"
-dotnet test src --filter Category!=Interactive
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No policy interfaces, networks, or UI.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
-- Unblock `WI-A4-19` and `WI-A4-20`.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

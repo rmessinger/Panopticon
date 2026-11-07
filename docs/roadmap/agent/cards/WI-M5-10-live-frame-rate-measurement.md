@@ -1,76 +1,7 @@
 # Task Card `WI-M5-10`: Live frame rate measurement
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-M5-10` |
-| Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Blocked` |
-| Type | `investigation` |
-| Effort | `S` |
-| Prerequisites | `WI-M5-09` |
-| Diagrams | [M5 battle](../../deep-dives/mass-battle-1k.md#m5-battle) |
+Ticket: https://projects.reid-corp.com/work_packages/691
 
-## Goal
+Canonical card ID: `WI-M5-10`
 
-Measure the live spectator battle through B1 on the operator's machine against the 30 fps median
-milestone, attribute the frame time, and record the verdict and follow-ups.
-
-## Context to read (and only this)
-
-- `docs/roadmap/implementation/track-m-m5-mass-battle.md`: decision 9 and the starting gaps.
-- `docs/roadmap/implementation/track-m-m1-capacity-probe.md` and
-  `docs/roadmap/implementation/track-m-m4-army-ai.md`: measured headless baselines.
-- `docs/roadmap/implementation/track-b-b5-rendering-scale.md`: rendering-at-scale results.
-- `src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`: windowed `tick.fps` and spans.
-
-## Steps
-
-1. Run the windowed spectator battle on a presenting display (operator machine), with the full
-   battle in view, seed 1, to outcome or 9000 measured frames.
-2. Record the B1 report: median and p95 `tick.fps` and `tick.wallMs`, the logic, `ai`,
-   partition, and presentation spans, units alive over time, and the hardware context.
-3. Add a `Live frame rate` section to the M5 plan: the numbers, the largest spans, and a met or
-   missed verdict.
-4. On a miss, write follow-up cards in the owning track (B2 allocation, B3 parallel logic, B5
-   rendering) with the measured span as their baseline.
-
-## Files likely to change
-
-- `docs/roadmap/implementation/track-m-m5-mass-battle.md`
-- Follow-up cards under `docs/roadmap/agent/cards/` (on a miss)
-
-## Acceptance criteria
-
-- [ ] A B1 record from a presenting windowed run is committed or linked from the M5 plan.
-- [ ] The verdict states met or missed against a 30 fps median, with the attributed spans.
-- [ ] Each miss cause has a follow-up card or a stated reason for none.
-
-## Validation commands
-
-```sh
-CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" EMPIRE_EARTH_II_PATH="<ee2 install>" \
-  dotnet run -c Release --project src/Panopticon.Tools.TestHarness -- --built-in-scenario MassBattle
-```
-
-## Out of scope / guardrails
-
-- No engine optimization in this card.
-- Xvfb or software rendering numbers do not count toward the milestone.
-
-## On completion
-
-- Set Status above to `Done`.
-- On a met verdict, tick M5-4 in the implementation checklist and update the README progress row.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List any follow-up cards to create here:
-  - State: `Blocked` on the presenting-display run; measurement plumbing landed. The windowed
-    battle's B1 record now carries `tick.fps` (median, with `tick.wallMs` and the logic, `ai`,
-    partition, and scene3d spans already recorded), verified present on a headless scaled run
-    (626 fps headless, informational only). The agent host cannot present a window (Xvfb
-    presenting is documented not-working in docs/screenshots.md) and this card explicitly bars
-    software-rendered numbers, so the milestone measurement is the operator's Release run:
-    `dotnet run -c Release --project src/Panopticon.Tools.TestHarness -- --built-in-scenario
-    MassBattle` on a presenting machine, seed 1, full battle in view, to outcome or 9000
-    measured frames. Record the verdict (30 fps median, attributed spans) in the M5 plan's
-    `Live frame rate` section; on a miss, cut follow-up cards in the owning tracks (B2
-    allocation, B3 parallel logic, B5 rendering) with the measured span as baseline.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

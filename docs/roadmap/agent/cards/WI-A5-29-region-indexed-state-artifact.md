@@ -1,74 +1,7 @@
 # Task Card `WI-A5-29`: Add region-indexed state records
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-A5-29` |
-| Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-5 bounded-memory replay |
-| Status | `Done` |
-| Type | `mechanical-refactor` |
-| Effort | `S` |
-| Prerequisites | `WI-A5-08`, `WI-A5-12` |
-| Diagrams | [A5 §8](../../deep-dives/a5-visualization.md#8-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/325
 
-## Goal
+Canonical card ID: `WI-A5-29`
 
-Make snapshot and delta records addressable by stable domain region so replay can avoid decoding a
-whole world frame when only a viewport subset is needed.
-
-## Context to read (and only this)
-
-- Region-record layout in the A5 implementation plan.
-- Indexed frame reader from `WI-A5-08`.
-- Domain topology keys from `WI-A5-12`.
-- `src/Panopticon.Simulation/Recording/WorldStateSnapshot.cs` and `RunRecording.cs`.
-
-## Steps
-
-1. Add region/chunk directories or offsets to the state-artifact format.
-2. Write added, removed, and changed entities under stable domain region keys.
-3. Support frame plus region queries while retaining whole-frame reconstruction.
-4. Version the artifact and reject incompatible region schemas.
-5. Add multi-region, moved-between-region, long-run, and bounded-decode tests.
-
-## Files likely to change
-
-- `src/Panopticon.Simulation/Recording/`
-- Run manifest metadata
-- Game and ReplaySketch recording tests
-
-## Acceptance criteria
-
-- [x] A frame-region query decodes only requested regions plus required metadata.
-  - `ReconstructRegionStateAt(frame, keys)` skips non-matching snapshot parts and region deltas;
-    `LongRun_RegionQuery_DecodesOnlyRequestedRegions` decodes ~150 entities of ~15,000 written.
-- [x] Entities moving between regions reconstruct exactly once.
-  - The writer splits a cross-region move into Removed(old) + Added(new) so region parts are
-    self-contained; `MovedBetweenRegions_ReconstructsExactlyOnce` asserts whole-frame uniqueness
-    and correct per-region membership before and after the move.
-- [x] Whole-frame reconstruction remains correct.
-  - `WholeFrame_Query_MatchesAuthoredSummaries` compares v2 `ReconstructStateAt` against authored
-    summaries; `WorldStateArtifact.Load` merges v2 tags into whole-frame records for existing
-    consumers (WorldStateArtifactReader/TieredRecording/A5Manifest/RunBundleTests suites green).
-- [x] Decoded entity count can remain bounded independently of world size.
-  - `DecodedEntitiesLastQuery` counts only decoded entities; frame-global money resolves at the
-    query frame without decoding other regions' parts.
-- [x] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~RegionIndexedState"
-dotnet test src --filter Category!=Interactive
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No viewport culling, rendering, or compression redesign.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked`.
-- Append a result line to `.exchange`.
-- Unblock `WI-A5-24`.
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.

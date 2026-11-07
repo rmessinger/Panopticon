@@ -576,5 +576,5 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
   added, removed, or renamed.
 - Update the [seam registry](seams.md) whenever a phase introduces a new pluggable seam or a new
   implementation behind an existing seam.
-- When a phase is ready for cheap or automated agents, decompose it into task cards in
-  [`agent/`](agent/) and keep card Status aligned with phase Status.
+- When a phase is ready for cheap or automated agents, decompose it into OpenProject tickets, one
+  link stub per ticket in [`agent/cards/`](agent/cards/). Phase Status stays in the track doc.

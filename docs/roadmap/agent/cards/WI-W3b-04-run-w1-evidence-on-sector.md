@@ -1,60 +1,7 @@
 # Task Card `WI-W3b-04`: Run W1 evidence on generated sector
 
-| Field | Value |
-|---|---|
-| Card ID | `WI-W3b-04` |
-| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
-| Status | `Draft` |
-| Type | `test-addition` |
-| Effort | `S` |
-| Prerequisites | `WI-W3b-03`, W1 evidence cards |
-| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
+Ticket: https://projects.reid-corp.com/work_packages/917
 
-## Goal
+Canonical card ID: `WI-W3b-04`
 
-Draft: flip to Ready once `WI-W3b-03` and W1 evidence cards are Done.
-
-Run the W1 conservation, reconstruction, fixed-seed, and metrics evidence against a generated-sector fixture.
-
-## Context to read (and only this)
-
-- `docs/roadmap/deep-dives/w3b-somme-sector.md` §3.
-- `docs/roadmap/deep-dives/w1-aggregate-sector.md` §11.
-
-## Steps
-
-1. Create a small synthetic B4b payload fixture suitable for CI.
-2. Run W1 scenario setup on the generated topology.
-3. Reuse W1 evidence assertions.
-4. Record generated topology counts in test output.
-
-## Files likely to change
-
-- Western Front evidence tests
-- Synthetic B4b payload test fixture
-
-## Acceptance criteria
-
-- [ ] W1 evidence passes on generated topology.
-- [ ] The test fixture remains small and committed source data is synthetic.
-- [ ] Standard validation passes.
-
-## Validation commands
-
-```sh
-dotnet build src
-dotnet test src --filter "FullyQualifiedName~GeneratedSectorW1Evidence"
-dotnet format src --verify-no-changes
-```
-
-## Out of scope / guardrails
-
-No operator Somme payload requirement in CI.
-
-## On completion
-
-- Set Status above to `Done` or `Blocked` with reason.
-- Update the roadmap phase Status if this card completes it.
-- Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
-- List any follow-up cards to create here:
-  - none
+This file is a link stub. The OpenProject work package is the canonical ticket: status, prerequisites, description, and completion records live there, not in this file. Content from the pre-migration card is in git history at commit c94289f24d4d882b6f0009d116773d9fb595a350.
