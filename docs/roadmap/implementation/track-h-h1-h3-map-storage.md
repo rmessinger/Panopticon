@@ -28,7 +28,7 @@ by `WI-H1-01`, [B4a larger maps](../deep-dives/b4a-larger-maps.md), and
 | [`WI-H3-01`](https://projects.reid-corp.com/work_packages/658) | H3 | Manifest schema | Done | `WI-H2-01` |
 | [`WI-H3-02`](https://projects.reid-corp.com/work_packages/659) | H3 | Chunk layer reader and writer | Done | `WI-H2-01`, `WI-H3-01` |
 | [`WI-H3-03`](https://projects.reid-corp.com/work_packages/660) | H3 | Legacy `MapFile` to package hooks | Done | `WI-H2-01`, `WI-H3-01`, `WI-H3-02` |
-| [`WI-H3-04`](https://projects.reid-corp.com/work_packages/661) | H3 | Round-trip tests | Draft | `WI-H3-01`, `WI-H3-02`, `WI-H3-03` |
+| [`WI-H3-04`](https://projects.reid-corp.com/work_packages/661) | H3 | Round-trip tests | Done | `WI-H3-01`, `WI-H3-02`, `WI-H3-03` |
 
 ## Acceptance by sub-item
 
