@@ -1546,7 +1546,7 @@ complete H2a group merges. Each item corresponds to one card.
   chunked heightmap representation).
   - AC: a map authored in the new format round-trips (write, reload) with terrain, blend, and
     placed-object data intact.
-- [ ] H3-1 Map package manifest schema (`WI-H3-01`).
+- [x] H3-1 Map package manifest schema (`WI-H3-01`).
   - AC: manifests validate versions, layers, and chunk layout.
 - [ ] H3-2 Chunk layer reader and writer (`WI-H3-02`).
   - AC: raw little-endian chunks round-trip byte-identically.
