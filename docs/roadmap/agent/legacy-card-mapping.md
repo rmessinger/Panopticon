@@ -459,6 +459,24 @@ workflow](README.md#ticket-workflow) and the [template](task-card-template.md).
 | `WI-H3-02` |  | `WI-H3-02-chunk-layer-reader-writer.md` | Implement chunk layer reader and writer | https://projects.reid-corp.com/work_packages/659 |
 | `WI-H3-03` |  | `WI-H3-03-legacy-to-package-importer-hooks.md` | Add legacy-to-package importer hooks | https://projects.reid-corp.com/work_packages/660 |
 | `WI-H3-04` |  | `WI-H3-04-map-package-roundtrip-tests.md` | Add map package round-trip tests | https://projects.reid-corp.com/work_packages/661 |
+| `WI-H4-01` |  |  | H4 schema and record-fidelity design gate | https://projects.reid-corp.com/work_packages/964 |
+| `WI-H4-02` |  |  | Package reader adapter implementing IUnitSourceAdapter | https://projects.reid-corp.com/work_packages/965 |
+| `WI-H4-03` |  |  | Package writer from resolved records | https://projects.reid-corp.com/work_packages/966 |
+| `WI-H4-04` |  |  | Physics fields and forward compatibility | https://projects.reid-corp.com/work_packages/967 |
+| `WI-H4-05` |  |  | Bounded INI parity proof | https://projects.reid-corp.com/work_packages/968 |
+| `WI-H5-01` |  |  | Legacy map conversion tool | https://projects.reid-corp.com/work_packages/969 |
+| `WI-H5-02` |  |  | Legacy INI conversion tool | https://projects.reid-corp.com/work_packages/970 |
+| `WI-H5-03` |  |  | Round-trip validator and report | https://projects.reid-corp.com/work_packages/971 |
+| `WI-H5-04` |  |  | Retained-backend integration for converted maps | https://projects.reid-corp.com/work_packages/972 |
+| `WI-H5-05` |  |  | Behavioral equivalence harness | https://projects.reid-corp.com/work_packages/973 |
+| `WI-H6-01` |  |  | WorldBuilder package open and save boundary conversion | https://projects.reid-corp.com/work_packages/974 |
+| `WI-H6-02` |  |  | WorldBuilder package edit round trip with capture evidence | https://projects.reid-corp.com/work_packages/975 |
+| `WI-H6-03` |  |  | Staged pack loading through H4 adapter and AssetStore scopes | https://projects.reid-corp.com/work_packages/976 |
+| `WI-H6-04` |  |  | INI edit and reload preservation check | https://projects.reid-corp.com/work_packages/977 |
+| `WI-H7-01` |  |  | Map round-trip regression suite | https://projects.reid-corp.com/work_packages/978 |
+| `WI-H7-02` |  |  | Unit round-trip regression suite | https://projects.reid-corp.com/work_packages/979 |
+| `WI-H7-03` |  |  | ReplaySketch new-format scenario proof | https://projects.reid-corp.com/work_packages/980 |
+| `WI-H7-04` |  |  | Fault-injection catch proof | https://projects.reid-corp.com/work_packages/981 |
 | `WI-M0-01` |  | `WI-M0-01-map-evaluation.md` | Official map evaluation against the battle-map requirements | https://projects.reid-corp.com/work_packages/662 |
 | `WI-M0-03` |  | `WI-M0-03-deployment-zones.md` | Deployment zones and reachability check as scenario data | https://projects.reid-corp.com/work_packages/663 |
 | `WI-M1-01` |  | `WI-M1-01-mass-battle-engagement-scenario.md` | 1000 vs 1000 engagement scenario | https://projects.reid-corp.com/work_packages/664 |
