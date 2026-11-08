@@ -59,5 +59,7 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string UnitFrame = "unit-frame";
 
+    public const string UnsupportedAddressing = "unsupported-addressing";
+
     public override string ToString() => $"{Code}: {Message}";
 }

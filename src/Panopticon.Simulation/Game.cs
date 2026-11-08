@@ -8,6 +8,7 @@ using Panopticon.Client;
 using Panopticon.Content;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
+using Panopticon.Content.Importing.MapSources.Package;
 using Panopticon.Data;
 using Panopticon.Data.Apt;
 using Panopticon.Data.Map;
@@ -791,23 +792,66 @@ public sealed class Game : DisposableBase, IGame
     }
 
     internal static Func<FileSystemEntry, MapFile, IMapReader> MapReaderFactory { get; set; } =
-        (entry, mapFile) => new LegacyMapReader(mapFile, entry.FilePath);
+        (entry, mapFile) => mapFile is not null
+            ? new LegacyMapReader(mapFile, entry?.FilePath)
+            : new PackageReader(entry?.FilePath ?? string.Empty);
 
-    private void LoadMap(
+    internal void LoadMap(
         string mapPath,
         PlayerSetting[] playerSettings,
         GameType gameType)
     {
         var entry = ContentManager.GetMapEntry(mapPath);
-        var mapFile = MapFile.FromFileSystemEntry(entry);
 
-        // Interchange failures throw before any resident mutation; scene construction failures are not rolled back.
-        var model = MapReaderFactory(entry, mapFile).Read();
-        var heightMapData = RuntimeBridge.MaterializeHeightMapData(model);
-        var mapObjects = RuntimeBridge.MaterializeMapObjects(model);
-        var useMaskFeed = RuntimeBridge.TryGetMaskFeed(model, out var maskFeed);
+        if (IsArchiveAddressedPackage(mapPath, entry))
+        {
+            throw new MapImportException(
+            [
+                new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.UnsupportedAddressing,
+                    $"Package addressing through archive container for '{mapPath}' is unsupported; packages must be loose directories."),
+            ]);
+        }
 
-        mapFile.HeightMapData = heightMapData;
+        var isPackage = IsDirectoryPackage(mapPath, entry, out var packageDirectory);
+
+        MapFile mapFile;
+        MapInterchange model;
+        MapObject[] mapObjects;
+        bool[,] maskFeed;
+        bool useMaskFeed;
+        string effectivePath;
+
+        if (!isPackage)
+        {
+            mapFile = MapFile.FromFileSystemEntry(entry!);
+            model = MapReaderFactory(entry!, mapFile).Read();
+            var heightMapData = RuntimeBridge.MaterializeHeightMapData(model);
+            mapObjects = RuntimeBridge.MaterializeMapObjects(model);
+            useMaskFeed = RuntimeBridge.TryGetMaskFeed(model, out maskFeed);
+            mapFile.HeightMapData = heightMapData;
+            effectivePath = entry!.FilePath;
+        }
+        else
+        {
+            var packageEntry = entry ?? new FileSystemEntry(
+                new DiskFileSystem(packageDirectory),
+                packageDirectory,
+                0,
+                () => throw new NotSupportedException("A directory package is not a single file stream."));
+
+            var reader = MapReaderFactory(packageEntry, null!);
+            if (reader is LegacyMapReader)
+            {
+                reader = new PackageReader(packageDirectory);
+            }
+
+            model = reader.Read();
+            mapFile = MapFile.FromInterchange(model);
+            mapObjects = RuntimeBridge.MaterializeMapObjects(model);
+            useMaskFeed = RuntimeBridge.TryGetMaskFeed(model, out maskFeed);
+            effectivePath = packageDirectory;
+        }
 
         SidesListUtility.SetupGameSides(
             this,
@@ -818,12 +862,12 @@ public sealed class Game : DisposableBase, IGame
             out var mapTeams,
             out var mapScriptLists);
 
-        TerrainLogic.SetHeightMapData(heightMapData);
+        TerrainLogic.SetHeightMapData(mapFile.HeightMapData);
 
         new Scene3D(
             this,
             mapFile,
-            entry.FilePath,
+            effectivePath,
             mapPlayers,
             mapTeams,
             mapScriptLists,
@@ -831,6 +875,68 @@ public sealed class Game : DisposableBase, IGame
             playerSettings,
             mapObjects,
             useMaskFeed ? maskFeed : null);
+    }
+
+    private static bool IsArchiveAddressedPackage(string mapPath, FileSystemEntry? entry)
+    {
+        if (entry != null && entry.FileSystem is not DiskFileSystem)
+        {
+            if (entry.FilePath.EndsWith(MapPackageFormat.ManifestFileName, StringComparison.OrdinalIgnoreCase) ||
+                entry.FilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        if (mapPath.Contains(".big", StringComparison.OrdinalIgnoreCase) &&
+            (mapPath.EndsWith(MapPackageFormat.ManifestFileName, StringComparison.OrdinalIgnoreCase) ||
+             mapPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+             mapPath.Contains("/package", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsDirectoryPackage(string mapPath, FileSystemEntry? entry, out string packageDirectory)
+    {
+        if (Directory.Exists(mapPath))
+        {
+            var manifest = Path.Combine(mapPath, MapPackageFormat.ManifestFileName);
+            if (File.Exists(manifest))
+            {
+                packageDirectory = Path.GetFullPath(mapPath);
+                return true;
+            }
+        }
+
+        if (File.Exists(mapPath) &&
+            Path.GetFileName(mapPath).Equals(MapPackageFormat.ManifestFileName, StringComparison.OrdinalIgnoreCase))
+        {
+            packageDirectory = Path.GetDirectoryName(Path.GetFullPath(mapPath)) ?? mapPath;
+            return true;
+        }
+
+        if (entry != null && entry.FileSystem is DiskFileSystem diskFs)
+        {
+            var fullPath = Path.Combine(diskFs.RootDirectory, entry.FilePath);
+            if (Directory.Exists(fullPath) && File.Exists(Path.Combine(fullPath, MapPackageFormat.ManifestFileName)))
+            {
+                packageDirectory = fullPath;
+                return true;
+            }
+
+            if (File.Exists(fullPath) &&
+                Path.GetFileName(fullPath).Equals(MapPackageFormat.ManifestFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                packageDirectory = Path.GetDirectoryName(fullPath) ?? fullPath;
+                return true;
+            }
+        }
+
+        packageDirectory = string.Empty;
+        return false;
     }
 
     public Window LoadWindow(string wndFileName)

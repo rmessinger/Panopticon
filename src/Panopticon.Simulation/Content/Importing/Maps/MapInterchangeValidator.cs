@@ -884,6 +884,13 @@ public static class MapInterchangeValidator
                     $"Retained section '{section.SectionName}' is not a known legacy section name."));
             }
 
+            if (section.SectionName == "SidesList" && section.SectionVersion < 2)
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.SidesListVersion,
+                    $"SidesList version {section.SectionVersion} cannot round-trip through the legacy reader; version 2 or above is required."));
+            }
+
             if (section.SectionVersion < 0)
             {
                 diagnostics.Add(new MapInterchangeDiagnostic(
