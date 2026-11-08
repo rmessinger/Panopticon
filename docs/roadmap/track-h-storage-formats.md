@@ -37,7 +37,7 @@ H2a has a design scaffold; its audit card supplies the evidence for the architec
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| H1 | [Map storage audit](deep-dives/h1-h2-map-storage.md) | — | [`WI-H1-01`](agent/cards/WI-H1-01-map-format-audit.md), [`WI-H1-02`](agent/cards/WI-H1-02-format-decision-options.md) |
+| H1 | [Map storage audit](deep-dives/h1-h2-map-storage.md) | — | [`WI-H1-01`](https://projects.reid-corp.com/work_packages/618), [`WI-H1-02`](https://projects.reid-corp.com/work_packages/619) |
 | H2 | [Map storage audit](deep-dives/h1-h2-map-storage.md) | — | [`WI-H2-01..04`](deep-dives/h1-h2-map-storage.md#implementation-cards) |
 | H2a | [Unit-content import](deep-dives/h2a-unit-content-import.md) | [Architecture gate](deep-dives/h2a-unit-content-import.md#architecture-diagrams) `†` | [WI-H2a-01..19](deep-dives/h2a-unit-content-import.md#card-sequence) |
 | H2b | [Metric core units](deep-dives/h2b-metric-core.md) | [Architecture gate](deep-dives/h2b-metric-core.md#architecture-diagrams) `†` | [WI-H2b-01..18](deep-dives/h2b-metric-core.md#card-sequence) |

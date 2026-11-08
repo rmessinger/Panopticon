@@ -16,12 +16,12 @@ clip plus one embedded morph model.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4g-01`](../agent/cards/WI-C4g-01-decode-nif-morph-blocks.md) | NIF 10.1 morph controller and morph data blocks. |
-| 2 | [`WI-C4g-02`](../agent/cards/WI-C4g-02-add-morph-interchange-gate.md) | C6 morph interchange types and request-scoped gate plumbing. |
-| 3 | [`WI-C4g-03`](../agent/cards/WI-C4g-03-import-nif-morph-targets.md) | NIF morph target sets for embedded controllers and paired KF data. |
-| 4 | [`WI-C4g-04`](../agent/cards/WI-C4g-04-materialize-cpu-morph-runtime.md) | CPU morph buffers applied before skinning. |
-| 5 | [`WI-C4g-05`](../agent/cards/WI-C4g-05-bind-morph-weight-animation.md) | Morph weight animation tracks bound to model target sets. |
-| 6 | [`WI-C4g-06`](../agent/cards/WI-C4g-06-capture-ee2-morph-proofs.md) | Installed proof tests and deterministic captures. |
+| 1 | [`WI-C4g-01`](https://projects.reid-corp.com/work_packages/517) | NIF 10.1 morph controller and morph data blocks. |
+| 2 | [`WI-C4g-02`](https://projects.reid-corp.com/work_packages/518) | C6 morph interchange types and request-scoped gate plumbing. |
+| 3 | [`WI-C4g-03`](https://projects.reid-corp.com/work_packages/519) | NIF morph target sets for embedded controllers and paired KF data. |
+| 4 | [`WI-C4g-04`](https://projects.reid-corp.com/work_packages/520) | CPU morph buffers applied before skinning. |
+| 5 | [`WI-C4g-05`](https://projects.reid-corp.com/work_packages/521) | Morph weight animation tracks bound to model target sets. |
+| 6 | [`WI-C4g-06`](https://projects.reid-corp.com/work_packages/522) | Installed proof tests and deterministic captures. |
 
 Cards 1 and 2 can proceed after C4c completes. Card 3 needs cards 1 and 2. Card 4 needs card 2.
 Card 5 needs cards 3 and 4. Card 6 is the completion point.

@@ -17,12 +17,12 @@ animation activation through that boundary. Existing W3D direct-index playback r
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C2-01`](../agent/cards/WI-C2-01-add-imported-animation-targets.md) | Imported direct-index and bone-name target contract. |
-| 2 | [`WI-C2-02`](../agent/cards/WI-C2-02-add-runtime-animation-binding.md) | Runtime target/channel types and direct-index binding. |
-| 3 | [`WI-C2-03`](../agent/cards/WI-C2-03-bind-named-animation-targets.md) | Exact-name binding and contextual failures. |
-| 4 | [`WI-C2-04`](../agent/cards/WI-C2-04-cache-bound-animations.md) | Weak hierarchy-identity cache and one-time direct-index diagnostics. |
-| 5 | [`WI-C2-05`](../agent/cards/WI-C2-05-route-gameplay-animation-binding.md) | Model-instance and gameplay activation integration. |
-| 6 | [`WI-C2-06`](../agent/cards/WI-C2-06-lock-retargeting-acceptance.md) | C2 acceptance and W3D parity tests. |
+| 1 | [`WI-C2-01`](https://projects.reid-corp.com/work_packages/450) | Imported direct-index and bone-name target contract. |
+| 2 | [`WI-C2-02`](https://projects.reid-corp.com/work_packages/451) | Runtime target/channel types and direct-index binding. |
+| 3 | [`WI-C2-03`](https://projects.reid-corp.com/work_packages/452) | Exact-name binding and contextual failures. |
+| 4 | [`WI-C2-04`](https://projects.reid-corp.com/work_packages/453) | Weak hierarchy-identity cache and one-time direct-index diagnostics. |
+| 5 | [`WI-C2-05`](https://projects.reid-corp.com/work_packages/454) | Model-instance and gameplay activation integration. |
+| 6 | [`WI-C2-06`](https://projects.reid-corp.com/work_packages/455) | C2 acceptance and W3D parity tests. |
 
 The sequence starts after C1 completes. Card 6 is the completion point.
 

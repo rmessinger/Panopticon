@@ -19,9 +19,9 @@ script engine; both are documented in the deep dive as named follow-ups.
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| A3-1 | [`WI-A3-01`](../agent/cards/WI-A3-01-audit-logic-presentation-reads.md) | Audit logic reads of presentation state. |
+| A3-1 | [`WI-A3-01`](https://projects.reid-corp.com/work_packages/250) | Audit logic reads of presentation state. |
 | A3-2 | Deep dive | Define the boundary, the seam interface, and the diagrams (the `WI-A3-02` gate). |
-| A3-3 | [`WI-A3-02`](../agent/cards/WI-A3-02-logic-presentation-boundary-test.md) | Reflection-based enforcement test with an exact allowlist. |
+| A3-3 | [`WI-A3-02`](https://projects.reid-corp.com/work_packages/251) | Reflection-based enforcement test with an exact allowlist. |
 | A3-4 | Follow-up cards (executed in this change) | Remove every audited read violation; allowlist reaches zero. |
 
 ---

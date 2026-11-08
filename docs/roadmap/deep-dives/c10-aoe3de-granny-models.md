@@ -174,9 +174,9 @@ Textures live in `ArtUnitsTextures*.bar`, for example
 
 | Phase | Deliverable | Proof | Cards |
 |---|---|---|---|
-| C10a | `BarFileSystem`, LZ4, XMB, DDT decode | All 42 archives enumerate; musketeer textures decode with recorded sizes | [`WI-C10a-01`](../agent/cards/WI-C10a-01-bar-archive-file-system.md), [`WI-C10a-02`](../agent/cards/WI-C10a-02-xmb-binary-xml-decoder.md), [`WI-C10a-03`](../agent/cards/WI-C10a-03-ddt-texture-decode.md) |
-| C10b | Generic uncompressed GR2 reader, static meshes, materials on C3 PBR | Musketeer and hussar horse render textured beside a Generals Ranger | [`WI-C10b-01`](../agent/cards/WI-C10b-01-granny-container-reader.md), [`WI-C10b-02`](../agent/cards/WI-C10b-02-granny-static-model-import.md), [`WI-C10b-03`](../agent/cards/WI-C10b-03-aoe3-material-mapping.md), [`WI-C10b-04`](../agent/cards/WI-C10b-04-aoe3-static-proof.md) |
-| C10c | Skins, float-curve clips, animfile resolution with variants and attachments | Musketeer march and volley clips and hussar idles bind and capture deterministically | [`WI-C10c-01`](../agent/cards/WI-C10c-01-granny-skin-import.md), [`WI-C10c-02`](../agent/cards/WI-C10c-02-granny-animation-import.md), [`WI-C10c-03`](../agent/cards/WI-C10c-03-aoe3-animfile-resolver.md), [`WI-C10c-04`](../agent/cards/WI-C10c-04-aoe3-animated-proof.md) |
+| C10a | `BarFileSystem`, LZ4, XMB, DDT decode | All 42 archives enumerate; musketeer textures decode with recorded sizes | [`WI-C10a-01`](https://projects.reid-corp.com/work_packages/422), [`WI-C10a-02`](https://projects.reid-corp.com/work_packages/423), [`WI-C10a-03`](https://projects.reid-corp.com/work_packages/424) |
+| C10b | Generic uncompressed GR2 reader, static meshes, materials on C3 PBR | Musketeer and hussar horse render textured beside a Generals Ranger | [`WI-C10b-01`](https://projects.reid-corp.com/work_packages/425), [`WI-C10b-02`](https://projects.reid-corp.com/work_packages/426), [`WI-C10b-03`](https://projects.reid-corp.com/work_packages/427), [`WI-C10b-04`](https://projects.reid-corp.com/work_packages/428) |
+| C10c | Skins, float-curve clips, animfile resolution with variants and attachments | Musketeer march and volley clips and hussar idles bind and capture deterministically | [`WI-C10c-01`](https://projects.reid-corp.com/work_packages/429), [`WI-C10c-02`](https://projects.reid-corp.com/work_packages/430), [`WI-C10c-03`](https://projects.reid-corp.com/work_packages/431), [`WI-C10c-04`](https://projects.reid-corp.com/work_packages/432) |
 | C10d | Oodle1 and BitKnit2 section decompression after license review | Falconet imports and plays `falconet_limber` | `WI-C10d-01` through `WI-C10d-04`, linked from the Track C resources |
 
 Card order: `WI-C10a-01` first; `WI-C10a-02`, `WI-C10a-03`, and `WI-C10b-01` in parallel after it;
@@ -645,7 +645,7 @@ sequenceDiagram
 
 Proposed types extend the existing `GrannyFile.Read` section assembly before relocation and
 type-tree traversal. Codec inputs and outputs remain CPU-only. Implementation is gated by
-the [provenance review](../agent/cards/WI-C10d-01-decompressor-provenance.md).
+the [provenance review](https://projects.reid-corp.com/work_packages/433).
 
 ```mermaid
 classDiagram

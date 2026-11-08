@@ -119,11 +119,11 @@ definition, the run is the cell's B1 record, and the comparison keys are the cel
 
 | Card | Output |
 |---|---|
-| [`WI-A4-37`](../agent/cards/WI-A4-37-design-experiment-harness.md) | This deep dive |
-| [`WI-A4-38`](../agent/cards/WI-A4-38-experiment-variant-registry.md) | Typed experiment definition and implementation registry |
-| [`WI-A4-39`](../agent/cards/WI-A4-39-run-b1-experiments.md) | Per-cell B1 execution |
-| [`WI-A4-40`](../agent/cards/WI-A4-40-write-experiment-comparison-report.md) | Report envelope and writers |
-| [`WI-A4-41`](../agent/cards/WI-A4-41-compare-two-seam-implementations.md) | Two-implementation comparison milestone and CLI |
+| [`WI-A4-37`](https://projects.reid-corp.com/work_packages/288) | This deep dive |
+| [`WI-A4-38`](https://projects.reid-corp.com/work_packages/289) | Typed experiment definition and implementation registry |
+| [`WI-A4-39`](https://projects.reid-corp.com/work_packages/290) | Per-cell B1 execution |
+| [`WI-A4-40`](https://projects.reid-corp.com/work_packages/291) | Report envelope and writers |
+| [`WI-A4-41`](https://projects.reid-corp.com/work_packages/292) | Two-implementation comparison milestone and CLI |
 
 ## Architecture diagrams
 

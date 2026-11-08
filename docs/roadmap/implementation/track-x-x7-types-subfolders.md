@@ -5,7 +5,7 @@
 
 | Card | Status | Scope | Prerequisites |
 |---|---|---|---|
-| [WI-X7-01](../agent/cards/WI-X7-01-types-subfolders.md) | Ready | Move non-logic types into `Types/` subfolders in their domains | none |
+| [WI-X7-01](https://projects.reid-corp.com/work_packages/955) | Ready | Move non-logic types into `Types/` subfolders in their domains | none |
 
 ## Starting point
 

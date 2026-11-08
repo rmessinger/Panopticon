@@ -60,25 +60,25 @@ staging-branch model; leave every PR open for operator merge.
 
 | Card | Deliverable | Prerequisites | Initial status |
 |---|---|---|---|
-| [WI-H2a-01](../agent/cards/WI-H2a-01-unit-loading-audit.md) | Focused loading audit | None | Done |
-| [WI-H2a-02](../agent/cards/WI-H2a-02-unit-import-design.md) | Contract and grounded architecture | 01 | Done |
-| [WI-H2a-03](../agent/cards/WI-H2a-03-interchange-contracts.md) | Engine-owned interchange | 02 | Done |
-| [WI-H2a-04](../agent/cards/WI-H2a-04-inheritance-resolution.md) | Inheritance resolution | 03 | Done |
-| [WI-H2a-05](../agent/cards/WI-H2a-05-dependency-resolution.md) | Typed dependency resolution | 04 | Done |
-| [WI-H2a-06](../agent/cards/WI-H2a-06-capability-validation.md) | Capability validation | 05 | Done |
-| [WI-H2a-07](../agent/cards/WI-H2a-07-body-movement-materialization.md) | Body and movement | 06 | Done |
-| [WI-H2a-08](../agent/cards/WI-H2a-08-weapon-armor-materialization.md) | Weapons and armor | 07 | Done |
-| [WI-H2a-09](../agent/cards/WI-H2a-09-ability-materialization.md) | Selected native abilities | 08 | Done |
-| [WI-H2a-10](../agent/cards/WI-H2a-10-production-upgrade-materialization.md) | Production and upgrades | 09 | Done |
-| [WI-H2a-11](../agent/cards/WI-H2a-11-visual-state-binding.md) | Track C visual-state binding | 08 | Done |
-| [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Done |
-| [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Done |
-| [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Ready |
-| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Done |
-| [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Done |
-| [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Done |
-| [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Done |
-| [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Done |
+| [WI-H2a-01](https://projects.reid-corp.com/work_packages/621) | Focused loading audit | None | Done |
+| [WI-H2a-02](https://projects.reid-corp.com/work_packages/622) | Contract and grounded architecture | 01 | Done |
+| [WI-H2a-03](https://projects.reid-corp.com/work_packages/623) | Engine-owned interchange | 02 | Done |
+| [WI-H2a-04](https://projects.reid-corp.com/work_packages/624) | Inheritance resolution | 03 | Done |
+| [WI-H2a-05](https://projects.reid-corp.com/work_packages/625) | Typed dependency resolution | 04 | Done |
+| [WI-H2a-06](https://projects.reid-corp.com/work_packages/626) | Capability validation | 05 | Done |
+| [WI-H2a-07](https://projects.reid-corp.com/work_packages/627) | Body and movement | 06 | Done |
+| [WI-H2a-08](https://projects.reid-corp.com/work_packages/628) | Weapons and armor | 07 | Done |
+| [WI-H2a-09](https://projects.reid-corp.com/work_packages/629) | Selected native abilities | 08 | Done |
+| [WI-H2a-10](https://projects.reid-corp.com/work_packages/630) | Production and upgrades | 09 | Done |
+| [WI-H2a-11](https://projects.reid-corp.com/work_packages/631) | Track C visual-state binding | 08 | Done |
+| [WI-H2a-12](https://projects.reid-corp.com/work_packages/632) | Validated scoped publication | 10, 11 | Done |
+| [WI-H2a-13](https://projects.reid-corp.com/work_packages/633) | Generals reference adapter | 12 | Done |
+| [WI-H2a-14](https://projects.reid-corp.com/work_packages/634) | Generals parity evidence | 13 | Ready |
+| [WI-H2a-18](https://projects.reid-corp.com/work_packages/638) | EE2 ground-unit selection probe | 02 | Done |
+| [WI-H2a-15](https://projects.reid-corp.com/work_packages/635) | Bounded EE2 reader | 03, 18 | Done |
+| [WI-H2a-16](https://projects.reid-corp.com/work_packages/636) | EE2 interchange adapter | 12, 15 | Done |
+| [WI-H2a-19](https://projects.reid-corp.com/work_packages/639) | Staged Generals INI registration | 13 | Done |
+| [WI-H2a-17](https://projects.reid-corp.com/work_packages/637) | Mixed-source P9 proof and handoff | 14, 16 | Done |
 
 ## Loading audit
 

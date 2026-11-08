@@ -108,7 +108,7 @@ grounds.
 ## Mod acquisition tooling (ModCollector)
 
 - `Panopticon.Tools.ModCollector` does not yet exist in the repo. It will be created by the
-  `WI-MC-*` agent task cards (see [`agent/cards/WI-MC-01` through `WI-MC-04`](cards/)).
+  `WI-MC-*` agent task cards (see [`agent/cards/WI-MC-01` through `WI-MC-04`](legacy-card-mapping.md)).
 - Design authority: [`docs/roadmap/plans/mod-collector.md`](../plans/mod-collector.md):
   covers purpose, game slug table, manifest schema, seed entries, and engine integration path.
 - Engine integration point: the output `.big` files are consumed through the existing

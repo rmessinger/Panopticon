@@ -10,8 +10,8 @@ M2 machinery: [M2 implementation plan](track-m-m2-ee2-combat-units.md).
 
 | Card | Deliverable | Initial gate |
 |---|---|---|
-| [WI-M3-01](../agent/cards/WI-M3-01-model-scale-and-factor.md) | Authored tiles-to-world factor and model scale, bounds manifest, height test | Ready || [WI-M3-02](../agent/cards/WI-M3-02-rps-damage-and-armor.md) | rps and dbcombat mapping to Generals damage types and armor sets | Ready (scale evidence reconciled) |
-| [WI-M3-03](../agent/cards/WI-M3-03-points-rosters-duels.md) | Points budget, two 1000-unit manifests, duel matrix and report | Ready (damage evidence reconciled) |
+| [WI-M3-01](https://projects.reid-corp.com/work_packages/673) | Authored tiles-to-world factor and model scale, bounds manifest, height test | Ready || [WI-M3-02](https://projects.reid-corp.com/work_packages/674) | rps and dbcombat mapping to Generals damage types and armor sets | Ready (scale evidence reconciled) |
+| [WI-M3-03](https://projects.reid-corp.com/work_packages/675) | Points budget, two 1000-unit manifests, duel matrix and report | Ready (damage evidence reconciled) |
 
 One card per commit; one M3 phase PR left open for operator merge. Draft cards become Ready only
 after prerequisite names and runtime contracts are reconciled with landed code.

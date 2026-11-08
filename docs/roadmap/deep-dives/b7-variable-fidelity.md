@@ -121,13 +121,13 @@ Every mixed run compares against a full-fidelity or all-tactical reference using
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| B7-1 | [`WI-B7-01`](../agent/cards/WI-B7-01-fidelity-model-registry.md) | `SimulationFidelityLevel`, `FidelityState`, and `FidelityRegistry`. | Registry stores per-object level and hysteresis state, removes destroyed objects, and is queryable by object id. |
-| B7-1 | [`WI-B7-02`](../agent/cards/WI-B7-02-replicated-policy-input-contract.md) | Replicated-state policy input contract. | Policies classify from shared simulation state only and reject camera/view inputs for shared runs. |
-| B7-1 | [`WI-B7-03`](../agent/cards/WI-B7-03-registry-domain-projection.md) | Registry projection into domain state and metrics. | Recorded runs reconstruct fidelity level counts and per-object categories. |
-| B7-4 | [`WI-B7-04`](../agent/cards/WI-B7-04-group-aggregation-contract.md) | Reusable group aggregation contract generalized from W2. | Aggregate materialization and reconciliation preserve declared quantities and write transition records. |
-| B7-4 | [`WI-B7-05`](../agent/cards/WI-B7-05-group-aggregation-error-hooks.md) | A2 error hooks for group aggregation. | Mixed aggregate runs compare against a full-fidelity reference with declared metrics. |
-| B7-6 | [`WI-B7-06`](../agent/cards/WI-B7-06-fidelity-visualization-bridge.md) | A5-3 fidelity visualization bridge. | Recorded fidelity categories render through A5 without duplicating B7 policy types. |
-| B7-6 | [`WI-B7-07`](../agent/cards/WI-B7-07-fidelity-error-report.md) | Fidelity error and transition report. | Reports include transition counts, dwell, level occupancy, and A2 error tables. |
+| B7-1 | [`WI-B7-01`](https://projects.reid-corp.com/work_packages/401) | `SimulationFidelityLevel`, `FidelityState`, and `FidelityRegistry`. | Registry stores per-object level and hysteresis state, removes destroyed objects, and is queryable by object id. |
+| B7-1 | [`WI-B7-02`](https://projects.reid-corp.com/work_packages/402) | Replicated-state policy input contract. | Policies classify from shared simulation state only and reject camera/view inputs for shared runs. |
+| B7-1 | [`WI-B7-03`](https://projects.reid-corp.com/work_packages/403) | Registry projection into domain state and metrics. | Recorded runs reconstruct fidelity level counts and per-object categories. |
+| B7-4 | [`WI-B7-04`](https://projects.reid-corp.com/work_packages/404) | Reusable group aggregation contract generalized from W2. | Aggregate materialization and reconciliation preserve declared quantities and write transition records. |
+| B7-4 | [`WI-B7-05`](https://projects.reid-corp.com/work_packages/405) | A2 error hooks for group aggregation. | Mixed aggregate runs compare against a full-fidelity reference with declared metrics. |
+| B7-6 | [`WI-B7-06`](https://projects.reid-corp.com/work_packages/406) | A5-3 fidelity visualization bridge. | Recorded fidelity categories render through A5 without duplicating B7 policy types. |
+| B7-6 | [`WI-B7-07`](https://projects.reid-corp.com/work_packages/407) | Fidelity error and transition report. | Reports include transition counts, dwell, level occupancy, and A2 error tables. |
 
 ## 9. Architecture diagrams
 

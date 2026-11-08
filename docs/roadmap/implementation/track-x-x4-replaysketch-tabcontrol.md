@@ -5,7 +5,7 @@
 
 | Card | Status | Scope | Prerequisites |
 |---|---|---|---|
-| [WI-X4-01](../agent/cards/WI-X4-01-replaysketch-tabcontrol.md) | Ready | Replace the hand-built tab strip in `MainWindow` with an Avalonia `TabControl` | none |
+| [WI-X4-01](https://projects.reid-corp.com/work_packages/952) | Ready | Replace the hand-built tab strip in `MainWindow` with an Avalonia `TabControl` | none |
 
 ## Starting point
 

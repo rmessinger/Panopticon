@@ -17,12 +17,12 @@ material state.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4e-01`](../agent/cards/WI-C4e-01-decode-ee2-property-controllers.md) | Property controller and data blocks in `Panopticon.FileFormats.Nif`. |
-| 2 | [`WI-C4e-02`](../agent/cards/WI-C4e-02-resolve-ee2-property-targets.md) | NIF target resolution for sub-objects and material slots. |
-| 3 | [`WI-C4e-03`](../agent/cards/WI-C4e-03-extend-c1-property-channels.md) | C1 and runtime target/channel types for property animation. |
-| 4 | [`WI-C4e-04`](../agent/cards/WI-C4e-04-convert-ee2-property-animation.md) | NIF property-animation converter emitting C1 channels. |
-| 5 | [`WI-C4e-05`](../agent/cards/WI-C4e-05-add-runtime-material-animation.md) | Per-instance runtime material and UV animation state. |
-| 6 | [`WI-C4e-06`](../agent/cards/WI-C4e-06-verify-ee2-property-proofs.md) | Installed proof assertions and deterministic captures. |
+| 1 | [`WI-C4e-01`](https://projects.reid-corp.com/work_packages/505) | Property controller and data blocks in `Panopticon.FileFormats.Nif`. |
+| 2 | [`WI-C4e-02`](https://projects.reid-corp.com/work_packages/506) | NIF target resolution for sub-objects and material slots. |
+| 3 | [`WI-C4e-03`](https://projects.reid-corp.com/work_packages/507) | C1 and runtime target/channel types for property animation. |
+| 4 | [`WI-C4e-04`](https://projects.reid-corp.com/work_packages/508) | NIF property-animation converter emitting C1 channels. |
+| 5 | [`WI-C4e-05`](https://projects.reid-corp.com/work_packages/509) | Per-instance runtime material and UV animation state. |
+| 6 | [`WI-C4e-06`](https://projects.reid-corp.com/work_packages/510) | Installed proof assertions and deterministic captures. |
 
 Cards 1 and 2 can proceed after their C4c prerequisites. Card 3 follows card 1. Card 4 needs
 cards 1 through 3. Card 5 follows card 3 and can proceed in parallel with card 4 after the target

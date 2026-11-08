@@ -57,16 +57,16 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 
 | Card | Checklist | Prerequisites | Status |
 |---|---|---|---|
-| [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Done` |
-| [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Done` |
-| [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
-| [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
-| [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Done` |
-| [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Done` |
-| [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Blocked` (variants landed and validated scaled; full-scale acceptance batches pending, see below) |
-| [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
-| [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Done` |
-| [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Blocked` (measurement plumbing landed; presenting-display operator run pending) |
+| [`WI-M5-01`](https://projects.reid-corp.com/work_packages/682) army AI side setup | M5-1 | M4 | `Done` |
+| [`WI-M5-02`](https://projects.reid-corp.com/work_packages/683) roster deployment profile | M5-1 | M3 | `Done` |
+| [`WI-M5-03`](https://projects.reid-corp.com/work_packages/684) army-eliminated outcome | M5-1 | P3 | `Done` |
+| [`WI-M5-04`](https://projects.reid-corp.com/work_packages/685) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
+| [`WI-M5-05`](https://projects.reid-corp.com/work_packages/686) kills and losses per unit type | M5-2 | `WI-M5-04` | `Done` |
+| [`WI-M5-06`](https://projects.reid-corp.com/work_packages/687) seeded batch runner | M5-2 | `WI-M5-05` | `Done` |
+| [`WI-M5-07`](https://projects.reid-corp.com/work_packages/688) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Blocked` (variants landed and validated scaled; full-scale acceptance batches pending, see below) |
+| [`WI-M5-08`](https://projects.reid-corp.com/work_packages/689) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
+| [`WI-M5-09`](https://projects.reid-corp.com/work_packages/690) spectator live view | M5-4 | `WI-M5-04` | `Done` |
+| [`WI-M5-10`](https://projects.reid-corp.com/work_packages/691) live frame rate measurement | M5-4 | `WI-M5-09` | `Blocked` (measurement plumbing landed; presenting-display operator run pending) |
 
 `WI-M5-01..03` are independent. After `WI-M5-04`, the batch chain (`05..07`) and the live chain
 (`09..10`) run in parallel. M5-1 closes when `WI-M5-08` adds the replay mode to the scenario

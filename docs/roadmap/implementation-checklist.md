@@ -355,9 +355,9 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 
 P6 corrective follow-ups ([plan](plans/macos-battle-artifacts.md)):
 
-- [ ] [WI-P6-06](agent/cards/WI-P6-06-design-jet-crash-lifecycle.md): ground the jet crash lifecycle.
+- [ ] [WI-P6-06](https://projects.reid-corp.com/work_packages/805): ground the jet crash lifecycle.
   - AC: source-grounded airborne/grounded/impact/removal contract and populated diagrams reconcile the implementation card or record a concrete blocker.
-- [ ] [WI-P6-07](agent/cards/WI-P6-07-implement-jet-crash-lifecycle.md): implement jet crash and final cleanup after WI-P6-06 and WI-G6-03.
+- [ ] [WI-P6-07](https://projects.reid-corp.com/work_packages/806): implement jet crash and final cleanup after WI-P6-06 and WI-G6-03.
   - AC: lethal damage leads to authored crash/removal, once-only lifecycle cleanup, and checkpoint continuation; physical removal is asserted separately from logical death.
 
 ### P6b: Unit-contract validation ([deep dive](deep-dives/p6b-unit-contract-validation.md))
@@ -1251,38 +1251,38 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: on a display with a non-unity scale factor the swapchain and a captured frame match
     the window's native pixel dimensions, and cursor/input hit-testing stays correct.
   - [x] G1-1 Classify every window/panel size consumer as logical points or physical pixels
-        ([`WI-G1-01`](agent/cards/WI-G1-01-audit-size-consumers.md)).
+        ([`WI-G1-01`](https://projects.reid-corp.com/work_packages/573)).
     - AC: every `ClientBounds`/`WindowScale`/`CursorScale`/`Frame`/`Viewport` read in `src/` is
       classified, and sites feeding both spaces are called out.
   - [x] G1-2 `AllowHighDpi` window creation, `SDL_GetWindowSizeInPixels` interop,
         `DrawableBounds`/`DpiScale`, swapchain sized in pixels
-        ([`WI-G1-02`](agent/cards/WI-G1-02-allow-highdpi-drawable-size.md)).
+        ([`WI-G1-02`](https://projects.reid-corp.com/work_packages/574)).
     - AC: the window is created with `AllowHighDpi` via `new Sdl2Window(...)`, `WindowScale`
       enlargement applies only where `DpiScale` is 1, and `Swapchain.Resize` is fed `DrawableBounds`.
   - [x] G1-3 Render target, 3D viewport and GUI layout in pixels; ImGui framebuffer scale
-        ([`WI-G1-03`](agent/cards/WI-G1-03-route-render-surfaces-to-pixels.md)).
+        ([`WI-G1-03`](https://projects.reid-corp.com/work_packages/575)).
     - AC: every window-backed `EnsureFrame` call site passes `DrawableBounds`, `Game.Viewport` and
       the WND/APT managers receive the pixel size, and ImGui renders with `DpiScale` as its
       framebuffer scale.
   - [x] G1-4 Convert mouse input from points to pixels at the `GameWindow` boundary
-        ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
+        ([`WI-G1-04`](https://projects.reid-corp.com/work_packages/576)).
     - AC: a centre mouse position keeps its normalised position and maps to the same WND client
       point at `DpiScale` 1 and 2, and `Camera` holds no `DpiScale` reference.
 - [x] G2 Graphics settings & fidelity presets (`Legacy`/`Enhanced`; settings layer, not an
       experiment seam). The parsed `StaticGameLod` assets name several knobs but have no runtime
       consumer, so G2 builds the application layer
-      ([`WI-G2-01`](agent/cards/WI-G2-01-audit-render-state-knobs.md),
-      [`WI-G2-02`](agent/cards/WI-G2-02-graphics-settings-type-and-presets.md),
-      [`WI-G2-03`](agent/cards/WI-G2-03-wire-settings-into-render-construction.md)).
+      ([`WI-G2-01`](https://projects.reid-corp.com/work_packages/597),
+      [`WI-G2-02`](https://projects.reid-corp.com/work_packages/598),
+      [`WI-G2-03`](https://projects.reid-corp.com/work_packages/599)).
   - AC: preset round trips preserve validated settings; runtime switching rebuilds affected
     resources safely; requested and effective capability-fallback values are reported; and
     `Legacy` reproduces the pre-track captured frame on the reference host.
 - [x] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
       with sharpness/edge-aliasing metrics; extends `FrameCapturer` + the TestHarness `ScenarioCapture` runner)
-      ([`WI-G3-01`](agent/cards/WI-G3-01-audit-frame-capture-paths.md),
-      [`WI-G3-02`](agent/cards/WI-G3-02-image-quality-metrics.md),
-      [`WI-G3-03`](agent/cards/WI-G3-03-golden-frame-comparison.md),
-      [`WI-G3-04`](agent/cards/WI-G3-04-golden-store-and-gate.md)).
+      ([`WI-G3-01`](https://projects.reid-corp.com/work_packages/600),
+      [`WI-G3-02`](https://projects.reid-corp.com/work_packages/601),
+      [`WI-G3-03`](https://projects.reid-corp.com/work_packages/602),
+      [`WI-G3-04`](https://projects.reid-corp.com/work_packages/603)).
   - AC: the TestHarness `VisualRegression` built-in scenario captures the fixed scene set headlessly
     under both presets, byte-identically across two runs on the reference host; a perturbed build
     exits 2 against the committed goldens; goldens change only through
@@ -1290,54 +1290,54 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
     supersampled reference scores lower on edge aliasing than the native capture.
 - [x] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
       colour/depth targets and every pipeline description, plus a resolve before single-sample 2D)
-      ([`WI-G4-01`](agent/cards/WI-G4-01-inventory-sample-count-sites.md),
-      [`WI-G4-02`](agent/cards/WI-G4-02-thread-sample-count-and-resolve.md)).
+      ([`WI-G4-01`](https://projects.reid-corp.com/work_packages/604),
+      [`WI-G4-02`](https://projects.reid-corp.com/work_packages/605)).
   - AC: supported 1x/2x/4x/8x modes render without attachment mismatch across 3D, terrain, water,
     roads and particles; 4x improves G3 silhouette aliasing against 1x; 2D stays single-sample;
     resize/preset switches release obsolete resources; unsupported requests report their fallback.
 - [x] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
       alpha-tested textures, baked per-mip alpha rescale, retaining the fixed `0x60` cutoff in
-      `Common.h`) ([`WI-G5-01`](agent/cards/WI-G5-01-audit-alpha-test-materials.md),
-      [`WI-G5-02`](agent/cards/WI-G5-02-alpha-to-coverage-and-cutout-mips.md)).
+      `Common.h`) ([`WI-G5-01`](https://projects.reid-corp.com/work_packages/606),
+      [`WI-G5-02`](https://projects.reid-corp.com/work_packages/607)).
   - AC: synthetic cutout mips preserve threshold coverage within the G5 tolerance; foliage/fence
     silhouette captures improve against the supersampled reference; alpha-to-coverage requires
     effective MSAA greater than 1; blended/opaque textures remain unchanged; `Legacy` matches its golden.
 - [x] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, one sRGB output transfer,
       linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output)
-      ([`WI-G6-01`](agent/cards/WI-G6-01-audit-colour-space-handling.md),
-      [`WI-G6-02`](agent/cards/WI-G6-02-linear-space-shading-and-dither.md)).
+      ([`WI-G6-01`](https://projects.reid-corp.com/work_packages/608),
+      [`WI-G6-02`](https://projects.reid-corp.com/work_packages/609)).
   - AC: black/white colour mips encode approximately 188 while data mips remain 128; role tests
     keep normals/masks/alpha linear; output has exactly one transfer; ordered dither is deterministic
     and zero-mean; gradient captures meet the G6 banding check; `Legacy` matches its golden.
-- [ ] [WI-G6-03](agent/cards/WI-G6-03-clamp-particle-opacity.md): shared particle-opacity clamp ([corrective plan](plans/macos-battle-artifacts.md)).
+- [ ] [WI-G6-03](https://projects.reid-corp.com/work_packages/610): shared particle-opacity clamp ([corrective plan](plans/macos-battle-artifacts.md)).
   - AC: GPU opacity-boundary tests and late-life Metal captures under both presets show normal smoke without black/neon corruption; additive RGB, simulation state, and RNG consumption remain unchanged.
 - [x] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias,
       Enhanced offline-prefiltered terrain data, preserved original fallback and Legacy generation)
-      ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
-      [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).
+      ([`WI-G7-01`](https://projects.reid-corp.com/work_packages/611),
+      [`WI-G7-02`](https://projects.reid-corp.com/work_packages/612)).
   - AC: requested anisotropy 1/2/4/8/16 and finite bias in [-1,1] validate and report effective
     values; resource sets observe sampler changes; grazing-angle and fixed-motion captures
     meet the G7 sharpness/temporal checks; terrain seams stay absent and `Legacy` matches its golden.
     Motion evidence: [terrain zoom proof](implementation/track-g-g7-texture-filtering.md#temporal-validation-follow-up).
 - [x] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
       slope-scaled term added to the constant bias; the existing normal offset is kept)
-      ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),
-      [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md)).
+      ([`WI-G8-01`](https://projects.reid-corp.com/work_packages/613),
+      [`WI-G8-02`](https://projects.reid-corp.com/work_packages/614)).
   - AC: an `Enhanced` capture of the G3 `shadow-casters` scene at the default zoom shows no acne,
     no visible cascade seam and no detached contact shadows, with `VisualizeCascades` showing four
     cascades; the `Legacy` capture matches its golden byte for byte; `ShadowConstantsPS` stays
     240 bytes.
 - [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, proportional pixel-space layout
       from G1, role-aware WND/APT upscaling)
-      ([`WI-G9-01`](agent/cards/WI-G9-01-audit-2d-ui-resolution-path.md),
-      [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
+      ([`WI-G9-01`](https://projects.reid-corp.com/work_packages/615),
+      [`WI-G9-02`](https://projects.reid-corp.com/work_packages/616)).
   - AC: native 1x/2x captures use pixel-sized fonts with no duplicate DPI transform; proportional
     layout and hit rectangles remain unchanged; `Enhanced` role-aware sampling avoids atlas
     bleed and preserves pixel-art roles; `Legacy` matches its golden.
   - [x] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
         dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
         behind the `Enhanced` preset, `Legacy` keeps the original art
-        ([`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md)).
+        ([`WI-G9-03`](https://projects.reid-corp.com/work_packages/617)).
     - AC: under `Enhanced` the control-bar chrome contains no legacy panel/button/frame bitmap
       draws (portraits, icons and minimap remain textures); captured frames are sharp
       at 4x native with no upscaled-art blur, and `Legacy` is pixel-identical to the pre-rework
@@ -1350,79 +1350,79 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
         bounds, FX meshes excluded) against INI `Geometry` and real-world counterparts; check in
         the deviation table and pin the world-units-per-meter reference (measured basis: ≈ 5
         units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real)
-        ([`WI-G10-01`](agent/cards/WI-G10-01-audit-proportions-and-reference-scale.md)).
+        ([`WI-G10-01`](https://projects.reid-corp.com/work_packages/577)).
     - AC: a checked-in table covers a representative set spanning infantry, ground vehicles,
       buildings, and aircraft, and a data test re-derives its numbers from the installed
       INI/W3D assets so a changed asset fails the test.
   - [x] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
         the proportions option, correcting the aircraft class
-        ([`WI-G10-02`](agent/cards/WI-G10-02-presentation-scale-overrides.md)).
+        ([`WI-G10-02`](https://projects.reid-corp.com/work_packages/578)).
     - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
       assertions pass identically with the option on and off; presentation rings/culling match
       visuals while shared world/bone transforms and selection-query bounds remain unchanged.
   - [x] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
         layer and add proportion-mode captures to the G3 golden set
-        ([`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md)).
+        ([`WI-G10-03`](https://projects.reid-corp.com/work_packages/579)).
     - AC: golden frames captured under the proportions mode catch an injected rescale regression,
       both presets default the option off, and disabled `Legacy` output matches the pre-phase capture.
 - [ ] G11 Terrain impact decals (persistent scorch marks from FX, logic modules and map objects,
       drawn as a terrain overlay; design in the
       [deep dive](deep-dives/g11-terrain-impact-decals.md)).
   - [x] G11-1 Decal store and scorch FX execution
-        ([`WI-G11-01`](agent/cards/WI-G11-01-terrain-decal-store-and-scorch-fx.md)).
+        ([`WI-G11-01`](https://projects.reid-corp.com/work_packages/580)).
     - AC: `TerrainScorch` nuggets add decals using client random only; the store applies the
       original cap and duplicate rule; every installed Generals and Zero Hour nugget parses.
   - [ ] G11-2 Overlay mesh and render pass
-        ([`WI-G11-02`](agent/cards/WI-G11-02-terrain-decal-mesh-and-pass.md)).
+        ([`WI-G11-02`](https://projects.reid-corp.com/work_packages/581)).
     - AC: mesher matches the original geometry and UVs in tests; scorches follow slopes and sit
       under roads; existing goldens unchanged with no decals.
   - [x] G11-3 Logic and map scorch producers
-        ([`WI-G11-03`](agent/cards/WI-G11-03-logic-and-map-scorch-producers.md)).
+        ([`WI-G11-03`](https://projects.reid-corp.com/work_packages/582)).
     - AC: implemented producers add original-size scorches, unimplemented ones are recorded;
       map-placed scorches load once.
   - [ ] G11-4 `Enhanced` lighting, limit and golden frames
-        ([`WI-G11-04`](agent/cards/WI-G11-04-enhanced-decals-and-golden-frames.md)).
+        ([`WI-G11-04`](https://projects.reid-corp.com/work_packages/583)).
     - AC: `Enhanced` scorches are terrain-lit; `faithful` and `enhanced` goldens recorded and an
       injected regression fails.
 - [ ] G12 Open material packs (operator-built CC0 replacements for terrain textures, terrain PBR,
       then model textures; design in the [deep dive](deep-dives/g12-open-material-packs.md)).
   - [ ] G12-1 Terrain texture inventory and material map
-        ([`WI-G12-01`](agent/cards/WI-G12-01-terrain-texture-inventory-and-map.md)).
+        ([`WI-G12-01`](https://projects.reid-corp.com/work_packages/584)).
     - AC: every original `Terrain` entry is reported with size and colour statistics, and the
       committed mapping table resolves every class to a licensed source or `keepOriginal`.
   - [ ] G12-2 Fetch, bake, and runtime terrain material packs
-        ([`WI-G12-02`](agent/cards/WI-G12-02-fetch-open-materials.md) to
-        [`WI-G12-04`](agent/cards/WI-G12-04-terrain-material-runtime-and-goldens.md)).
+        ([`WI-G12-02`](https://projects.reid-corp.com/work_packages/585) to
+        [`WI-G12-04`](https://projects.reid-corp.com/work_packages/587)).
     - AC: a pack bakes from command-line downloads with licences recorded; selecting it replaces
       terrain layers with per-layer fallback; `Legacy` never reads packs; `enhanced-materials`
       goldens recorded and existing goldens unchanged.
   - [ ] G12-3 Terrain normal and roughness shading
-        ([`WI-G12-05`](agent/cards/WI-G12-05-terrain-normal-roughness-shading.md),
-        [`WI-G12-06`](agent/cards/WI-G12-06-terrain-pbr-goldens-and-cost.md)).
+        ([`WI-G12-05`](https://projects.reid-corp.com/work_packages/588),
+        [`WI-G12-06`](https://projects.reid-corp.com/work_packages/589)).
     - AC: pack surface maps shade terrain with GGX specular; without maps output is unchanged;
       PBR goldens recorded and terrain pass cost stated.
   - [ ] G12-4 Model texture replacement
-        ([`WI-G12-07`](agent/cards/WI-G12-07-model-texture-replacement-investigation.md)
+        ([`WI-G12-07`](https://projects.reid-corp.com/work_packages/590)
         investigation first).
     - AC: the investigation recommends an approach with captures and writes the implementation
       cards.
 - [ ] G13 First-person ground view (hotkey avatar drop, then walk in first person; design in the
       [deep dive](deep-dives/g13-first-person-ground-view.md)).
   - [ ] G13-1 View mode seam and relative mouse
-        ([`WI-G13-01`](agent/cards/WI-G13-01-view-mode-seam-and-relative-mouse.md)).
+        ([`WI-G13-01`](https://projects.reid-corp.com/work_packages/591)).
     - AC: entering and leaving restores `TacticalView` exactly and RTS input is suppressed in
       first person.
-  - [ ] G13-2 Avatar drop mode ([`WI-G13-02`](agent/cards/WI-G13-02-avatar-drop-mode.md)).
+  - [ ] G13-2 Avatar drop mode ([`WI-G13-02`](https://projects.reid-corp.com/work_packages/592)).
     - AC: the marker validates ground and a valid click enters first person there.
-  - [ ] G13-3 Ground locomotion ([`WI-G13-03`](agent/cards/WI-G13-03-avatar-ground-locomotion.md)).
+  - [ ] G13-3 Ground locomotion ([`WI-G13-03`](https://projects.reid-corp.com/work_packages/593)).
     - AC: walking respects slope, impassable, structure, and border blocking at G10-derived scale.
   - [ ] G13-4 Ground-level rendering
-        ([`WI-G13-04`](agent/cards/WI-G13-04-ground-level-projection-and-hud.md),
-        [`WI-G13-05`](agent/cards/WI-G13-05-sky-and-distance-fog.md)).
+        ([`WI-G13-04`](https://projects.reid-corp.com/work_packages/594),
+        [`WI-G13-05`](https://projects.reid-corp.com/work_packages/595)).
     - AC: no near-plane clipping, sky and fog at the horizon, HUD hidden; tactical rendering and
       goldens unchanged.
   - [ ] G13-5 Transitions, goldens, and cost
-        ([`WI-G13-06`](agent/cards/WI-G13-06-transitions-goldens-and-cost.md)).
+        ([`WI-G13-06`](https://projects.reid-corp.com/work_packages/596)).
     - AC: `first-person` goldens recorded with injected regressions failing; frame time recorded.
 
 ## Track H: Map & Unit Storage Formats
@@ -1851,11 +1851,11 @@ depend on the Track A/B/C phases listed in the track doc. Design:
 ### M0: Battle map
 - [x] M0-1 Community map evaluation against the map requirements.
   - AC: each operator-supplied candidate has a record of size, slots, waypoints, passability, load
-    result, and provenance; no map file is committed. Records: [`WI-M0-01`](agent/cards/WI-M0-01-map-evaluation.md)
+    result, and provenance; no map file is committed. Records: [`WI-M0-01`](https://projects.reid-corp.com/work_packages/662)
     (official maps.big batch; operator may extend with community candidates).
 - [x] M0-3 Deployment zones and reachability check as scenario data.
   - AC: both zones hold 1000 units at twice footprint spacing with airfields behind them; every
-    ground locomotor reaches the opposing zone. Card: [`WI-M0-03`](agent/cards/WI-M0-03-deployment-zones.md);
+    ground locomotor reaches the opposing zone. Card: [`WI-M0-03`](https://projects.reid-corp.com/work_packages/663);
     proof: [`WI-M0-03-deployment-proof.json`](agent/cards/WI-M0-03-deployment-proof.json).
 - [~] M0-2 Authored fallback map with B4a: not needed, deepdivide passed every M0-3 check;
   permanently deferred in favor of the post-track programmatic map-development direction
@@ -1912,14 +1912,14 @@ depend on the Track A/B/C phases listed in the track doc. Design:
 - [x] M3-1 Model scale and tiles-to-world factor.
   - AC: EE2 model heights match Generals references within authored bounds; the factor is
     recorded with the manifest.
-  - Evidence: [`WI-M3-01`](agent/cards/WI-M3-01-model-scale-and-factor.md); derived pair
+  - Evidence: [`WI-M3-01`](https://projects.reid-corp.com/work_packages/673); derived pair
     18.2505 units per tile and 0.36501 per model unit recorded in both reference-roster profiles
     and asserted with committed per-class bounds
     ([plan](implementation/track-m-m3-mixed-roster.md#authored-conversion-derivation-wi-m3-01));
     EE2 ground-plane weapon-range semantics normalized (`MeasuresRangeOnGround`).
 - [x] M3-2 `rps` counter class and `dbcombat.csv` matrix to Generals armor and damage type table.
   - AC: every reference EE2 unit maps to an armor set and damage type; unmapped classes fail load.
-  - Evidence: [`WI-M3-02`](agent/cards/WI-M3-02-rps-damage-and-armor.md); authored table in
+  - Evidence: [`WI-M3-02`](https://projects.reid-corp.com/work_packages/674); authored table in
     `Ee2ReferenceRps` and both reference-roster profiles (distinct BFME-family types no native
     armor authors), armor multipliers from the stock dbcombat rows, explicit closure-scoped
     failures ([plan](implementation/track-m-m3-mixed-roster.md#damage-class-mapping-wi-m3-02)).
@@ -1928,7 +1928,7 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     rates; two different 1000-unit manifests, each with anti-air, total equal points within the
     tolerance; each EE2 versus Generals archetype duel, air included, resolves within authored
     time-to-kill bounds.
-  - Evidence: [`WI-M3-03`](agent/cards/WI-M3-03-points-rosters-duels.md); `mass-battle-rosters.json`
+  - Evidence: [`WI-M3-03`](https://projects.reid-corp.com/work_packages/675); `mass-battle-rosters.json`
     (rates, tolerance, both manifests, 0.056 percent apart), `RosterBudgetEvaluator`,
     `Ee2DuelPhase` + `ee2-duel-report.json` with all seven duels inside the authored bounds
     ([plan](implementation/track-m-m3-mixed-roster.md#points-budget-and-manifests-wi-m3-03)).

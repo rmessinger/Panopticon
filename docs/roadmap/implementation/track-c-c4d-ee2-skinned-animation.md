@@ -17,13 +17,13 @@ influences. Correct the NIF rotation convention first.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4d-01`](../agent/cards/WI-C4d-01-fix-nif-rotation-convention.md) | Column-convention NIF rotations; C4a and C4c locked outputs regenerated. |
-| 2 | [`WI-C4d-02`](../agent/cards/WI-C4d-02-decode-nif-skin-blocks.md) | `NiSkinInstance`, `NiSkinData`, and `NiSkinPartition` blocks. |
-| 3 | [`WI-C4d-03`](../agent/cards/WI-C4d-03-widen-c1-skin-influences.md) | Four-slot `ImportedVertex` and C1 validation. |
-| 4 | [`WI-C4d-04`](../agent/cards/WI-C4d-04-widen-runtime-skin-influences.md) | Four-slot mesh vertex layout and shaders. |
-| 5 | [`WI-C4d-05`](../agent/cards/WI-C4d-05-accept-gltf-four-influences.md) | glTF import accepts third and fourth influences. |
-| 6 | [`WI-C4d-06`](../agent/cards/WI-C4d-06-convert-nif-skinned-shapes.md) | NIF skin conversion to model-space vertices and inverse binds. |
-| 7 | [`WI-C4d-07`](../agent/cards/WI-C4d-07-verify-ee2-skinned-proof.md) | Installed Druid assertions and deterministic captures. |
+| 1 | [`WI-C4d-01`](https://projects.reid-corp.com/work_packages/498) | Column-convention NIF rotations; C4a and C4c locked outputs regenerated. |
+| 2 | [`WI-C4d-02`](https://projects.reid-corp.com/work_packages/499) | `NiSkinInstance`, `NiSkinData`, and `NiSkinPartition` blocks. |
+| 3 | [`WI-C4d-03`](https://projects.reid-corp.com/work_packages/500) | Four-slot `ImportedVertex` and C1 validation. |
+| 4 | [`WI-C4d-04`](https://projects.reid-corp.com/work_packages/501) | Four-slot mesh vertex layout and shaders. |
+| 5 | [`WI-C4d-05`](https://projects.reid-corp.com/work_packages/502) | glTF import accepts third and fourth influences. |
+| 6 | [`WI-C4d-06`](https://projects.reid-corp.com/work_packages/503) | NIF skin conversion to model-space vertices and inverse binds. |
+| 7 | [`WI-C4d-07`](https://projects.reid-corp.com/work_packages/504) | Installed Druid assertions and deterministic captures. |
 
 Cards 1, 2, and 3 can proceed in parallel. Card 4 follows card 3. Card 5 needs cards 3 and 4.
 Card 6 needs cards 1, 2, and 3. Card 7 needs cards 4 and 6 and is the completion point.

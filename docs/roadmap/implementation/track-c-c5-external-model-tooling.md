@@ -17,18 +17,18 @@ installation filesystem, and preview corrections never rewrite imported data or 
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C5-01`](../agent/cards/WI-C5-01-add-external-inspection-facade.md) | Public format-neutral catalog, animation descriptors, inspector facade, and explicit format selection. |
-| 2 | [`WI-C5-02`](../agent/cards/WI-C5-02-mount-external-source-roots.md) | Traversal-safe read-only model and animation source mounts. |
-| 3 | [`WI-C5-03`](../agent/cards/WI-C5-03-add-diagnostics-and-reports.md) | Immutable diagnostics, stable failure mapping, preview eligibility, and versioned reports. |
-| 4 | [`WI-C5-04`](../agent/cards/WI-C5-04-implement-external-model-session.md) | Generation-safe session state, immutable snapshots, cancellation, and leases. |
-| 5 | [`WI-C5-05`](../agent/cards/WI-C5-05-pair-external-animations.md) | Same-document and cross-document animation pairing, import options, and preview controls. |
-| 6 | [`WI-C5-06`](../agent/cards/WI-C5-06-add-external-model-protocol.md) | Versioned JSON request protocol with separate roots and validated outputs. |
-| 7 | [`WI-C5-07`](../agent/cards/WI-C5-07-host-external-model-requests.md) | TestHarness host mode through import, materialization, binding, and disposal. |
-| 8 | [`WI-C5-08`](../agent/cards/WI-C5-08-render-external-model-scenes.md) | Deterministic scene rendering, sampling, atomic artifacts, and report-only mode. |
-| 9 | [`WI-C5-09`](../agent/cards/WI-C5-09-launch-testharness-preview.md) | Awaitable cancellable preview process client and sibling-build executable locator. |
-| 10 | [`WI-C5-10`](../agent/cards/WI-C5-10-add-external-model-viewmodel.md) | Injectable Core view model commands and state. |
-| 11 | [`WI-C5-11`](../agent/cards/WI-C5-11-add-replaysketch-model-tab.md) | MAUI Model tab, pickers, diagnostics, preview, and fake-session screenshot mode. |
-| 12 | [`WI-C5-12`](../agent/cards/WI-C5-12-verify-external-model-tooling.md) | Core, TestHarness, Model-tab, and Map-tab acceptance coverage. |
+| 1 | [`WI-C5-01`](https://projects.reid-corp.com/work_packages/535) | Public format-neutral catalog, animation descriptors, inspector facade, and explicit format selection. |
+| 2 | [`WI-C5-02`](https://projects.reid-corp.com/work_packages/536) | Traversal-safe read-only model and animation source mounts. |
+| 3 | [`WI-C5-03`](https://projects.reid-corp.com/work_packages/537) | Immutable diagnostics, stable failure mapping, preview eligibility, and versioned reports. |
+| 4 | [`WI-C5-04`](https://projects.reid-corp.com/work_packages/538) | Generation-safe session state, immutable snapshots, cancellation, and leases. |
+| 5 | [`WI-C5-05`](https://projects.reid-corp.com/work_packages/539) | Same-document and cross-document animation pairing, import options, and preview controls. |
+| 6 | [`WI-C5-06`](https://projects.reid-corp.com/work_packages/540) | Versioned JSON request protocol with separate roots and validated outputs. |
+| 7 | [`WI-C5-07`](https://projects.reid-corp.com/work_packages/541) | TestHarness host mode through import, materialization, binding, and disposal. |
+| 8 | [`WI-C5-08`](https://projects.reid-corp.com/work_packages/542) | Deterministic scene rendering, sampling, atomic artifacts, and report-only mode. |
+| 9 | [`WI-C5-09`](https://projects.reid-corp.com/work_packages/543) | Awaitable cancellable preview process client and sibling-build executable locator. |
+| 10 | [`WI-C5-10`](https://projects.reid-corp.com/work_packages/544) | Injectable Core view model commands and state. |
+| 11 | [`WI-C5-11`](https://projects.reid-corp.com/work_packages/545) | MAUI Model tab, pickers, diagnostics, preview, and fake-session screenshot mode. |
+| 12 | [`WI-C5-12`](https://projects.reid-corp.com/work_packages/546) | Core, TestHarness, Model-tab, and Map-tab acceptance coverage. |
 
 ## Dependencies
 

@@ -17,18 +17,18 @@ engine-owned values.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4-01`](../agent/cards/WI-C4-01-bootstrap-gltf-import.md) | SharpGLTF dependency, immutable options, key parsing, and bounded document scaffold. |
-| 2 | [`WI-C4-02`](../agent/cards/WI-C4-02-resolve-gltf-resources.md) | Virtual-filesystem resource resolver with traversal protection. |
-| 3 | [`WI-C4-03`](../agent/cards/WI-C4-03-add-inverse-bind-matrices.md) | Format-neutral inverse-bind storage and row-vector skinning upload. |
-| 4 | [`WI-C4-04`](../agent/cards/WI-C4-04-add-animation-interpolation.md) | Format-neutral linear and step interpolation. |
-| 5 | [`WI-C4-05`](../agent/cards/WI-C4-05-convert-gltf-scene-nodes.md) | Selected-scene node, transform, rigid attachment, scale, and bounds conversion. |
-| 6 | [`WI-C4-06`](../agent/cards/WI-C4-06-decode-gltf-primitives.md) | Accessor decoding and deterministic 65,535-vertex splitting. |
-| 7 | [`WI-C4-07`](../agent/cards/WI-C4-07-convert-gltf-skinning.md) | One-skin, two-influence conversion with inverse-bind validation. |
-| 8 | [`WI-C4-08`](../agent/cards/WI-C4-08-convert-gltf-animations.md) | Bind-relative named animation conversion for `LINEAR` and `STEP`. |
-| 9 | [`WI-C4-09`](../agent/cards/WI-C4-09-map-gltf-pbr-materials.md) | Core glTF PBR, image, UV, sampler, alpha, and culling mapping. |
-| 10 | [`WI-C4-10`](../agent/cards/WI-C4-10-enforce-gltf-import-policy.md) | Extension policy, complete limits, exception contract, and explicit importer composition. |
-| 11 | [`WI-C4-11`](../agent/cards/WI-C4-11-add-gltf-fixture-matrix.md) | Repository-owned CPU fixture and exclusion matrix. |
-| 12 | [`WI-C4-12`](../agent/cards/WI-C4-12-capture-gltf-runtime-proof.md) | Static PBR, rigid-node animation, and skinned end-to-end runtime captures. |
+| 1 | [`WI-C4-01`](https://projects.reid-corp.com/work_packages/467) | SharpGLTF dependency, immutable options, key parsing, and bounded document scaffold. |
+| 2 | [`WI-C4-02`](https://projects.reid-corp.com/work_packages/468) | Virtual-filesystem resource resolver with traversal protection. |
+| 3 | [`WI-C4-03`](https://projects.reid-corp.com/work_packages/469) | Format-neutral inverse-bind storage and row-vector skinning upload. |
+| 4 | [`WI-C4-04`](https://projects.reid-corp.com/work_packages/470) | Format-neutral linear and step interpolation. |
+| 5 | [`WI-C4-05`](https://projects.reid-corp.com/work_packages/471) | Selected-scene node, transform, rigid attachment, scale, and bounds conversion. |
+| 6 | [`WI-C4-06`](https://projects.reid-corp.com/work_packages/472) | Accessor decoding and deterministic 65,535-vertex splitting. |
+| 7 | [`WI-C4-07`](https://projects.reid-corp.com/work_packages/473) | One-skin, two-influence conversion with inverse-bind validation. |
+| 8 | [`WI-C4-08`](https://projects.reid-corp.com/work_packages/474) | Bind-relative named animation conversion for `LINEAR` and `STEP`. |
+| 9 | [`WI-C4-09`](https://projects.reid-corp.com/work_packages/475) | Core glTF PBR, image, UV, sampler, alpha, and culling mapping. |
+| 10 | [`WI-C4-10`](https://projects.reid-corp.com/work_packages/476) | Extension policy, complete limits, exception contract, and explicit importer composition. |
+| 11 | [`WI-C4-11`](https://projects.reid-corp.com/work_packages/477) | Repository-owned CPU fixture and exclusion matrix. |
+| 12 | [`WI-C4-12`](https://projects.reid-corp.com/work_packages/478) | Static PBR, rigid-node animation, and skinned end-to-end runtime captures. |
 
 ## Dependencies
 

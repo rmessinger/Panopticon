@@ -7,7 +7,7 @@ Architecture: none yet. Loader diagrams are required before any source-edit card
 
 | Card | Status | Scope | Prerequisites |
 |---|---|---|---|
-| [WI-X3-01](../agent/cards/WI-X3-01-cursor-theme-examples.md) | Ready | Evaluate Bibata and game-icons.net cursors, produce comparison examples, assess the loader | none |
+| [WI-X3-01](https://projects.reid-corp.com/work_packages/951) | Ready | Evaluate Bibata and game-icons.net cursors, produce comparison examples, assess the loader | none |
 
 ## Starting point
 

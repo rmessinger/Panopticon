@@ -419,7 +419,7 @@ Buildings, bridges, and other structures reach a generated map only through thes
 |---|---|
 | Elevation | Profiles use bare-earth terrain models (RGE ALTI is one), so buildings, vegetation, and bridges are absent from the terrain. A surface model would bake roofs in as terrain lumps; a surface-model profile records that limit in its `sources.txt`. |
 | Imagery | Roofs and streets are flat texture with no height or collision. |
-| Vector footprints | Building polygons map to Passability (impassable) and Buildability (unbuildable) regions through ordinary rules ([`WI-R2-03`](../agent/cards/WI-R2-03-building-footprint-masks.md)). Footprints smaller than a lattice cell set no mask cells and are counted in the report. |
+| Vector footprints | Building polygons map to Passability (impassable) and Buildability (unbuildable) regions through ordinary rules ([`WI-R2-03`](https://projects.reid-corp.com/work_packages/841)). Footprints smaller than a lattice cell set no mask cells and are counted in the report. |
 
 Deferred to R3, where placed objects enter the map package:
 
@@ -446,7 +446,7 @@ review. Landmarks such as the Sedan château stay bespoke. Both glTF import (C4)
 
 #### 5.4.2 Procedural building investigation
 
-[`WI-R3-01`](../agent/cards/WI-R3-01-procedural-building-investigation.md) prototypes route 1 on the
+[`WI-R3-01`](https://projects.reid-corp.com/work_packages/842) prototypes route 1 on the
 Sedan footprints and recommends the R3 layout (merged chunk meshes or per-building objects), roof
 rule, and material list.
 
@@ -579,7 +579,7 @@ Validation layers:
 
 ### 8.1 Early operator proof (R2)
 
-Before R5, [`WI-R2-01`](../agent/cards/WI-R2-01-sedan-operator-proof.md) runs layers 5 and 6 on the
+Before R5, [`WI-R2-01`](https://projects.reid-corp.com/work_packages/839) runs layers 5 and 6 on the
 R2 dev preview with real data: about 1.1 km of Sedan around the Château fort, IGN RGE ALTI 1 m
 elevation (`NGF-IGN69`), IGN BD ORTHO imagery, a generated KML extent, and blinded ground-truth
 cells derived from IGN LiDAR HD class-2 points as independent vertical control, selected by the
@@ -589,7 +589,7 @@ ground-comparable, so the levelling marks are retained only as metadata and cand
 evidence. It omits the H3 package and WorldBuilder round-trip,
 which stay in R5. Data preparation is command-line only (`scripts/geo/prepare-sedan-proof.sh`:
 `curl` downloads, GDAL reprojection, `ogr2ogr` KML generation); no desktop tool is required.
-[`WI-R2-02`](../agent/cards/WI-R2-02-provider-source-profiles.md) then generalizes it into
+[`WI-R2-02`](https://projects.reid-corp.com/work_packages/840) then generalizes it into
 `scripts/geo/prepare_area.py` with one source profile per provider (`ign-fr`, Europe-wide
 `copernicus-glo30`), so other countries need a profile, not a new script.
 
@@ -628,7 +628,7 @@ Scope limits, carried and not resolved by this proof:
 
 Entry point: `scripts/geo/prepare_area.py`. Default mode validates and prints a read-only plan; `--prepare` permits acquisition and publication. `ign-fr` delegates only the pinned Sedan request to the existing preparation pipeline. `copernicus-glo30` supports one DEM tile and one complete-AOI Sentinel-2 item per request. Profiles are not an automatic source-discovery service.
 
-- Required profile data: identifier, coverage, capabilities, download kind, source CRS, vertical datum, surface type, resampling and no-data policy, imagery selection and scaling metadata, manifest requirements, licence, and attribution. Adapter constraints and fields: [`WI-R2-02`](../agent/cards/WI-R2-02-provider-source-profiles.md#design).
+- Required profile data: identifier, coverage, capabilities, download kind, source CRS, vertical datum, surface type, resampling and no-data policy, imagery selection and scaling metadata, manifest requirements, licence, and attribution. Adapter constraints and fields: [`WI-R2-02`](https://projects.reid-corp.com/work_packages/840).
 - Licence review covers source and derived notices, liability, no endorsement, obligations for subsequent users, retained intellectual property, and termination on breach. Applicable obligations are retained in `sources.txt`; Sentinel notices use the selected acquisition year. Account, API-key, RequesterPays, and interactive-acceptance providers are excluded.
 - Every new profile requires one successful operator import before listing as supported. Required evidence: source identities and retained hashes, CRS and band layout, full storage and apron coverage, kernels, no-data counts, and import report. A completed acquisition alone is not importer compatibility evidence.
 - Surface semantics remain explicit: GLO-30 is a DSM, not IGN bare earth. EGM2008 passes through unchanged. The importer performs no inter-provider datum conversion. Source LE90 is not a maximum error or a control-point acceptance result.
@@ -676,7 +676,7 @@ Copernicus differences mix EGM2008 versus NGF-IGN69, DSM versus bare earth, 30 m
 
 #### Building footprint masks and conservative coverage (R2-03)
 
-The building footprint stage adds vector-derived terrain masks to the Sedan preview under card [`WI-R2-03`](../agent/cards/WI-R2-03-building-footprint-masks.md).
+The building footprint stage adds vector-derived terrain masks to the Sedan preview under card [`WI-R2-03`](https://projects.reid-corp.com/work_packages/841).
 
 ##### Coverage policy contract
 
@@ -767,14 +767,14 @@ Artifacts published under local directory `/mnt/pit2/Network Storage/temp/` (pla
 
 | Phase | Goal | Cards | Status |
 |---|---|---|---|
-| B4b-1. Input contract | Project, diagnostics, limits, manifest schema and loader. | [`WI-B4b-01`](../agent/cards/WI-B4b-01-scaffold-geospatial-project.md), [`02`](../agent/cards/WI-B4b-02-import-manifest.md) | Done |
-| B4b-2. Geospatial interchange | Immutable raster, feature, CRS, provenance values and reader/transform interfaces. | [`WI-B4b-03`](../agent/cards/WI-B4b-03-interchange-values.md) | Done |
-| B4b-3. Local source readers | KML, KMZ, and GeoTIFF readers with limits; synthetic GeoTIFF fixtures. | [`07`](../agent/cards/WI-B4b-07-kml-reader.md), [`08`](../agent/cards/WI-B4b-08-kmz-archive.md), [`09`](../agent/cards/WI-B4b-09-geotiff-fixtures.md), [`10`](../agent/cards/WI-B4b-10-geotiff-reader.md) | Done |
-| B4b-4. Coordinate normalization | Transverse Mercator, CRS transformer, local map grid with distortion check. | [`04`](../agent/cards/WI-B4b-04-transverse-mercator.md), [`05`](../agent/cards/WI-B4b-05-coordinate-transformer.md), [`06`](../agent/cards/WI-B4b-06-local-map-grid.md) | Done |
-| B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](../agent/cards/WI-B4b-11-raster-sampling.md), [`12`](../agent/cards/WI-B4b-12-terrain-chunks.md), [`13`](../agent/cards/WI-B4b-13-imagery-chunks.md), [`14`](../agent/cards/WI-B4b-14-material-layer.md) | Done |
-| B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](../agent/cards/WI-B4b-15-feature-clipping.md), [`16`](../agent/cards/WI-B4b-16-feature-mapping.md), [`17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Done |
-| B4b-6a. Standalone payload | Import pipeline, payload writer/reader, CLI, control-point validation (§6.1). | [`18`](../agent/cards/WI-B4b-18-import-pipeline-payload.md), [`19`](../agent/cards/WI-B4b-19-geoimport-cli.md), [`20`](../agent/cards/WI-B4b-20-control-point-validation.md) | Done |
-| B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md), [`22`](../agent/cards/WI-B4b-22-mapfile-defaults.md), [`23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md), [`24`](../agent/cards/WI-B4b-24-preview-evidence.md) | Done |
+| B4b-1. Input contract | Project, diagnostics, limits, manifest schema and loader. | [`WI-B4b-01`](https://projects.reid-corp.com/work_packages/362), [`02`](https://projects.reid-corp.com/work_packages/363) | Done |
+| B4b-2. Geospatial interchange | Immutable raster, feature, CRS, provenance values and reader/transform interfaces. | [`WI-B4b-03`](https://projects.reid-corp.com/work_packages/364) | Done |
+| B4b-3. Local source readers | KML, KMZ, and GeoTIFF readers with limits; synthetic GeoTIFF fixtures. | [`07`](https://projects.reid-corp.com/work_packages/368), [`08`](https://projects.reid-corp.com/work_packages/369), [`09`](https://projects.reid-corp.com/work_packages/370), [`10`](https://projects.reid-corp.com/work_packages/371) | Done |
+| B4b-4. Coordinate normalization | Transverse Mercator, CRS transformer, local map grid with distortion check. | [`04`](https://projects.reid-corp.com/work_packages/365), [`05`](https://projects.reid-corp.com/work_packages/366), [`06`](https://projects.reid-corp.com/work_packages/367) | Done |
+| B4b-5. Terrain and imagery generation | Sampling kernels, terrain chunks, imagery chunks, material layer. | [`11`](https://projects.reid-corp.com/work_packages/372), [`12`](https://projects.reid-corp.com/work_packages/373), [`13`](https://projects.reid-corp.com/work_packages/374), [`14`](https://projects.reid-corp.com/work_packages/375) | Done |
+| B4b-6. Vector semantics | Clip and transform features, mapping rules, passability and buildability masks. | [`15`](https://projects.reid-corp.com/work_packages/376), [`16`](https://projects.reid-corp.com/work_packages/377), [`17`](https://projects.reid-corp.com/work_packages/378) | Done |
+| B4b-6a. Standalone payload | Import pipeline, payload writer/reader, CLI, control-point validation (§6.1). | [`18`](https://projects.reid-corp.com/work_packages/379), [`19`](https://projects.reid-corp.com/work_packages/380), [`20`](https://projects.reid-corp.com/work_packages/381) | Done |
+| B4b-6b. Dev preview | Payload to resident legacy `MapFile`, playable in the engine (§6.1). | [`21`](https://projects.reid-corp.com/work_packages/382), [`22`](https://projects.reid-corp.com/work_packages/383), [`23`](https://projects.reid-corp.com/work_packages/384), [`24`](https://projects.reid-corp.com/work_packages/385) | Done |
 | B4b-7. H3 package output | Populate the H2 map interchange and write chunked terrain, generated assets, vector-derived layers, provenance, and diagnostics through H3. | blocked on H2/H3 and B4a-5 | Not started |
 | B4b-8. WorldBuilder workflow | Build on H6 to add transactional import, preview, cancellation, report display, and edit/save/reload. | blocked on H6 | Not started |
 | B4b-9. Validation and scale proof | Package and engine round-trips, one operator-supplied control-point proof, and B1 measurements. | blocked on B4b-7/8 | Not started |

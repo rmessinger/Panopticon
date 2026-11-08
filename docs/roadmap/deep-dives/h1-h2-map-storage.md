@@ -6,7 +6,7 @@
 
 ## Scope and ownership
 
-This audit records the legacy `.map` container, its 29 top-level sections, and the code that reads and writes them. It states current behavior with file:line citations at base commit `bc908cf`. It makes no format decision. Options are tracked in [WI-H1-02](../agent/cards/WI-H1-02-format-decision-options.md).
+This audit records the legacy `.map` container, its 29 top-level sections, and the code that reads and writes them. It states current behavior with file:line citations at base commit `bc908cf`. It makes no format decision. Options are tracked in [WI-H1-02](https://projects.reid-corp.com/work_packages/619).
 
 Code location: `src/Panopticon.Simulation/Data/Map/`, plus `SidesList` (`Logic/Map/SidesList.cs`) and the Scb reader (`Data/Scb/`). In tables, a bare file name is relative to `src/Panopticon.Simulation/Data/Map/`. Other paths are relative to `src/Panopticon.Simulation/`. Line numbers refer to base `bc908cf`.
 
@@ -209,11 +209,11 @@ The geospatial preview and GeoImport callers belong to [B4b](r-real-world-terrai
 
 ## Not a decision
 
-This document records current behavior only. It does not compare storage formats, choose one, or recommend changes. Follow-up: [WI-H1-02](../agent/cards/WI-H1-02-format-decision-options.md).
+This document records current behavior only. It does not compare storage formats, choose one, or recommend changes. Follow-up: [WI-H1-02](https://projects.reid-corp.com/work_packages/619).
 
 ## Settled choices confirmed
 
-Checked 2026-11-06 against this audit at base `bc908cf`: the choices settled in the [implementation plan](../implementation/track-h-h1-h3-map-storage.md) and the [Map storage format Decision](../open-questions.md) are confirmed against the audit tables by [WI-H1-02](../agent/cards/WI-H1-02-format-decision-options.md).
+Checked 2026-11-06 against this audit at base `bc908cf`: the choices settled in the [implementation plan](../implementation/track-h-h1-h3-map-storage.md) and the [Map storage format Decision](../open-questions.md) are confirmed against the audit tables by [WI-H1-02](https://projects.reid-corp.com/work_packages/619).
 
 | Settled choice | Consumer | Requirement | Audit evidence | Verdict |
 |---|---|---|---|---|
@@ -227,7 +227,7 @@ The choices above answer the three format-design questions recorded for H1 on [T
 
 ## H2 map interchange design
 
-This section designs the format-neutral interchange for [WI-H2-01](../agent/cards/WI-H2-01-map-interchange-design.md). It is design only. Implementation follows in the cards listed under Implementation cards.
+This section designs the format-neutral interchange for [WI-H2-01](https://projects.reid-corp.com/work_packages/620). It is design only. Implementation follows in the cards listed under Implementation cards.
 
 ### Scope and ownership
 
@@ -398,7 +398,7 @@ Addressing and ordering:
 
 - Chunk key `(cx, cy)` counts from the southwest origin. `+X` is east and `+Y` is north.
 - The grid covers the extent rounded outward to whole chunks. The chunk inventory must match that grid exactly: every position present, none extra.
-- Projected easting maps to `+X` and northing to `+Y`. Raster row order comes from the affine transform, so samples are stored in game order (section 4). The model indexes `(x, y)` with `x` increasing east and `y` increasing north. Serialized order is owned by [WI-H3-02](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md).
+- Projected easting maps to `+X` and northing to `+Y`. Raster row order comes from the affine transform, so samples are stored in game order (section 4). The model indexes `(x, y)` with `x` increasing east and `y` increasing north. Serialized order is owned by [WI-H3-02](https://projects.reid-corp.com/work_packages/659).
 
 Seam rules:
 
@@ -527,7 +527,7 @@ Transitional backend: the H2 legacy bridge still reads these sections from the p
 
 Transactional scope: validation and materialization complete before any mutation of `TerrainLogic`, `Scene3D`, or `PlayerManager`. Failures during scene construction after that gate keep the existing non-transactional behavior. No full-rollback guarantee is claimed.
 
-H3 must-supply list: a future package reader ([WI-H3-01](../agent/cards/WI-H3-01-map-package-manifest-schema.md), [WI-H3-02](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md)) must supply:
+H3 must-supply list: a future package reader ([WI-H3-01](https://projects.reid-corp.com/work_packages/658), [WI-H3-02](https://projects.reid-corp.com/work_packages/659)) must supply:
 
 - Borders, area, and section version.
 - `RoadType` per object.

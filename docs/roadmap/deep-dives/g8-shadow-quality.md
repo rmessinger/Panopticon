@@ -126,8 +126,8 @@ depth shader. G8 does not change caster classification or add alpha-tested shado
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| G8-1 | [`WI-G8-01`](../agent/cards/WI-G8-01-audit-shadow-settings-flow.md) | Audit: trace every `ShadowSettings` member to its endpoint, confirm the four-cascade path and normal offset, name the bias insertion point. |
-| G8-2 | [`WI-G8-02`](../agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md) | `SlopeScaledBias` member and constant, slope term in `Shadows.h`, tier-to-settings mapping consumed by the G2 wiring, G3 captures under both presets. |
+| G8-1 | [`WI-G8-01`](https://projects.reid-corp.com/work_packages/613) | Audit: trace every `ShadowSettings` member to its endpoint, confirm the four-cascade path and normal offset, name the bias insertion point. |
+| G8-2 | [`WI-G8-02`](https://projects.reid-corp.com/work_packages/614) | `SlopeScaledBias` member and constant, slope term in `Shadows.h`, tier-to-settings mapping consumed by the G2 wiring, G3 captures under both presets. |
 
 ## 4. Validation
 

@@ -7,13 +7,13 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 
 | Card | Deliverable | Status |
 |---|---|---|
-| [WI-X1-01](../agent/cards/WI-X1-01-hit-feedback-policy.md) | Source/runtime audit and bounded compatibility policy | Done |
-| [WI-X1-02](../agent/cards/WI-X1-02-imported-damage-fx-binding.md) | Opt-in imported-vehicle damage-effect binding | Done |
-| [WI-X1-03](../agent/cards/WI-X1-03-hit-feedback-regressions.md) | Policy, lifecycle, and combat regression tests | Done |
-| [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Done |
-| [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md) | Opt-in impact-effect selection for imported weapons | Done |
-| [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md) | Attacker-facing bounds placement for mapped imported targets | Done |
-| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Done |
+| [WI-X1-01](https://projects.reid-corp.com/work_packages/942) | Source/runtime audit and bounded compatibility policy | Done |
+| [WI-X1-02](https://projects.reid-corp.com/work_packages/943) | Opt-in imported-vehicle damage-effect binding | Done |
+| [WI-X1-03](https://projects.reid-corp.com/work_packages/944) | Policy, lifecycle, and combat regression tests | Done |
+| [WI-X1-05](https://projects.reid-corp.com/work_packages/946) | Directional tank-impact and Rebel playback audit/design | Done |
+| [WI-X1-06](https://projects.reid-corp.com/work_packages/947) | Opt-in impact-effect selection for imported weapons | Done |
+| [WI-X1-07](https://projects.reid-corp.com/work_packages/948) | Attacker-facing bounds placement for mapped imported targets | Done |
+| [WI-X1-04](https://projects.reid-corp.com/work_packages/945) | Readable labeled duel and rendered impact evidence | Done |
 
 One commit per card; leave any PR open for operator merge. Reconcile Draft cards against preceding evidence before execution. Stop and preserve artifacts on determinism/golden-output deviations, pending operator determination.
 
@@ -82,7 +82,7 @@ Hypothesis, not verified: original Generals adds `Height` to the particle Z. Res
 
 #### Decision: Rebel feedback
 
-Opt-in weapon-side effect selection, not a damage change. `CaptureContentImport.ImpactEffectDamageTypes` maps an imported unit name to a Generals damage type used only for `DamageFXOverride`. The capture maps `LightMounted1UpgradeEpoch15` to `ARMOR_PIERCING`, the Generals tank-gun type; `InfantryDamageFX` resolves it through `DEFAULT` to `FX_DamageInfantryStruck`. This is a recorded compatibility choice, not EE2-authored data. `DamageType` stays `UNRESISTABLE`, so health, armor, and death are unchanged. Validation: the subject must be a typed unit with at least one weapon in the import; the name must parse as a `DamageType` and must not be `UNRESISTABLE` (the "no override" sentinel). `DamageNugget` gains an internal `DamageFXOverride` (default `Unresistable`) threaded through `WeaponTarget.DoDamage`, so native weapons are unchanged. Card: [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md).
+Opt-in weapon-side effect selection, not a damage change. `CaptureContentImport.ImpactEffectDamageTypes` maps an imported unit name to a Generals damage type used only for `DamageFXOverride`. The capture maps `LightMounted1UpgradeEpoch15` to `ARMOR_PIERCING`, the Generals tank-gun type; `InfantryDamageFX` resolves it through `DEFAULT` to `FX_DamageInfantryStruck`. This is a recorded compatibility choice, not EE2-authored data. `DamageType` stays `UNRESISTABLE`, so health, armor, and death are unchanged. Validation: the subject must be a typed unit with at least one weapon in the import; the name must parse as a `DamageType` and must not be `UNRESISTABLE` (the "no override" sentinel). `DamageNugget` gains an internal `DamageFXOverride` (default `Unresistable`) threaded through `WeaponTarget.DoDamage`, so native weapons are unchanged. Card: [WI-X1-06](https://projects.reid-corp.com/work_packages/947).
 
 #### Decision: attacker-facing placement
 
@@ -95,7 +95,7 @@ Contact is a presentation approximation from transformed rendered bounds, not me
 3. Rotation stays `victim.Rotation` so `OrientToObject` nuggets behave as today.
 4. Fallbacks: no client or bounds (headless), dead or missing source, non-invertible or non-finite transform, or result: victim origin. Source inside the bounds or degenerate direction: world bounds center.
 
-The gameplay radius and fixed capture offsets are not used. Damage processing and throttle are untouched: `ActiveBody` computes the position only after throttle passes and passes it to a `DamageFX.DoDamageFX` overload. The geometry lives in a pure static helper testable without graphics. Card: [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md).
+The gameplay radius and fixed capture offsets are not used. Damage processing and throttle are untouched: `ActiveBody` computes the position only after throttle passes and passes it to a `DamageFX.DoDamageFX` overload. The geometry lives in a pure static helper testable without graphics. Card: [WI-X1-07](https://projects.reid-corp.com/work_packages/948).
 
 #### Selection results (WI-X1-06)
 

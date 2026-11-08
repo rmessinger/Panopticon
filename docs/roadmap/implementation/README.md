@@ -141,10 +141,10 @@ Source of truth:
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | R1 (B4b-1…B4b-6), R2 (B4b-6a, B4b-6b) | Geospatial map generation (WI-B4b-01..24) |
-| [WI-R2-01](../agent/cards/WI-R2-01-sedan-operator-proof.md) | R2 | Sedan real-data preview proof (after `WI-B4b-24`) |
-| [WI-R2-02](../agent/cards/WI-R2-02-provider-source-profiles.md) | R2 | Provider source profiles for data preparation (after `WI-R2-01`) |
-| [WI-R2-03](../agent/cards/WI-R2-03-building-footprint-masks.md) | R2 | Building footprints as terrain masks (after `WI-R2-02`) |
-| [WI-R3-01](../agent/cards/WI-R3-01-procedural-building-investigation.md) | R3 | Procedural buildings from footprints, investigation (after `WI-R2-03`) |
+| [WI-R2-01](https://projects.reid-corp.com/work_packages/839) | R2 | Sedan real-data preview proof (after `WI-B4b-24`) |
+| [WI-R2-02](https://projects.reid-corp.com/work_packages/840) | R2 | Provider source profiles for data preparation (after `WI-R2-01`) |
+| [WI-R2-03](https://projects.reid-corp.com/work_packages/841) | R2 | Building footprints as terrain masks (after `WI-R2-02`) |
+| [WI-R3-01](https://projects.reid-corp.com/work_packages/842) | R3 | Procedural buildings from footprints, investigation (after `WI-R2-03`) |
 
 ## Track B · B5 : Rendering at scale
 
@@ -326,7 +326,7 @@ Source of truth: [c10-aoe3de-granny-models.md](../deep-dives/c10-aoe3de-granny-m
 | [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10a | Archives, XMB, and DDT (`WI-C10a-01`, then `WI-C10a-02` and `WI-C10a-03` in parallel) |
 | [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10b | Static Granny models (`WI-C10b-01` after `WI-C10a-01`, then `WI-C10b-02..04`) |
 | [c10-aoe3de-granny-models.md §7](../deep-dives/c10-aoe3de-granny-models.md#7-phase-split) | C10c | Skins, clips, and animfile resolution (`WI-C10c-01..03`, then `WI-C10c-04`) |
-| [C10d architecture](../deep-dives/c10-aoe3de-granny-models.md#c10d-decompression-architecture) | C10d | [Provenance](../agent/cards/WI-C10d-01-decompressor-provenance.md), [codecs](../agent/cards/WI-C10d-02-managed-section-codecs.md), [reader integration](../agent/cards/WI-C10d-03-compressed-reader-integration.md), then [visual proof](../agent/cards/WI-C10d-04-compressed-model-proof.md) |
+| [C10d architecture](../deep-dives/c10-aoe3de-granny-models.md#c10d-decompression-architecture) | C10d | [Provenance](https://projects.reid-corp.com/work_packages/433), [codecs](https://projects.reid-corp.com/work_packages/434), [reader integration](https://projects.reid-corp.com/work_packages/435), then [visual proof](https://projects.reid-corp.com/work_packages/436) |
 
 ## Track C · C12a-C12c : SHOGUN 2 models
 
@@ -645,7 +645,7 @@ Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), includin
 
 ## Track X · X2: Capacity-probe graphics resource fixes
 
-Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [upload lifecycle](../agent/cards/WI-X2-01-bound-upload-resource-lifetimes.md#architecture-diagrams).
+Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [upload lifecycle](https://projects.reid-corp.com/work_packages/949).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|

@@ -17,7 +17,7 @@ The [policy audit](../implementation/track-x-x1-hit-feedback.md#policy-audit) sp
 
 Health bars and unit labels supplement, but do not replace, effects at the damaged target. Reuse existing capture/UI or overlay facilities first. Keep both complete model bounds and impact effects inside the frame throughout the duel. The output must be identified as a two-unit duel, not a full-roster or rearm demonstration.
 
-[WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) traced the blocked capture and approved two bounded extensions: opt-in impact-effect selection and attacker-facing bounds placement. Decisions and evidence are owned by the [implementation plan](../implementation/track-x-x1-hit-feedback.md#target-impact-design-wi-x1-05). The first two diagrams show the landed binding path; the last two show the approved extension, where `DamageFXPlacement` and `DamageFXContact` do not exist yet.
+[WI-X1-05](https://projects.reid-corp.com/work_packages/946) traced the blocked capture and approved two bounded extensions: opt-in impact-effect selection and attacker-facing bounds placement. Decisions and evidence are owned by the [implementation plan](../implementation/track-x-x1-hit-feedback.md#target-impact-design-wi-x1-05). The first two diagrams show the landed binding path; the last two show the approved extension, where `DamageFXPlacement` and `DamageFXContact` do not exist yet.
 
 ## Architecture diagrams
 

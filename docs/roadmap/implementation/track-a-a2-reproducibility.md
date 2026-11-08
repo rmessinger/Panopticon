@@ -16,11 +16,11 @@ harness is `WI-A2-04`, out of scope here.
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| audit | [`WI-A2-01`](../agent/cards/WI-A2-01-audit-randomness-sources.md) | Randomness source audit (below). |
-| audit | [`WI-A2-02`](../agent/cards/WI-A2-02-audit-nonrandom-nondeterminism.md) | Non-random nondeterminism audit (below). |
+| audit | [`WI-A2-01`](https://projects.reid-corp.com/work_packages/246) | Randomness source audit (below). |
+| audit | [`WI-A2-02`](https://projects.reid-corp.com/work_packages/247) | Non-random nondeterminism audit (below). |
 | design | A2 deep dive | Seed-control design, statistical validation model, conflict-rule scope. |
-| convert | [`WI-A2-03`](../agent/cards/WI-A2-03-route-randomness-through-seeded-source.md) | Seed `GameLogic.Random` from the run seed; convert the uncontrolled simulation-affecting sites. |
-| harness | [`WI-A2-04`](../agent/cards/WI-A2-04-stability-verification-harness.md) | Multi-sample statistical harness. |
+| convert | [`WI-A2-03`](https://projects.reid-corp.com/work_packages/248) | Seed `GameLogic.Random` from the run seed; convert the uncontrolled simulation-affecting sites. |
+| harness | [`WI-A2-04`](https://projects.reid-corp.com/work_packages/249) | Multi-sample statistical harness. |
 
 ---
 
@@ -29,7 +29,7 @@ harness is `WI-A2-04`, out of scope here.
 ## Randomness source audit
 
 Every `new Random(`, `Random.Shared`, `IRandom`, and `CreateRandom` site in `src/`, classified per
-[`WI-A2-01`](../agent/cards/WI-A2-01-audit-randomness-sources.md).
+[`WI-A2-01`](https://projects.reid-corp.com/work_packages/246).
 
 ### Engine (`src/Panopticon.Simulation`)
 

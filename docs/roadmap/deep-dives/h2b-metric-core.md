@@ -37,24 +37,24 @@ Gate: pending cards 01 and 02. Card 02 replaces this section with grounded class
 
 | Card | Scope | Prerequisites |
 |---|---|---|
-| [WI-H2b-01](../agent/cards/WI-H2b-01-unit-boundary-audit.md) | Merged H2a baseline and dimensional audit | H2a merged |
-| [WI-H2b-02](../agent/cards/WI-H2b-02-cutover-design.md) | Design and bounded scopes | 01 |
-| [WI-H2b-03](../agent/cards/WI-H2b-03-conversion-primitives.md) | Explicit conversion helpers | 02 |
-| [WI-H2b-04](../agent/cards/WI-H2b-04-h2a-quantities.md) | H2a adapters and materializers | 03 |
-| [WI-H2b-05](../agent/cards/WI-H2b-05-ini-gameplay.md) | Gameplay INI lengths and rates | 03, 04 |
-| [WI-H2b-06](../agent/cards/WI-H2b-06-ini-presentation.md) | Presentation INI and globals | 05 |
-| [WI-H2b-07](../agent/cards/WI-H2b-07-terrain.md) | Terrain spacing and elevation | 03 |
-| [WI-H2b-08](../agent/cards/WI-H2b-08-map-placement.md) | Placement and WorldBuilder | 07 |
-| [WI-H2b-09](../agent/cards/WI-H2b-09-w3d.md) | W3D models and animation | 03 |
-| [WI-H2b-10](../agent/cards/WI-H2b-10-gltf-nif.md) | Metric-native importers | 09 |
-| [WI-H2b-11](../agent/cards/WI-H2b-11-physics.md) | Physics and locomotion | 05, 07, 09 |
-| [WI-H2b-12](../agent/cards/WI-H2b-12-spatial.md) | Navigation and scripts | 08, 11 |
-| [WI-H2b-13](../agent/cards/WI-H2b-13-render-audio.md) | Cameras, rendering, audio | 06, 08, 10 |
-| [WI-H2b-14](../agent/cards/WI-H2b-14-orders-replays.md) | Orders, network, replays | 08, 12 |
-| [WI-H2b-15](../agent/cards/WI-H2b-15-persistence.md) | Saves and recording versions | 11, 14 |
-| [WI-H2b-16](../agent/cards/WI-H2b-16-tools-scenarios.md) | Tools and scenarios | 04, 12, 13, 14, 15 |
-| [WI-H2b-17](../agent/cards/WI-H2b-17-boundary-conformance.md) | Compatibility tests | 16 |
-| [WI-H2b-18](../agent/cards/WI-H2b-18-release-proof.md) | Real-content release proof | 17 |
+| [WI-H2b-01](https://projects.reid-corp.com/work_packages/640) | Merged H2a baseline and dimensional audit | H2a merged |
+| [WI-H2b-02](https://projects.reid-corp.com/work_packages/641) | Design and bounded scopes | 01 |
+| [WI-H2b-03](https://projects.reid-corp.com/work_packages/642) | Explicit conversion helpers | 02 |
+| [WI-H2b-04](https://projects.reid-corp.com/work_packages/643) | H2a adapters and materializers | 03 |
+| [WI-H2b-05](https://projects.reid-corp.com/work_packages/644) | Gameplay INI lengths and rates | 03, 04 |
+| [WI-H2b-06](https://projects.reid-corp.com/work_packages/645) | Presentation INI and globals | 05 |
+| [WI-H2b-07](https://projects.reid-corp.com/work_packages/646) | Terrain spacing and elevation | 03 |
+| [WI-H2b-08](https://projects.reid-corp.com/work_packages/647) | Placement and WorldBuilder | 07 |
+| [WI-H2b-09](https://projects.reid-corp.com/work_packages/648) | W3D models and animation | 03 |
+| [WI-H2b-10](https://projects.reid-corp.com/work_packages/649) | Metric-native importers | 09 |
+| [WI-H2b-11](https://projects.reid-corp.com/work_packages/650) | Physics and locomotion | 05, 07, 09 |
+| [WI-H2b-12](https://projects.reid-corp.com/work_packages/651) | Navigation and scripts | 08, 11 |
+| [WI-H2b-13](https://projects.reid-corp.com/work_packages/652) | Cameras, rendering, audio | 06, 08, 10 |
+| [WI-H2b-14](https://projects.reid-corp.com/work_packages/653) | Orders, network, replays | 08, 12 |
+| [WI-H2b-15](https://projects.reid-corp.com/work_packages/654) | Saves and recording versions | 11, 14 |
+| [WI-H2b-16](https://projects.reid-corp.com/work_packages/655) | Tools and scenarios | 04, 12, 13, 14, 15 |
+| [WI-H2b-17](https://projects.reid-corp.com/work_packages/656) | Compatibility tests | 16 |
+| [WI-H2b-18](https://projects.reid-corp.com/work_packages/657) | Real-content release proof | 17 |
 
 Numbers denote `WI-H2b` cards. Intermediate commits are not complete metric gameplay builds.
 

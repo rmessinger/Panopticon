@@ -16,12 +16,12 @@ models. Singular rest-scale animated nodes are diagnosed, not approximated.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4f-01`](../agent/cards/WI-C4f-01-add-scale-to-c1-runtime.md) | C1 and runtime rest scale plus scale animation channel. |
-| 2 | [`WI-C4f-02`](../agent/cards/WI-C4f-02-preserve-nif-rest-scale.md) | NIF node rest scale preserved and collapse rule relaxed. |
-| 3 | [`WI-C4f-03`](../agent/cards/WI-C4f-03-convert-kf-scale-keys.md) | KF scale keys converted through C4c curve evaluation. |
-| 4 | [`WI-C4f-04`](../agent/cards/WI-C4f-04-validate-scale-normals-bounds.md) | Normal, bounds, and skinning invariants under uniform scale. |
-| 5 | [`WI-C4f-05`](../agent/cards/WI-C4f-05-verify-ee2-scale-descriptors.md) | Installed DDF-bound scale clip descriptor and pose checks. |
-| 6 | [`WI-C4f-06`](../agent/cards/WI-C4f-06-capture-ee2-scale-proof.md) | Deterministic textured captures showing scale animation. |
+| 1 | [`WI-C4f-01`](https://projects.reid-corp.com/work_packages/511) | C1 and runtime rest scale plus scale animation channel. |
+| 2 | [`WI-C4f-02`](https://projects.reid-corp.com/work_packages/512) | NIF node rest scale preserved and collapse rule relaxed. |
+| 3 | [`WI-C4f-03`](https://projects.reid-corp.com/work_packages/513) | KF scale keys converted through C4c curve evaluation. |
+| 4 | [`WI-C4f-04`](https://projects.reid-corp.com/work_packages/514) | Normal, bounds, and skinning invariants under uniform scale. |
+| 5 | [`WI-C4f-05`](https://projects.reid-corp.com/work_packages/515) | Installed DDF-bound scale clip descriptor and pose checks. |
+| 6 | [`WI-C4f-06`](https://projects.reid-corp.com/work_packages/516) | Deterministic textured captures showing scale animation. |
 
 Cards 1 and 2 can proceed in parallel after C4c. Card 3 needs cards 1 and 2. Card 4 follows card
 3. Card 6 is the completion point.

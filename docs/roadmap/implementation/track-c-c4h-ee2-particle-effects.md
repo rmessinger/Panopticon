@@ -17,12 +17,12 @@ runtime, and capture deterministic explosion, muzzle-smoke, and water-splash pro
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4h-01`](../agent/cards/WI-C4h-01-census-ee2-particle-effects.md) | Locked DDF-bound proof inventory and particle corpus descriptor tests. |
-| 2 | [`WI-C4h-02`](../agent/cards/WI-C4h-02-decode-legacy-particle-blocks.md) | NIF parser blocks for legacy particle effects and exact proof parsing. |
-| 3 | [`WI-C4h-03`](../agent/cards/WI-C4h-03-add-particle-interchange.md) | CPU-only imported particle effect values and invariant tests. |
-| 4 | [`WI-C4h-04`](../agent/cards/WI-C4h-04-translate-particles-to-runtime-templates.md) | Materializer that creates existing `FXParticleSystemTemplate` values. |
-| 5 | [`WI-C4h-05`](../agent/cards/WI-C4h-05-bind-effect-attachments.md) | DDF attachment binding to world origins or C4c node bones. |
-| 6 | [`WI-C4h-06`](../agent/cards/WI-C4h-06-capture-particle-proof-effects.md) | Deterministic TestHarness captures for the three proof effects. |
+| 1 | [`WI-C4h-01`](https://projects.reid-corp.com/work_packages/523) | Locked DDF-bound proof inventory and particle corpus descriptor tests. |
+| 2 | [`WI-C4h-02`](https://projects.reid-corp.com/work_packages/524) | NIF parser blocks for legacy particle effects and exact proof parsing. |
+| 3 | [`WI-C4h-03`](https://projects.reid-corp.com/work_packages/525) | CPU-only imported particle effect values and invariant tests. |
+| 4 | [`WI-C4h-04`](https://projects.reid-corp.com/work_packages/526) | Materializer that creates existing `FXParticleSystemTemplate` values. |
+| 5 | [`WI-C4h-05`](https://projects.reid-corp.com/work_packages/527) | DDF attachment binding to world origins or C4c node bones. |
+| 6 | [`WI-C4h-06`](https://projects.reid-corp.com/work_packages/528) | Deterministic TestHarness captures for the three proof effects. |
 
 Cards 1 and 2 start after C4c is complete. Card 3 follows card 2. Card 4 follows cards 2 and 3.
 Card 5 follows card 4. Card 6 is the completion point.

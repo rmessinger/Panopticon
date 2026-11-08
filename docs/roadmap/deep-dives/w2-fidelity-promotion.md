@@ -148,20 +148,20 @@ it does not set a permanent acceptance threshold.
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W2-1 | [`WI-W2-01`](../agent/cards/WI-W2-01-activation-policy-hysteresis.md) | Activation policy interface, references, and dwell. | Contact regions promote, inactive regions demote after 3 operational ticks, and every transition records policy inputs. |
-| W2-2 | [`WI-W2-02`](../agent/cards/WI-W2-02-transition-records-schema.md) | Transition records and schema additions. | Promotion and demotion reconstruct from domain state artifacts without input re-simulation. |
-| W2-3 | [`WI-W2-03`](../agent/cards/WI-W2-03-tactical-template-map.md) | Tactical template map. | Blue resolves to `AmericaInfantryRanger`, red resolves to `ChinaInfantryRedguard`, with validation for missing definitions. |
-| W2-4 | [`WI-W2-04`](../agent/cards/WI-W2-04-soldier-placement.md) | Soldier placement from posture and trench level. | Placement is deterministic per seed and keeps soldiers inside their active cells and posture bands. |
-| W2-5 | [`WI-W2-05`](../agent/cards/WI-W2-05-promotion-ledger-split.md) | Platoon-to-soldier ledger split. | Personnel, MG, and SAA split exactly; SAA uses largest remainder. |
-| W2-6 | [`WI-W2-06`](../agent/cards/WI-W2-06-soldier-casualty-classification.md) | Soldier death classification. | Every soldier death creates exactly one killed, wounded, or missing ledger sink from seeded fractions. |
-| W2-7 | [`WI-W2-07`](../agent/cards/WI-W2-07-soldier-ammo-module.md) | Per-soldier SAA module. | Shots decrement SAA and zero rounds blocks firing. |
-| W2-8 | [`WI-W2-08`](../agent/cards/WI-W2-08-mg-teams.md) | MG team preservation. | MG carriers are assigned deterministically and MG counts reconcile after deaths and demotion. |
-| W2-9 | [`WI-W2-09`](../agent/cards/WI-W2-09-artillery-impacts-active-areas.md) | Strategic artillery into active tactical areas. | Bombard orders consume operational rounds and apply `DamageInfoInput` at seeded impact points. |
-| W2-10 | [`WI-W2-10`](../agent/cards/WI-W2-10-formation-objectives-to-soldier-orders.md) | Formation objectives to soldier/squad orders through A4-3. | Orders are injected through `SimulationHost.InjectOrders`; higher orders do not mutate tactical state directly. |
-| W2-11 | [`WI-W2-11`](../agent/cards/WI-W2-11-demotion-reconciliation-terrain.md) | Demotion, reconciliation, and terrain fold-in. | Soldier survivors, ammo, MG, and terrain summaries fold back with empty residuals. |
-| W2-12 | [`WI-W2-12`](../agent/cards/WI-W2-12-mode-switching-scheduler.md) | Mode switching with the W0 scheduler. | Tactical mode enters and exits only on operational boundaries and records conversions. |
-| W2-13 | [`WI-W2-13`](../agent/cards/WI-W2-13-all-tactical-reference-run.md) | Whole-sector all-tactical reference run. | Reference scenario materializes the sector tactically from frame zero and records it as the primary product. |
-| W2-14 | [`WI-W2-14`](../agent/cards/WI-W2-14-error-report-64-seeds.md) | Aggregate-vs-tactical A2 report. | A2 runs 64 seeds per arm and reports declared error distributions against all-tactical reference. |
+| W2-1 | [`WI-W2-01`](https://projects.reid-corp.com/work_packages/869) | Activation policy interface, references, and dwell. | Contact regions promote, inactive regions demote after 3 operational ticks, and every transition records policy inputs. |
+| W2-2 | [`WI-W2-02`](https://projects.reid-corp.com/work_packages/870) | Transition records and schema additions. | Promotion and demotion reconstruct from domain state artifacts without input re-simulation. |
+| W2-3 | [`WI-W2-03`](https://projects.reid-corp.com/work_packages/871) | Tactical template map. | Blue resolves to `AmericaInfantryRanger`, red resolves to `ChinaInfantryRedguard`, with validation for missing definitions. |
+| W2-4 | [`WI-W2-04`](https://projects.reid-corp.com/work_packages/872) | Soldier placement from posture and trench level. | Placement is deterministic per seed and keeps soldiers inside their active cells and posture bands. |
+| W2-5 | [`WI-W2-05`](https://projects.reid-corp.com/work_packages/873) | Platoon-to-soldier ledger split. | Personnel, MG, and SAA split exactly; SAA uses largest remainder. |
+| W2-6 | [`WI-W2-06`](https://projects.reid-corp.com/work_packages/874) | Soldier death classification. | Every soldier death creates exactly one killed, wounded, or missing ledger sink from seeded fractions. |
+| W2-7 | [`WI-W2-07`](https://projects.reid-corp.com/work_packages/875) | Per-soldier SAA module. | Shots decrement SAA and zero rounds blocks firing. |
+| W2-8 | [`WI-W2-08`](https://projects.reid-corp.com/work_packages/876) | MG team preservation. | MG carriers are assigned deterministically and MG counts reconcile after deaths and demotion. |
+| W2-9 | [`WI-W2-09`](https://projects.reid-corp.com/work_packages/877) | Strategic artillery into active tactical areas. | Bombard orders consume operational rounds and apply `DamageInfoInput` at seeded impact points. |
+| W2-10 | [`WI-W2-10`](https://projects.reid-corp.com/work_packages/878) | Formation objectives to soldier/squad orders through A4-3. | Orders are injected through `SimulationHost.InjectOrders`; higher orders do not mutate tactical state directly. |
+| W2-11 | [`WI-W2-11`](https://projects.reid-corp.com/work_packages/879) | Demotion, reconciliation, and terrain fold-in. | Soldier survivors, ammo, MG, and terrain summaries fold back with empty residuals. |
+| W2-12 | [`WI-W2-12`](https://projects.reid-corp.com/work_packages/880) | Mode switching with the W0 scheduler. | Tactical mode enters and exits only on operational boundaries and records conversions. |
+| W2-13 | [`WI-W2-13`](https://projects.reid-corp.com/work_packages/881) | Whole-sector all-tactical reference run. | Reference scenario materializes the sector tactically from frame zero and records it as the primary product. |
+| W2-14 | [`WI-W2-14`](https://projects.reid-corp.com/work_packages/882) | Aggregate-vs-tactical A2 report. | A2 runs 64 seeds per arm and reports declared error distributions against all-tactical reference. |
 
 ## 10. Architecture diagrams
 

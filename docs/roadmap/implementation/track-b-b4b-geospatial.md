@@ -17,35 +17,35 @@ playable legacy `MapFile`. B4b-7 (H2 interchange), B4b-8 (WorldBuilder import), 
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| B4b-1 | [`WI-B4b-01`](../agent/cards/WI-B4b-01-scaffold-geospatial-project.md) | Projects, diagnostics, limits. |
-| B4b-1 | [`WI-B4b-02`](../agent/cards/WI-B4b-02-import-manifest.md) | Manifest schema and loader. |
-| B4b-2 | [`WI-B4b-03`](../agent/cards/WI-B4b-03-interchange-values.md) | Interchange values and interfaces. |
-| B4b-4 | [`WI-B4b-04`](../agent/cards/WI-B4b-04-transverse-mercator.md) | Krüger Transverse Mercator. |
-| B4b-4 | [`WI-B4b-05`](../agent/cards/WI-B4b-05-coordinate-transformer.md) | `ICoordinateTransformer` for supported CRS. |
-| B4b-4 | [`WI-B4b-06`](../agent/cards/WI-B4b-06-local-map-grid.md) | `LocalMapGrid`, chunk rounding, scale-error check. |
-| B4b-3 | [`WI-B4b-07`](../agent/cards/WI-B4b-07-kml-reader.md) | KML reader. |
-| B4b-3 | [`WI-B4b-08`](../agent/cards/WI-B4b-08-kmz-archive.md) | KMZ archive reader. |
-| B4b-3 | [`WI-B4b-09`](../agent/cards/WI-B4b-09-geotiff-fixtures.md) | Synthetic GeoTIFF fixtures. |
-| B4b-3 | [`WI-B4b-10`](../agent/cards/WI-B4b-10-geotiff-reader.md) | GeoTIFF reader. |
-| B4b-5 | [`WI-B4b-11`](../agent/cards/WI-B4b-11-raster-sampling.md) | Sampling kernels, no-data and edge policies. |
-| B4b-5 | [`WI-B4b-12`](../agent/cards/WI-B4b-12-terrain-chunks.md) | Terrain chunks. |
-| B4b-5 | [`WI-B4b-13`](../agent/cards/WI-B4b-13-imagery-chunks.md) | Imagery chunks. |
-| B4b-5 | [`WI-B4b-14`](../agent/cards/WI-B4b-14-material-layer.md) | Material layer. |
-| B4b-6 | [`WI-B4b-15`](../agent/cards/WI-B4b-15-feature-clipping.md) | Feature transform and clipping. |
-| B4b-6 | [`WI-B4b-16`](../agent/cards/WI-B4b-16-feature-mapping.md) | Feature mapping rules. |
-| B4b-6 | [`WI-B4b-17`](../agent/cards/WI-B4b-17-terrain-masks.md) | Passability and buildability masks. |
-| B4b-6a | [`WI-B4b-18`](../agent/cards/WI-B4b-18-import-pipeline-payload.md) | Import pipeline and payload. |
-| B4b-6a | [`WI-B4b-19`](../agent/cards/WI-B4b-19-geoimport-cli.md) | `Panopticon.Tools.GeoImport` CLI. |
-| B4b-6a | [`WI-B4b-20`](../agent/cards/WI-B4b-20-control-point-validation.md) | Control-point validation. |
-| B4b-6b | [`WI-B4b-21`](../agent/cards/WI-B4b-21-audit-playable-mapfile.md) | Minimum playable `MapFile` audit. |
-| B4b-6b | [`WI-B4b-22`](../agent/cards/WI-B4b-22-mapfile-defaults.md) | Legacy `MapFile` default factories. |
-| B4b-6b | [`WI-B4b-23`](../agent/cards/WI-B4b-23-payload-to-mapfile.md) | `Panopticon.Geospatial.Preview`. |
-| B4b-6b | [`WI-B4b-24`](../agent/cards/WI-B4b-24-preview-evidence.md) | `preview` verb and game-backed evidence. |
+| B4b-1 | [`WI-B4b-01`](https://projects.reid-corp.com/work_packages/362) | Projects, diagnostics, limits. |
+| B4b-1 | [`WI-B4b-02`](https://projects.reid-corp.com/work_packages/363) | Manifest schema and loader. |
+| B4b-2 | [`WI-B4b-03`](https://projects.reid-corp.com/work_packages/364) | Interchange values and interfaces. |
+| B4b-4 | [`WI-B4b-04`](https://projects.reid-corp.com/work_packages/365) | Krüger Transverse Mercator. |
+| B4b-4 | [`WI-B4b-05`](https://projects.reid-corp.com/work_packages/366) | `ICoordinateTransformer` for supported CRS. |
+| B4b-4 | [`WI-B4b-06`](https://projects.reid-corp.com/work_packages/367) | `LocalMapGrid`, chunk rounding, scale-error check. |
+| B4b-3 | [`WI-B4b-07`](https://projects.reid-corp.com/work_packages/368) | KML reader. |
+| B4b-3 | [`WI-B4b-08`](https://projects.reid-corp.com/work_packages/369) | KMZ archive reader. |
+| B4b-3 | [`WI-B4b-09`](https://projects.reid-corp.com/work_packages/370) | Synthetic GeoTIFF fixtures. |
+| B4b-3 | [`WI-B4b-10`](https://projects.reid-corp.com/work_packages/371) | GeoTIFF reader. |
+| B4b-5 | [`WI-B4b-11`](https://projects.reid-corp.com/work_packages/372) | Sampling kernels, no-data and edge policies. |
+| B4b-5 | [`WI-B4b-12`](https://projects.reid-corp.com/work_packages/373) | Terrain chunks. |
+| B4b-5 | [`WI-B4b-13`](https://projects.reid-corp.com/work_packages/374) | Imagery chunks. |
+| B4b-5 | [`WI-B4b-14`](https://projects.reid-corp.com/work_packages/375) | Material layer. |
+| B4b-6 | [`WI-B4b-15`](https://projects.reid-corp.com/work_packages/376) | Feature transform and clipping. |
+| B4b-6 | [`WI-B4b-16`](https://projects.reid-corp.com/work_packages/377) | Feature mapping rules. |
+| B4b-6 | [`WI-B4b-17`](https://projects.reid-corp.com/work_packages/378) | Passability and buildability masks. |
+| B4b-6a | [`WI-B4b-18`](https://projects.reid-corp.com/work_packages/379) | Import pipeline and payload. |
+| B4b-6a | [`WI-B4b-19`](https://projects.reid-corp.com/work_packages/380) | `Panopticon.Tools.GeoImport` CLI. |
+| B4b-6a | [`WI-B4b-20`](https://projects.reid-corp.com/work_packages/381) | Control-point validation. |
+| B4b-6b | [`WI-B4b-21`](https://projects.reid-corp.com/work_packages/382) | Minimum playable `MapFile` audit. |
+| B4b-6b | [`WI-B4b-22`](https://projects.reid-corp.com/work_packages/383) | Legacy `MapFile` default factories. |
+| B4b-6b | [`WI-B4b-23`](https://projects.reid-corp.com/work_packages/384) | `Panopticon.Geospatial.Preview`. |
+| B4b-6b | [`WI-B4b-24`](https://projects.reid-corp.com/work_packages/385) | `preview` verb and game-backed evidence. |
 
-Related design cards: [`WI-B4a-01`](../agent/cards/WI-B4a-01-chunk-contract.md) (B4a-5 chunk
-contract), [`WI-H1-01`](../agent/cards/WI-H1-01-map-format-audit.md),
-[`WI-H1-02`](../agent/cards/WI-H1-02-format-decision-options.md), and
-[`WI-H2-01`](../agent/cards/WI-H2-01-map-interchange-design.md).
+Related design cards: [`WI-B4a-01`](https://projects.reid-corp.com/work_packages/351) (B4a-5 chunk
+contract), [`WI-H1-01`](https://projects.reid-corp.com/work_packages/618),
+[`WI-H1-02`](https://projects.reid-corp.com/work_packages/619), and
+[`WI-H2-01`](https://projects.reid-corp.com/work_packages/620).
 
 ---
 

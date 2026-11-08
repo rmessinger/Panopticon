@@ -11,9 +11,9 @@ Source of truth: [design and diagrams](../deep-dives/g10-realistic-proportions.m
 
 | Card | Deliverable | Depends on |
 |---|---|---|
-| [WI-G10-01](../agent/cards/WI-G10-01-audit-proportions-and-reference-scale.md) | Reference manifest, deviation table and measurement tests | none |
-| [WI-G10-02](../agent/cards/WI-G10-02-presentation-scale-overrides.md) | Per-definition visual transform and separate culling bounds | WI-G10-01, WI-G2-03 |
-| [WI-G10-03](../agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md) | Explicit opt-in and proportion golden captures | WI-G10-02, WI-G3-04 |
+| [WI-G10-01](https://projects.reid-corp.com/work_packages/577) | Reference manifest, deviation table and measurement tests | none |
+| [WI-G10-02](https://projects.reid-corp.com/work_packages/578) | Per-definition visual transform and separate culling bounds | WI-G10-01, WI-G2-03 |
+| [WI-G10-03](https://projects.reid-corp.com/work_packages/579) | Explicit opt-in and proportion golden captures | WI-G10-02, WI-G3-04 |
 
 ## Audit (WI-G10-01, complete)
 

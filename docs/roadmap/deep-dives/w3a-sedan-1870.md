@@ -361,37 +361,37 @@ Milestone evidence, all measured:
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W3a-1 | [`WI-W3a-01`](../agent/cards/WI-W3a-01-scale-probe.md) | Scale probe report. | Per-frame cost and peak memory at 320,000 soldier objects with long-range acquisition; projected reference wall-clock. |
-| W3a-2 | [`WI-W3a-02`](../agent/cards/WI-W3a-02-operator-geospatial-inputs.md) | Operator-local input manifest. | Manifest names DEM, vector, and digitized 1870 sources, CRS, datum offset, and non-committed paths. |
-| W3a-3 | [`WI-W3a-03`](../agent/cards/WI-W3a-03-sedan-payload-validation.md) | Payload validation. | Rejects wrong CRS, scale, datum, bounds, or missing W3a layers. |
-| W3a-4 | [`WI-W3a-04`](../agent/cards/WI-W3a-04-topology-builder-contract.md) | `WesternFrontTopologyBuilder` contract. | Topology derives from payload values with stable source references. |
-| W3a-5 | [`WI-W3a-05`](../agent/cards/WI-W3a-05-region-cell-grid.md) | Region and cell grid. | 1000 m regions and 125 m cells cover the extent without duplicates. |
-| W3a-6 | [`WI-W3a-06`](../agent/cards/WI-W3a-06-vector-feature-to-topology.md) | Feature-to-topology mapping. | Every link and annotation carries source ids; W3a layers apply their §4 effects. |
-| W3a-7 | [`WI-W3a-07`](../agent/cards/WI-W3a-07-neutral-territory.md) | Neutral territory. | German entry is blocked; French entry moves holdings to `interned`. |
-| W3a-8 | [`WI-W3a-08`](../agent/cards/WI-W3a-08-order-of-battle-schema.md) | Order-of-battle schema. | Schema validates keys, echelons, parents, strengths, templates, and provenance. |
-| W3a-9 | [`WI-W3a-09`](../agent/cards/WI-W3a-09-french-order-of-battle.md) | French order-of-battle dataset. | Every French battalion, battery, and squadron has a source; totals match §5.2 within stated confidence. |
-| W3a-10 | [`WI-W3a-10`](../agent/cards/WI-W3a-10-german-order-of-battle.md) | German order-of-battle dataset. | Every German battalion, battery, and squadron has a source; totals match §5.2 within stated confidence. |
-| W3a-11 | [`WI-W3a-11`](../agent/cards/WI-W3a-11-organization-template-expansion.md) | Template expansion. | Expansion to the platoon floor is deterministic with stable keys. |
-| W3a-12 | [`WI-W3a-12`](../agent/cards/WI-W3a-12-period-ledger-families.md) | Schema version with new families and sinks. | `horse`, `mitrailleuse`, `captured`, `interned` conserve exactly. |
-| W3a-13 | [`WI-W3a-13`](../agent/cards/WI-W3a-13-period-weapon-parameters.md) | Period weapon parameters. | Every value has unit and source; §6 values are verified or corrected. |
-| W3a-14 | [`WI-W3a-14`](../agent/cards/WI-W3a-14-period-content-definitions.md) | Period INI definitions. | Objects and weapons load in a scope above Generals with placeholder models. |
-| W3a-15 | [`WI-W3a-15`](../agent/cards/WI-W3a-15-weapon-hit-resolution.md) | Hit-resolution seam and `PeriodHitResolver`. | Null resolver keeps RTS behavior identical; period hits follow the table per seed. |
-| W3a-16 | [`WI-W3a-16`](../agent/cards/WI-W3a-16-shells-and-fuzes.md) | Shell burst and fuze model. | Percussion, shrapnel, case, and La Hitte preset behavior match §7.2. |
-| W3a-17 | [`WI-W3a-17`](../agent/cards/WI-W3a-17-line-of-sight.md) | Terrain and feature line of sight. | Fire and detection require line of sight; occluders apply by cover depth. |
-| W3a-18 | [`WI-W3a-18`](../agent/cards/WI-W3a-18-environment-schedule.md) | Light and weather schedule. | Schedule values match §8.3 and modify detection, fire, and movement. |
-| W3a-19 | [`WI-W3a-19`](../agent/cards/WI-W3a-19-tactical-artillery.md) | Tactical batteries. | Crew minimum, limbering, ammunition flow, and capture transfer follow §7.4. |
-| W3a-20 | [`WI-W3a-20`](../agent/cards/WI-W3a-20-cavalry-troopers.md) | Cavalry troopers. | Horse holdings, dismounting, and charges follow §7.5. |
-| W3a-21 | [`WI-W3a-21`](../agent/cards/WI-W3a-21-courier-and-telegraph-links.md) | Courier and telegraph comm types. | Latency and disruption follow §8.1; telephone and wireless are disabled. |
-| W3a-22 | [`WI-W3a-22`](../agent/cards/WI-W3a-22-orders-timeline-dataset.md) | Orders timeline schema and dataset. | Every order and command change has a source and resolvable keys. |
-| W3a-23 | [`WI-W3a-23`](../agent/cards/WI-W3a-23-order-applicability.md) | Timeline issue and applicability. | Orders issue from simulated headquarters; applicability and arrival-offset metrics record. |
-| W3a-24 | [`WI-W3a-24`](../agent/cards/WI-W3a-24-local-surrender.md) | Encirclement and local surrender. | Surrendered soldiers move to `captured`; equipment transfers. |
-| W3a-25 | [`WI-W3a-25`](../agent/cards/WI-W3a-25-army-capitulation.md) | Army capitulation policy. | Capitulation sets `Decided`/`Surrendered`; window end without it records `InProgress`. |
-| W3a-26 | [`WI-W3a-26`](../agent/cards/WI-W3a-26-sedan-scenario-assembly.md) | Sedan scenario assembly. | 31 August 00:00 state places every formation in its assembly area with valid links. |
-| W3a-27 | [`WI-W3a-27`](../agent/cards/WI-W3a-27-a5-geospatial-rendering.md) | A5 geospatial rendering. | A5 shows regions, cells, features, nodes, links, and source ids. |
-| W3a-28 | [`WI-W3a-28`](../agent/cards/WI-W3a-28-all-tactical-reference-run.md) | All-tactical reference run. | Reference seeds complete the 60 h window in `Operational` mode; sampled tactical intervals rebuild from checkpoints. |
-| W3a-29 | [`WI-W3a-29`](../agent/cards/WI-W3a-29-aggregate-and-mixed-runs.md) | Aggregate and mixed arms. | 64 seeds per arm with error distributions against the reference. |
-| W3a-30 | [`WI-W3a-30`](../agent/cards/WI-W3a-30-sedan-evidence-report.md) | Sedan evidence report. | Report records §11 evidence, the divergence table, and provenance. |
-| W3a-31 | [`WI-W3a-31`](../agent/cards/WI-W3a-31-operational-recording-adapter.md) | Operational recording adapter. | Western Front `IReconstructableDomain`, `rollup` record kind; checkpoint restore matches a `Full` capture of the same frame; rebuilt tactical frames conserve. |
+| W3a-1 | [`WI-W3a-01`](https://projects.reid-corp.com/work_packages/883) | Scale probe report. | Per-frame cost and peak memory at 320,000 soldier objects with long-range acquisition; projected reference wall-clock. |
+| W3a-2 | [`WI-W3a-02`](https://projects.reid-corp.com/work_packages/884) | Operator-local input manifest. | Manifest names DEM, vector, and digitized 1870 sources, CRS, datum offset, and non-committed paths. |
+| W3a-3 | [`WI-W3a-03`](https://projects.reid-corp.com/work_packages/885) | Payload validation. | Rejects wrong CRS, scale, datum, bounds, or missing W3a layers. |
+| W3a-4 | [`WI-W3a-04`](https://projects.reid-corp.com/work_packages/886) | `WesternFrontTopologyBuilder` contract. | Topology derives from payload values with stable source references. |
+| W3a-5 | [`WI-W3a-05`](https://projects.reid-corp.com/work_packages/887) | Region and cell grid. | 1000 m regions and 125 m cells cover the extent without duplicates. |
+| W3a-6 | [`WI-W3a-06`](https://projects.reid-corp.com/work_packages/888) | Feature-to-topology mapping. | Every link and annotation carries source ids; W3a layers apply their §4 effects. |
+| W3a-7 | [`WI-W3a-07`](https://projects.reid-corp.com/work_packages/889) | Neutral territory. | German entry is blocked; French entry moves holdings to `interned`. |
+| W3a-8 | [`WI-W3a-08`](https://projects.reid-corp.com/work_packages/890) | Order-of-battle schema. | Schema validates keys, echelons, parents, strengths, templates, and provenance. |
+| W3a-9 | [`WI-W3a-09`](https://projects.reid-corp.com/work_packages/891) | French order-of-battle dataset. | Every French battalion, battery, and squadron has a source; totals match §5.2 within stated confidence. |
+| W3a-10 | [`WI-W3a-10`](https://projects.reid-corp.com/work_packages/892) | German order-of-battle dataset. | Every German battalion, battery, and squadron has a source; totals match §5.2 within stated confidence. |
+| W3a-11 | [`WI-W3a-11`](https://projects.reid-corp.com/work_packages/893) | Template expansion. | Expansion to the platoon floor is deterministic with stable keys. |
+| W3a-12 | [`WI-W3a-12`](https://projects.reid-corp.com/work_packages/894) | Schema version with new families and sinks. | `horse`, `mitrailleuse`, `captured`, `interned` conserve exactly. |
+| W3a-13 | [`WI-W3a-13`](https://projects.reid-corp.com/work_packages/895) | Period weapon parameters. | Every value has unit and source; §6 values are verified or corrected. |
+| W3a-14 | [`WI-W3a-14`](https://projects.reid-corp.com/work_packages/896) | Period INI definitions. | Objects and weapons load in a scope above Generals with placeholder models. |
+| W3a-15 | [`WI-W3a-15`](https://projects.reid-corp.com/work_packages/897) | Hit-resolution seam and `PeriodHitResolver`. | Null resolver keeps RTS behavior identical; period hits follow the table per seed. |
+| W3a-16 | [`WI-W3a-16`](https://projects.reid-corp.com/work_packages/898) | Shell burst and fuze model. | Percussion, shrapnel, case, and La Hitte preset behavior match §7.2. |
+| W3a-17 | [`WI-W3a-17`](https://projects.reid-corp.com/work_packages/899) | Terrain and feature line of sight. | Fire and detection require line of sight; occluders apply by cover depth. |
+| W3a-18 | [`WI-W3a-18`](https://projects.reid-corp.com/work_packages/900) | Light and weather schedule. | Schedule values match §8.3 and modify detection, fire, and movement. |
+| W3a-19 | [`WI-W3a-19`](https://projects.reid-corp.com/work_packages/901) | Tactical batteries. | Crew minimum, limbering, ammunition flow, and capture transfer follow §7.4. |
+| W3a-20 | [`WI-W3a-20`](https://projects.reid-corp.com/work_packages/902) | Cavalry troopers. | Horse holdings, dismounting, and charges follow §7.5. |
+| W3a-21 | [`WI-W3a-21`](https://projects.reid-corp.com/work_packages/903) | Courier and telegraph comm types. | Latency and disruption follow §8.1; telephone and wireless are disabled. |
+| W3a-22 | [`WI-W3a-22`](https://projects.reid-corp.com/work_packages/904) | Orders timeline schema and dataset. | Every order and command change has a source and resolvable keys. |
+| W3a-23 | [`WI-W3a-23`](https://projects.reid-corp.com/work_packages/905) | Timeline issue and applicability. | Orders issue from simulated headquarters; applicability and arrival-offset metrics record. |
+| W3a-24 | [`WI-W3a-24`](https://projects.reid-corp.com/work_packages/906) | Encirclement and local surrender. | Surrendered soldiers move to `captured`; equipment transfers. |
+| W3a-25 | [`WI-W3a-25`](https://projects.reid-corp.com/work_packages/907) | Army capitulation policy. | Capitulation sets `Decided`/`Surrendered`; window end without it records `InProgress`. |
+| W3a-26 | [`WI-W3a-26`](https://projects.reid-corp.com/work_packages/908) | Sedan scenario assembly. | 31 August 00:00 state places every formation in its assembly area with valid links. |
+| W3a-27 | [`WI-W3a-27`](https://projects.reid-corp.com/work_packages/909) | A5 geospatial rendering. | A5 shows regions, cells, features, nodes, links, and source ids. |
+| W3a-28 | [`WI-W3a-28`](https://projects.reid-corp.com/work_packages/910) | All-tactical reference run. | Reference seeds complete the 60 h window in `Operational` mode; sampled tactical intervals rebuild from checkpoints. |
+| W3a-29 | [`WI-W3a-29`](https://projects.reid-corp.com/work_packages/911) | Aggregate and mixed arms. | 64 seeds per arm with error distributions against the reference. |
+| W3a-30 | [`WI-W3a-30`](https://projects.reid-corp.com/work_packages/912) | Sedan evidence report. | Report records §11 evidence, the divergence table, and provenance. |
+| W3a-31 | [`WI-W3a-31`](https://projects.reid-corp.com/work_packages/913) | Operational recording adapter. | Western Front `IReconstructableDomain`, `rollup` record kind; checkpoint restore matches a `Full` capture of the same frame; rebuilt tactical frames conserve. |
 
 ## 13. Architecture diagrams
 

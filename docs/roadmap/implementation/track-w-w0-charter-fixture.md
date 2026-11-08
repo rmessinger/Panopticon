@@ -17,15 +17,15 @@ measures only; it adds no gameplay systems.
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| W0-1 | [`WI-W0-01`](../agent/cards/WI-W0-01-scaffold-western-front-project.md) | Project, `InternalsVisibleTo`, keys, enums. |
-| W0-2 | [`WI-W0-02`](../agent/cards/WI-W0-02-western-front-state-schema.md) | `WesternFrontSchema` v1. |
-| W0-3 | [`WI-W0-03`](../agent/cards/WI-W0-03-synthetic-topology.md) | Sectors, regions, 410-unit cells, nodes, links. |
-| W0-4 | [`WI-W0-04`](../agent/cards/WI-W0-04-theater-clock-scheduler.md) | `TheaterClock`, `WesternFrontScheduler`, 1 min and 1 h cadence. |
-| W0-5 | [`WI-W0-05`](../agent/cards/WI-W0-05-formation-registry-modules.md) | State modules, `FormationRegistry`, soldier records. |
-| W0-6 | [`WI-W0-06`](../agent/cards/WI-W0-06-synthetic-scenario.md) | `WesternFrontScenario.CreateSynthetic`. |
-| W0-7 | [`WI-W0-07`](../agent/cards/WI-W0-07-western-front-domain-adapter.md) | `WesternFrontDomainModel`. |
-| W0-8 | [`WI-W0-08`](../agent/cards/WI-W0-08-conservation-ledger.md) | `WesternFrontLedger`, residual metrics. |
-| W0-9 | [`WI-W0-09`](../agent/cards/WI-W0-09-charter-fixture-evidence.md) | End-to-end evidence test; closes W0. |
+| W0-1 | [`WI-W0-01`](https://projects.reid-corp.com/work_packages/845) | Project, `InternalsVisibleTo`, keys, enums. |
+| W0-2 | [`WI-W0-02`](https://projects.reid-corp.com/work_packages/846) | `WesternFrontSchema` v1. |
+| W0-3 | [`WI-W0-03`](https://projects.reid-corp.com/work_packages/847) | Sectors, regions, 410-unit cells, nodes, links. |
+| W0-4 | [`WI-W0-04`](https://projects.reid-corp.com/work_packages/848) | `TheaterClock`, `WesternFrontScheduler`, 1 min and 1 h cadence. |
+| W0-5 | [`WI-W0-05`](https://projects.reid-corp.com/work_packages/849) | State modules, `FormationRegistry`, soldier records. |
+| W0-6 | [`WI-W0-06`](https://projects.reid-corp.com/work_packages/850) | `WesternFrontScenario.CreateSynthetic`. |
+| W0-7 | [`WI-W0-07`](https://projects.reid-corp.com/work_packages/851) | `WesternFrontDomainModel`. |
+| W0-8 | [`WI-W0-08`](https://projects.reid-corp.com/work_packages/852) | `WesternFrontLedger`, residual metrics. |
+| W0-9 | [`WI-W0-09`](https://projects.reid-corp.com/work_packages/853) | End-to-end evidence test; closes W0. |
 
 ---
 

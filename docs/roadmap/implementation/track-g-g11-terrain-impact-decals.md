@@ -12,10 +12,10 @@ Source of truth: [design and diagrams](../deep-dives/g11-terrain-impact-decals.m
 
 | Card | Deliverable | Depends on |
 |---|---|---|
-| [WI-G11-01](../agent/cards/WI-G11-01-terrain-decal-store-and-scorch-fx.md) | Scorch enum and parse fixes, `TerrainDecalStore`, nugget `Execute`, INI data test | WI-G2-03 |
-| [WI-G11-02](../agent/cards/WI-G11-02-terrain-decal-mesh-and-pass.md) | Original-geometry overlay mesh, `TerrainDecals` bucket and shaders, `Legacy` tint | WI-G11-01, WI-G3-04 |
-| [WI-G11-03](../agent/cards/WI-G11-03-logic-and-map-scorch-producers.md) | Client `AddScorch`, neutron/uplink/firestorm producers, map-placed scorches | WI-G11-01 |
-| [WI-G11-04](../agent/cards/WI-G11-04-enhanced-decals-and-golden-frames.md) | `Enhanced` terrain lighting and limit, `vr-terrain-scorch` goldens | WI-G11-02, WI-G11-03 |
+| [WI-G11-01](https://projects.reid-corp.com/work_packages/580) | Scorch enum and parse fixes, `TerrainDecalStore`, nugget `Execute`, INI data test | WI-G2-03 |
+| [WI-G11-02](https://projects.reid-corp.com/work_packages/581) | Original-geometry overlay mesh, `TerrainDecals` bucket and shaders, `Legacy` tint | WI-G11-01, WI-G3-04 |
+| [WI-G11-03](https://projects.reid-corp.com/work_packages/582) | Client `AddScorch`, neutron/uplink/firestorm producers, map-placed scorches | WI-G11-01 |
+| [WI-G11-04](https://projects.reid-corp.com/work_packages/583) | `Enhanced` terrain lighting and limit, `vr-terrain-scorch` goldens | WI-G11-02, WI-G11-03 |
 
 `WI-G11-02` and `WI-G11-03` may run in parallel after `WI-G11-01`.
 

@@ -168,10 +168,10 @@ edge aliasing, 6 golden host mismatch.
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| G3-1 | [`WI-G3-01`](../agent/cards/WI-G3-01-audit-frame-capture-paths.md) | Audit capture paths, gaps, and repeat-run determinism of candidate scenes. |
-| G3-2 | [`WI-G3-02`](../agent/cards/WI-G3-02-image-quality-metrics.md) | `ImageQualityMetrics` with synthetic-image unit tests. |
-| G3-3 | [`WI-G3-03`](../agent/cards/WI-G3-03-golden-frame-comparison.md) | Fixed render clock, preset and scale in `CaptureRunSettings`, camera pitch override, scene set, `VisualRegression` capture pass, supersampled-reference check. |
-| G3-4 | [`WI-G3-04`](../agent/cards/WI-G3-04-golden-store-and-gate.md) | `GoldenFrameComparer`, golden store and manifest, update mode, exit codes. |
+| G3-1 | [`WI-G3-01`](https://projects.reid-corp.com/work_packages/600) | Audit capture paths, gaps, and repeat-run determinism of candidate scenes. |
+| G3-2 | [`WI-G3-02`](https://projects.reid-corp.com/work_packages/601) | `ImageQualityMetrics` with synthetic-image unit tests. |
+| G3-3 | [`WI-G3-03`](https://projects.reid-corp.com/work_packages/602) | Fixed render clock, preset and scale in `CaptureRunSettings`, camera pitch override, scene set, `VisualRegression` capture pass, supersampled-reference check. |
+| G3-4 | [`WI-G3-04`](https://projects.reid-corp.com/work_packages/603) | `GoldenFrameComparer`, golden store and manifest, update mode, exit codes. |
 
 ## 4. Validation
 

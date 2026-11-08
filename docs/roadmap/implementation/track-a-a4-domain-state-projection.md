@@ -16,10 +16,10 @@ schema-driven integer conservation check. The RTS recording path and its JSON st
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| A4-4a | [`WI-A4-42`](../agent/cards/WI-A4-42-domain-state-contracts.md) | Schema, field, record contracts and validation. |
-| A4-4b | [`WI-A4-43`](../agent/cards/WI-A4-43-domain-state-frames.md) | Frame persistence, diff/apply, reconstruction, conservation residuals. |
-| A4-4c | [`WI-A4-44`](../agent/cards/WI-A4-44-domain-state-recorder.md) | `DomainStateRecorder`, artifact, `RunRecording` and `RunOutput` wiring. |
-| A4-4d | [`WI-A4-45`](../agent/cards/WI-A4-45-transport-state-projection.md) | Transport-graph reference projection and conservation test. |
+| A4-4a | [`WI-A4-42`](https://projects.reid-corp.com/work_packages/293) | Schema, field, record contracts and validation. |
+| A4-4b | [`WI-A4-43`](https://projects.reid-corp.com/work_packages/294) | Frame persistence, diff/apply, reconstruction, conservation residuals. |
+| A4-4c | [`WI-A4-44`](https://projects.reid-corp.com/work_packages/295) | `DomainStateRecorder`, artifact, `RunRecording` and `RunOutput` wiring. |
+| A4-4d | [`WI-A4-45`](https://projects.reid-corp.com/work_packages/296) | Transport-graph reference projection and conservation test. |
 
 Order: 42, 43, 44, 45. `WI-W0-02` depends on 42; `WI-W0-07` depends on 44.
 

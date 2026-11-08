@@ -14,17 +14,17 @@ owns runtime chunk residency and paging. H3 owns on-disk encoding.
 
 | Card | Sub-phase | Output | Status | Prerequisites |
 |---|---|---|---|---|
-| [`WI-B4a-01`](../agent/cards/WI-B4a-01-chunk-contract.md) | B4a-5 prep | 128-interval runtime chunk contract | Ready | none |
-| [`WI-B4a-02`](../agent/cards/WI-B4a-02-baseline-limits-audit.md) | B4a-1 | Baseline and limits audit | Ready | A5-6 checklist item |
-| [`WI-B4a-03`](../agent/cards/WI-B4a-03-region-delta-contract.md) | B4a-2 | Region-delta edit contract | Ready | A5-6 checklist item |
-| [`WI-B4a-04`](../agent/cards/WI-B4a-04-height-brush-region-delta.md) | B4a-2 | Height brush without full clones | Draft | `WI-B4a-03` |
-| [`WI-B4a-05`](../agent/cards/WI-B4a-05-layer-region-deltas.md) | B4a-2 | Blend/material/mask deltas | Draft | `WI-B4a-03` |
-| [`WI-B4a-06`](../agent/cards/WI-B4a-06-large-map-wizard.md) | B4a-3 | Large presets and 16-bit defaults | Ready | A5-6 checklist item |
-| [`WI-B4a-07`](../agent/cards/WI-B4a-07-cdlod-streaming-design.md) | B4a-4 | CDLOD design | Draft | `WI-B4a-01` |
-| [`WI-B4a-08`](../agent/cards/WI-B4a-08-cdlod-selection.md) | B4a-4 | CDLOD selection | Draft | `WI-B4a-07` |
-| [`WI-B4a-09`](../agent/cards/WI-B4a-09-visible-patch-streaming.md) | B4a-4 | Visible patch streaming | Draft | `WI-B4a-07`, `WI-B4a-08` |
-| [`WI-B4a-10`](../agent/cards/WI-B4a-10-runtime-chunk-store.md) | B4a-5 | Runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
-| [`WI-B4a-11`](../agent/cards/WI-B4a-11-large-map-roundtrip.md) | B4a-6 | Large-map round-trip and play validation | Draft | `WI-B4a-10`, H6 |
+| [`WI-B4a-01`](https://projects.reid-corp.com/work_packages/351) | B4a-5 prep | 128-interval runtime chunk contract | Ready | none |
+| [`WI-B4a-02`](https://projects.reid-corp.com/work_packages/352) | B4a-1 | Baseline and limits audit | Ready | A5-6 checklist item |
+| [`WI-B4a-03`](https://projects.reid-corp.com/work_packages/353) | B4a-2 | Region-delta edit contract | Ready | A5-6 checklist item |
+| [`WI-B4a-04`](https://projects.reid-corp.com/work_packages/354) | B4a-2 | Height brush without full clones | Draft | `WI-B4a-03` |
+| [`WI-B4a-05`](https://projects.reid-corp.com/work_packages/355) | B4a-2 | Blend/material/mask deltas | Draft | `WI-B4a-03` |
+| [`WI-B4a-06`](https://projects.reid-corp.com/work_packages/356) | B4a-3 | Large presets and 16-bit defaults | Ready | A5-6 checklist item |
+| [`WI-B4a-07`](https://projects.reid-corp.com/work_packages/357) | B4a-4 | CDLOD design | Draft | `WI-B4a-01` |
+| [`WI-B4a-08`](https://projects.reid-corp.com/work_packages/358) | B4a-4 | CDLOD selection | Draft | `WI-B4a-07` |
+| [`WI-B4a-09`](https://projects.reid-corp.com/work_packages/359) | B4a-4 | Visible patch streaming | Draft | `WI-B4a-07`, `WI-B4a-08` |
+| [`WI-B4a-10`](https://projects.reid-corp.com/work_packages/360) | B4a-5 | Runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
+| [`WI-B4a-11`](https://projects.reid-corp.com/work_packages/361) | B4a-6 | Large-map round-trip and play validation | Draft | `WI-B4a-10`, H6 |
 
 ## Acceptance by sub-item
 

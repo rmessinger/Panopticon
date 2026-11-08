@@ -64,12 +64,12 @@ Evidence:
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W3b-1 | [`WI-W3b-01`](../agent/cards/WI-W3b-01-operator-geospatial-inputs.md) | Operator-local input manifest and reprojection notes. | Manifest template names required sources, CRS, scale, vertical datum, and non-committed output paths. |
-| W3b-2 | [`WI-W3b-02`](../agent/cards/WI-W3b-02-somme-payload-validation.md) | Payload validation contract. | Payload metadata rejects wrong CRS, scale, datum, bounds, or missing feature layers. |
-| W3b-3 | [`WI-W3b-03`](../agent/cards/WI-W3b-03-synthetic-forces-on-geography.md) | W1 synthetic forces placed on real regions and front-line bands. | Scenario starts with valid depots, fronts, and movement/logistics links. |
-| W3b-4 | [`WI-W3b-04`](../agent/cards/WI-W3b-04-run-w1-evidence-on-sector.md) | W1 evidence on generated sector. | Conservation, reconstruction, fixed-seed, and metrics pass on the payload-backed topology. |
-| W3b-5 | [`WI-W3b-05`](../agent/cards/WI-W3b-05-run-w2-evidence-on-sector.md) | W2 evidence on generated sector. | Promote, all-tactical reference, demote, and transition records pass. |
-| W3b-6 | [`WI-W3b-06`](../agent/cards/WI-W3b-06-geospatial-sector-report.md) | W3b evidence report. | Report records control-point status, topology counts, W1/W2 evidence, and operator-local provenance. |
+| W3b-1 | [`WI-W3b-01`](https://projects.reid-corp.com/work_packages/914) | Operator-local input manifest and reprojection notes. | Manifest template names required sources, CRS, scale, vertical datum, and non-committed output paths. |
+| W3b-2 | [`WI-W3b-02`](https://projects.reid-corp.com/work_packages/915) | Payload validation contract. | Payload metadata rejects wrong CRS, scale, datum, bounds, or missing feature layers. |
+| W3b-3 | [`WI-W3b-03`](https://projects.reid-corp.com/work_packages/916) | W1 synthetic forces placed on real regions and front-line bands. | Scenario starts with valid depots, fronts, and movement/logistics links. |
+| W3b-4 | [`WI-W3b-04`](https://projects.reid-corp.com/work_packages/917) | W1 evidence on generated sector. | Conservation, reconstruction, fixed-seed, and metrics pass on the payload-backed topology. |
+| W3b-5 | [`WI-W3b-05`](https://projects.reid-corp.com/work_packages/918) | W2 evidence on generated sector. | Promote, all-tactical reference, demote, and transition records pass. |
+| W3b-6 | [`WI-W3b-06`](https://projects.reid-corp.com/work_packages/919) | W3b evidence report. | Report records control-point status, topology counts, W1/W2 evidence, and operator-local provenance. |
 
 The topology builder, grid, feature mapping, and A5 rendering are W3a cards `WI-W3a-04..06` and
 `WI-W3a-27`.

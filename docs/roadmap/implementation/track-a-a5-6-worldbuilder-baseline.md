@@ -3,7 +3,7 @@
 > Audience: human overview above the divider; agent-context detail below it.
 
 Audit half of the A5-6 row of [Track A](../track-a-foundations.md), card
-[`WI-A5-01`](../agent/cards/WI-A5-01-worldbuilder-functional-audit.md). Read-only: classified
+[`WI-A5-01`](https://projects.reid-corp.com/work_packages/297). Read-only: classified
 from code, no behavior fixed, nothing run interactively. The front-end is
 `Panopticon.Tools.WorldBuilder.Avalonia` (no `.Maui` project exists;
 `docs/worldbuilder-requirements.md` still carries MAUI-era prose).
