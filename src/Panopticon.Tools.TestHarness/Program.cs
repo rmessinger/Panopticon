@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Panopticon.Data;
 using Panopticon.Graphics.Rendering.Instancing;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
 using Panopticon.Tools.ReplaySketch.Model.HarnessLauncher;
@@ -555,6 +556,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.BehavioralParity)
+        {
+            Environment.ExitCode = RunBehavioralParity(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {
@@ -579,5 +586,31 @@ public static class Program
 
             reporter.Info($"Action results saved to: {plan.ResultsPath}");
         }
+    }
+
+    private static int RunBehavioralParity(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        var scenarioPath = string.IsNullOrWhiteSpace(config.BehavioralParityScenarioPath)
+            ? Path.Combine(AppContext.BaseDirectory, "h5-parity-scenario.json")
+            : config.BehavioralParityScenarioPath!;
+        if (!File.Exists(scenarioPath))
+        {
+            reporter.Error($"Parity scenario '{scenarioPath}' does not exist.");
+            return 1;
+        }
+
+        var scenario = BehavioralParityScenario.Load(scenarioPath);
+        var artifacts = string.IsNullOrWhiteSpace(config.BehavioralParityArtifactsDirectory)
+            ? Path.Combine(AppContext.BaseDirectory, "artifacts", "h5-parity")
+            : config.BehavioralParityArtifactsDirectory!;
+        var capture = string.IsNullOrWhiteSpace(config.BehavioralParityCaptureDirectory)
+            ? null
+            : config.BehavioralParityCaptureDirectory;
+        var options = new BehavioralParityOptions(
+            artifacts,
+            config.BehavioralParityReportPath,
+            capture,
+            config.BehavioralParityCaptureStride);
+        return BehavioralParityRunner.Run(installation, scenario, options, reporter);
     }
 }

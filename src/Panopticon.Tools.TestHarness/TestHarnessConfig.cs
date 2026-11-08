@@ -405,6 +405,21 @@ public sealed class TestHarnessConfig
     [HarnessParameter("NavigationDeadlock", "NavigationDeadlockMapPath.", nameof(BuiltInScenario.NavigationDeadlock))]
     public string? NavigationDeadlockMapPath { get; set; } = null;
 
+    [HarnessParameter("BehavioralParity", "Declarative parity scenario JSON (default: shipped h5-parity-scenario.json).", nameof(BuiltInScenario.BehavioralParity))]
+    public string? BehavioralParityScenarioPath { get; set; } = null;
+
+    [HarnessParameter("BehavioralParity", "Where the parity report JSON is written (default: <artifacts>/h5-parity-report.json).", nameof(BuiltInScenario.BehavioralParity))]
+    public string? BehavioralParityReportPath { get; set; } = null;
+
+    [HarnessParameter("BehavioralParity", "Artifacts root: converted packages, source map extract, and reports (default: artifacts/h5-parity).", nameof(BuiltInScenario.BehavioralParity))]
+    public string? BehavioralParityArtifactsDirectory { get; set; } = null;
+
+    [HarnessParameter("BehavioralParity", "Optional PNG capture directory for the converted-content run (evidence).", nameof(BuiltInScenario.BehavioralParity))]
+    public string? BehavioralParityCaptureDirectory { get; set; } = null;
+
+    [HarnessParameter("BehavioralParity", "Capture one PNG every Nth logic frame of the converted run (default 15).", nameof(BuiltInScenario.BehavioralParity))]
+    public int BehavioralParityCaptureStride { get; set; } = 15;
+
     /// <summary>WI-N4-02: order-driven paths submit to the async worker queue (default false).</summary>
     [HarnessParameter("PathfindingLoad", "PathfindingLoadAsyncOrderPaths.", nameof(BuiltInScenario.PathfindingLoad))]
     public bool PathfindingLoadAsyncOrderPaths { get; set; } = false;

@@ -32,6 +32,7 @@
     <Content Include="mass-battle-deepdivide-battle.json" CopyToOutputDirectory="Always" />
     <Content Include="mass-battle-rosters.json" CopyToOutputDirectory="Always" />
     <Content Include="ee2-reference-validation.json" CopyToOutputDirectory="Always" />
+    <Content Include="h5-parity-scenario.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +40,7 @@
     <ProjectReference Include="..\Panopticon.Benchmarks.Simulation\Panopticon.Benchmarks.Simulation.csproj" />
     <ProjectReference Include="..\Panopticon.Mods.BuiltIn\Panopticon.Mods.BuiltIn.csproj" />
     <ProjectReference Include="..\Panopticon.Tools.ReplaySketch.Core\Panopticon.Tools.ReplaySketch.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.Tools.H5Migrate\Panopticon.Tools.H5Migrate.csproj" />
     <ProjectReference Include="..\Veldrid.ImGui\Veldrid.ImGui.csproj" />
   </ItemGroup>
 
