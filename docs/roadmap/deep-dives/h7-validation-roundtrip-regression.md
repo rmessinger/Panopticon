@@ -54,8 +54,14 @@ Verified at `2e5d3770`.
 | Retained-section precedent | `src/Panopticon.Simulation/Content/Importing/Maps/RetainedSection.cs:5` | Name, version, byte-exact payload, SHA-256. The map round-trip compares these hashes. |
 | Installed-files convention | `InstalledFilesTestData.GetInstallation` (named in [AGENTS.md](../../../AGENTS.md#environment)) | Real-install tests resolve through `CNC_GENERALS_PATH`. Tests that boot the game are tagged `Interactive`. |
 
-CI has no game install. Any suite that needs the real Generals content must run outside routine CI,
-or fall back to synthetic fixtures in CI. Open question AQ-H7-1 decides which.
+CI has no game install. Pure-fixture tests run in routine CI with no install. The real-install H7
+suite is distinctly marked with trait Category "InstalledAssets" (the repo's existing Category
+"Interactive" keeps its own fail-on-missing regime and is untouched; InstalledAssets is the H7
+category). When an install is missing, InstalledAssets tests must explicitly Skip with a recorded
+reason and report as not executed, never green. A strict validation mode (a named environment variable
+or MSBuild property, exact name is the implementing ticket's choice but recorded as a required
+mechanism) makes missing or vacuous InstalledAssets execution a failure for pre-PR full installation
+proof on this validation host (AQ-H7-1). CI agent provisioning is out of scope.
 
 ## Stop rule for determinism and golden checks
 
@@ -83,7 +89,10 @@ follows the normal rules. H7-04 expects failures by design and follows the norma
 | Synthetic | Small map under `test/Panopticon.Simulation.Tests/Data/` covering every typed section and at least one retained section per disposition row in H5 | Synthetic roster covering each record kind and one valued unclassified field |
 | Real install | One representative Generals map from the install, `CNC_GENERALS_PATH` set | P6b archetypes (infantry, vehicle, aircraft, builder, support, superweapon) and the USA reference units |
 
-Synthetic inputs run in routine CI. Real-install inputs run as a separate `Category` (AQ-H7-1).
+Synthetic inputs run in routine CI. Real-install inputs run under trait Category "InstalledAssets"
+(AQ-H7-1). When an install is missing, InstalledAssets tests explicitly Skip with a recorded reason
+and report as not executed, never green. Strict validation mode makes missing or vacuous execution a
+failure for pre-PR proof.
 
 ### D-H7-2. Comparison levels
 
@@ -100,10 +109,11 @@ Any missing section, missing record, or unexpected extra record fails.
 
 ### D-H7-3. Fault injection is test-side only
 
-H7-04 injects a mismatch into a copy of a converted package at test time: one typed field, one
-retained byte, one dropped record, and one changed valued unclassified field. The suite must fail on
-each injection with the named diagnostic from H5-03. Injection never edits committed fixtures or
-production code. The unmodified suite must pass in the same run.
+H7-04 injects mismatches into a copy of a converted package at test time. Semantic fault injections
+are deliberate valid tamper: hashes and digests are recomputed after mutation so integrity checks
+pass, and the comparer against the original must catch each mutation with a named mismatch diagnostic
+from H5-03. No production integrity check is weakened to make an injection pass or fail. Injections
+never edit committed fixtures or production code. The unmodified suite must pass in the same run.
 
 ### D-H7-4. ReplaySketch proof uses the P0 assertion pattern
 
@@ -113,9 +123,16 @@ H7-03 builds one scenario twice through `P0HarnessTestHelpers`-style constructio
 - New-format variant: content loaded from the H3 package and H4 packs (through H6-03 scope
   publication).
 
-Both run headless through `HarnessRunner` with the same seed. The same `StateAssertion` set must pass
-on both. The end state of the two runs must be equal, which is a same-seed equality check under the
-stop rule.
+AQ-H7-2 resolution: WI-H7-03 reuses an existing `ScenarioCapture` fight profile translated to the
+converted map and H4 unit pack through explicit path and adapter selection. A new minimal profile is
+allowed only if an existing profile cannot satisfy the proof without ambiguous source fallback. The
+test must prove the actual package paths were loaded (converted map package directory and H4 pack),
+with no substitution by legacy direct parse.
+
+Both variants run headless through `HarnessRunner` with the same seed. The same `StateAssertion` set
+must pass on both. The end state of the two runs must be equal. Any inequality is a same-seed
+determinism failure under the stop rule: artifacts are preserved, the failing assertion and likely
+cause are reported, and the user decides; no rebaselining.
 
 Playable claim gate: H7-03 may claim playability only after H5-04 (retained-backend integration) is
 merged. Conversion output alone does not qualify.
@@ -134,7 +151,33 @@ REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png REPLAYSKETCH_SCREENSHOT_TAB=model \
 
 Repeat with `REPLAYSKETCH_SCREENSHOT_TAB=map` and `CNC_GENERALS_PATH` set. Copy results to
 `/mnt/pit2/Network Storage/temp/` under unique versioned names. The fight itself is motion, so it
-ships as a GIF from the `ScenarioCapture` recipe, not as stills.
+ships as a GIF from the `ScenarioCapture` recipe, assembled from the actual captured frames under
+unique versioned names, not as stills.
+
+## Coverage contract
+
+The regression suite builds upon the existing H3 and H4 package safety tests, adding only the
+uncovered migration, converter, and semantic comparison cases.
+
+| Verification area | Covered by H3/H4 tests | Added by H7 |
+|---|---|---|
+| Map tamper and digests | `MapPackageChunkTamperTests` (`FlippedHeightByteIsRejectedWithoutData`, `TruncatedMaterialsFileIsRejectedWithoutData`, `SameLengthTamperIsRejectedByDigestBeforeDecode`, `TamperedRetainedSectionIsRejectedWithoutData`, `ManifestDigestMismatchIsReportedAsDigestInvalid`) | Valid semantic tamper: recomputed hashes and digests after mutation so integrity passes and the comparer catches payload mismatches (`WI-H7-04`) |
+| Hostile layout diagnostics cap | `MapPackageManifestTests.HostileLayout_CompletesQuickly_ReturnsResourceLimitDiagnostics_CappedAt101`, `UnitPackageSecurityTests.DiagnosticsCountExceedingLimitIsCappedWithAggregate` | Converter lossy-diagnostic collection with named diagnostics for unclassified fields and excluded mechanics |
+| Oversized manifest | `LegacyMapPackageImporterTests.PackageOnDisk_WithOversizedManifest_ThrowsMapImportExceptionWithoutReadingFull`, `UnitPackageSecurityTests.OversizeManifestIsRejectedWithResourceLimitDiagnostic` | None; conversion output adheres to existing package size boundaries |
+| Path and symlink guards | `MapPackageChunkGuardTests` (`ParentTraversalEntryPathIsRejectedByGuard`, `AbsoluteEntryPathIsRejected`), `MapPackageChunkSymlinkTests` (`SymlinkedPackageFileIsRejectedByGuardAndReader`), `UnitPackageSecurityTests` (`TraversalPathInRecordIsRejected`, `SymlinkInPayloadPathIsRejected`) | None; converted output adheres to relative root and layout constraints |
+| Atomic overwrite and provider failure | `MapPackageChunkAtomicWriteTests` (`OverwriteReplacesPackageExactlyAndLeavesNoResidue`, `ProviderFailureMidStagingLeavesOriginalIntactAndNoResidue`), `UnitPackageWriterTests` (`AtomicOverwriteSecondWriteWinsWithoutResidue`, `ProviderFailureMidWriteLeavesOriginalPackageIntactWithoutResidue`) | None; round-trip runs verify clean target publication with no staging residue |
+| Duplicate retained and stable IDs | `MapPackageManifestTests` (`DuplicateStableIdAcrossComponentsFails`, `DuplicateRetainedSectionName_FailsValidation`, `DuplicatePaletteIndexFails`) | None; converter maintains stable-ID and section uniqueness |
+| Numeric enum rejection | `UnitPackageVersionTests` (`NumericEnumStringIsRejectedWithoutSilentCoercion`, `NumericEnumStringInManifestRecordKindIsRejectedAsError`) | H7 asserts rejection once H5 lands the fix for open H3 numeric enum coercion (see note below) |
+| Valued unclassified preservation | `UnitPackageVersionTests.UnknownRecordPayloadFieldIsRetainedAsValuedUnclassifiedWithWarning`, `UnitPackageForwardCompatibilityTests`, `UnitPackageReaderTests.ReadPackageWithAllRecordKindsAndRetainedIniSucceedsFieldByField` | Converter lossy diagnostics: unclassified INI field retained with value and named diagnostic, excluded gameplay mechanic named; comparer catches changed value |
+| Retained-INI hard errors and dialects | `UnitPackageVersionTests` (`MissingRetainedPayloadForLegacyBoundRecordIsHardError`, `MissingRetainedPayloadForLegacyBoundModuleIsHardError`), `UnitPackageWriterTests` (`WriteRefusesUnsupportedRetainedDialect`, `WriteRefusesBindingsWithoutProviderAndProviderWithoutBlock`) | Converter failure on unsupported retained section version |
+| End-to-end format parity | `UnitPackageIniParityTests` (`BoundedRoster_MaterializedTemplates_CompareEqualFieldByField`, `BoundedRoster_BehavioralAssertion_PassesOnBothPaths`) | Legacy-to-converted end-to-end comparison through H5 converter (`convert-map`, `convert-ini`) across full map and roster (`WI-H7-01`, `WI-H7-02`) |
+| Semantic manifest mutations | `UnitPackageWriterSecurityTests` (`TamperedPayloadByteIsCaughtOnReread`, `TamperedManifestDigestIsCaughtOnReread`) | Semantic mutations integrity cannot catch: quantity unit or frame string flip, AssetReference scope change, retained byte flip with recomputed digest, height change with recomputed digest, dropped record with manifest entry removed, changed valued unclassified value (`WI-H7-04`) |
+| Terrain deformation re-export | None | Deformation re-export after a `HeightMapData` edit verified through package reload (`WI-H7-01`) |
+| Headless fight scenario execution | `P0HarnessAcceptanceTests` | Converted-content scenario proof (`WI-H7-03`): converted map package and H4 unit pack fought under `HarnessRunner`, asserted against legacy equivalent |
+
+Correction note: numeric quantity enum coercion in H3 manifests is known open at the reviewed snapshot
+and is being fixed on the H5 track; H7 tests must assert rejection once that lands, not treat current
+behavior as correct.
 
 ## Architecture diagram
 
@@ -190,25 +233,35 @@ Dependency order: 01 and 02 are parallel once their H5 and H6 prerequisites are 
 - Prerequisites: H5-01, H5-03, H6-01.
 - Files: `test/Panopticon.Simulation.Tests/Content/Importing/Maps/` round-trip tests; synthetic map
   fixture under `test/Panopticon.Simulation.Tests/Data/`.
-- Tests: synthetic round trip in routine CI; real-install representative map under the separate
-  category from AQ-H7-1.
+- Tests: synthetic round trip in routine CI; real-install representative map marked with trait
+  Category "InstalledAssets" (AQ-H7-1). When an install is missing, the test explicitly skips with a
+  recorded reason and reports as not executed, never green. Strict validation mode makes missing or
+  vacuous execution a failure.
 - Acceptance: typed sections compare semantically equal; every retained section matches by SHA-256;
   the manifest accounts for every source section. A byte or record mismatch fails and reports the
-  section. Stop rule applies to any SHA-256 failure.
+  section. Deformation re-export after a `HeightMapData` edit verified through package reload.
+  Converter failure on unsupported retained section versions verified. Stop rule applies to any
+  SHA-256 failure.
 - Validation: standard four commands. Real-install variant prefixed with
-  `CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals"`.
+  `CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals"`. Executed counts reported
+  separately from skips.
 
 `WI-H7-02` (unit round trip)
 
 - Prerequisites: H4-05 (parity proof), H5-02, H5-03.
 - Files: `test/Panopticon.Simulation.Tests/Content/Importing/Units/` round-trip tests; synthetic
   roster fixture.
-- Tests: synthetic roster in routine CI; P6b archetype and USA reference roster as a real-install
-  category.
+- Tests: synthetic roster in routine CI; P6b archetype and USA reference roster marked with trait
+  Category "InstalledAssets" (AQ-H7-1). When an install is missing, the test explicitly skips with a
+  recorded reason and reports as not executed, never green. Strict validation mode makes missing or
+  vacuous execution a failure.
 - Acceptance: each materialized template field equals its counterpart on the converted path; valued
-  unclassified fields match; diagnostic sets match. Provenance-only differences pass only through the
-  H5 allowlist. Missing or extra records fail.
-- Validation: standard four commands, with the real-install variant prefixed as in `WI-H7-01`.
+  unclassified fields match; diagnostic sets match (including lossy converter diagnostics for
+  unclassified fields and named excluded gameplay mechanics). Provenance-only differences pass only
+  through the H5 allowlist. Missing or extra records fail. Numeric enum rejection asserted once the H5
+  fix lands.
+- Validation: standard four commands, with the real-install variant prefixed as in `WI-H7-01`. Executed
+  counts reported separately from skips.
 
 `WI-H7-03` (ReplaySketch new-format proof)
 
@@ -216,41 +269,52 @@ Dependency order: 01 and 02 are parallel once their H5 and H6 prerequisites are 
   any playable claim is made from this ticket.
 - Files: scenario definition under `src/Panopticon.Tools.ReplaySketch.Core/` (scenario data only; no
   UI changes); test under `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/`.
-- Tests: a legacy and a new-format variant through `HarnessRunner` at one seed; the same
-  `StateAssertion` set on both.
-- Acceptance: both variants pass every assertion. End states are equal under the same seed. The
-  fight runs to the same outcome on both. Any inequality is a same-seed failure under the stop rule.
+- Tests: reuses an existing `ScenarioCapture` fight profile translated to the converted map and H4
+  unit pack through explicit path and adapter selection (AQ-H7-2). A new minimal profile is allowed
+  only if an existing profile cannot satisfy the proof without ambiguous source fallback. The test must
+  prove the actual package paths were loaded (converted map package directory and H4 pack), with no
+  substitution by legacy direct parse. Runs both variants through `HarnessRunner` at one seed with the
+  same `StateAssertion` set.
+- Acceptance: both variants pass every assertion. End states are equal under the same seed. The fight
+  runs to the same outcome on both. A same-seed determinism failure stops the run: artifacts are
+  preserved, the failing assertion and likely cause are reported, and the user decides; no
+  rebaselining.
 - Evidence: ReplaySketch changes need screenshot-mode proof of both the map and model panels for each
-  variant, per D-H7-5. The fight ships as a GIF from the `ScenarioCapture` recipe. Results are
-  copied to `/mnt/pit2/Network Storage/temp/` with unique versioned names. Map-tab capture needs
-  `CNC_GENERALS_PATH`; if it cannot be captured on the host, the PR states the blocker.
+  variant, per D-H7-5. The fight GIF is assembled from actual captured frames under unique versioned
+  names from the `ScenarioCapture` recipe. Results are copied to `/mnt/pit2/Network Storage/temp/` with
+  unique versioned names. Map-tab capture needs `CNC_GENERALS_PATH`; if it cannot be captured on the
+  host, the PR states the blocker.
 - Validation: standard four commands, `CNC_GENERALS_PATH`-prefixed focused run, and the screenshot
   commands above.
 
 `WI-H7-04` (fault-injection proof)
 
 - Prerequisites: 01, 02.
-- Files: test-side injector under `test/Panopticon.Simulation.Tests/Content/Importing/`; no
-  production or fixture edits.
-- Tests: four injections (typed field, retained byte, dropped record, changed valued unclassified
-  field) each run against a copy of the converted output.
-- Acceptance: each injection fails the suite with its named H5-03 diagnostic. The unmodified suite
-  passes in the same run. The injector never writes to a committed path.
+- Files: test-side injector under `test/Panopticon.Simulation.Tests/Content/Importing/`; no production
+  or fixture edits.
+- Tests: semantic fault injections are deliberate valid tamper: hashes and digests are recomputed
+  after mutation so integrity checks pass. Tests inject: quantity unit or frame string flip,
+  `AssetReference` scope change, retained byte flip with recomputed digest, height change with
+  recomputed digest, dropped record with manifest entry removed, and changed valued unclassified value.
+- Acceptance: each injection passes integrity checks but fails the comparer against the original with
+  its named H5-03 mismatch diagnostic. No production integrity check is weakened to make an injection
+  pass or fail. The unmodified suite passes in the same run. The injector never writes to a committed
+  path.
 - Validation: standard four commands.
 
 ## Open questions
 
-| ID | Question | Evidence required to close |
-|---|---|---|
-| AQ-H7-1 | Which real-install suites run in routine CI, given CI has no game install | Decision recorded in `open-questions.md`; CI policy agreed |
-| AQ-H7-2 | Does the H7-03 fight GIF need a new `ScenarioCapture` profile, or does an existing profile suffice | Profile review during `WI-H7-03` |
+| ID | Status | Question | Decision / Resolution |
+|---|---|---|---|
+| AQ-H7-1 | Resolved | Which real-install suites run in routine CI, given CI has no game install | Deterministic pure-fixture tests run in routine CI with no install. The real-install H7 suite is distinctly marked with trait Category "InstalledAssets" (the repo's existing Category "Interactive" keeps its own fail-on-missing regime and is untouched; InstalledAssets is the H7 category). When an install is missing, InstalledAssets tests must explicitly Skip with a recorded reason and report as not executed, never green. A strict validation mode (a named environment variable or MSBuild property, exact name is the implementing ticket's choice but recorded as a required mechanism) makes missing or vacuous InstalledAssets execution a failure for pre-PR full installation proof. Validation reports state executed counts separately from skips. Proving actual content happens on this validation host with the installs present; CI agent provisioning is out of scope. |
+| AQ-H7-2 | Resolved | Does the H7-03 fight GIF need a new `ScenarioCapture` profile, or does an existing profile suffice | WI-H7-03 reuses an existing ScenarioCapture fight profile translated to the converted map and H4 unit pack through explicit path and adapter selection. A new minimal profile is allowed only if an existing profile cannot satisfy the proof without ambiguous source fallback. The test must prove the actual package paths were loaded (converted map package directory and H4 pack), with no substitution by legacy direct parse. Same seed and same assertions on legacy and new-format variants. The fight GIF is assembled from the actual captured frames under unique versioned names. A same-seed determinism failure stops the run: artifacts are preserved, the failing assertion and likely cause are reported, and the user decides; no rebaselining. |
 
 ## Risks
 
 | Risk | Mitigation |
 |---|---|
 | Suite passes only because both sides share the same bug | Fault injection (H7-04) proves the comparer can fail; H5 disposition rules forbid normalization |
-| Real-install suites silently skip in CI | Named category with an explicit skip reason; AQ-H7-1 decides the policy |
+| Real-install suites silently skip in CI | Distinct Category "InstalledAssets" skips with a recorded reason; strict validation mode fails if missing or vacuous on proof runs (AQ-H7-1) |
 | Same-seed equality flakes from ambient effects | Compare manifest trajectories and end state, not pixels (screenshots.md caveat on ambient effects) |
 | Baseline updated to hide a mismatch | Stop rule above; baselines are never regenerated by H7 tickets |
 | ReplaySketch proof passes without the playable gate | Playable claim requires H5-04; the ticket states this |
@@ -266,5 +330,12 @@ dotnet format src --verify-no-changes
 python3 scripts/check_brace_newline.py
 ```
 
-Real-install variants prefix `CNC_GENERALS_PATH` as shown in each ticket's scope. Documentation
-changes (this scaffold) require link resolution and style checks only.
+Deterministic pure-fixture tests run in routine CI with no install. Real-install variants are
+distinctly marked with trait Category "InstalledAssets" and prefix `CNC_GENERALS_PATH` as shown in
+each ticket's scope. When `CNC_GENERALS_PATH` is missing or invalid, `InstalledAssets` tests
+explicitly Skip with a recorded reason and report as not executed, never green.
+
+A strict validation mode (a named environment variable or MSBuild property, exact name chosen by the
+implementing ticket) makes missing or vacuous `InstalledAssets` execution a failure for pre-PR full
+installation proof on this host. Validation reports must state executed counts separately from skips.
+Documentation changes (this scaffold) require link resolution and style checks only.
