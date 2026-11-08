@@ -10,10 +10,10 @@ Import policy boundaries: [H2a handoff](../deep-dives/h2a-unit-content-import.md
 
 | Card | Deliverable | Initial gate |
 |---|---|---|
-| [WI-M2-01](../agent/cards/WI-M2-01-ddf-roster-resolution.md) | Complete DDF inventory, inherited dependencies, authored reference roster | Ready |
-| [WI-M2-02](../agent/cards/WI-M2-02-combat-aircraft-materialization.md) | Typed movement, combat, aircraft, and visual materialization | Reconcile roster evidence after 01 |
-| [WI-M2-03](../agent/cards/WI-M2-03-scoped-roster-registration.md) | Scoped roster publication beside Generals | Reconcile after 02 |
-| [WI-M2-04](../agent/cards/WI-M2-04-p9-contract-validation.md) | P9 contract results, aircraft rearm, phase report | Reconcile after 03 |
+| [WI-M2-01](https://projects.reid-corp.com/work_packages/667) | Complete DDF inventory, inherited dependencies, authored reference roster | Ready |
+| [WI-M2-02](https://projects.reid-corp.com/work_packages/668) | Typed movement, combat, aircraft, and visual materialization | Reconcile roster evidence after 01 |
+| [WI-M2-03](https://projects.reid-corp.com/work_packages/669) | Scoped roster publication beside Generals | Reconcile after 02 |
+| [WI-M2-04](https://projects.reid-corp.com/work_packages/670) | P9 contract results, aircraft rearm, phase report | Reconcile after 03 |
 
 One card per commit; one M2 phase PR left open for operator merge. Draft cards become Ready only after prerequisite names and runtime contracts are reconciled with landed code.
 

@@ -1,7 +1,7 @@
 # Deep Dive: R2 Sedan Vertical Ground Truth
 
 > Operator-approved LiDAR HD ground-truth protocol for the
-> [WI-R2-01](../agent/cards/WI-R2-01-sedan-operator-proof.md) Sedan proof, replacing the card's
+> [WI-R2-01](https://projects.reid-corp.com/work_packages/839) Sedan proof, replacing the card's
 > levelling-benchmark vertical control; complements
 > [Deep Dive: Geospatial Map Generation](r-real-world-terrain.md) §8.1 in
 > [Track R: Real-World Terrain](../track-r-real-world-terrain.md).

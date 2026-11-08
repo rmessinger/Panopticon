@@ -17,10 +17,10 @@ the deep dive §1 corrections.
 
 | Card | Deliverable | Depends on |
 |---|---|---|
-| [`WI-G3-01`](../agent/cards/WI-G3-01-audit-frame-capture-paths.md) | Capture-path gap list, per-scene repeat-run result, reference host record | none |
-| [`WI-G3-02`](../agent/cards/WI-G3-02-image-quality-metrics.md) | `ImageQualityMetrics` and synthetic-image tests | none |
-| [`WI-G3-03`](../agent/cards/WI-G3-03-golden-frame-comparison.md) | Fixed render clock, camera pitch/angle override, preset and scale in `CaptureRunSettings`, scene set, capture pass, supersampled-reference check | `WI-G3-01`, `WI-G3-02`, `WI-G2-03`, `WI-G1-04` |
-| [`WI-G3-04`](../agent/cards/WI-G3-04-golden-store-and-gate.md) | `GoldenFrameComparer`, golden store and manifest, update mode, exit codes, initial goldens | `WI-G3-03` |
+| [`WI-G3-01`](https://projects.reid-corp.com/work_packages/600) | Capture-path gap list, per-scene repeat-run result, reference host record | none |
+| [`WI-G3-02`](https://projects.reid-corp.com/work_packages/601) | `ImageQualityMetrics` and synthetic-image tests | none |
+| [`WI-G3-03`](https://projects.reid-corp.com/work_packages/602) | Fixed render clock, camera pitch/angle override, preset and scale in `CaptureRunSettings`, scene set, capture pass, supersampled-reference check | `WI-G3-01`, `WI-G3-02`, `WI-G2-03`, `WI-G1-04` |
+| [`WI-G3-04`](https://projects.reid-corp.com/work_packages/603) | `GoldenFrameComparer`, golden store and manifest, update mode, exit codes, initial goldens | `WI-G3-03` |
 
 `WI-G3-01` and `WI-G3-02` can run in parallel. Later Track G phases validate against goldens only
 once `WI-G3-04` is `Done`.

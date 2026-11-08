@@ -14,9 +14,9 @@ Settings ownership and frame-boundary application. Later phases own their visual
 
 | Step | Card | Deliverable | Depends on |
 |---|---|---|---|
-| 1 | [`WI-G2-01`](../agent/cards/WI-G2-01-audit-render-state-knobs.md) | Knob/default/owner/rebuild/capability tables below | none |
-| 2 | [`WI-G2-02`](../agent/cards/WI-G2-02-graphics-settings-type-and-presets.md) | Immutable settings, presets and game ownership | WI-G2-01 |
-| 3 | [`WI-G2-03`](../agent/cards/WI-G2-03-wire-settings-into-render-construction.md) | Coherent application, resource invalidation and capture proof | WI-G2-02 |
+| 1 | [`WI-G2-01`](https://projects.reid-corp.com/work_packages/597) | Knob/default/owner/rebuild/capability tables below | none |
+| 2 | [`WI-G2-02`](https://projects.reid-corp.com/work_packages/598) | Immutable settings, presets and game ownership | WI-G2-01 |
+| 3 | [`WI-G2-03`](https://projects.reid-corp.com/work_packages/599) | Coherent application, resource invalidation and capture proof | WI-G2-02 |
 
 ## Audit summary (WI-G2-01)
 

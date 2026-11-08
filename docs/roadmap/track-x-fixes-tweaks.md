@@ -22,7 +22,7 @@ Open-ended queue for bounded fixes and presentation tweaks. Each phase has its o
 | Phase | Design | Diagrams | Cards |
 |---|---|---|---|
 | X1 | [Hit feedback](deep-dives/x1-imported-unit-hit-feedback.md) | [Architecture](deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams) | [WI-X1-01..07](implementation/track-x-x1-hit-feedback.md) |
-| X2 | [Capacity-probe fixes](implementation/track-x-x2-capacity-probe-fixes.md) | [Upload lifecycle](agent/cards/WI-X2-01-bound-upload-resource-lifetimes.md#architecture-diagrams); reuse diagrams gated on profiling | [WI-X2-01..02](implementation/track-x-x2-capacity-probe-fixes.md) |
+| X2 | [Capacity-probe fixes](implementation/track-x-x2-capacity-probe-fixes.md) | [Upload lifecycle](https://projects.reid-corp.com/work_packages/949); reuse diagrams gated on profiling | [WI-X2-01..02](implementation/track-x-x2-capacity-probe-fixes.md) |
 | X3 | [Cursor modernization](implementation/track-x-x3-cursor-modernization.md) | Loader diagrams gated on `WI-X3-01` | [WI-X3-01](implementation/track-x-x3-cursor-modernization.md) |
 | X4 | [TabControl shell](implementation/track-x-x4-replaysketch-tabcontrol.md) | [Architecture](implementation/track-x-x4-replaysketch-tabcontrol.md#architecture-diagrams) | [WI-X4-01](implementation/track-x-x4-replaysketch-tabcontrol.md) |
 | X5 | [Culling dispatch](implementation/track-x-x5-render-culling-dispatch.md) | [Architecture](implementation/track-x-x5-render-culling-dispatch.md#architecture-diagrams) | [WI-X5-01](implementation/track-x-x5-render-culling-dispatch.md) |

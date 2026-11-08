@@ -69,12 +69,12 @@ carrying it; a condition no helper expresses uses a brace-less `if` (`docs/codin
 
 | Card | Title | Effort | Prerequisites |
 |---|---|---|---|
-| [`WI-AV-01`](../agent/cards/WI-AV-01-add-ensure-helper.md) | Add the `Ensure` helper and tests | S | none |
-| [`WI-AV-02`](../agent/cards/WI-AV-02-convert-null-checks.md) | Convert bare null checks to `ThrowIfNull` | S | none |
-| [`WI-AV-03`](../agent/cards/WI-AV-03-convert-string-and-element-checks.md) | Convert string and null-element checks | S | `WI-AV-01` |
-| [`WI-AV-04`](../agent/cards/WI-AV-04-convert-range-and-finite-checks.md) | Convert range and finite checks, update tests | S | `WI-AV-01` |
-| [`WI-AV-05`](../agent/cards/WI-AV-05-collapse-compound-checks.md) | Collapse compound and unique checks | S | `WI-AV-01` |
-| [`WI-AV-06`](../agent/cards/WI-AV-06-enforce-and-document.md) | Analyzer enforcement and style rule | S | `WI-AV-02`..`05` |
+| [`WI-AV-01`](https://projects.reid-corp.com/work_packages/332) | Add the `Ensure` helper and tests | S | none |
+| [`WI-AV-02`](https://projects.reid-corp.com/work_packages/333) | Convert bare null checks to `ThrowIfNull` | S | none |
+| [`WI-AV-03`](https://projects.reid-corp.com/work_packages/334) | Convert string and null-element checks | S | `WI-AV-01` |
+| [`WI-AV-04`](https://projects.reid-corp.com/work_packages/335) | Convert range and finite checks, update tests | S | `WI-AV-01` |
+| [`WI-AV-05`](https://projects.reid-corp.com/work_packages/336) | Collapse compound and unique checks | S | `WI-AV-01` |
+| [`WI-AV-06`](https://projects.reid-corp.com/work_packages/337) | Analyzer enforcement and style rule | S | `WI-AV-02`..`05` |
 
 ## Sequencing
 

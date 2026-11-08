@@ -174,10 +174,10 @@ Every vehicle is counted at exactly one node, so `vehicle` residuals stay empty 
 
 | Item | Card | Deliverable |
 |---|---|---|
-| A4-4a | [`WI-A4-42`](../agent/cards/WI-A4-42-domain-state-contracts.md) | Contracts and schema validation. |
-| A4-4b | [`WI-A4-43`](../agent/cards/WI-A4-43-domain-state-frames.md) | Persistence, diff/apply, reconstruction, conservation check. |
-| A4-4c | [`WI-A4-44`](../agent/cards/WI-A4-44-domain-state-recorder.md) | Recorder, artifact, `RunRecording`/`RunOutput` wiring. |
-| A4-4d | [`WI-A4-45`](../agent/cards/WI-A4-45-transport-state-projection.md) | Transport-graph projection and conservation test. |
+| A4-4a | [`WI-A4-42`](https://projects.reid-corp.com/work_packages/293) | Contracts and schema validation. |
+| A4-4b | [`WI-A4-43`](https://projects.reid-corp.com/work_packages/294) | Persistence, diff/apply, reconstruction, conservation check. |
+| A4-4c | [`WI-A4-44`](https://projects.reid-corp.com/work_packages/295) | Recorder, artifact, `RunRecording`/`RunOutput` wiring. |
+| A4-4d | [`WI-A4-45`](https://projects.reid-corp.com/work_packages/296) | Transport-graph projection and conservation test. |
 
 ## 8. Architecture diagrams
 

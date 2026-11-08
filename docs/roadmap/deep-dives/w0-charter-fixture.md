@@ -273,15 +273,15 @@ domain-state artifact. A test asserts:
 
 | Item | Card | Deliverable |
 |---|---|---|
-| W0-1 | [`WI-W0-01`](../agent/cards/WI-W0-01-scaffold-western-front-project.md) | Project, keys, enums. |
-| W0-2 | [`WI-W0-02`](../agent/cards/WI-W0-02-western-front-state-schema.md) | State schema (§4). |
-| W0-3 | [`WI-W0-03`](../agent/cards/WI-W0-03-synthetic-topology.md) | Topology (§5). |
-| W0-4 | [`WI-W0-04`](../agent/cards/WI-W0-04-theater-clock-scheduler.md) | Clock and scheduler (§7). |
-| W0-5 | [`WI-W0-05`](../agent/cards/WI-W0-05-formation-registry-modules.md) | State modules and formation registry (§2). |
-| W0-6 | [`WI-W0-06`](../agent/cards/WI-W0-06-synthetic-scenario.md) | Scenario fixture (§6). |
-| W0-7 | [`WI-W0-07`](../agent/cards/WI-W0-07-western-front-domain-adapter.md) | Domain adapter (§8). |
-| W0-8 | [`WI-W0-08`](../agent/cards/WI-W0-08-conservation-ledger.md) | Ledger (§9). |
-| W0-9 | [`WI-W0-09`](../agent/cards/WI-W0-09-charter-fixture-evidence.md) | Evidence test (§10). |
+| W0-1 | [`WI-W0-01`](https://projects.reid-corp.com/work_packages/845) | Project, keys, enums. |
+| W0-2 | [`WI-W0-02`](https://projects.reid-corp.com/work_packages/846) | State schema (§4). |
+| W0-3 | [`WI-W0-03`](https://projects.reid-corp.com/work_packages/847) | Topology (§5). |
+| W0-4 | [`WI-W0-04`](https://projects.reid-corp.com/work_packages/848) | Clock and scheduler (§7). |
+| W0-5 | [`WI-W0-05`](https://projects.reid-corp.com/work_packages/849) | State modules and formation registry (§2). |
+| W0-6 | [`WI-W0-06`](https://projects.reid-corp.com/work_packages/850) | Scenario fixture (§6). |
+| W0-7 | [`WI-W0-07`](https://projects.reid-corp.com/work_packages/851) | Domain adapter (§8). |
+| W0-8 | [`WI-W0-08`](https://projects.reid-corp.com/work_packages/852) | Ledger (§9). |
+| W0-9 | [`WI-W0-09`](https://projects.reid-corp.com/work_packages/853) | Evidence test (§10). |
 
 ## 12. Architecture diagrams
 

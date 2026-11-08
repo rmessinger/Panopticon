@@ -78,14 +78,14 @@ Evidence is collected at run-set level:
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W6-1 | [`WI-W6-01`](../agent/cards/WI-W6-01-campaign-file.md) | Versioned campaign file. | Campaign binds sector, parameters, shard layout, dates, seed, and checkpoint cadence. |
-| W6-2 | [`WI-W6-02`](../agent/cards/WI-W6-02-historical-oob-investigation.md) | Historical OOB format investigation. | Decision records accepted source format or keeps synthetic OOB. |
-| W6-3 | [`WI-W6-03`](../agent/cards/WI-W6-03-long-run-clock-plan.md) | 201600-tick run plan. | One-minute operational ticks and one-hour campaign ticks cover July-November without drift. |
-| W6-4 | [`WI-W6-04`](../agent/cards/WI-W6-04-domain-snapshot-save-load.md) | Domain snapshot plus host save/load. | Load validates frame, theater time, active regions, schema, and object-key mapping. |
-| W6-5 | [`WI-W6-05`](../agent/cards/WI-W6-05-replay-indexing.md) | A5 replay index for long artifacts. | Scrub latency remains bounded at early, middle, and late frames. |
-| W6-6 | [`WI-W6-06`](../agent/cards/WI-W6-06-long-run-metrics.md) | Memory, artifact, and wall-clock metrics. | Report covers tick cost, memory, artifact size, save/load time, and reconstruction latency. |
-| W6-7 | [`WI-W6-07`](../agent/cards/WI-W6-07-approximation-error-report.md) | Fidelity approximation report. | Every active fidelity policy declares error against W2 envelope or all-tactical reference. |
-| W6-8 | [`WI-W6-08`](../agent/cards/WI-W6-08-campaign-evidence-report.md) | W6 final evidence report. | Long-run report includes provenance, conservation, replay, save/load, and scaling results. |
+| W6-1 | [`WI-W6-01`](https://projects.reid-corp.com/work_packages/934) | Versioned campaign file. | Campaign binds sector, parameters, shard layout, dates, seed, and checkpoint cadence. |
+| W6-2 | [`WI-W6-02`](https://projects.reid-corp.com/work_packages/935) | Historical OOB format investigation. | Decision records accepted source format or keeps synthetic OOB. |
+| W6-3 | [`WI-W6-03`](https://projects.reid-corp.com/work_packages/936) | 201600-tick run plan. | One-minute operational ticks and one-hour campaign ticks cover July-November without drift. |
+| W6-4 | [`WI-W6-04`](https://projects.reid-corp.com/work_packages/937) | Domain snapshot plus host save/load. | Load validates frame, theater time, active regions, schema, and object-key mapping. |
+| W6-5 | [`WI-W6-05`](https://projects.reid-corp.com/work_packages/938) | A5 replay index for long artifacts. | Scrub latency remains bounded at early, middle, and late frames. |
+| W6-6 | [`WI-W6-06`](https://projects.reid-corp.com/work_packages/939) | Memory, artifact, and wall-clock metrics. | Report covers tick cost, memory, artifact size, save/load time, and reconstruction latency. |
+| W6-7 | [`WI-W6-07`](https://projects.reid-corp.com/work_packages/940) | Fidelity approximation report. | Every active fidelity policy declares error against W2 envelope or all-tactical reference. |
+| W6-8 | [`WI-W6-08`](https://projects.reid-corp.com/work_packages/941) | W6 final evidence report. | Long-run report includes provenance, conservation, replay, save/load, and scaling results. |
 
 ## 6. Architecture diagrams
 

@@ -19,16 +19,16 @@ by `WI-H1-01`, [B4a larger maps](../deep-dives/b4a-larger-maps.md), and
 
 | Card | Sub-phase | Output | Status | Prerequisites |
 |---|---|---|---|---|
-| [`WI-H1-01`](../agent/cards/WI-H1-01-map-format-audit.md) | H1 | Legacy map audit deep dive | Done | none |
-| [`WI-H1-02`](../agent/cards/WI-H1-02-format-decision-options.md) | H1 | Confirm settled format choices against audit | Done | `WI-H1-01` |
-| [`WI-H2-01`](../agent/cards/WI-H2-01-map-interchange-design.md) | H2 | H2 map interchange design | Done | `WI-H1-02` |
+| [`WI-H1-01`](https://projects.reid-corp.com/work_packages/618) | H1 | Legacy map audit deep dive | Done | none |
+| [`WI-H1-02`](https://projects.reid-corp.com/work_packages/619) | H1 | Confirm settled format choices against audit | Done | `WI-H1-01` |
+| [`WI-H2-01`](https://projects.reid-corp.com/work_packages/620) | H2 | H2 map interchange design | Done | `WI-H1-02` |
 | [`WI-H2-02`](../agent/cards/WI-H2-02-interchange-types.md) | H2 | Interchange types | Done | `WI-H2-01` |
 | [`WI-H2-03`](../agent/cards/WI-H2-03-legacy-reader-seam.md) | H2 | Reader seam and legacy adapter | Done | `WI-H2-02` |
 | [`WI-H2-04`](../agent/cards/WI-H2-04-runtime-bridge.md) | H2 | Runtime bridge and parity | Done | `WI-H2-03` |
-| [`WI-H3-01`](../agent/cards/WI-H3-01-map-package-manifest-schema.md) | H3 | Manifest schema | Draft | `WI-H2-01` |
-| [`WI-H3-02`](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md) | H3 | Chunk layer reader and writer | Draft | `WI-H2-01`, `WI-H3-01` |
-| [`WI-H3-03`](../agent/cards/WI-H3-03-legacy-to-package-importer-hooks.md) | H3 | Legacy `MapFile` to package hooks | Draft | `WI-H2-01`, `WI-H3-01`, `WI-H3-02` |
-| [`WI-H3-04`](../agent/cards/WI-H3-04-map-package-roundtrip-tests.md) | H3 | Round-trip tests | Draft | `WI-H3-01`, `WI-H3-02`, `WI-H3-03` |
+| [`WI-H3-01`](https://projects.reid-corp.com/work_packages/658) | H3 | Manifest schema | Draft | `WI-H2-01` |
+| [`WI-H3-02`](https://projects.reid-corp.com/work_packages/659) | H3 | Chunk layer reader and writer | Draft | `WI-H2-01`, `WI-H3-01` |
+| [`WI-H3-03`](https://projects.reid-corp.com/work_packages/660) | H3 | Legacy `MapFile` to package hooks | Draft | `WI-H2-01`, `WI-H3-01`, `WI-H3-02` |
+| [`WI-H3-04`](https://projects.reid-corp.com/work_packages/661) | H3 | Round-trip tests | Draft | `WI-H3-01`, `WI-H3-02`, `WI-H3-03` |
 
 ## Acceptance by sub-item
 

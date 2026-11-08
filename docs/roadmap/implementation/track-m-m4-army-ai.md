@@ -49,12 +49,12 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
 
 | Card | Deliverable | Status |
 |---|---|---|
-| [`WI-M4-01`](../agent/cards/WI-M4-01-army-hierarchy-scale-audit.md) | This audit and the decisions above | Done |
-| [`WI-M4-02`](../agent/cards/WI-M4-02-ai-decision-cost-counter.md) | `ai` span: allocation-free accumulation of `OnDecisionTick` across all AI players, emitted by `LogicStepper` after `gameLogic`; install-free tests | Ready |
-| [`WI-M4-03`](../agent/cards/WI-M4-03-army-hierarchy-on-probe.md) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Done |
-| [`WI-M4-04`](../agent/cards/WI-M4-04-squad-group-orders.md) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Done |
-| [`WI-M4-05`](../agent/cards/WI-M4-05-air-commander.md) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Done |
-| [`WI-M4-06`](../agent/cards/WI-M4-06-ai-budget-and-stall-report.md) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Done |
+| [`WI-M4-01`](https://projects.reid-corp.com/work_packages/676) | This audit and the decisions above | Done |
+| [`WI-M4-02`](https://projects.reid-corp.com/work_packages/677) | `ai` span: allocation-free accumulation of `OnDecisionTick` across all AI players, emitted by `LogicStepper` after `gameLogic`; install-free tests | Ready |
+| [`WI-M4-03`](https://projects.reid-corp.com/work_packages/678) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Done |
+| [`WI-M4-04`](https://projects.reid-corp.com/work_packages/679) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Done |
+| [`WI-M4-05`](https://projects.reid-corp.com/work_packages/680) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Done |
+| [`WI-M4-06`](https://projects.reid-corp.com/work_packages/681) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Done |
 
 ## WI-M4-03: what landed
 

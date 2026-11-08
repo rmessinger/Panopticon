@@ -13,9 +13,9 @@ in [seams.md](../seams.md) as the model/animation import seam.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C1-01`](../agent/cards/WI-C1-01-audit-model-import-path.md) | Current model import path audit (below). |
-| 2 | [`WI-C1-02`](../agent/cards/WI-C1-02-audit-animation-import-path.md) | Current animation import path audit (below). |
-| 3 | [`WI-C1-03`](../agent/cards/WI-C1-03-deep-dive-contract-design.md) | [C1 deep dive](../deep-dives/c1-import-abstraction.md), contract design, and grounded diagrams. |
+| 1 | [`WI-C1-01`](https://projects.reid-corp.com/work_packages/408) | Current model import path audit (below). |
+| 2 | [`WI-C1-02`](https://projects.reid-corp.com/work_packages/409) | Current animation import path audit (below). |
+| 3 | [`WI-C1-03`](https://projects.reid-corp.com/work_packages/410) | [C1 deep dive](../deep-dives/c1-import-abstraction.md), contract design, and grounded diagrams. |
 | 4 | [`WI-C1-04..14`](../agent/cards/) | Interchange types, importers, materializers, W3D parity, cutover, and cleanup. |
 
 Steps 1-3 are complete. `WI-C1-04` is the first source-edit card.

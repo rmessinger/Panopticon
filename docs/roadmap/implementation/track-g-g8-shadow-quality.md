@@ -16,8 +16,8 @@ offset already exist; G8 adds no cascade code and does not change the normal off
 
 | Card | Deliverable | Depends on |
 |---|---|---|
-| [`WI-G8-01`](../agent/cards/WI-G8-01-audit-shadow-settings-flow.md) | Settings-to-shader trace, four-cascade path confirmation, bias insertion point | none |
-| [`WI-G8-02`](../agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md) | `SlopeScaledBias`, `ApplyTier`, slope term in `Shadows.h`, captures under both presets | `WI-G8-01`, `WI-G2-03`, `WI-G3-04` |
+| [`WI-G8-01`](https://projects.reid-corp.com/work_packages/613) | Settings-to-shader trace, four-cascade path confirmation, bias insertion point | none |
+| [`WI-G8-02`](https://projects.reid-corp.com/work_packages/614) | `SlopeScaledBias`, `ApplyTier`, slope term in `Shadows.h`, captures under both presets | `WI-G8-01`, `WI-G2-03`, `WI-G3-04` |
 
 ## Audit (`WI-G8-01`, complete)
 

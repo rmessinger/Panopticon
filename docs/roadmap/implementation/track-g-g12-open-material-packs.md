@@ -13,13 +13,13 @@ Source of truth: [design and diagrams](../deep-dives/g12-open-material-packs.md#
 
 | Card | Sub-phase | Deliverable | Depends on |
 |---|---|---|---|
-| [WI-G12-01](../agent/cards/WI-G12-01-terrain-texture-inventory-and-map.md) | G12-1 | `TerrainMaterialInventory` runner, `TerrainMaterialMap`, committed mapping table | G7 |
-| [WI-G12-02](../agent/cards/WI-G12-02-fetch-open-materials.md) | G12-2 | `fetch_materials.py` with licence records | WI-G12-01 |
-| [WI-G12-03](../agent/cards/WI-G12-03-terrain-material-pack-bake.md) | G12-2 | `TerrainMaterialPack`, builder, bake runner, synthetic pack | WI-G12-01, WI-G12-02 |
-| [WI-G12-04](../agent/cards/WI-G12-04-terrain-material-runtime-and-goldens.md) | G12-2 | `TerrainMaterialSource` setting, load and fallback, `enhanced-materials` goldens | WI-G12-03 |
-| [WI-G12-05](../agent/cards/WI-G12-05-terrain-normal-roughness-shading.md) | G12-3 | Surface map arrays, terrain GGX shading, shared lighting include | WI-G12-04 |
-| [WI-G12-06](../agent/cards/WI-G12-06-terrain-pbr-goldens-and-cost.md) | G12-3 | PBR goldens and terrain pass cost | WI-G12-05 |
-| [WI-G12-07](../agent/cards/WI-G12-07-model-texture-replacement-investigation.md) | G12-4 | Model texture investigation and G12-4 cards | WI-G12-04 |
+| [WI-G12-01](https://projects.reid-corp.com/work_packages/584) | G12-1 | `TerrainMaterialInventory` runner, `TerrainMaterialMap`, committed mapping table | G7 |
+| [WI-G12-02](https://projects.reid-corp.com/work_packages/585) | G12-2 | `fetch_materials.py` with licence records | WI-G12-01 |
+| [WI-G12-03](https://projects.reid-corp.com/work_packages/586) | G12-2 | `TerrainMaterialPack`, builder, bake runner, synthetic pack | WI-G12-01, WI-G12-02 |
+| [WI-G12-04](https://projects.reid-corp.com/work_packages/587) | G12-2 | `TerrainMaterialSource` setting, load and fallback, `enhanced-materials` goldens | WI-G12-03 |
+| [WI-G12-05](https://projects.reid-corp.com/work_packages/588) | G12-3 | Surface map arrays, terrain GGX shading, shared lighting include | WI-G12-04 |
+| [WI-G12-06](https://projects.reid-corp.com/work_packages/589) | G12-3 | PBR goldens and terrain pass cost | WI-G12-05 |
+| [WI-G12-07](https://projects.reid-corp.com/work_packages/590) | G12-4 | Model texture investigation and G12-4 cards | WI-G12-04 |
 
 `WI-G12-05` and `WI-G12-07` may run in parallel after `WI-G12-04`. Groups on
 `staging/track-g-g12`: group 1 `WI-G12-01`..`03`, group 2 `WI-G12-04`, group 3 `WI-G12-05`..`06`,

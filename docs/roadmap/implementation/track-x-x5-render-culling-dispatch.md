@@ -5,7 +5,7 @@
 
 | Card | Status | Scope | Prerequisites |
 |---|---|---|---|
-| [WI-X5-01](../agent/cards/WI-X5-01-culling-dispatch-sizing.md) | Ready | Measure per-pass culling cost and right-size `FilterVisible` dispatch | M1 |
+| [WI-X5-01](https://projects.reid-corp.com/work_packages/953) | Ready | Measure per-pass culling cost and right-size `FilterVisible` dispatch | M1 |
 
 ## Starting point
 

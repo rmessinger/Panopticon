@@ -11,7 +11,7 @@ core requirements.
 
 B4a assumes that WorldBuilder's basic author, save, load, and play round-trip works at normal map
 sizes. That baseline is tracked by A5-6 in [implementation-checklist.md](../implementation-checklist.md).
-The only current A5-6 card found is [`WI-A5-06`](../agent/cards/WI-A5-06-ground-a5-architecture.md),
+The only current A5-6 card found is [`WI-A5-06`](https://projects.reid-corp.com/work_packages/302),
 which is `Ready` and grounds A5 architecture, not the full WorldBuilder baseline acceptance item.
 B4a implementation cards therefore call out the A5-6 checklist item where it affects execution.
 
@@ -114,17 +114,17 @@ later capacity problem and must page by region rather than relying on full resid
 
 | Card | Title | Status | Prerequisites |
 |---|---|---|---|
-| [`WI-B4a-01`](../agent/cards/WI-B4a-01-chunk-contract.md) | Ground the B4a-5 chunk contract | Ready | none |
-| [`WI-B4a-02`](../agent/cards/WI-B4a-02-baseline-limits-audit.md) | Audit WorldBuilder large-map limits | Ready | A5-6 checklist item |
-| [`WI-B4a-03`](../agent/cards/WI-B4a-03-region-delta-contract.md) | Add the region-delta edit contract | Ready | A5-6 checklist item |
-| [`WI-B4a-04`](../agent/cards/WI-B4a-04-height-brush-region-delta.md) | Remove full-grid height brush clones | Draft | `WI-B4a-03` |
-| [`WI-B4a-05`](../agent/cards/WI-B4a-05-layer-region-deltas.md) | Apply region deltas to map layers | Draft | `WI-B4a-03` |
-| [`WI-B4a-06`](../agent/cards/WI-B4a-06-large-map-wizard.md) | Add large-map wizard presets | Ready | A5-6 checklist item |
-| [`WI-B4a-07`](../agent/cards/WI-B4a-07-cdlod-streaming-design.md) | Design CDLOD and streaming seams | Draft | `WI-B4a-01` |
-| [`WI-B4a-08`](../agent/cards/WI-B4a-08-cdlod-selection.md) | Implement CDLOD quadtree selection | Draft | `WI-B4a-07` |
-| [`WI-B4a-09`](../agent/cards/WI-B4a-09-visible-patch-streaming.md) | Stream visible terrain patches | Draft | `WI-B4a-07` |
-| [`WI-B4a-10`](../agent/cards/WI-B4a-10-runtime-chunk-store.md) | Implement runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
-| [`WI-B4a-11`](../agent/cards/WI-B4a-11-large-map-roundtrip.md) | Validate large-map round-trip and play | Draft | `WI-B4a-10`, H6 |
+| [`WI-B4a-01`](https://projects.reid-corp.com/work_packages/351) | Ground the B4a-5 chunk contract | Ready | none |
+| [`WI-B4a-02`](https://projects.reid-corp.com/work_packages/352) | Audit WorldBuilder large-map limits | Ready | A5-6 checklist item |
+| [`WI-B4a-03`](https://projects.reid-corp.com/work_packages/353) | Add the region-delta edit contract | Ready | A5-6 checklist item |
+| [`WI-B4a-04`](https://projects.reid-corp.com/work_packages/354) | Remove full-grid height brush clones | Draft | `WI-B4a-03` |
+| [`WI-B4a-05`](https://projects.reid-corp.com/work_packages/355) | Apply region deltas to map layers | Draft | `WI-B4a-03` |
+| [`WI-B4a-06`](https://projects.reid-corp.com/work_packages/356) | Add large-map wizard presets | Ready | A5-6 checklist item |
+| [`WI-B4a-07`](https://projects.reid-corp.com/work_packages/357) | Design CDLOD and streaming seams | Draft | `WI-B4a-01` |
+| [`WI-B4a-08`](https://projects.reid-corp.com/work_packages/358) | Implement CDLOD quadtree selection | Draft | `WI-B4a-07` |
+| [`WI-B4a-09`](https://projects.reid-corp.com/work_packages/359) | Stream visible terrain patches | Draft | `WI-B4a-07` |
+| [`WI-B4a-10`](https://projects.reid-corp.com/work_packages/360) | Implement runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
+| [`WI-B4a-11`](https://projects.reid-corp.com/work_packages/361) | Validate large-map round-trip and play | Draft | `WI-B4a-10`, H6 |
 
 ## Sequencing notes
 

@@ -8,9 +8,9 @@ Source of truth: [M1 checklist items](../implementation-checklist.md#m1-capacity
 
 | Card | Deliverable | Status |
 |---|---|---|
-| [`WI-M1-01`](../agent/cards/WI-M1-01-mass-battle-engagement-scenario.md) | `MassBattleCapacityProbe` built-in scenario: two hostile 1000-unit armies (992 ground + 8 parked `AmericaJetAurora` per side) on the M0 deepdivide map, one general attack, headless and windowed from one profile | Done |
-| [`WI-M1-02`](../agent/cards/WI-M1-02-b1-capacity-measurements.md) | B1 measurement of the engagement: `BenchmarkMetricRecorder` samples, `Navigation.PathRequestCount`, `BenchmarkRunRecord` JSON/CSV beside the engagement report | Done |
-| [`WI-M1-03`](../agent/cards/WI-M1-03-first-bottleneck-report.md) | This report: first failing constraint and the B2/B3 verdict | Done |
+| [`WI-M1-01`](https://projects.reid-corp.com/work_packages/664) | `MassBattleCapacityProbe` built-in scenario: two hostile 1000-unit armies (992 ground + 8 parked `AmericaJetAurora` per side) on the M0 deepdivide map, one general attack, headless and windowed from one profile | Done |
+| [`WI-M1-02`](https://projects.reid-corp.com/work_packages/665) | B1 measurement of the engagement: `BenchmarkMetricRecorder` samples, `Navigation.PathRequestCount`, `BenchmarkRunRecord` JSON/CSV beside the engagement report | Done |
+| [`WI-M1-03`](https://projects.reid-corp.com/work_packages/666) | This report: first failing constraint and the B2/B3 verdict | Done |
 
 Engine fixes the scenario required (direct-spawned parked jets could not fly): lateral velocity
 scrub for taxiing aircraft (`PhysicsBehavior.ScrubVelocityLateral2D`), takeoff speed from

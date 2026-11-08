@@ -5,7 +5,7 @@
 
 | Card | Status | Scope | Prerequisites |
 |---|---|---|---|
-| [WI-X6-01](../agent/cards/WI-X6-01-extract-ai-navigation.md) | Ready | Move path request, route application, blocked-movement, and give-way logic from `AIUpdate` into `UnitNavigation` with no behavior change | `WI-N11-01` |
+| [WI-X6-01](https://projects.reid-corp.com/work_packages/954) | Ready | Move path request, route application, blocked-movement, and give-way logic from `AIUpdate` into `UnitNavigation` with no behavior change | `WI-N11-01` |
 
 ## Starting point
 

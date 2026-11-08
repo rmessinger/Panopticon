@@ -119,9 +119,9 @@ Assertions:
 
 | Sub-phase | Cards | Status |
 |---|---|---|
-| B6-1 | [`WI-B6-01`](../agent/cards/WI-B6-01-partition-scheme-contract.md), [`WI-B6-02`](../agent/cards/WI-B6-02-halo-derivation-contract.md), [`WI-B6-03`](../agent/cards/WI-B6-03-boundary-message-format.md) | Ready |
-| B6-2 | [`WI-B6-04`](../agent/cards/WI-B6-04-western-front-front-strip-partition.md), [`WI-B6-05`](../agent/cards/WI-B6-05-inprocess-shard-coordinator.md), [`WI-B6-06`](../agent/cards/WI-B6-06-json-boundary-transport.md), [`WI-B6-07`](../agent/cards/WI-B6-07-western-front-shard-evidence.md) | Draft |
-| B6-6 | [`WI-B6-08`](../agent/cards/WI-B6-08-compact-boundary-codec.md), [`WI-B6-09`](../agent/cards/WI-B6-09-multiprocess-shard-transport.md), [`WI-B6-10`](../agent/cards/WI-B6-10-transport-fault-diagnostics.md) | Draft |
+| B6-1 | [`WI-B6-01`](https://projects.reid-corp.com/work_packages/391), [`WI-B6-02`](https://projects.reid-corp.com/work_packages/392), [`WI-B6-03`](https://projects.reid-corp.com/work_packages/393) | Ready |
+| B6-2 | [`WI-B6-04`](https://projects.reid-corp.com/work_packages/394), [`WI-B6-05`](https://projects.reid-corp.com/work_packages/395), [`WI-B6-06`](https://projects.reid-corp.com/work_packages/396), [`WI-B6-07`](https://projects.reid-corp.com/work_packages/397) | Draft |
+| B6-6 | [`WI-B6-08`](https://projects.reid-corp.com/work_packages/398), [`WI-B6-09`](https://projects.reid-corp.com/work_packages/399), [`WI-B6-10`](https://projects.reid-corp.com/work_packages/400) | Draft |
 
 ## 9. Architecture diagrams
 

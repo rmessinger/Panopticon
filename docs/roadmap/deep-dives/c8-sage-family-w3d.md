@@ -193,8 +193,8 @@ The BFME2 corsair ship is also the reference hull for [Track E](../track-e-naval
 | C8b | Shader-material family resolution, per-face shader-material ids, `WsClassicEnv`, per-game texture loading, team-color decision, `SHDMESH` decision | Static captures of the section 5 models beside a Generals Ranger; section 4.1 mesh hazards removed from the manifest |
 | C8c | Compressed visibility bit channels, channel 15 decision, adaptive-delta and motion-channel verification | Gondor soldier, Mumakil, and wolf rider cycles bind with no missing targets and capture deterministically |
 
-Cards: [`WI-C8a-01`](../agent/cards/WI-C8a-01-match-launcher-executables-case-insensitively.md) to
-[`WI-C8c-04`](../agent/cards/WI-C8c-04-capture-animated-bfme-proof.md); the sequence is in
+Cards: [`WI-C8a-01`](https://projects.reid-corp.com/work_packages/561) to
+[`WI-C8c-04`](https://projects.reid-corp.com/work_packages/572); the sequence is in
 [`implementation/README.md`](../implementation/README.md#track-c--c8a-c8c--bfme-family-w3d).
 
 ## 8. Risks

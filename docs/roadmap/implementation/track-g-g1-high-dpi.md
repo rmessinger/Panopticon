@@ -16,10 +16,10 @@ only at the OS boundary: window creation size, SDL mouse events, the OS cursor, 
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-G1-01`](../agent/cards/WI-G1-01-audit-size-consumers.md) | Consumer classification below. |
-| 2 | [`WI-G1-02`](../agent/cards/WI-G1-02-allow-highdpi-drawable-size.md) | `AllowHighDpi` window, `DrawableBounds`, `DpiScale`, swapchain in pixels. |
-| 3 | [`WI-G1-03`](../agent/cards/WI-G1-03-route-render-surfaces-to-pixels.md) | Panel, viewport and GUI layout in pixels. |
-| 4 | [`WI-G1-04`](../agent/cards/WI-G1-04-scale-2d-and-picking.md) | Mouse input and ImGui converted at the window boundary. |
+| 1 | [`WI-G1-01`](https://projects.reid-corp.com/work_packages/573) | Consumer classification below. |
+| 2 | [`WI-G1-02`](https://projects.reid-corp.com/work_packages/574) | `AllowHighDpi` window, `DrawableBounds`, `DpiScale`, swapchain in pixels. |
+| 3 | [`WI-G1-03`](https://projects.reid-corp.com/work_packages/575) | Panel, viewport and GUI layout in pixels. |
+| 4 | [`WI-G1-04`](https://projects.reid-corp.com/work_packages/576) | Mouse input and ImGui converted at the window boundary. |
 
 ## Design adjustment from the audit
 

@@ -69,12 +69,12 @@ policies and future policy implementations obey the same rule.
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W4-1 | [`WI-W4-01`](../agent/cards/WI-W4-01-matrix-axis-contract.md) | Declarative W4 matrix axes and constraints. | A5-2 expands exactly 216 cells with 64 seeds per cell. |
-| W4-2 | [`WI-W4-02`](../agent/cards/WI-W4-02-parameter-binding.md) | Bind axes to `WesternFrontParameters`, activation policy, and combat variant. | Each axis changes only the intended parameters and records its values in run output. |
-| W4-3 | [`WI-W4-03`](../agent/cards/WI-W4-03-information-audit.md) | Policy information audit. | A test policy that reads outside `EchelonView` fails the run with provenance detail. |
-| W4-4 | [`WI-W4-04`](../agent/cards/WI-W4-04-cell-result-schema.md) | W4 result schema. | Outcome, casualties, supply, command latency, activation, cost, and artifacts are keyed by cell and seed. |
-| W4-5 | [`WI-W4-05`](../agent/cards/WI-W4-05-sensitivity-report.md) | Distribution and sensitivity report. | Report includes confidence intervals and a sensitivity ranking for every axis. |
-| W4-6 | [`WI-W4-06`](../agent/cards/WI-W4-06-a5-comparison-workspace.md) | A5 comparison workspace for W4. | A5 opens a W4 run set, filters cells, and scrubs selected seed artifacts. |
+| W4-1 | [`WI-W4-01`](https://projects.reid-corp.com/work_packages/920) | Declarative W4 matrix axes and constraints. | A5-2 expands exactly 216 cells with 64 seeds per cell. |
+| W4-2 | [`WI-W4-02`](https://projects.reid-corp.com/work_packages/921) | Bind axes to `WesternFrontParameters`, activation policy, and combat variant. | Each axis changes only the intended parameters and records its values in run output. |
+| W4-3 | [`WI-W4-03`](https://projects.reid-corp.com/work_packages/922) | Policy information audit. | A test policy that reads outside `EchelonView` fails the run with provenance detail. |
+| W4-4 | [`WI-W4-04`](https://projects.reid-corp.com/work_packages/923) | W4 result schema. | Outcome, casualties, supply, command latency, activation, cost, and artifacts are keyed by cell and seed. |
+| W4-5 | [`WI-W4-05`](https://projects.reid-corp.com/work_packages/924) | Distribution and sensitivity report. | Report includes confidence intervals and a sensitivity ranking for every axis. |
+| W4-6 | [`WI-W4-06`](https://projects.reid-corp.com/work_packages/925) | A5 comparison workspace for W4. | A5 opens a W4 run set, filters cells, and scrubs selected seed artifacts. |
 
 ## 6. Architecture diagrams
 

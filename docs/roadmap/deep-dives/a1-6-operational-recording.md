@@ -247,15 +247,15 @@ A5 shows operational records from the stream.
 
 | Item | Cards | Deliverable |
 |---|---|---|
-| A1-6a | [`WI-A1-13`](../agent/cards/WI-A1-13-audit-checkpoint-coverage.md), [`WI-A1-14`](../agent/cards/WI-A1-14-persistable-logic-random.md) | Checkpoint coverage audit; persisted `SageRandom` logic random. |
-| A1-6b | [`WI-A1-15`](../agent/cards/WI-A1-15-engine-checkpoint-format.md), [`WI-A1-16`](../agent/cards/WI-A1-16-restore-host-from-checkpoint.md) | Checkpoint write/read; host restore. |
-| A1-6c | [`WI-A1-17`](../agent/cards/WI-A1-17-run-identity.md), [`WI-A1-18`](../agent/cards/WI-A1-18-operational-state-hash.md) | Withdrawn: run identity and state hashes are not part of the design. |
-| A1-6d | [`WI-A1-19`](../agent/cards/WI-A1-19-recording-modes-and-cadence.md), [`WI-A1-20`](../agent/cards/WI-A1-20-operational-stream.md) | Recording modes and cadence; operational stream writer and reader. |
-| A1-6e | [`WI-A1-21`](../agent/cards/WI-A1-21-operational-run-bundle.md) | Checkpoint scheduling and manifest wiring. |
-| A1-6f | [`WI-A1-22`](../agent/cards/WI-A1-22-run-reconstructor.md), [`WI-A1-23`](../agent/cards/WI-A1-23-reconstruction-cache.md) | Reconstructor and sinks; in-memory derived-checkpoint cache. |
-| A1-6g | [`WI-A1-24`](../agent/cards/WI-A1-24-reconstruction-conformance.md) | Conformance evidence on RTS and transport-graph runs: exact restore at checkpoints, invariants on rebuilt frames. |
+| A1-6a | [`WI-A1-13`](https://projects.reid-corp.com/work_packages/234), [`WI-A1-14`](https://projects.reid-corp.com/work_packages/235) | Checkpoint coverage audit; persisted `SageRandom` logic random. |
+| A1-6b | [`WI-A1-15`](https://projects.reid-corp.com/work_packages/236), [`WI-A1-16`](https://projects.reid-corp.com/work_packages/237) | Checkpoint write/read; host restore. |
+| A1-6c | [`WI-A1-17`](https://projects.reid-corp.com/work_packages/238), [`WI-A1-18`](https://projects.reid-corp.com/work_packages/239) | Withdrawn: run identity and state hashes are not part of the design. |
+| A1-6d | [`WI-A1-19`](https://projects.reid-corp.com/work_packages/240), [`WI-A1-20`](https://projects.reid-corp.com/work_packages/241) | Recording modes and cadence; operational stream writer and reader. |
+| A1-6e | [`WI-A1-21`](https://projects.reid-corp.com/work_packages/242) | Checkpoint scheduling and manifest wiring. |
+| A1-6f | [`WI-A1-22`](https://projects.reid-corp.com/work_packages/243), [`WI-A1-23`](https://projects.reid-corp.com/work_packages/244) | Reconstructor and sinks; in-memory derived-checkpoint cache. |
+| A1-6g | [`WI-A1-24`](https://projects.reid-corp.com/work_packages/245) | Conformance evidence on RTS and transport-graph runs: exact restore at checkpoints, invariants on rebuilt frames. |
 
-Western Front adapter: [`WI-W3a-31`](../agent/cards/WI-W3a-31-operational-recording-adapter.md).
+Western Front adapter: [`WI-W3a-31`](https://projects.reid-corp.com/work_packages/913).
 
 ## 10. Architecture diagrams
 

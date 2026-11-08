@@ -30,13 +30,13 @@ Builds on the repository-wide documentation style above. Additional rules specif
 * Use plain prose. Structure through headers, tables, lists, and `` `code spans` `` only.
 * Fenced code blocks for shell commands and code examples are fine.
 * Don't repeat the same rationale, background, or "why this matters" explanation across multiple roadmap docs (README, track docs, deep dives, task cards). State it once in the doc that owns the topic and link to it from the others.
-* Applies to every file under `docs/roadmap/`, including `agent/cards/` task cards.
+* Applies to every file under `docs/roadmap/`, including `agent/` docs and the legacy card mapping.
 
 ## Repository-Specific Memories
 
 ### Development model (stacked PRs; superseded the C4 staging model Oct 2026)
 
-* Tickets: OpenProject (project Panopticon, id 4) is canonical for ticket creation, status, prerequisites, and completion records. Card files under `docs/roadmap/agent/cards/` are link stubs with no status. Cards created on an unmerged branch are reconciled with OpenProject after that branch merges; see [ticket workflow](docs/roadmap/agent/README.md#ticket-workflow).
+* Tickets: OpenProject (project Panopticon, id 4) is canonical for ticket creation, status, prerequisites, and completion records. Card-to-ticket pairings live in one mapping table, [docs/roadmap/agent/legacy-card-mapping.md](docs/roadmap/agent/legacy-card-mapping.md); per-ticket stub files no longer exist. Cards created on an unmerged branch are reconciled with OpenProject after that branch merges by appending a mapping row; see [ticket workflow](docs/roadmap/agent/README.md#ticket-workflow).
 * Tracks ship as a `gh stack`-managed stack of group PRs targeting `main`: cards are implemented in dependency order, grouped onto shared branches (per-card commits, OpenProject status updates, completion comments), each group = one PR. Groups are identified by numbers, not letters: branches use `track-<track>-<phase>-<group-n>-<topic>` and PRs use "group 1/2/3" wording.
 * Group 1 branches off `main` (or the upstream branch the track builds on); each later group branches off the previous group's branch, so every PR's base is the branch below it. No staging branches.
 * Manage the stack with the `gh stack` extension: `gh stack init`/`add` plus `submit` while developing, `gh stack link <prs bottom-to-top>` to adopt PRs that already exist, `gh stack checkout <stack>` to adopt locally, `gh stack sync`/`rebase` to update after merges.

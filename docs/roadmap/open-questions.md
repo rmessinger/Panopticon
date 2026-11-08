@@ -15,7 +15,7 @@
 
 - Real-world structures. Decision (2026-11-02): through R2, structures exist only as imagery and
   as building footprints mapped to impassable, unbuildable mask regions
-  ([`WI-R2-03`](agent/cards/WI-R2-03-building-footprint-masks.md)); preparation profiles use
+  ([`WI-R2-03`](https://projects.reid-corp.com/work_packages/841)); preparation profiles use
   bare-earth elevation. Structure object placement, bridges, and building heights are deferred to
   R3, where placed objects enter the map package; see
   [§5.4](deep-dives/r-real-world-terrain.md#54-real-world-structures). OpenStreetMap footprints
@@ -449,8 +449,8 @@
   Affects [B4b](deep-dives/r-real-world-terrain.md).
   Revised (2026-11-02): the importer boundary is unchanged, but the primary sources are openly
   licensed national and Europe-wide datasets fetched by command-line preparation scripts
-  (`scripts/geo/`, [`WI-R2-01`](agent/cards/WI-R2-01-sedan-operator-proof.md),
-  [`WI-R2-02`](agent/cards/WI-R2-02-provider-source-profiles.md)) rather than Google Earth exports.
+  (`scripts/geo/`, [`WI-R2-01`](https://projects.reid-corp.com/work_packages/839),
+  [`WI-R2-02`](https://projects.reid-corp.com/work_packages/840)) rather than Google Earth exports.
   Scripts own all downloads, use only providers without accounts or keys, and never run in CI.
   Google Earth Pro KML and Earth Engine exports of openly licensed datasets stay optional; data
   traced or digitized from Google imagery is excluded.

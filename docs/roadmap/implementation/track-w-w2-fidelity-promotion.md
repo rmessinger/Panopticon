@@ -17,20 +17,20 @@ until Track D content exists.
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| W2-1 | [`WI-W2-01`](../agent/cards/WI-W2-01-activation-policy-hysteresis.md) | Activation policy interface, references, and dwell. |
-| W2-2 | [`WI-W2-02`](../agent/cards/WI-W2-02-transition-records-schema.md) | Transition records and schema additions. |
-| W2-3 | [`WI-W2-03`](../agent/cards/WI-W2-03-tactical-template-map.md) | Tactical template map. |
-| W2-4 | [`WI-W2-04`](../agent/cards/WI-W2-04-soldier-placement.md) | Soldier placement from posture and trench level. |
-| W2-5 | [`WI-W2-05`](../agent/cards/WI-W2-05-promotion-ledger-split.md) | Promotion ledger split. |
-| W2-6 | [`WI-W2-06`](../agent/cards/WI-W2-06-soldier-casualty-classification.md) | Soldier casualty classification. |
-| W2-7 | [`WI-W2-07`](../agent/cards/WI-W2-07-soldier-ammo-module.md) | Per-soldier SAA module. |
-| W2-8 | [`WI-W2-08`](../agent/cards/WI-W2-08-mg-teams.md) | MG team preservation. |
-| W2-9 | [`WI-W2-09`](../agent/cards/WI-W2-09-artillery-impacts-active-areas.md) | Strategic artillery impacts into active tactical areas. |
-| W2-10 | [`WI-W2-10`](../agent/cards/WI-W2-10-formation-objectives-to-soldier-orders.md) | Formation objectives to A4-3 soldier orders. |
-| W2-11 | [`WI-W2-11`](../agent/cards/WI-W2-11-demotion-reconciliation-terrain.md) | Demotion, reconciliation, and terrain fold-in. |
-| W2-12 | [`WI-W2-12`](../agent/cards/WI-W2-12-mode-switching-scheduler.md) | Scheduler mode switching. |
-| W2-13 | [`WI-W2-13`](../agent/cards/WI-W2-13-all-tactical-reference-run.md) | Whole-sector all-tactical reference run. |
-| W2-14 | [`WI-W2-14`](../agent/cards/WI-W2-14-error-report-64-seeds.md) | Aggregate-vs-tactical A2 report over 64 seeds per arm. |
+| W2-1 | [`WI-W2-01`](https://projects.reid-corp.com/work_packages/869) | Activation policy interface, references, and dwell. |
+| W2-2 | [`WI-W2-02`](https://projects.reid-corp.com/work_packages/870) | Transition records and schema additions. |
+| W2-3 | [`WI-W2-03`](https://projects.reid-corp.com/work_packages/871) | Tactical template map. |
+| W2-4 | [`WI-W2-04`](https://projects.reid-corp.com/work_packages/872) | Soldier placement from posture and trench level. |
+| W2-5 | [`WI-W2-05`](https://projects.reid-corp.com/work_packages/873) | Promotion ledger split. |
+| W2-6 | [`WI-W2-06`](https://projects.reid-corp.com/work_packages/874) | Soldier casualty classification. |
+| W2-7 | [`WI-W2-07`](https://projects.reid-corp.com/work_packages/875) | Per-soldier SAA module. |
+| W2-8 | [`WI-W2-08`](https://projects.reid-corp.com/work_packages/876) | MG team preservation. |
+| W2-9 | [`WI-W2-09`](https://projects.reid-corp.com/work_packages/877) | Strategic artillery impacts into active tactical areas. |
+| W2-10 | [`WI-W2-10`](https://projects.reid-corp.com/work_packages/878) | Formation objectives to A4-3 soldier orders. |
+| W2-11 | [`WI-W2-11`](https://projects.reid-corp.com/work_packages/879) | Demotion, reconciliation, and terrain fold-in. |
+| W2-12 | [`WI-W2-12`](https://projects.reid-corp.com/work_packages/880) | Scheduler mode switching. |
+| W2-13 | [`WI-W2-13`](https://projects.reid-corp.com/work_packages/881) | Whole-sector all-tactical reference run. |
+| W2-14 | [`WI-W2-14`](https://projects.reid-corp.com/work_packages/882) | Aggregate-vs-tactical A2 report over 64 seeds per arm. |
 
 ---
 

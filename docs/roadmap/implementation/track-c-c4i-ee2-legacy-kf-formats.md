@@ -16,12 +16,12 @@ palisade gate. Reject the three NetImmerse 4.2.2.0 files with an explicit diagno
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4i-01`](../agent/cards/WI-C4i-01-add-legacy-kf-header-layouts.md) | Version-gated 10.0.1.0 header and footer parsing plus 4.2.2.0 rejection. |
-| 2 | [`WI-C4i-02`](../agent/cards/WI-C4i-02-reuse-kf-block-readers-for-legacy.md) | C4c keyframe blocks accepted under 10.0.1.0 field conditions. |
-| 3 | [`WI-C4i-03`](../agent/cards/WI-C4i-03-normalize-legacy-kf-semantics.md) | Text-key trimming, legacy flag validation, and uppercase `.KF` resolution. |
-| 4 | [`WI-C4i-04`](../agent/cards/WI-C4i-04-bind-ddf-legacy-proof-clips.md) | Installed guntank and palisade legacy clip import and pose checks. |
-| 5 | [`WI-C4i-05`](../agent/cards/WI-C4i-05-lock-legacy-family-rejections.md) | Property, morph, skinned, and NetImmerse rejection fixtures. |
-| 6 | [`WI-C4i-06`](../agent/cards/WI-C4i-06-capture-legacy-rigid-proofs.md) | Deterministic legacy rigid captures and phase completion. |
+| 1 | [`WI-C4i-01`](https://projects.reid-corp.com/work_packages/529) | Version-gated 10.0.1.0 header and footer parsing plus 4.2.2.0 rejection. |
+| 2 | [`WI-C4i-02`](https://projects.reid-corp.com/work_packages/530) | C4c keyframe blocks accepted under 10.0.1.0 field conditions. |
+| 3 | [`WI-C4i-03`](https://projects.reid-corp.com/work_packages/531) | Text-key trimming, legacy flag validation, and uppercase `.KF` resolution. |
+| 4 | [`WI-C4i-04`](https://projects.reid-corp.com/work_packages/532) | Installed guntank and palisade legacy clip import and pose checks. |
+| 5 | [`WI-C4i-05`](https://projects.reid-corp.com/work_packages/533) | Property, morph, skinned, and NetImmerse rejection fixtures. |
+| 6 | [`WI-C4i-06`](https://projects.reid-corp.com/work_packages/534) | Deterministic legacy rigid captures and phase completion. |
 
 Cards remain blocked until their C4c prerequisite cards are done. Card 6 is the completion point.
 

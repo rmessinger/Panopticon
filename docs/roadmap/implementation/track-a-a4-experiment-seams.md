@@ -11,12 +11,12 @@ designs define the final contracts; this audit only fixes the extraction points.
 
 | Card | Output | Status |
 |---|---|---|
-| [`WI-A4-31`](../agent/cards/WI-A4-31-audit-experiment-seam-ownership.md) | This audit | Ready |
-| [`WI-A4-32`](../agent/cards/WI-A4-32-extract-pathfinding-seam.md) | Pathfinding/routing seam | Blocked (B4) |
-| [`WI-A4-33`](../agent/cards/WI-A4-33-extract-entity-storage-seam.md) | Entity-storage seam | Blocked (B3) |
-| [`WI-A4-34`](../agent/cards/WI-A4-34-extract-partition-scheme-seam.md) | Partition-scheme seam | Blocked (B6-1) |
-| [`WI-A4-35`](../agent/cards/WI-A4-35-extract-fidelity-policy-seam.md) | Fidelity-policy seam | Blocked (B7-1) |
-| [`WI-A4-36`](../agent/cards/WI-A4-36-register-model-import-seam.md) | Model-import seam registration | Ready |
+| [`WI-A4-31`](https://projects.reid-corp.com/work_packages/282) | This audit | Ready |
+| [`WI-A4-32`](https://projects.reid-corp.com/work_packages/283) | Pathfinding/routing seam | Blocked (B4) |
+| [`WI-A4-33`](https://projects.reid-corp.com/work_packages/284) | Entity-storage seam | Blocked (B3) |
+| [`WI-A4-34`](https://projects.reid-corp.com/work_packages/285) | Partition-scheme seam | Blocked (B6-1) |
+| [`WI-A4-35`](https://projects.reid-corp.com/work_packages/286) | Fidelity-policy seam | Blocked (B7-1) |
+| [`WI-A4-36`](https://projects.reid-corp.com/work_packages/287) | Model-import seam registration | Ready |
 
 ## Seam audit
 

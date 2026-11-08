@@ -18,17 +18,17 @@ experimental proof, not an EE2 game definition or a production NIF importer.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4a-01`](../agent/cards/WI-C4a-01-inventory-proof-models.md) | Exact target descriptors, coordinate convention, and LOD contract. |
-| 2 | [`WI-C4a-02`](../agent/cards/WI-C4a-02-add-nif-container-reader.md) | NIF 10.1 container reader and block directory. |
-| 3 | [`WI-C4a-03`](../agent/cards/WI-C4a-03-decode-nif-scene-graph.md) | Node hierarchy and local transforms. |
-| 4 | [`WI-C4a-04`](../agent/cards/WI-C4a-04-decode-nif-triangle-geometry.md) | Triangle meshes and bounds. |
-| 5 | [`WI-C4a-05`](../agent/cards/WI-C4a-05-decode-nif-material-properties.md) | Fixed-function properties and source texture names. |
-| 6 | [`WI-C4a-06`](../agent/cards/WI-C4a-06-select-nif-lod.md) | Deterministic highest-detail LOD selection. |
-| 7 | [`WI-C4a-07`](../agent/cards/WI-C4a-07-add-nif-model-importer.md) | C1 `ImportedModel` adapter. |
-| 8 | [`WI-C4a-08`](../agent/cards/WI-C4a-08-add-zip-file-system.md) | Case-insensitive ZIP-backed virtual file system. |
-| 9 | [`WI-C4a-09`](../agent/cards/WI-C4a-09-verify-ee2-import-descriptors.md) | Installed-asset descriptor checks for both targets. |
-| 10 | [`WI-C4a-10`](../agent/cards/WI-C4a-10-add-headless-model-capture.md) | Shared C3/C4a headless runtime-model capture path. |
-| 11 | [`WI-C4a-11`](../agent/cards/WI-C4a-11-capture-ee2-proof-models.md) | Installed-asset materialization and visual captures. |
+| 1 | [`WI-C4a-01`](https://projects.reid-corp.com/work_packages/479) | Exact target descriptors, coordinate convention, and LOD contract. |
+| 2 | [`WI-C4a-02`](https://projects.reid-corp.com/work_packages/480) | NIF 10.1 container reader and block directory. |
+| 3 | [`WI-C4a-03`](https://projects.reid-corp.com/work_packages/481) | Node hierarchy and local transforms. |
+| 4 | [`WI-C4a-04`](https://projects.reid-corp.com/work_packages/482) | Triangle meshes and bounds. |
+| 5 | [`WI-C4a-05`](https://projects.reid-corp.com/work_packages/483) | Fixed-function properties and source texture names. |
+| 6 | [`WI-C4a-06`](https://projects.reid-corp.com/work_packages/484) | Deterministic highest-detail LOD selection. |
+| 7 | [`WI-C4a-07`](https://projects.reid-corp.com/work_packages/485) | C1 `ImportedModel` adapter. |
+| 8 | [`WI-C4a-08`](https://projects.reid-corp.com/work_packages/486) | Case-insensitive ZIP-backed virtual file system. |
+| 9 | [`WI-C4a-09`](https://projects.reid-corp.com/work_packages/487) | Installed-asset descriptor checks for both targets. |
+| 10 | [`WI-C4a-10`](https://projects.reid-corp.com/work_packages/488) | Shared C3/C4a headless runtime-model capture path. |
+| 11 | [`WI-C4a-11`](https://projects.reid-corp.com/work_packages/489) | Installed-asset materialization and visual captures. |
 
 Cards 3 and 8 can proceed independently after their prerequisites. Cards 4, 5, and 6 can proceed
 independently after card 3. Card 11 is the completion point.

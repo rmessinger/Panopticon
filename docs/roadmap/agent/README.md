@@ -59,8 +59,8 @@ in fresh sessions can't see it. Rely only on OpenProject and repo artifacts:
 
 - OpenProject project Panopticon (id 4): the source of truth for ticket status, prerequisites, and
   descriptions. Query with `op_list_work_packages` and `op_get_work_package`.
-- [`cards/`](cards/): one link stub per ticket (canonical card ID, title, ticket URL). Stubs carry
-  no status.
+- [`legacy-card-mapping.md`](legacy-card-mapping.md): one row per ticket (canonical card ID,
+  title, ticket URL). Rows carry no status.
 - The Status column in each [track document](../README.md#document-map) (`Not started` /
   `In progress` / `Done`): the authoritative phase state.
 
@@ -88,10 +88,10 @@ https://projects.reid-corp.com/projects/panopticon. Work package URL:
 | List statuses | `op_list_statuses` |
 
 - `op_update_work_package` requires the current `lock_version`, which `op_get_work_package` returns for the same ticket. Read the ticket immediately before updating it.
-- Ticket status, prerequisites, and completion records live only in OpenProject. Stub files carry no status and never mirror it.
+- Ticket status, prerequisites, and completion records live only in OpenProject. Mapping rows carry no status and never mirror it.
 - Create a ticket only after `op_find_card_work_package` finds none for the card ID. Never overwrite an existing ticket or reuse a card ID that belongs to another ticket; a collision is reported.
 - `get_card(card_id, ref)` and `card_status(track, ref)` are deprecated frozen Markdown snapshots. Use them only to inspect source or history at an explicit ref. Their payload may be stale, so never use them for current status.
-- A card file created on an unmerged branch has no ticket. After that branch merges, look up its ID with `op_find_card_work_package`, create the ticket if none exists, and replace the card file with a link stub in a follow-up change.
+- A card file created on an unmerged branch has no ticket. After that branch merges, look up its ID with `op_find_card_work_package`, create the ticket if none exists, and replace the card file with a row in [the legacy card mapping](legacy-card-mapping.md) in a follow-up change.
 
 ## Standard validation
 
@@ -161,8 +161,9 @@ pre-retirement results and is not written to.
 | File | Purpose |
 |---|---|
 | [`README.md`](../README.md) | This loop and its conventions. |
-| [`task-card-template.md`](task-card-template.md) | Procedure and stub format for a new ticket. |
-| [`cards/`](cards/) | Link stubs, one per OpenProject ticket: card ID, title, ticket URL. |
+| [`task-card-template.md`](task-card-template.md) | Procedure and mapping-row format for a new ticket. |
+| [`legacy-card-mapping.md`](legacy-card-mapping.md) | Card-to-ticket mapping, one row per OpenProject ticket: card ID, title, ticket URL. |
+| [`cards/`](cards/) | Non-ticket data files kept beside the mapping: community map records, deployment proof. |
 
 ## How to maintain this guide
 
@@ -171,12 +172,12 @@ pre-retirement results and is not written to.
   actual types and flows. Replace any placeholder stubs before a source-edit ticket is made startable.
   A read-only audit/design ticket may be made startable when its deliverable supplies the evidence or
   diagrams needed to open this gate.
-- Decompose the phase into OpenProject tickets, one link stub per ticket in [`cards/`](cards/)
+- Decompose the phase into OpenProject tickets, one row per ticket in [the legacy card mapping](legacy-card-mapping.md)
   (don't wait for a full deep dive: small investigation/prep tickets are valuable early, but the
   diagrams should still precede executable tickets).
 - Keep each ticket small enough for a low-effort model. If a ticket needs deep reasoning, split it
   or escalate it to a roadmap deep dive instead.
 - Phase Status stays in the track doc. Ticket status changes go to OpenProject and are never
-  mirrored into stubs.
+  mirrored into mapping rows.
 - Ticket descriptions reference the roadmap for why; never duplicate roadmap rationale there: link
   to it.

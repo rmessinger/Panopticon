@@ -3,12 +3,12 @@
 > Audience: human + agent.
 > Phase and dependencies: [Track X](../track-x-fixes-tweaks.md). Depends on M1; independent of X1.
 
-Architecture: [upload lifecycle](../agent/cards/WI-X2-01-bound-upload-resource-lifetimes.md#architecture-diagrams). Model/FX reuse diagrams remain gated on post-cleanup allocation evidence.
+Architecture: [upload lifecycle](https://projects.reid-corp.com/work_packages/949). Model/FX reuse diagrams remain gated on post-cleanup allocation evidence.
 
 | Card | Status | Scope | Prerequisites |
 |---|---|---|---|
-| [WI-X2-01](../agent/cards/WI-X2-01-bound-upload-resource-lifetimes.md) | Done | Bound temporary graphics-upload resource lifetimes | none |
-| [WI-X2-02](../agent/cards/WI-X2-02-reuse-combat-fx-model-resources.md) | Draft | Reduce combat FX/model resource recreation | WI-X2-01 |
+| [WI-X2-01](https://projects.reid-corp.com/work_packages/949) | Done | Bound temporary graphics-upload resource lifetimes | none |
+| [WI-X2-02](https://projects.reid-corp.com/work_packages/950) | Draft | Reduce combat FX/model resource recreation | WI-X2-01 |
 
 ## Capacity-probe evidence
 
@@ -24,7 +24,7 @@ Working diagnosis: undrained upload temporaries retain native graphics resources
 
 ## X2-01 results
 
-Code, regression tests, and the Linux/Vulkan probe comparison are recorded in the [card Result](../agent/cards/WI-X2-01-bound-upload-resource-lifetimes.md#result). Summary: upload helpers drain per upload; queue-drain tests fail on the pre-fix build; the 900-frame probe shows identical battles and no measurable tick-time cost. Outstanding: Windows D3D11 native-memory measurement (operator command recorded in the card).
+Code, regression tests, and the Linux/Vulkan probe comparison are recorded in the [card Result](https://projects.reid-corp.com/work_packages/949). Summary: upload helpers drain per upload; queue-drain tests fail on the pre-fix build; the 900-frame probe shows identical battles and no measurable tick-time cost. Outstanding: Windows D3D11 native-memory measurement (operator command recorded in the card).
 
 ## X2-02 reconciliation
 

@@ -86,14 +86,14 @@ Required evidence:
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W5-1 | [`WI-W5-01`](../agent/cards/WI-W5-01-front-strip-partition.md) | Front-strip partition design and tests. | No contested pair crosses shards for synthetic and W3b topologies. |
-| W5-2 | [`WI-W5-02`](../agent/cards/WI-W5-02-shard-slice-state.md) | Western Front shard slice state. | Owned and halo records are separated and keyed by stable W keys. |
-| W5-3 | [`WI-W5-03`](../agent/cards/WI-W5-03-inprocess-json-transport.md) | In-process JSON boundary transport. | Messages round-trip deterministically and preserve frame ordering. |
-| W5-4 | [`WI-W5-04`](../agent/cards/WI-W5-04-lockstep-coordinator.md) | Lockstep coordinator. | Barriers occur per operational tick in compressed mode and per logic frame in tactical mode. |
-| W5-5 | [`WI-W5-05`](../agent/cards/WI-W5-05-cross-boundary-handoff.md) | Formation and soldier handoff. | Ownership is exactly one through handoff and conserved holdings move through ledger events. |
-| W5-6 | [`WI-W5-06`](../agent/cards/WI-W5-06-boundary-effects.md) | Logistics, command, and halo effects. | Each boundary effect has one send, one apply, one ack, and metrics. |
-| W5-7 | [`WI-W5-07`](../agent/cards/WI-W5-07-sharded-vs-reference-evidence.md) | Sharded versus reference evidence. | Invariants pass and outcome distributions compare within the W2 envelope. |
-| W5-8 | [`WI-W5-08`](../agent/cards/WI-W5-08-a5-shard-visualization.md) | A5 shard visualization. | A5 displays strip ownership, halo age, handoffs, and boundary messages over time. |
+| W5-1 | [`WI-W5-01`](https://projects.reid-corp.com/work_packages/926) | Front-strip partition design and tests. | No contested pair crosses shards for synthetic and W3b topologies. |
+| W5-2 | [`WI-W5-02`](https://projects.reid-corp.com/work_packages/927) | Western Front shard slice state. | Owned and halo records are separated and keyed by stable W keys. |
+| W5-3 | [`WI-W5-03`](https://projects.reid-corp.com/work_packages/928) | In-process JSON boundary transport. | Messages round-trip deterministically and preserve frame ordering. |
+| W5-4 | [`WI-W5-04`](https://projects.reid-corp.com/work_packages/929) | Lockstep coordinator. | Barriers occur per operational tick in compressed mode and per logic frame in tactical mode. |
+| W5-5 | [`WI-W5-05`](https://projects.reid-corp.com/work_packages/930) | Formation and soldier handoff. | Ownership is exactly one through handoff and conserved holdings move through ledger events. |
+| W5-6 | [`WI-W5-06`](https://projects.reid-corp.com/work_packages/931) | Logistics, command, and halo effects. | Each boundary effect has one send, one apply, one ack, and metrics. |
+| W5-7 | [`WI-W5-07`](https://projects.reid-corp.com/work_packages/932) | Sharded versus reference evidence. | Invariants pass and outcome distributions compare within the W2 envelope. |
+| W5-8 | [`WI-W5-08`](https://projects.reid-corp.com/work_packages/933) | A5 shard visualization. | A5 displays strip ownership, halo age, handoffs, and boundary messages over time. |
 
 ## 7. Architecture diagrams
 

@@ -17,17 +17,17 @@ output (A1-5, metrics/events tier only; T1/T2 use A5-4 bucketing).
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| A1-1 | [`WI-A1-01`](../agent/cards/WI-A1-01-audit-graphics-device-couplings.md) | GraphicsDevice coupling audit (below). |
-| A1-1 | [`WI-A1-02`](../agent/cards/WI-A1-02-audit-tick-presentation-couplings.md) | Tick-path presentation audit (below). |
-| A1-1 | [`WI-A1-03`](../agent/cards/WI-A1-03-populate-architecture-diagrams.md) | Grounded §5 diagrams in the deep dive. |
-| A1-2 | [`WI-A1-04`](../agent/cards/WI-A1-04-data-only-asset-loading.md) | `AssetStore`/`AssetLoadContext` accept null graphics; INI data resolves without a device. |
-| A1-3 | [`WI-A1-05`](../agent/cards/WI-A1-05-extract-logic-stepper.md) | `LogicStepper` extracted from `Game.Update`; presentation stays in `Game`. |
-| A1-4 | [`WI-A1-06`](../agent/cards/WI-A1-06-simulation-host.md) | `SimulationHost`: FTRT run loop, order injection, per-tick hook. |
-| A1-5 | [`WI-A1-07`](../agent/cards/WI-A1-07-run-outputs-metrics-stream.md) | T0 run output: JSON with seed, frames, terminal `GameOutcome`, bounded metric series. |
-| A1-5 | [`WI-A1-08`](../agent/cards/WI-A1-08-testharness-simulation-host.md) | TestHarness headless + P0 `HarnessRunner` onto `SimulationHost`. |
-| A1-5 | [`WI-A1-09`](../agent/cards/WI-A1-09-t1-signature-tree-recording.md) | T1 signature trees. |
-| A1-5 | [`WI-A1-10`](../agent/cards/WI-A1-10-t2-triggered-detail-capture.md) | T2 triggered detail capture. |
-| A1-5 | [`WI-A1-11`](../agent/cards/WI-A1-11-state-snapshot-delta-recording.md) | Snapshot and delta recording. |
+| A1-1 | [`WI-A1-01`](https://projects.reid-corp.com/work_packages/222) | GraphicsDevice coupling audit (below). |
+| A1-1 | [`WI-A1-02`](https://projects.reid-corp.com/work_packages/223) | Tick-path presentation audit (below). |
+| A1-1 | [`WI-A1-03`](https://projects.reid-corp.com/work_packages/224) | Grounded §5 diagrams in the deep dive. |
+| A1-2 | [`WI-A1-04`](https://projects.reid-corp.com/work_packages/225) | `AssetStore`/`AssetLoadContext` accept null graphics; INI data resolves without a device. |
+| A1-3 | [`WI-A1-05`](https://projects.reid-corp.com/work_packages/226) | `LogicStepper` extracted from `Game.Update`; presentation stays in `Game`. |
+| A1-4 | [`WI-A1-06`](https://projects.reid-corp.com/work_packages/227) | `SimulationHost`: FTRT run loop, order injection, per-tick hook. |
+| A1-5 | [`WI-A1-07`](https://projects.reid-corp.com/work_packages/228) | T0 run output: JSON with seed, frames, terminal `GameOutcome`, bounded metric series. |
+| A1-5 | [`WI-A1-08`](https://projects.reid-corp.com/work_packages/229) | TestHarness headless + P0 `HarnessRunner` onto `SimulationHost`. |
+| A1-5 | [`WI-A1-09`](https://projects.reid-corp.com/work_packages/230) | T1 signature trees. |
+| A1-5 | [`WI-A1-10`](https://projects.reid-corp.com/work_packages/231) | T2 triggered detail capture. |
+| A1-5 | [`WI-A1-11`](https://projects.reid-corp.com/work_packages/232) | Snapshot and delta recording. |
 
 ---
 
@@ -37,7 +37,7 @@ output (A1-5, metrics/events tier only; T1/T2 use A5-4 bucketing).
 
 Every `GraphicsDevice` / `GraphicsLoadContext` / `ShaderSetStore` / `ShaderResourceManager` /
 `StandardGraphicsResources` reference in `src/Panopticon.Simulation`, classified per
-[`WI-A1-01`](../agent/cards/WI-A1-01-audit-graphics-device-couplings.md). Classification key:
+[`WI-A1-01`](https://projects.reid-corp.com/work_packages/222). Classification key:
 `logic` (reached from `GameLogic.Update` / `Scene3D.LogicTick` / scripting), `asset-data`
 (reached while parsing INI, map, or object-definition data), `presentation` (reached only from
 render, UI, diagnostics, or audio paths).
@@ -134,7 +134,7 @@ path, matching the card.
 
 Every call made from `Game.Update`, `LocalLogicTick`, and `LogicTick`
 (`src/Panopticon.Simulation/Game.cs:921-1000`), classified per
-[`WI-A1-02`](../agent/cards/WI-A1-02-audit-tick-presentation-couplings.md). Key: `logic` (must run
+[`WI-A1-02`](https://projects.reid-corp.com/work_packages/223). Key: `logic` (must run
 headless), `presentation` (must not run headless), `mixed` (does both, needs splitting).
 
 ### `Game.Update(IEnumerable<InputMessage>)`

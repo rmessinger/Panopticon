@@ -39,9 +39,9 @@ geometry in the capture map is outside this plan.
 
 | Card | Scope | Status | Depends on |
 |---|---|---|---|
-| [WI-G6-03](../agent/cards/WI-G6-03-clamp-particle-opacity.md) | Shared particle-opacity clamp and late-life capture regression | Ready | None |
-| [WI-P6-06](../agent/cards/WI-P6-06-design-jet-crash-lifecycle.md) | Ground the jet crash lifecycle and implementation contract | Ready | None |
-| [WI-P6-07](../agent/cards/WI-P6-07-implement-jet-crash-lifecycle.md) | Specialized jet death runtime and cleanup regression | Draft | WI-P6-06, WI-G6-03 |
+| [WI-G6-03](https://projects.reid-corp.com/work_packages/610) | Shared particle-opacity clamp and late-life capture regression | Ready | None |
+| [WI-P6-06](https://projects.reid-corp.com/work_packages/805) | Ground the jet crash lifecycle and implementation contract | Ready | None |
+| [WI-P6-07](https://projects.reid-corp.com/work_packages/806) | Specialized jet death runtime and cleanup regression | Draft | WI-P6-06, WI-G6-03 |
 
 The shipped G6/P6 milestones remain `Done`. These corrective follow-ups are
 tracked separately in the [implementation checklist](../implementation-checklist.md)

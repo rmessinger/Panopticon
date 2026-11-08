@@ -16,19 +16,19 @@ are rebuilt by re-simulating from the nearest checkpoint; rebuilt frames are not
 
 | Sub-phase | Card | Scope |
 |---|---|---|
-| A1-6a | [`WI-A1-13`](../agent/cards/WI-A1-13-audit-checkpoint-coverage.md) | Audit checkpoint persistence coverage, checkpoint chunk exclusions, and logic RNG sources. |
-| A1-6a | [`WI-A1-14`](../agent/cards/WI-A1-14-persistable-logic-random.md) | Replace non-persistable logic random state with persisted `SageRandom` state. |
-| A1-6b | [`WI-A1-15`](../agent/cards/WI-A1-15-engine-checkpoint-format.md) | `PNCK` checkpoint writer and reader. |
-| A1-6b | [`WI-A1-16`](../agent/cards/WI-A1-16-restore-host-from-checkpoint.md) | Restore a `SimulationHost` from checkpoint without `StartCampaign`. |
-| A1-6c | [`WI-A1-17`](../agent/cards/WI-A1-17-run-identity.md) | Withdrawn: `RunIdentity` removed. |
-| A1-6c | [`WI-A1-18`](../agent/cards/WI-A1-18-operational-state-hash.md) | Withdrawn: `OperationalStateHasher` removed. |
-| A1-6d | [`WI-A1-19`](../agent/cards/WI-A1-19-recording-modes-and-cadence.md) | `RecordingMode`, `RecordingOptions`, `RecordingCadence`, and `IReconstructableDomain`. |
-| A1-6d | [`WI-A1-20`](../agent/cards/WI-A1-20-operational-stream.md) | `operational.bin` writer and reader. |
-| A1-6e | [`WI-A1-21`](../agent/cards/WI-A1-21-operational-run-bundle.md) | Bundle layout, checkpoint scheduling, and manifest fields. |
-| A1-6f | [`WI-A1-22`](../agent/cards/WI-A1-22-run-reconstructor.md) | `RunReconstructor`, bootstrap, and sinks. |
-| A1-6f | [`WI-A1-23`](../agent/cards/WI-A1-23-reconstruction-cache.md) | In-memory LRU cache of derived checkpoints at operational boundaries. |
-| A1-6g | [`WI-A1-24`](../agent/cards/WI-A1-24-reconstruction-conformance.md) | RTS and transport-graph conformance: exact checkpoint restore, invariants on rebuilt frames. |
-| W3a adapter | [`WI-W3a-31`](../agent/cards/WI-W3a-31-operational-recording-adapter.md) | Western Front `IReconstructableDomain` adapter and rollups. |
+| A1-6a | [`WI-A1-13`](https://projects.reid-corp.com/work_packages/234) | Audit checkpoint persistence coverage, checkpoint chunk exclusions, and logic RNG sources. |
+| A1-6a | [`WI-A1-14`](https://projects.reid-corp.com/work_packages/235) | Replace non-persistable logic random state with persisted `SageRandom` state. |
+| A1-6b | [`WI-A1-15`](https://projects.reid-corp.com/work_packages/236) | `PNCK` checkpoint writer and reader. |
+| A1-6b | [`WI-A1-16`](https://projects.reid-corp.com/work_packages/237) | Restore a `SimulationHost` from checkpoint without `StartCampaign`. |
+| A1-6c | [`WI-A1-17`](https://projects.reid-corp.com/work_packages/238) | Withdrawn: `RunIdentity` removed. |
+| A1-6c | [`WI-A1-18`](https://projects.reid-corp.com/work_packages/239) | Withdrawn: `OperationalStateHasher` removed. |
+| A1-6d | [`WI-A1-19`](https://projects.reid-corp.com/work_packages/240) | `RecordingMode`, `RecordingOptions`, `RecordingCadence`, and `IReconstructableDomain`. |
+| A1-6d | [`WI-A1-20`](https://projects.reid-corp.com/work_packages/241) | `operational.bin` writer and reader. |
+| A1-6e | [`WI-A1-21`](https://projects.reid-corp.com/work_packages/242) | Bundle layout, checkpoint scheduling, and manifest fields. |
+| A1-6f | [`WI-A1-22`](https://projects.reid-corp.com/work_packages/243) | `RunReconstructor`, bootstrap, and sinks. |
+| A1-6f | [`WI-A1-23`](https://projects.reid-corp.com/work_packages/244) | In-memory LRU cache of derived checkpoints at operational boundaries. |
+| A1-6g | [`WI-A1-24`](https://projects.reid-corp.com/work_packages/245) | RTS and transport-graph conformance: exact checkpoint restore, invariants on rebuilt frames. |
+| W3a adapter | [`WI-W3a-31`](https://projects.reid-corp.com/work_packages/913) | Western Front `IReconstructableDomain` adapter and rollups. |
 
 ## Execution order and dependencies
 

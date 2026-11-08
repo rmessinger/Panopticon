@@ -18,13 +18,13 @@ logistics, consumption, platoon-level aggregate combat, campaign systems, eviden
 
 | Sub-phase | Cards | Scope |
 |---|---|---|
-| W1-1 | [`WI-W1-01`](../agent/cards/WI-W1-01-parameters-loader.md), [`WI-W1-02`](../agent/cards/WI-W1-02-schema-v2.md), [`WI-W1-03`](../agent/cards/WI-W1-03-seeded-streams-poisson.md) | Parameters with unit schema, schema v2, XxHash64 streams, Poisson. |
-| W1-2 | [`WI-W1-04`](../agent/cards/WI-W1-04-message-queue-commlinks.md) | Message queue, comm links, communication system. |
-| W1-3 | [`WI-W1-05`](../agent/cards/WI-W1-05-intelligence-echelon-view.md), [`WI-W1-06`](../agent/cards/WI-W1-06-command-policies.md) | Intelligence pictures, `EchelonView`, reactive policies. |
-| W1-4 | [`WI-W1-07`](../agent/cards/WI-W1-07-movement-system.md) | Movement and stacking. |
-| W1-5 | [`WI-W1-08`](../agent/cards/WI-W1-08-logistics-allocation.md), [`WI-W1-09`](../agent/cards/WI-W1-09-shipments-interdiction-consumption.md) | Allocation, shipments, interdiction, consumption. |
-| W1-6 | [`WI-W1-10`](../agent/cards/WI-W1-10-aggregate-combat-stochastic.md), [`WI-W1-11`](../agent/cards/WI-W1-11-aggregate-combat-mean-field.md), [`WI-W1-12`](../agent/cards/WI-W1-12-morale-terrain-outcomes.md), [`WI-W1-13`](../agent/cards/WI-W1-13-campaign-systems.md) | Combat variants, morale, terrain, outcomes, campaign systems. |
-| W1-7 | [`WI-W1-14`](../agent/cards/WI-W1-14-scenario-evidence-tests.md), [`WI-W1-15`](../agent/cards/WI-W1-15-a2-experiment-report.md) | Seven-day scenario, evidence tests, 64-seed report. |
+| W1-1 | [`WI-W1-01`](https://projects.reid-corp.com/work_packages/854), [`WI-W1-02`](https://projects.reid-corp.com/work_packages/855), [`WI-W1-03`](https://projects.reid-corp.com/work_packages/856) | Parameters with unit schema, schema v2, XxHash64 streams, Poisson. |
+| W1-2 | [`WI-W1-04`](https://projects.reid-corp.com/work_packages/857) | Message queue, comm links, communication system. |
+| W1-3 | [`WI-W1-05`](https://projects.reid-corp.com/work_packages/858), [`WI-W1-06`](https://projects.reid-corp.com/work_packages/859) | Intelligence pictures, `EchelonView`, reactive policies. |
+| W1-4 | [`WI-W1-07`](https://projects.reid-corp.com/work_packages/860) | Movement and stacking. |
+| W1-5 | [`WI-W1-08`](https://projects.reid-corp.com/work_packages/861), [`WI-W1-09`](https://projects.reid-corp.com/work_packages/862) | Allocation, shipments, interdiction, consumption. |
+| W1-6 | [`WI-W1-10`](https://projects.reid-corp.com/work_packages/863), [`WI-W1-11`](https://projects.reid-corp.com/work_packages/864), [`WI-W1-12`](https://projects.reid-corp.com/work_packages/865), [`WI-W1-13`](https://projects.reid-corp.com/work_packages/866) | Combat variants, morale, terrain, outcomes, campaign systems. |
+| W1-7 | [`WI-W1-14`](https://projects.reid-corp.com/work_packages/867), [`WI-W1-15`](https://projects.reid-corp.com/work_packages/868) | Seven-day scenario, evidence tests, 64-seed report. |
 
 ---
 

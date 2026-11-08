@@ -15,11 +15,11 @@ B1 owns benchmark mechanics; this chain owns selection and orchestration.
 
 | Card | Output | Status |
 |---|---|---|
-| [`WI-A4-37`](../agent/cards/WI-A4-37-design-experiment-harness.md) | Harness design deep dive | Done |
-| [`WI-A4-38`](../agent/cards/WI-A4-38-experiment-variant-registry.md) | Definition and registry types | Done |
-| [`WI-A4-39`](../agent/cards/WI-A4-39-run-b1-experiments.md) | Per-cell B1 execution | Done |
-| [`WI-A4-40`](../agent/cards/WI-A4-40-write-experiment-comparison-report.md) | Report envelope and writers | Done |
-| [`WI-A4-41`](../agent/cards/WI-A4-41-compare-two-seam-implementations.md) | Comparison milestone and CLI | Done |
+| [`WI-A4-37`](https://projects.reid-corp.com/work_packages/288) | Harness design deep dive | Done |
+| [`WI-A4-38`](https://projects.reid-corp.com/work_packages/289) | Definition and registry types | Done |
+| [`WI-A4-39`](https://projects.reid-corp.com/work_packages/290) | Per-cell B1 execution | Done |
+| [`WI-A4-40`](https://projects.reid-corp.com/work_packages/291) | Report envelope and writers | Done |
+| [`WI-A4-41`](https://projects.reid-corp.com/work_packages/292) | Comparison milestone and CLI | Done |
 
 ## Acceptance by card
 

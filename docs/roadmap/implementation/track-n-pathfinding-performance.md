@@ -7,17 +7,17 @@ Source of truth: [deep-dives/n-multi-unit-pathfinding.md](../deep-dives/n-multi-
 
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
-| [`WI-N0-01`](../agent/cards/WI-N0-01-path-span-and-counters.md) | N0 | `path` span and request counters by origin | N0-1 | Done |
-| [`WI-N0-02`](../agent/cards/WI-N0-02-pathfinding-load-scenario.md) | N0 | `PathfindingLoad` scenario and baseline report | N0-2 | Done |
-| [`WI-N1-01`](../agent/cards/WI-N1-01-allocation-free-search.md) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
-| [`WI-N1-02`](../agent/cards/WI-N1-02-region-labels.md) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
-| [`WI-N1-03`](../agent/cards/WI-N1-03-passability-snapshot.md) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
-| [`WI-N2-01`](../agent/cards/WI-N2-01-follower-landing.md) | N2 | Bounded landing for blocked followers | N2-1 | Done |
-| [`WI-N2-02`](../agent/cards/WI-N2-02-group-selection-moves.md) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Done |
-| [`WI-N3-01`](../agent/cards/WI-N3-01-goal-field-gate.md) | N3 | Shared-destination field gate | N3-1 | Done |
-| [`WI-N4-01`](../agent/cards/WI-N4-01-pending-path-handles.md) | N4 | Pending path handles on `AIUpdate` | N4-1 | Done |
-| [`WI-N4-02`](../agent/cards/WI-N4-02-async-order-paths.md) | N4 | Async order paths behind an option | N4-2 | Done |
-| [`WI-N5-01`](../agent/cards/WI-N5-01-scale-verification.md) | N5 | Scale verification | N5-1 | Done |
+| [`WI-N0-01`](https://projects.reid-corp.com/work_packages/696) | N0 | `path` span and request counters by origin | N0-1 | Done |
+| [`WI-N0-02`](https://projects.reid-corp.com/work_packages/697) | N0 | `PathfindingLoad` scenario and baseline report | N0-2 | Done |
+| [`WI-N1-01`](https://projects.reid-corp.com/work_packages/698) | N1 | Allocation-free search scratch with a path-equality corpus | N1-1 | Done |
+| [`WI-N1-02`](https://projects.reid-corp.com/work_packages/699) | N1 | Connected-region labels and unreachable early reject | N1-2 | Done |
+| [`WI-N1-03`](https://projects.reid-corp.com/work_packages/700) | N1 | Versioned passability snapshot for workers | N1-3 | Done |
+| [`WI-N2-01`](https://projects.reid-corp.com/work_packages/720) | N2 | Bounded landing for blocked followers | N2-1 | Done |
+| [`WI-N2-02`](https://projects.reid-corp.com/work_packages/721) | N2 | Group moves for squad-less selections, behind an option | N2-2 | Done |
+| [`WI-N3-01`](https://projects.reid-corp.com/work_packages/724) | N3 | Shared-destination field gate | N3-1 | Done |
+| [`WI-N4-01`](https://projects.reid-corp.com/work_packages/725) | N4 | Pending path handles on `AIUpdate` | N4-1 | Done |
+| [`WI-N4-02`](https://projects.reid-corp.com/work_packages/726) | N4 | Async order paths behind an option | N4-2 | Done |
+| [`WI-N5-01`](https://projects.reid-corp.com/work_packages/727) | N5 | Scale verification | N5-1 | Done |
 
 Delivery: phase staging branch `staging/track-n`, numbered group PRs per the repository
 development model. Suggested groups: 1 = N0, 2 = N1, 3 = N2 and N4, 4 = N3 and N5.
@@ -392,15 +392,15 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
-| [`WI-N6-01`](../agent/cards/WI-N6-01-movement-progress-and-stall-attribution.md) | N6 | Movement progress and stall attribution | N6-1 | Done |
-| [`WI-N6-02`](../agent/cards/WI-N6-02-navigation-deadlock-scenario.md) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Done |
-| [`WI-N7-01`](../agent/cards/WI-N7-01-async-path-liveness.md) | N7 | Async and squad path liveness | N7-1 | Done |
-| [`WI-N7-02`](../agent/cards/WI-N7-02-offset-route-validation.md) | N7 | Offset route validation behind an option | N7-2 | Done |
-| [`WI-N8-01`](../agent/cards/WI-N8-01-blocked-wait-and-local-repath.md) | N8 | Blocked wait and bounded local repath | N8-1 | Done |
-| [`WI-N8-02`](../agent/cards/WI-N8-02-give-way-and-mutual-block.md) | N8 | Give-way and mutual block yield | N8-2 | Done |
-| [`WI-N9-01`](../agent/cards/WI-N9-01-destination-slots.md) | N9 | Destination slots behind an option | N9-1 | Done |
-| [`WI-N9-02`](../agent/cards/WI-N9-02-crowd-arrival.md) | N9 | Crowd arrival | N9-2 | Done |
-| [`WI-N10-01`](../agent/cards/WI-N10-01-deadlock-verification.md) | N10 | Deadlock verification | N10-1 | Done |
+| [`WI-N6-01`](https://projects.reid-corp.com/work_packages/728) | N6 | Movement progress and stall attribution | N6-1 | Done |
+| [`WI-N6-02`](https://projects.reid-corp.com/work_packages/729) | N6 | `NavigationDeadlock` scenario and baseline | N6-2 | Done |
+| [`WI-N7-01`](https://projects.reid-corp.com/work_packages/730) | N7 | Async and squad path liveness | N7-1 | Done |
+| [`WI-N7-02`](https://projects.reid-corp.com/work_packages/731) | N7 | Offset route validation behind an option | N7-2 | Done |
+| [`WI-N8-01`](https://projects.reid-corp.com/work_packages/732) | N8 | Blocked wait and bounded local repath | N8-1 | Done |
+| [`WI-N8-02`](https://projects.reid-corp.com/work_packages/733) | N8 | Give-way and mutual block yield | N8-2 | Done |
+| [`WI-N9-01`](https://projects.reid-corp.com/work_packages/734) | N9 | Destination slots behind an option | N9-1 | Done |
+| [`WI-N9-02`](https://projects.reid-corp.com/work_packages/735) | N9 | Crowd arrival | N9-2 | Done |
+| [`WI-N10-01`](https://projects.reid-corp.com/work_packages/701) | N10 | Deadlock verification | N10-1 | Done |
 
 Delivery: stacked group PRs into `main` via the `gh stack` extension (superseded the staging model Oct 2026). Suggested groups:
 1 = N6, 2 = N7, 3 = N8, 4 = N9, 5 = N10. Groups 2 to 4 may stack in any order after group 1.
@@ -411,7 +411,7 @@ Source of truth: [deep-dives/n-navigation-deadlocks.md](../deep-dives/n-navigati
 
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
-| [`WI-N21-01`](../agent/cards/WI-N21-01-structure-passability-coverage.md) | N21 | Structure passability coverage | N21-1 | Done |
+| [`WI-N21-01`](https://projects.reid-corp.com/work_packages/723) | N21 | Structure passability coverage | N21-1 | Done |
 
 Delivery: group 6 in the Track N stack, branching off `track-n-n10-5-verification`.
 
@@ -773,13 +773,13 @@ Source of truth: [deep-dives/n-confined-passage-queueing.md](../deep-dives/n-con
 
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
-| [`WI-N11-01`](../agent/cards/WI-N11-01-passage-finder.md) | N11 | Passage finder and cross-section cache | N11-1 | Ready |
-| [`WI-N11-02`](../agent/cards/WI-N11-02-passage-cases-and-baseline.md) | N11 | Passage cases and option-off baseline | N11-2 | Done |
-| [`WI-N12-01`](../agent/cards/WI-N12-01-passage-coordinator-and-queue.md) | N12 | Passage coordinator, queue order, and lane path | N12-1 | Blocked |
-| [`WI-N12-02`](../agent/cards/WI-N12-02-passage-hold-and-release-movement.md) | N12 | Passage hold, release, and route splice | N12-2 | Blocked |
-| [`WI-N13-01`](../agent/cards/WI-N13-01-opposing-flow-arbitration.md) | N13 | Opposing flow arbitration | N13-1 | Blocked |
-| [`WI-N13-02`](../agent/cards/WI-N13-02-group-passage-entry.md) | N13 | Squad and cluster passage entry | N13-2 | Blocked |
-| [`WI-N14-01`](../agent/cards/WI-N14-01-passage-verification.md) | N14 | Passage queueing verification | N14-1 | Blocked |
+| [`WI-N11-01`](https://projects.reid-corp.com/work_packages/702) | N11 | Passage finder and cross-section cache | N11-1 | Ready |
+| [`WI-N11-02`](https://projects.reid-corp.com/work_packages/703) | N11 | Passage cases and option-off baseline | N11-2 | Done |
+| [`WI-N12-01`](https://projects.reid-corp.com/work_packages/704) | N12 | Passage coordinator, queue order, and lane path | N12-1 | Blocked |
+| [`WI-N12-02`](https://projects.reid-corp.com/work_packages/705) | N12 | Passage hold, release, and route splice | N12-2 | Blocked |
+| [`WI-N13-01`](https://projects.reid-corp.com/work_packages/706) | N13 | Opposing flow arbitration | N13-1 | Blocked |
+| [`WI-N13-02`](https://projects.reid-corp.com/work_packages/707) | N13 | Squad and cluster passage entry | N13-2 | Blocked |
+| [`WI-N14-01`](https://projects.reid-corp.com/work_packages/708) | N14 | Passage queueing verification | N14-1 | Blocked |
 
 Delivery: phase staging branch `staging/track-n-passages`, numbered group PRs. Suggested groups:
 1 = N11, 2 = N12, 3 = N13, 4 = N14. `WI-N11-01` may start before N6; `WI-N11-02` waits on
@@ -897,18 +897,18 @@ Source of truth: [deep-dives/n-layered-navigation.md](../deep-dives/n-layered-na
 
 | Card | Phase | Title | Checklist item | Status |
 |---|---|---|---|---|
-| [`WI-N15-01`](../agent/cards/WI-N15-01-navigation-plan-layer-contract.md) | N15 | Navigation plan and layer contract | N15-1 | Blocked |
-| [`WI-N15-02`](../agent/cards/WI-N15-02-layered-cases-and-baseline.md) | N15 | Layered cases, layer spans, and option-off baseline | N15-2 | Blocked |
-| [`WI-N16-01`](../agent/cards/WI-N16-01-sector-graph.md) | N16 | Sector graph with incremental rebuild | N16-1 | Ready |
-| [`WI-N16-02`](../agent/cards/WI-N16-02-strategic-planner.md) | N16 | Strategic planner and route-quality corpus | N16-2 | Blocked |
-| [`WI-N17-01`](../agent/cards/WI-N17-01-corridor-search-and-stitching.md) | N17 | Masked corridor search and segment stitching | N17-1 | Blocked |
-| [`WI-N17-02`](../agent/cards/WI-N17-02-layered-unit-main-path.md) | N17 | Layered unit main path behind `LayeredNavigation` | N17-2 | Blocked |
-| [`WI-N18-01`](../agent/cards/WI-N18-01-navigation-group-and-spine.md) | N18 | Navigation groups and spine following | N18-1 | Blocked |
-| [`WI-N18-02`](../agent/cards/WI-N18-02-width-adaptive-formation-and-passages.md) | N18 | Width-adaptive formation and passage handoff | N18-2 | Blocked |
-| [`WI-N18-03`](../agent/cards/WI-N18-03-crowd-routing.md) | N18 | Crowd routing for large selections | N18-3 | Blocked |
-| [`WI-N19-01`](../agent/cards/WI-N19-01-steering-core.md) | N19 | Reciprocal velocity-obstacle steering core | N19-1 | Ready |
-| [`WI-N19-02`](../agent/cards/WI-N19-02-steering-integration.md) | N19 | Steering integration with N8 fallback | N19-2 | Blocked |
-| [`WI-N20-01`](../agent/cards/WI-N20-01-layered-navigation-verification.md) | N20 | Layered navigation verification | N20-1 | Blocked |
+| [`WI-N15-01`](https://projects.reid-corp.com/work_packages/709) | N15 | Navigation plan and layer contract | N15-1 | Blocked |
+| [`WI-N15-02`](https://projects.reid-corp.com/work_packages/710) | N15 | Layered cases, layer spans, and option-off baseline | N15-2 | Blocked |
+| [`WI-N16-01`](https://projects.reid-corp.com/work_packages/711) | N16 | Sector graph with incremental rebuild | N16-1 | Ready |
+| [`WI-N16-02`](https://projects.reid-corp.com/work_packages/712) | N16 | Strategic planner and route-quality corpus | N16-2 | Blocked |
+| [`WI-N17-01`](https://projects.reid-corp.com/work_packages/713) | N17 | Masked corridor search and segment stitching | N17-1 | Blocked |
+| [`WI-N17-02`](https://projects.reid-corp.com/work_packages/714) | N17 | Layered unit main path behind `LayeredNavigation` | N17-2 | Blocked |
+| [`WI-N18-01`](https://projects.reid-corp.com/work_packages/715) | N18 | Navigation groups and spine following | N18-1 | Blocked |
+| [`WI-N18-02`](https://projects.reid-corp.com/work_packages/716) | N18 | Width-adaptive formation and passage handoff | N18-2 | Blocked |
+| [`WI-N18-03`](https://projects.reid-corp.com/work_packages/717) | N18 | Crowd routing for large selections | N18-3 | Blocked |
+| [`WI-N19-01`](https://projects.reid-corp.com/work_packages/718) | N19 | Reciprocal velocity-obstacle steering core | N19-1 | Ready |
+| [`WI-N19-02`](https://projects.reid-corp.com/work_packages/719) | N19 | Steering integration with N8 fallback | N19-2 | Blocked |
+| [`WI-N20-01`](https://projects.reid-corp.com/work_packages/722) | N20 | Layered navigation verification | N20-1 | Blocked |
 
 Delivery: phase staging branch `staging/track-n-layers`, numbered group PRs. Suggested groups:
 1 = N16 and `WI-N19-01` (pure, no movement change), 2 = N15, 3 = N17, 4 = N18, 5 = `WI-N19-02`,

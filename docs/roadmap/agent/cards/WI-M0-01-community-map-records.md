@@ -1,7 +1,7 @@
 # `WI-M0-01` community map records
 
 Full per-map record of the 948-file community batch (CNCNZ `952 Generals Maps` pack) described in
-[`WI-M0-01-map-evaluation.md`](WI-M0-01-map-evaluation.md); method and thresholds are identical to the
+[`WI-M0-01-map-evaluation.md`](https://projects.reid-corp.com/work_packages/662); method and thresholds are identical to the
 official batch. Ranked by the smaller of the top-2 dry components (zone bottleneck); load failures last.
 `gap` = bounding-box gap, `ctr` = centroid separation, both in world units. Verdict: `cand` passes both
 screens; `fit`/`sep` names the failing screen.

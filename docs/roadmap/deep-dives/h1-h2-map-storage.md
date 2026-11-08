@@ -6,7 +6,7 @@
 
 ## Scope and ownership
 
-This audit records the legacy `.map` container, its 29 top-level sections, and the code that reads and writes them. It states current behavior with file:line citations at base commit `bc908cf`. It makes no format decision. Options are tracked in [WI-H1-02](../agent/cards/WI-H1-02-format-decision-options.md).
+This audit records the legacy `.map` container, its 29 top-level sections, and the code that reads and writes them. It states current behavior with file:line citations at base commit `bc908cf`. It makes no format decision. Options are tracked in [WI-H1-02](https://projects.reid-corp.com/work_packages/619).
 
 Code location: `src/Panopticon.Simulation/Data/Map/`, plus `SidesList` (`Logic/Map/SidesList.cs`) and the Scb reader (`Data/Scb/`). In tables, a bare file name is relative to `src/Panopticon.Simulation/Data/Map/`. Other paths are relative to `src/Panopticon.Simulation/`. Line numbers refer to base `bc908cf`.
 
@@ -209,11 +209,11 @@ The geospatial preview and GeoImport callers belong to [B4b](r-real-world-terrai
 
 ## Not a decision
 
-This document records current behavior only. It does not compare storage formats, choose one, or recommend changes. Follow-up: [WI-H1-02](../agent/cards/WI-H1-02-format-decision-options.md).
+This document records current behavior only. It does not compare storage formats, choose one, or recommend changes. Follow-up: [WI-H1-02](https://projects.reid-corp.com/work_packages/619).
 
 ## Settled choices confirmed
 
-Checked 2026-11-06 against this audit at base `bc908cf`: the choices settled in the [implementation plan](../implementation/track-h-h1-h3-map-storage.md) and the [Map storage format Decision](../open-questions.md) are confirmed against the audit tables by [WI-H1-02](../agent/cards/WI-H1-02-format-decision-options.md).
+Checked 2026-11-06 against this audit at base `bc908cf`: the choices settled in the [implementation plan](../implementation/track-h-h1-h3-map-storage.md) and the [Map storage format Decision](../open-questions.md) are confirmed against the audit tables by [WI-H1-02](https://projects.reid-corp.com/work_packages/619).
 
 | Settled choice | Consumer | Requirement | Audit evidence | Verdict |
 |---|---|---|---|---|

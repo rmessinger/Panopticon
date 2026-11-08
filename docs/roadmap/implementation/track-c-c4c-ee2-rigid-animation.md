@@ -16,12 +16,12 @@ captures. Skinning is C4d.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4c-01`](../agent/cards/WI-C4c-01-decode-kf-animation-blocks.md) | KF sequence, text-key, controller, and keyframe blocks. |
-| 2 | [`WI-C4c-02`](../agent/cards/WI-C4c-02-preserve-nif-node-hierarchy.md) | Node skeleton with bone-local rigid meshes and rest-pose parity. |
-| 3 | [`WI-C4c-03`](../agent/cards/WI-C4c-03-evaluate-nif-key-curves.md) | Hermite curves and Euler-to-quaternion resampling. |
-| 4 | [`WI-C4c-04`](../agent/cards/WI-C4c-04-add-nif-animation-importer.md) | Model-qualified KF importer emitting C1 channels. |
-| 5 | [`WI-C4c-05`](../agent/cards/WI-C4c-05-verify-ee2-clip-descriptors.md) | Installed clip, binding, and pose checks. |
-| 6 | [`WI-C4c-06`](../agent/cards/WI-C4c-06-capture-animated-proof-models.md) | Deterministic animated captures. |
+| 1 | [`WI-C4c-01`](https://projects.reid-corp.com/work_packages/492) | KF sequence, text-key, controller, and keyframe blocks. |
+| 2 | [`WI-C4c-02`](https://projects.reid-corp.com/work_packages/493) | Node skeleton with bone-local rigid meshes and rest-pose parity. |
+| 3 | [`WI-C4c-03`](https://projects.reid-corp.com/work_packages/494) | Hermite curves and Euler-to-quaternion resampling. |
+| 4 | [`WI-C4c-04`](https://projects.reid-corp.com/work_packages/495) | Model-qualified KF importer emitting C1 channels. |
+| 5 | [`WI-C4c-05`](https://projects.reid-corp.com/work_packages/496) | Installed clip, binding, and pose checks. |
+| 6 | [`WI-C4c-06`](https://projects.reid-corp.com/work_packages/497) | Deterministic animated captures. |
 
 Cards 1 and 2 can proceed in parallel. Card 3 follows card 1. Card 4 needs cards 2 and 3.
 Card 6 is the completion point.

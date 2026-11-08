@@ -31,7 +31,7 @@ Each artifact owns one view. A plan change usually touches several. Know which o
 | [`plans/known-test-failures.md`](../plans/known-test-failures.md) | Recurring test-failure inventory, remediation sequence, and closeout gates. |
 | [`plans/m5-closeout.md`](../plans/m5-closeout.md) | Track M closeout order of operations: staging of remaining phases, measurement-driven B2/B3 decision, and M5 acceptance. |
 | [`current-state.md`](current-state.md) | Snapshot of the code the roadmap assumes. |
-| [`agent/`](./) | Ticket link stubs + the execution-agent workflow. Ticket status and completion records live in OpenProject. |
+| [`agent/`](./) | Card-to-ticket mapping + the execution-agent workflow. Ticket status and completion records live in OpenProject. |
 | [`README.md`](../README.md) | Index: doc map, deep-dive table, at-a-glance, guiding principles. |
 | Copilot memories | Durable decisions/conventions (via `store_memory`, repository scope). |
 | Session `plan.md` | The orchestrator's working notes: session-local, not in the repo. |
@@ -45,16 +45,16 @@ Find your change type; update every box listed. Then run the [validation](#valid
 | You changed… | Must also update |
 |---|---|
 | Add a phase / sub-phase | track doc table (incl. a Milestone definition-of-done) + notes · implementation-checklist (new items, each with an `AC:` sub-bullet: concrete, or `TBD` + rough template if not yet definable) · roadmap-tree mindmap · roadmap-tree LR flow (place by dependency depth + edges) · README at-a-glance · its deps in the tree/checklist ordering |
-| Rename / renumber a phase | every doc above plus every inbound link/anchor; search the whole `docs/roadmap/` tree for the old id · agent card stub files in `agent/cards/` and the OpenProject tickets referencing it · SQL todo ids (if the orchestrator tracks them) |
+| Rename / renumber a phase | every doc above plus every inbound link/anchor; search the whole `docs/roadmap/` tree for the old id · mapping rows in `agent/legacy-card-mapping.md` and the OpenProject tickets referencing it · SQL todo ids (if the orchestrator tracks them) |
 | Remove a phase | delete from track doc, checklist, tree (both diagrams), README; fix anything that depended on it |
 | Change a dependency / ordering | track doc "Depends on" · roadmap-tree LR edges (+ re-stage if depth changed) · checklist ordering |
 | Change a phase's Status | track doc Status · tick/untick checklist items · status of each matching OpenProject ticket · README [Progress](#progress) tables |
-| Ticket status change or completion | OpenProject: `op_update_work_package` for status, `op_add_work_package_comment` for the completion record. Do not mirror status into stub files. |
-| Card file created on a branch, once that branch merges | Reconcile per [ticket workflow](README.md#ticket-workflow): look up the ID, create the ticket if absent, and replace the card file with a link stub. |
+| Ticket status change or completion | OpenProject: `op_update_work_package` for status, `op_add_work_package_comment` for the completion record. Do not mirror status into mapping rows. |
+| Card file created on a branch, once that branch merges | Reconcile per [ticket workflow](README.md#ticket-workflow): look up the ID, create the ticket if absent, and replace the card file with a row in [the legacy card mapping](legacy-card-mapping.md). |
 | Make a decision (resolve an open question) | open-questions.md (write as Decision + rationale) · thread into the affected phase/deep dive · `store_memory` (repository scope) · README guiding principle if it's a principle |
 | Introduce / change a seam | seams.md registry · the A4 notes in track-a · any deep dive that uses it |
 | Write a deep dive | add `deep-dives/<name>.md` · link from the phase row · add an `Architecture Diagrams` placeholder section · update the phase's Phase resources row in the track doc · README Deep dives table · mark the phase ⮕ in the roadmap-tree mindmap |
-| Phase ready for cheap agents | Architecture diagrams (class + sequence) complete in the phase's deep-dive `Architecture Diagrams` section: placeholder stubs must be replaced with diagrams grounded in the actual types and flows before the first source-edit ticket is made startable · a read-only audit/design ticket may be made startable when its deliverable supplies the evidence or diagrams needed to open that gate · update the Phase resources row in the track doc (remove `†`) · add implementation plan entry to `implementation/README.md` with diagram link · decompose into OpenProject tickets, one link stub each in [agent cards](./) ([ticket workflow](README.md#ticket-workflow)) · keep ticket status ↔ phase Status |
+| Phase ready for cheap agents | Architecture diagrams (class + sequence) complete in the phase's deep-dive `Architecture Diagrams` section: placeholder stubs must be replaced with diagrams grounded in the actual types and flows before the first source-edit ticket is made startable · a read-only audit/design ticket may be made startable when its deliverable supplies the evidence or diagrams needed to open that gate · update the Phase resources row in the track doc (remove `†`) · add implementation plan entry to `implementation/README.md` with diagram link · decompose into OpenProject tickets, one row each in [the legacy card mapping](legacy-card-mapping.md) ([ticket workflow](README.md#ticket-workflow)) · keep ticket status ↔ phase Status |
 | Code drifts from assumptions | refresh current-state.md (it underpins every phase) |
 | Add/rename/remove any doc | README doc map + (if a deep dive) the Deep dives table · this file's parallel-documents table |
 
@@ -127,7 +127,7 @@ Additional rules specific to `docs/roadmap/`:
 - Don't repeat the same rationale, background, or "why this matters" explanation across multiple
   roadmap docs (README, track docs, deep dives, task cards). State it once in the doc that owns the
   topic and link to it from the others.
-- Applies to every file under `docs/roadmap/`, including `agent/cards/` task cards.
+- Applies to every file under `docs/roadmap/`, including `agent/` docs and the legacy card mapping.
 
 ---
 
