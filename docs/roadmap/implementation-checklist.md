@@ -1569,10 +1569,28 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: physics fields round-trip with no BepuPhysics types or handles; a future-field package loads with a warning and re-emits the field.
 - [x] H4-5 Bounded INI parity proof (`WI-H4-05`).
   - AC: a bounded Generals roster materializes equal on both paths, plus one behavioral assertion.
-- [ ] H5 Legacy migration & compatibility tooling (`.map`/INI → new formats, round-trip
-  validator).
-  - AC: a converted legacy map and unit roster load through the new formats and play identically
-    (per the P0 assertion layer) to the original `.map`/INI content.
+- [x] H5-1 Legacy map conversion tool (`WI-H5-01`).
+  - AC: a legacy `.map` converts to an H3 package; typed sections re-read semantically equal;
+    every retained section matches by SHA-256; the manifest accounts for every source section,
+    and a missing section fails conversion; mask and blend bits are byte-identical with no
+    polarity change.
+- [ ] H5-2 Legacy INI conversion tool (`WI-H5-02`).
+  - AC: a bounded Generals roster converts; converted packages re-read to the same closure;
+    resolutions carrying error diagnostics refuse conversion with a per-record report; no
+    partial rosters are written.
+- [ ] H5-3 Round-trip validator and report (`WI-H5-03`).
+  - AC: each failure class produces a named diagnostic and a report entry; identical content
+    passes; provenance-only unit differences pass only through the explicit allowlist; exit
+    code and JSON report are machine-checkable.
+- [ ] H5-4 Retained-backend integration for converted maps (`WI-H5-04`).
+  - AC: a converted map loads and plays with lighting, cameras, water, blend navigation,
+    waypoint paths, sides, teams, scripts, and trigger areas equivalent to the original;
+    every retained section has a disposition; silent drops fail validation and load; the
+    legacy `.map` path is unchanged.
+- [ ] H5-5 Behavioral equivalence harness (`WI-H5-05`).
+  - AC: end-state assertions (outcomes, survivors, engagement assertions per the existing
+    run-and-assert pattern) match across both runs; any divergence fails with a named diff
+    report; the play-identically claim is proven by this ticket only.
 - [ ] H6 Authoring & pipeline integration (WorldBuilder read/write; ModCollector/`AssetStore`
   scope layering).
   - AC: WorldBuilder authors, saves, and reloads a map in the new format, and a ModCollector-
