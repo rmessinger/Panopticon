@@ -9,6 +9,8 @@ Runtime positions, lengths, bounds, and translations use meters. Authored rates 
 
 The Generals distance convention is one foot: `s = 0.3048` meters per legacy unit. Length, velocity, and acceleration scale by `s`; area and squared-distance thresholds by `s^2`; volume by `s^3`; inverse-length quantities by `1/s`. Gravity preserves the converted source value, not an assumed terrestrial value. Mass and force fields require evidence of physical dimensions and source units; gameplay weights are not kilograms.
 
+Each supported game declares a source unit policy at its source boundaries: a per-game `SourceUnitPolicy` giving the meters-per-source-unit scale, never a parser-global assumed physical truth. Generals declares the established 0.3048 meters per legacy unit. The BFME family (BFME, BFME2, RotWK) declares 0.3048 as a provisional compatibility scale: a uniform similarity transform that preserves existing numerical behavior, documented as unverified physical calibration and never claimed as a measured unit. The policy is centralized with a per-game override point, so a later measured value replaces one declaration. Every supported game declares its policy explicitly, with no default fallthrough, and tests enforce that no value is scaled twice.
+
 Raw format readers retain source-space values. Normalization happens once, at the source-to-engine boundary, and the inverse is applied on legacy write. Map cells, sample indices, pixels, UVs, normals, rotations, and ratios are not lengths. Runtime interchange is metric unless a quantity explicitly carries a source unit tag.
 
 ## Current state on main
@@ -53,7 +55,7 @@ Ownership note: this design task is docs-only. `src/Panopticon.Simulation/Conten
 
 ## Audit inventory
 
-Each row names the source unit, the runtime unit after cutover, the conversion owner, the inverse writer, the dimensional exponent (`L` length, `T` time), and the test home. Rows marked AQ are audit questions: the dispositions in the Audit questions section resolve AQ-2 through AQ-14, AQ-1 stays open in narrowed form, and an open AQ blocks its ticket. No source ticket guesses a unit.
+Each row names the source unit, the runtime unit after cutover, the conversion owner, the inverse writer, the dimensional exponent (`L` length, `T` time), and the test home. Rows marked AQ are audit questions: the dispositions in the Audit questions section resolve AQ-1 through AQ-14, and an open AQ blocks its ticket. No source ticket guesses a unit.
 
 Dimensionless and non-length rows (health, damage, cost, currency, ratios, angles, UVs, cells, pixels) are unchanged and are not repeated per row.
 
@@ -66,9 +68,9 @@ Dimensionless and non-length rows (health, damage, cost, currency, ratios, angle
 | `GameData.cs:161` `Gravity` | legacy foot per second squared | m per logic frame squared (converted value, not terrestrial) | `IniParser` boundary | none | `L T^-2` | `IniFileTests.cs`, `GameData` tests (WI-H2b-05) |
 | `IniParser.cs:483` `ParseAngularVelocityToLogicFrames` | degrees per second | unchanged | none | none | `T^-1` | `IniFileTests.cs` |
 | Distance-named INI fields in `Logic/` and `GameData.cs` (about 312 parse sites matching Range, Radius, Distance, Speed, Height, Vision, Offset, Width, Length, Depth, Accel, Gravity, Spacing, Scale, Lifetime, Size) | legacy foot | m | `IniParser` boundary, per field | none | `L` (per field) | `IniFileTests.cs` plus per-object tests |
-| BFME variants in `src/Panopticon.Mods.Bfme2/Bfme2Definition.cs` and `Bfme2RotwkDefinition.cs` | AQ-1 | AQ-1 | AQ-1 | none | AQ-1 | none established |
+| BFME variants in `src/Panopticon.Mods.Bfme2/Bfme2Definition.cs` and `Bfme2RotwkDefinition.cs` | BFME-family legacy unit; provisional 0.3048 compatibility scale (AQ-1 decided) | m | `IniParser` boundary, per-game policy | none | `L` | `IniFileTests.cs` (policy-explicitness and no-double-scale tests) |
 
-AQ-1: The BFME unit convention is open and narrowed; see the AQ-1 subsection under Audit questions. BFME rows get no source ticket until the Architect decides; dormant or unsupported BFME paths stay recorded here without importers.
+AQ-1 (decided): the BFME rows convert under the provisional compatibility scale declared per game; see the AQ-1 subsection under Audit questions. The provisional scale is a similarity transform, not a measured BFME calibration; the missing BFME physical fixture stays a known limitation recorded in WI-H2b-18.
 
 The full per-field list is produced by the WI-H2b-05 scope step (see the per-ticket table). The grep recipe is the gate: every matching site is either converted, classified as non-length, or listed as AQ before WI-H2b-05 starts.
 
@@ -107,17 +109,19 @@ AQ-2 (resolved): the derivation in the `Ee2ReferenceScale.cs` doc comment names 
 | Map object positions (`RuntimeBridge.MaterializeMapObjects`, `RuntimeBridge.cs:117`) | `GameUnit` (from `LegacyMapReader`) | `Meters` | `RuntimeBridge` | `MapFile.WriteTo` | `L` | `RuntimeBridgeParityTests.cs` |
 | Waypoints (`Data/Map/Waypoint*`, `Scripting/Waypoints.cs`) | `GameUnit` | `Meters` | `RuntimeBridge` | `MapFile.WriteTo` | `L` | `LegacyMapReaderTests.cs` |
 | Mask feed (`RuntimeBridge.TryGetMaskFeed`, `RuntimeBridge.cs:195`) | cells, dimensionless | unchanged | none | none | `L^0` | `RuntimeBridgeParityTests.cs` |
-| Polygon triggers (`Logic/Map/PolygonTrigger.cs`) | `GameUnit`, retained opaque (not a typed `MapInterchange` component, AQ-4 closed) | unchanged in H2b; typed home is the H5 work | none in H2b | none | `L` | none established |
+| Polygon triggers (`Logic/Map/PolygonTrigger.cs`) and other retained map-sourced fields read directly by `Scene3D` (AQ-4 corrected) | `GameUnit`, retained opaque (not a typed `MapInterchange` component) | `Meters` before runtime | `Game`/`Scene3D` load boundary or the section readers; inventory owned by WI-H2b-07/08 | `MapFile.WriteTo`; stored source bytes unchanged | `L` | inventory and tests named in WI-H2b-07/08 |
 | WorldBuilder new-map defaults (`NewMapFactory`) | `GameUnit` defaults | `Meters` when constructed | `EditorMap.CreateNew` (`EditorMap.cs:34`) | `MapFile.WriteTo` | `L` | `test/Panopticon.Tools.WorldBuilder.Core.Tests/NewMapFactoryTests.cs`, `MapCompanionTests.cs` |
 | Geospatial import (`MapQuantityUnit.Meters` and `Degrees` CRS, `MapInterchangeValidator.cs:835-836`) | `Meters` for CRS, `GameUnit` for derived spacing | `Meters` | `RuntimeBridge` for spacing | `MapFile.WriteTo` | `L` | `test/Panopticon.Geospatial.Tests/Interchange/SourceProvenanceAndMapTransformTests.cs` |
 
-Map rule: `LegacyMapReader` keeps source-space values and their `GameUnit` tags. `RuntimeBridge` is the only converter on read. `MapFile.WriteTo` applies the inverse on write. `GameUnit` is never reinterpreted as meters.
+Map rule: `LegacyMapReader` keeps source-space values and their `GameUnit` tags. `RuntimeBridge` is the only converter on read for typed `MapInterchange` components. `MapFile.WriteTo` applies the inverse on write. `GameUnit` is never reinterpreted as meters.
+
+Retained-backend rule (AQ-4, corrected): retained-opaque storage is not a reason to defer runtime quantity conversion. `Scene3D` and other consumers read `MapFile` directly after the bridge: water from `PolygonTriggers` (`Scene3D.cs:321`), plus cameras, lighting, waypoint paths, sides and team positions, and MP positions. Every load-bearing dimensionful field in the retained legacy backend normalizes before runtime under H2b, with the inverse applied on legacy write and the stored source bytes unchanged; no silent mixture of metric terrain with legacy-unit water, triggers, cameras, or paths. The retained-backend dimensionful inventory (sections consumed at runtime, their coordinate fields, the conversion owner at the `Game`/`Scene3D` load boundary or the section readers, and the inverse writer) is a required audit deliverable, assigned in the per-ticket table: WI-H2b-07 and WI-H2b-08 own the map-sourced retained fields and WI-H2b-14 owns replay and order paths if any. Coordination with H5: H2b converts values at the legacy backend boundary without changing section storage, and H5 may later replace the backend without re-converting.
 
 ### W3D, glTF, and NIF importers
 
 | Source site | Source unit | Runtime unit after cutover | Conversion owner | Inverse writer | Exponent | Test home |
 |---|---|---|---|---|---|---|
-| `W3dModelImporter.cs:182` bone pivot translations | legacy game unit (AQ-5 closed; fixture proof in WI-H2b-09) | `Meters` | W3D importer, at import, including bind translations | none (no W3D writer) | `L` | `test/Panopticon.Simulation.Tests/Content/Importing/W3dModelImporterTests.cs`, `W3dImportParityTests.cs` |
+| `W3dModelImporter.cs:182` bone pivot translations | legacy game unit by compatibility scale (AQ-5; compatibility proof in WI-H2b-09) | `Meters` | W3D importer, at import, including bind translations | none (no W3D writer) | `L` | `test/Panopticon.Simulation.Tests/Content/Importing/W3dModelImporterTests.cs`, `W3dImportParityTests.cs` |
 | `W3dAnimationImporter.cs:286-288` translation channels | legacy game unit (AQ-5) | `Meters` | W3D importer, at import | none | `L` | `W3dAnimationImporterTests.cs` |
 | `W3dMeshConverter` vertex positions | legacy game unit (AQ-5) | `Meters` | W3D importer | none | `L` | `W3dMeshConverterTests.cs` |
 | `ImportedVisualInstaller.cs:34, 88` `modelScale` | dimensionless multiplier | unchanged; kept separate from unit conversion | caller (presentation sizing) | none | dimensionless | `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs`, `Units/UnitVisualMaterializerTests.cs` |
@@ -181,15 +185,15 @@ Importer rule: each importer converts at import. The inverse exists only where a
 
 ### Audit questions
 
-Dispositions are evidence-based and verified at `7b7b9585f`; citations are file:line at that commit. AQ-1 stays open in narrowed form; AQ-2 through AQ-14 are resolved. Proofs that remain inside resolved tickets (the AQ-5 fixture, the AQ-9 uniform enumeration, and similar) are named in the per-ticket table.
+Dispositions are evidence-based and verified at `7b7b9585f`; citations are file:line at that commit. AQ-1 is decided by the Architect and recorded in the subsection below; AQ-2 through AQ-14 are resolved. Proofs that remain inside resolved tickets (the AQ-5 compatibility fixture, the AQ-9 uniform enumeration, and similar) are named in the per-ticket table.
 
 | ID | Question | Disposition | Evidence |
 |---|---|---|---|
-| AQ-1 | BFME INI unit convention | open, narrowed; WI-H2b-05 blocked on the Architect decision | subsection below |
+| AQ-1 | BFME INI unit convention | decided; per-game declared source unit policy (option 2) | subsection below |
 | AQ-2 | Unit of EE2 model reference scale | resolved | The `Ee2ReferenceScale.cs` doc comment derives the unit: EE2 NIF models authored in decimeters, one tile = 50 model units = 5 m, `GameUnitsPerSourceDistance` 18.2505, `GameUnitsPerSourceModelUnit` 0.36501. After cutover the declared scale is meters directly (5 m per tile, 0.1 m per model unit); the 3.6501 Generals presentation anchor stays separate and is never a gameplay scale |
 | AQ-3 | Vertical height sample scale | resolved by construction | `HeightMapData.cs:17` `VerticalScale` converts elevation steps to world Z; `HeightMap.cs:12` `HorizontalScale` is 10 and world positions combine Z with XY everywhere, so elevation is a world length in the same `GameUnit`. It converts by `s` like other lengths; raw elevation integers round-trip unchanged (proof in WI-H2b-07) |
-| AQ-4 | Whether polygon triggers pass through `MapInterchange` | resolved, out of typed scope | `PolygonTriggers` does not pass through `MapInterchange` as a typed component: `LegacyMapReader.cs:309-311` retains it opaque and `Scene3D.cs:321` reads `MapFile.PolygonTriggers` directly. Its coordinates ride the retained legacy path and the H5 typed-home work |
-| AQ-5 | W3D file unit | resolved, fixture proof outstanding | W3D importers place vertices and pivots directly in world space with no scale, and INI geometry radii authored in legacy feet must match hulls in the original game, so the W3D source unit is the legacy game unit. WI-H2b-09 proves it with a known-bounds fixture (installed W3D hull bounds vs INI `GeometryMajorRadius`) before converting |
+| AQ-4 | Whether polygon triggers pass through `MapInterchange` | resolved, corrected: retained-opaque storage is not a reason to defer runtime quantity conversion | `PolygonTriggers` does not pass through `MapInterchange` as a typed component: `LegacyMapReader.cs:309-311` retains it opaque and `Scene3D.cs:321` reads `MapFile.PolygonTriggers` directly (water), alongside cameras, lighting, waypoint paths, sides and team positions, and MP positions read from `MapFile` after the bridge. Every load-bearing dimensionful field in the retained legacy backend normalizes before runtime under H2b, with the inverse applied on legacy write and the stored source bytes unchanged; no silent mixture of metric terrain with legacy-unit water, triggers, cameras, or paths. The retained-backend dimensionful inventory is a required audit deliverable; WI-H2b-07/08 own map-sourced retained fields and WI-H2b-14 owns replay/order paths if any. H2b converts values at the legacy backend boundary without changing section storage; H5 may later replace the backend without re-converting |
+| AQ-5 | W3D file unit | resolved, reframed as a compatibility scale | W3D importers place vertices and pivots directly in world space with no scale, so converting by the same 0.3048 compatibility scale as AQ-1 preserves the existing similarity between W3D geometry and INI-authored radii. The WI-H2b-09 known-bounds fixture (installed W3D hull bounds vs INI `GeometryMajorRadius`) proves that compatibility, not a physical fact about the W3D file format; the file unit is not physically established |
 | AQ-6 | Physics backend world unit | resolved | `PhysicsUnitConversion.cs` is unit-neutral per-frame and per-second math; gravity flows from `GameData` through `PhysicsBehavior.cs:286` to the backends (`BepuPhysicsWorld.cs:33` takes gravity per second squared). No backend declares an independent world unit: the world unit is the runtime unit, legacy today and meters after cutover. Conversion owner is the `GameData` boundary |
 | AQ-7 | Partition cell and scripting area units | resolved | `PartitionCellSize` is a `GameData` INI length (`GameData.cs:163`) consumed at `PartitionCellManager.cs:64`; the literal `10.0f` at `PartitionCellManager.cs:100` is `HeightMap.HorizontalScale` and follows terrain spacing. Scripting areas and waypoints carry world positions from map data |
 | AQ-8 | Per-constant camera units | resolved | Camera heights are `GameData` INI presentation lengths (`GameData.cs:149-151` `CameraHeight`, `MaxCameraHeight`, `MinCameraHeight`) converting in WI-H2b-06; `TacticalView` constants derive from those plus `HorizontalScale` |
@@ -200,19 +204,15 @@ Dispositions are evidence-based and verified at `7b7b9585f`; citations are file:
 | AQ-13 | Geospatial export units | resolved | Geospatial is already unit-explicit (`GeospatialMapTransform` `MetersPerGameUnit`, `LocalMapGrid.cs:48,162,248`). The cutover changes what one `GameUnit` means in runtime spacing; each geospatial manifest's declared `metersPerGameUnit` is re-declared for metric spacing in WI-H2b-16, never silently reinterpreted |
 | AQ-14 | NIF particle translation direction | resolved | The `NifParticleEffectConverter.cs:80` comment states the conjugation converts translation to feet and the interchange carries source units (meters), so `*= MetersPerFoot` correctly undoes the legacy scale today. When WI-H2b-10 removes the feet expansion from `NifTransformConverter.SourceToEngine`, this multiplication is removed in the same ticket or translations shrink by 0.3048 |
 
-#### AQ-1: BFME INI unit convention (open, narrowed)
+#### AQ-1: BFME INI unit convention (decided)
 
-The INI parser and `GameData` tables are shared by Generals, BFME, BFME2, and RotWK SageGame titles. Only the Generals convention is established: one legacy unit = one foot, fixed by the contract above and confirmed by installed content. No BFME install or fixture exists in this environment, so the BFME convention is unproven.
+The Architect decided option 2: a per-game declared source unit policy at the source boundaries, not a parser-global assumed physical truth. The INI parser and `GameData` tables are shared by Generals, BFME, BFME2, and RotWK SageGame titles, and only the Generals convention is physically established: `s = 0.3048` meters per legacy unit, fixed by the contract above and confirmed by installed content.
 
-Exact unresolved question: does one parsed INI length unit denote the same physical distance in the BFME-family titles as in Generals?
+The BFME family (BFME, BFME2, RotWK) declares the same value as a provisional compatibility scale: a uniform similarity transform chosen to preserve existing numerical behavior, documented as unverified physical calibration. It is never claimed as a measured unit for the BFME titles or as a physically established scale across the SageGame family. The policy is centralized with a per-game override point, so a later measured BFME value replaces one declaration.
 
-Options for the Architect; this document does not pick one:
+Tests enforce two properties: no value is scaled twice anywhere in the conversion chain, and every supported game declares its policy explicitly with no default fallthrough. The decision excludes no supported game and leaves no non-metric runtime: the similarity conversion is consistent across all of a game's surfaces.
 
-1. Parser-wide conversion: assume one legacy foot across all SageGame titles and normalize once at the shared `IniParser` boundary.
-2. Per-game declared scale: declare the conversion per game at the parser boundary, with only Generals proven and the BFME scales declared but unproven.
-3. Explicit exclusion: exclude BFME titles from the metric release scope; BFME rows stay dormant with no importers.
-
-WI-H2b-05 is blocked on this decision.
+Known limitation: no BFME install or physical fixture exists in this environment, so the BFME scale stays provisional. A later BFME physical fixture remains a recorded limitation for the release report (WI-H2b-18). WI-H2b-05 is unblocked; the BFME rows above convert under the provisional policy.
 
 ## Cutover design
 
@@ -401,7 +401,7 @@ sequenceDiagram
     Note over Imp: glTF default 1.0 units per meter. NIF keeps axis, drops feet expansion
 ```
 
-Diagram notes: `IUnitSourceAdapter` and `GeneralsUnitAdapter` are verified at `src/Panopticon.Simulation/Content/Importing/Units/Generals/GeneralsUnitAdapter.cs:20`. Relationships to W3D importers are the target boundaries, not present code; the W3D unit is the legacy game unit, proven by the WI-H2b-09 known-bounds fixture (AQ-5).
+Diagram notes: `IUnitSourceAdapter` and `GeneralsUnitAdapter` are verified at `src/Panopticon.Simulation/Content/Importing/Units/Generals/GeneralsUnitAdapter.cs:20`. Relationships to W3D importers are the target boundaries, not present code; the W3D conversion applies the 0.3048 compatibility scale of AQ-1, and the WI-H2b-09 known-bounds fixture proves compatibility, not a physically established file unit.
 
 ## Card sequence
 
@@ -438,20 +438,20 @@ No source ticket (WI-H2b-03 through 18) is startable until the Architect reviews
 |---|---|---|---|---|---|
 | WI-H2b-03 (wp642) | 03a primitives, 03b tags | `src/Panopticon.Simulation/Content/Importing/Units/Materialization/UnitConversionPolicy.cs`, `Units/Types/QuantityUnit.cs`, `Units/Quantity.cs` | `test/Panopticon.Simulation.Tests/Content/Importing/Units/MaterializationFixtures.cs` | 02 | none |
 | WI-H2b-04 (wp643) | 04a Generals tags, 04b materializers | `Units/Generals/GeneralsUnitAdapter.cs`, `Units/Materialization/UnitBodyMovementMaterializer.cs`, `UnitCombatMaterializer.cs`, `Units/Generals/GeneralsUnitImport.cs`, `src/Panopticon.Tools.TestHarness/UnitContentImportRunner.cs` | `GeneralsUnitAdapterTests.cs`, `UnitBodyMovementMaterializerTests.cs`, new `UnitCombatMaterializerTests.cs` | 03 | none |
-| WI-H2b-05 (wp644) | 05a INI helpers, 05b gameplay field enumeration | `src/Panopticon.Simulation/Data/Ini/IniParser.cs`, `GameData.cs`, `Logic/Object/` distance fields | `test/Panopticon.Simulation.Tests/Data/Ini/IniFileTests.cs`, per-object tests | 03, 04 | AQ-1 (open; blocked on the Architect decision) |
+| WI-H2b-05 (wp644) | 05a INI helpers, 05b gameplay field enumeration | `src/Panopticon.Simulation/Data/Ini/IniParser.cs`, `GameData.cs`, `Logic/Object/` distance fields | `test/Panopticon.Simulation.Tests/Data/Ini/IniFileTests.cs`, per-object tests | 03, 04 | AQ-1 provisional-policy tests: per-game explicit source unit policy with no default fallthrough, and no double scale on BFME rows |
 | WI-H2b-06 (wp645) | 06a presentation INI, 06b globals | `Logic/Object/Draw/`, `Audio/AudioSettings.cs` (presentation distances only) | `ImportedModelMaterializerTests.cs`, `UnitVisualMaterializerTests.cs` | 05 | none |
-| WI-H2b-07 (wp646) | 07a terrain spacing, 07b elevation | `src/Panopticon.Simulation/Data/Map/MapFile.cs`, `HeightMapData.cs`, `Content/Importing/MapSources/RuntimeBridge.cs` | `LegacyMapReaderTests.cs`, `RuntimeBridgeParityTests.cs` | 03 | AQ-3 elevation integer round-trip proof |
-| WI-H2b-08 (wp647) | 08a placement, 08b WorldBuilder | `Data/Map/MapObject.cs`, `ObjectsList.cs`, `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs`, `NewMapFactory` | `test/Panopticon.Tools.WorldBuilder.Core.Tests/NewMapFactoryTests.cs`, `MapCompanionTests.cs` | 07 | none |
-| WI-H2b-09 (wp648) | 09a W3d mesh, 09b W3d animation | `src/Panopticon.Simulation/Content/Importing/W3d/` | `W3dModelImporterTests.cs`, `W3dAnimationImporterTests.cs`, `W3dMeshConverterTests.cs`, `W3dImportParityTests.cs` | 03 | AQ-5 known-bounds fixture (installed W3D hull bounds vs INI `GeometryMajorRadius`) |
+| WI-H2b-07 (wp646) | 07a terrain spacing, 07b elevation | `src/Panopticon.Simulation/Data/Map/MapFile.cs`, `HeightMapData.cs`, `Content/Importing/MapSources/RuntimeBridge.cs` | `LegacyMapReaderTests.cs`, `RuntimeBridgeParityTests.cs` | 03 | AQ-3 elevation integer round-trip proof; AQ-4 retained-backend inventory and map-sourced retained-field conversion (with 08) |
+| WI-H2b-08 (wp647) | 08a placement, 08b WorldBuilder | `Data/Map/MapObject.cs`, `ObjectsList.cs`, `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs`, `NewMapFactory` | `test/Panopticon.Tools.WorldBuilder.Core.Tests/NewMapFactoryTests.cs`, `MapCompanionTests.cs` | 07 | AQ-4 map-sourced retained-field conversion (with 07): water via polygon triggers, waypoint paths, sides and team positions, MP positions |
+| WI-H2b-09 (wp648) | 09a W3d mesh, 09b W3d animation | `src/Panopticon.Simulation/Content/Importing/W3d/` | `W3dModelImporterTests.cs`, `W3dAnimationImporterTests.cs`, `W3dMeshConverterTests.cs`, `W3dImportParityTests.cs` | 03 | AQ-5 known-bounds compatibility fixture (installed W3D hull bounds vs INI `GeometryMajorRadius`) |
 | WI-H2b-10 (wp649) | 10a glTF default and basis, 10b NIF expansion removal, 10c NIF particle translation | `Content/Importing/Gltf/GltfImportOptions.cs`, `GltfTransformConverter.cs`, `Content/Importing/Nif/NifTransformConverter.cs`, `NifParticleEffectConverter.cs`, ReplaySketch `ExternalModelImportOptions.cs` | `GltfImporterTests.cs`, `GltfSceneConverterTests.cs`, `NifModelImporterTests.cs`, `NifSkinConverterTests.cs`, ReplaySketch `ExternalModelProtocolTests.cs` | 09 | AQ-14 fixture (particle translation, created here); `MetersPerFoot` removal rides the same ticket as the feet expansion |
 | WI-H2b-11 (wp650) | 11a physics adapters, 11b terrain physics | `src/Panopticon.Physics/`, `src/Panopticon.Tools.TestHarness/TerrainPhysicsChunks.cs` | `LegacyPhysicsBodyTests.cs`, `PhysicsBehaviorTests.cs` | 05, 07, 09 | none |
 | WI-H2b-12 (wp651) | 12a navigation, 12b partition and scripts | `src/Panopticon.Simulation/Navigation/`, `Scripting/`, partition code | `GraphTest.cs`, `PathEqualityCorpusTests.cs`, `MovementProgressTests.cs`, `PartitionCounterTests.cs` | 08, 11 | none |
 | WI-H2b-13 (wp652) | 13a cameras, 13b shaders and audio | `Graphics/Cameras/`, `Assets/Shaders`, `Audio/AudioSettings.cs` | `TacticalViewConstraintTests.cs`, `TacticalViewZoomSettleTests.cs`, `FrameCaptureServiceTests.cs`, new audio test | 06, 08, 10 | AQ-9 uniform enumeration (each uniform's C# source confirmed converting with its owner) |
-| WI-H2b-14 (wp653) | 14a orders, 14b network, 14c replays | `Logic/Orders/`, `Network/NetworkConnection.cs`, `Data/Rep/` | `SkirmishSlotTests.cs`, new orders and replay tests | 08, 12 | none |
+| WI-H2b-14 (wp653) | 14a orders, 14b network, 14c replays | `Logic/Orders/`, `Network/NetworkConnection.cs`, `Data/Rep/` | `SkirmishSlotTests.cs`, new orders and replay tests | 08, 12 | AQ-4 retained-backend replay/order paths if any, per the inventory |
 | WI-H2b-15 (wp654) | 15a saves, 15b checkpoints and artifacts | `Data/Sav/SaveFile.cs`, `GameState.cs`, `Recording/EngineCheckpoint.cs`, `WorldStateArtifact.cs`, `RunRecording.cs` | new `Recording/EngineCheckpointVersionTests.cs`, `WorldStateArtifactSchemaTests.cs`, `Simulation/DomainStateRecorderTests.cs` | 11, 14 | none |
 | WI-H2b-16 (wp655) | 16a scenarios, 16b geospatial, 16c tools | `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/`, `src/Panopticon.Geospatial/`, `src/Panopticon.Tools.TestHarness/` | `ScenarioMatrixLoaderTests.cs`, `GeoImportCliTests.cs`, `ResultsExportTests.cs` | 04, 12, 13, 14, 15 | AQ-12 descriptor parameter inventory; AQ-13 `metersPerGameUnit` re-declaration |
 | WI-H2b-17 (wp656) | 17a boundary conformance | `test/Panopticon.Simulation.Tests/` and `test/Panopticon.Tools.ReplaySketch.Tests/` | cross-boundary tests named in tickets 03 to 16 | 16 | none |
-| WI-H2b-18 (wp657) | 18a real-content proof | Generals install via `CNC_GENERALS_PATH`, EE2 P9 content | ReplaySketch map and model screenshot proof (see Validation) | 17 | none |
+| WI-H2b-18 (wp657) | 18a real-content proof | Generals install via `CNC_GENERALS_PATH`, EE2 P9 content | ReplaySketch map and model screenshot proof (see Validation) | 17 | AQ-1 BFME provisional-scale limitation recorded in the release report |
 
 Split rule: any ticket whose scope lists more than one converter family is split into the named sub-scopes above before implementation.
 
