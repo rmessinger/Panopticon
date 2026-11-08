@@ -1449,7 +1449,7 @@ coordinates with rather than duplicates.
   - AC: the design names interchange types without `MapFile` dependencies.
 - [x] H2-2 Engine-owned interchange types (`WI-H2-02`).
   - AC: the `MapInterchange` model and validation build with no `MapFile` dependency.
-- [ ] H2-3 Reader seam and legacy adapter (`WI-H2-03`).
+- [x] H2-3 Reader seam and legacy adapter (`WI-H2-03`).
   - AC: the legacy adapter produces `MapInterchange` with the per-section dispositions and no load behavior change.
 - [ ] H2-4 Runtime bridge and parity (`WI-H2-04`).
   - AC: resident terrain, masks, and placed objects materialize from `MapInterchange` with parity against the legacy load path.

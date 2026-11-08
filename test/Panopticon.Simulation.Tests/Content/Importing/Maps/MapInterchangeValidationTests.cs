@@ -192,8 +192,8 @@ public sealed class MapInterchangeValidationTests
     [Fact]
     public void BrokenHorizontalSeamFails()
     {
-        // Perturbs west chunk core column 128 (stored column 129) at core row 10. No apron sample
-        // references that point (the east chunk's west apron is core column 127), so only the seam fires.
+        // Lattice column 128 is the shared seam point; the east chunk's west apron is lattice column 127,
+        // so only the seam trips.
         var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(10), StoredColumn(MapChunkGeometry.CorePointsPerAxis - 1), 999.5f);
 
         AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.SeamEquality);
@@ -206,6 +206,23 @@ public sealed class MapInterchangeValidationTests
         var chunk = MutateStoredSample(BuildValidModel().Layout.Chunks[0], StoredRow(10), MapChunkGeometry.StoredPointsPerAxis - 1, 777.25f);
 
         AssertOnlyCode(WithChunk(BuildValidModel(), 0, chunk), MapInterchangeDiagnostic.ApronAgreement);
+    }
+
+    [Fact]
+    public void EastApronCopyingSeamPointFails()
+    {
+        // Lattice column 128 (seam point) copied into east apron lattice column 129; the east neighbour's
+        // core column 1 is lattice column 129, so every apron row differs.
+        var source = BuildValidModel().Layout.Chunks[0];
+        var samples = source.Heights.Samples.ToArray();
+
+        for (var row = 1; row <= MapChunkGeometry.CorePointsPerAxis; row++)
+        {
+            var rowStart = row * MapChunkGeometry.StoredPointsPerAxis;
+            samples[rowStart + MapChunkGeometry.StoredPointsPerAxis - 1] = samples[rowStart + MapChunkGeometry.CorePointsPerAxis];
+        }
+
+        AssertOnlyCode(WithChunk(BuildValidModel(), 0, source with { Heights = new HeightLayer(samples) }), MapInterchangeDiagnostic.ApronAgreement);
     }
 
     [Fact]
@@ -291,7 +308,103 @@ public sealed class MapInterchangeValidationTests
         var model = BuildValidModel();
         var layout = model.Layout with { ChunksX = int.MaxValue };
 
-        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.ChunkInventory);
+        Assert.Equal(
+            [MapInterchangeDiagnostic.ChunkInventory, MapInterchangeDiagnostic.LatticeDimensions],
+            Codes(model with { Layout = layout }).Order().ToArray());
+    }
+
+    [Fact]
+    public void PartialEdgeChunkPasses()
+    {
+        var model = BuildValidModel(Partial);
+        var chunks = model.Layout.Chunks;
+
+        Assert.Equal(131 * 131, chunks[0].Heights.Samples.Count);
+        Assert.Equal(74 * 131, chunks[1].Heights.Samples.Count);
+        Assert.Equal(129 * 129, chunks[0].Materials!.Indices.Count);
+        Assert.Equal(72 * 129, chunks[1].Materials!.Indices.Count);
+        Assert.Equal(72 * 129, chunks[1].Masks!.Flags.Count);
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+    }
+
+    [Fact]
+    public void HeightsOnlyChunksPass()
+    {
+        var model = WithoutMaterialsAndMasks(BuildValidModel());
+
+        Assert.All(model.Layout.Chunks, chunk => Assert.Null(chunk.Materials));
+        Assert.All(model.Layout.Chunks, chunk => Assert.Null(chunk.Masks));
+        Assert.Empty(MapInterchangeValidator.Validate(model));
+    }
+
+    [Fact]
+    public void PartialMaterialCoverageFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { Chunks = [StripLayers(model.Layout.Chunks[0]), model.Layout.Chunks[1]] };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LayersConsistency);
+    }
+
+    [Fact]
+    public void PartialMaskCoverageFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { Chunks = [model.Layout.Chunks[0], StripLayers(model.Layout.Chunks[1])] };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LayersConsistency);
+    }
+
+    private static Chunk StripLayers(Chunk chunk) => chunk with { Materials = null, Masks = null };
+
+    private static MapInterchange WithoutMaterialsAndMasks(MapInterchange model)
+    {
+        return model with { Layout = model.Layout with { Chunks = [.. model.Layout.Chunks.Select(StripLayers)] } };
+    }
+
+    [Fact]
+    public void PartialChunkWrongHeightLengthFails()
+    {
+        var model = BuildValidModel(Partial);
+        var chunk = model.Layout.Chunks[1] with { Heights = new HeightLayer(BuildSampleArray(Standard, 1, 0)) };
+
+        AssertOnlyCode(WithChunk(model, 1, chunk), MapInterchangeDiagnostic.HeightLength);
+    }
+
+    [Fact]
+    public void ZeroLatticeWidthFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { LatticeWidth = 0 };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LatticeDimensions);
+    }
+
+    [Fact]
+    public void NegativeLatticeHeightFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { LatticeHeight = -1 };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LatticeDimensions);
+    }
+
+    [Fact]
+    public void ChunksXDisagreeingWithLatticeFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { LatticeWidth = 300 };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LatticeDimensions);
+    }
+
+    [Fact]
+    public void ChunksYDisagreeingWithLatticeFails()
+    {
+        var model = BuildValidModel();
+        var layout = model.Layout with { LatticeHeight = 130 };
+
+        AssertOnlyCode(model with { Layout = layout }, MapInterchangeDiagnostic.LatticeDimensions);
     }
 
     [Fact]
@@ -395,6 +508,8 @@ public sealed class MapInterchangeValidationTests
         var chunks = new List<Chunk>(model.Layout.Chunks);
         var layout = new TerrainLayout(
             model.Layout.SampleSpacing,
+            model.Layout.LatticeWidth,
+            model.Layout.LatticeHeight,
             model.Layout.ChunksX,
             model.Layout.ChunksY,
             model.Layout.Border,
@@ -554,24 +669,28 @@ public sealed class MapInterchangeValidationTests
         return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     }
 
-    private const int IntervalsPerChunkAxis = MapChunkGeometry.CorePointsPerAxis - 1;
+    private const int IntervalsPerChunkAxis = MapChunkGeometry.IntervalsPerChunkAxis;
 
-    private const int StoredAxis = MapChunkGeometry.StoredPointsPerAxis;
+    private static readonly Grid Standard = new(257, 129, 2, 1);
 
-    private const int ChunksX = 2;
+    private static readonly Grid Partial = new(200, 129, 2, 1);
 
-    private const int ChunksY = 1;
+    private readonly record struct Grid(int LatticeWidth, int LatticeHeight, int ChunksX, int ChunksY);
 
-    private static MapInterchange BuildValidModel()
+    private static MapInterchange BuildValidModel() => BuildValidModel(Standard);
+
+    private static MapInterchange BuildValidModel(Grid grid)
     {
         var layout = new TerrainLayout(
             new MapQuantity(10, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy),
-            ChunksX,
-            ChunksY,
+            grid.LatticeWidth,
+            grid.LatticeHeight,
+            grid.ChunksX,
+            grid.ChunksY,
             0,
             new GeospatialTransform(null, null, null, 1.0, null, null, null),
             MapNodataPolicy.Fail,
-            [BuildChunk(0, 0), BuildChunk(1, 0)]);
+            [BuildChunk(grid, 0, 0), BuildChunk(grid, 1, 0)]);
 
         var blend = new BlendModel(
         [
@@ -623,30 +742,40 @@ public sealed class MapInterchangeValidationTests
             [retained]);
     }
 
-    private static Chunk BuildChunk(int cx, int cy)
+    private static Chunk BuildChunk(int cx, int cy) => BuildChunk(Standard, cx, cy);
+
+    private static Chunk BuildChunk(Grid grid, int cx, int cy)
     {
+        var cells = CoreExtent(grid.LatticeWidth, cx) * CoreExtent(grid.LatticeHeight, cy);
+
         return new Chunk(
             new ChunkKey(cx, cy),
-            new HeightLayer(BuildSampleArray(cx, cy)),
-            new MaterialLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
-            new MaskLayer(new byte[MapChunkGeometry.CoreCellsPerChunk]),
+            new HeightLayer(BuildSampleArray(grid, cx, cy)),
+            new MaterialLayer(new byte[cells]),
+            new MaskLayer(new byte[cells]),
             null);
     }
 
-    private static float[] BuildSampleArray(int cx, int cy)
-    {
-        var samples = new float[MapChunkGeometry.StoredHeightSamplesPerChunk];
+    private static float[] BuildSampleArray(int cx, int cy) => BuildSampleArray(Standard, cx, cy);
 
-        for (var row = 0; row < StoredAxis; row++)
+    private static float[] BuildSampleArray(Grid grid, int cx, int cy)
+    {
+        var storedWidth = CoreExtent(grid.LatticeWidth, cx) + 2;
+        var storedHeight = CoreExtent(grid.LatticeHeight, cy) + 2;
+        var samples = new float[storedWidth * storedHeight];
+
+        for (var row = 0; row < storedHeight; row++)
         {
-            for (var column = 0; column < StoredAxis; column++)
+            for (var column = 0; column < storedWidth; column++)
             {
-                samples[(row * StoredAxis) + column] = LatticeSample(cx, cy, row, column);
+                samples[(row * storedWidth) + column] = LatticeSample(cx, cy, row, column);
             }
         }
 
         return samples;
     }
+
+    private static int CoreExtent(int latticePoints, int index) => Math.Min(MapChunkGeometry.CorePointsPerAxis, latticePoints - (index * IntervalsPerChunkAxis));
 
     private static float LatticeSample(int cx, int cy, int row, int column)
     {
