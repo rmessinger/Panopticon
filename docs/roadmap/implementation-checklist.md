@@ -1548,7 +1548,7 @@ complete H2a group merges. Each item corresponds to one card.
     placed-object data intact.
 - [x] H3-1 Map package manifest schema (`WI-H3-01`).
   - AC: manifests validate versions, layers, and chunk layout.
-- [ ] H3-2 Chunk layer reader and writer (`WI-H3-02`).
+- [x] H3-2 Chunk layer reader and writer (`WI-H3-02`).
   - AC: raw little-endian chunks round-trip byte-identically.
 - [ ] H3-3 Legacy-to-package importer hooks (`WI-H3-03`).
   - AC: a legacy map imports into a package through H2.
