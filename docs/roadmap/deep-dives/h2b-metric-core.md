@@ -117,6 +117,151 @@ Map rule: `LegacyMapReader` keeps source-space values and their `GameUnit` tags.
 
 Retained-backend rule (AQ-4, corrected): retained-opaque storage is not a reason to defer runtime quantity conversion. `Scene3D` and other consumers read `MapFile` directly after the bridge: water from `PolygonTriggers` (`Scene3D.cs:321`), plus cameras, lighting, waypoint paths, sides and team positions, and MP positions. Every load-bearing dimensionful field in the retained legacy backend normalizes before runtime under H2b, with the inverse applied on legacy write and the stored source bytes unchanged; no silent mixture of metric terrain with legacy-unit water, triggers, cameras, or paths. The retained-backend dimensionful inventory (sections consumed at runtime, their coordinate fields, the conversion owner at the `Game`/`Scene3D` load boundary or the section readers, and the inverse writer) is a required audit deliverable, assigned in the per-ticket table: WI-H2b-07 and WI-H2b-08 own the map-sourced retained fields and WI-H2b-14 owns replay and order paths if any. Coordination with H5: H2b converts values at the legacy backend boundary without changing section storage, and H5 may later replace the backend without re-converting.
 
+### Retained-backend runtime dimension inventory
+
+This section is the required AQ-4 inventory deliverable named in the retained-backend rule, verified at `7d9468677`. Ownership boundary: H2b owns value conversion at the metric boundary. Legacy `MapFile` sections are parsed once, and the parsed section objects are the runtime copies, so conversion normalizes the dimensionful fields of the in-memory parse result at the section reader on the `Game`/`Scene3D` load path. Stored source bytes and section storage never change; the inverse runs in `MapFile.WriteTo` and the per-section writers, which either invert from separate source data or apply the conversion symmetrically on write. H5 owns replacing the backend (typed interchange homes and materializers) and must consume the already-metric runtime values without re-converting. Each value keeps one source of truth: a runtime copy is converted exactly once.
+
+No double scale through save and replay persistence. `GameState.cs:11,23` persists only the map file name, and saves reload the map through the same load boundary, so map bytes convert once. Replays record orders, not section state. Two save chunks carry retained-backend runtime values and follow the same rule: `PolygonTrigger.Persist` (`PolygonTrigger.cs:316-337`, reached from `GameLogic.cs:545-563`) persists trigger points, bounds, and radius, and `BuildListInfo` persists `Location` and `RallyPointOffset` (`BuildListInfo.cs:101-102`). These payloads are written after conversion and read back as runtime values in the same build; legacy save versions convert at the save reader boundary (WI-H2b-15). A value reached through persistence is never re-converted.
+
+Classification rules for this inventory. A name-evident length converts even with no consumer today: the section reader is the conversion point, so a later consumer cannot see legacy units. A field with no established unit is an explicit diagnostic at the reader and never converts; a blanket float or `Vector3` conversion of an unclassified field is a defect. `UvScrollSpeed` fields are texture-space rates and take no world factor. `WaterHeight`, wave `FinalWidth` and `FinalHeight`, and trigger point Z are integer-sourced world Z lengths: the reader converts through `s`, and the section writer restores the integer source form.
+
+#### Section coverage
+
+Every section in `MapSectionNames.cs` is listed with its disposition. Converted sections have field tables below; the remainder carry no dimensionful field or are covered by an existing audit row.
+
+| Section | Disposition |
+|---|---|
+| `AssetList` | no dimensionful field: asset name strings |
+| `BlendTileData` | no dimensionful field: cells, texture indices, and the mask feed are dimensionless |
+| `CameraAnimationList` | converted at the section reader; parsed-but-unconsumed, table below |
+| `CastleTemplates` | converted, table below |
+| `EnvironmentData` | converted, table below |
+| `FogSettings` | no dimensionful field classified: 24 unknown bytes, never converted |
+| `GlobalLighting` | no position converts; unknowns are diagnostics, table below |
+| `GlobalVersion` | no dimensionful field: version integers |
+| `GlobalWaterSettings` | converted, table below |
+| `HeightMapData` | converted; terrain spacing and elevation (audit table above, WI-H2b-07) |
+| `LibraryMapLists` | no dimensionful field: map and asset name references |
+| `MissionHotSpots` | no dimensionful field: ID, title, and description text |
+| `MissionObjectives` | no dimensionful field: text, boolean, and objective enum |
+| `MPPositionList` | no dimensionful field: flags, team index, and side names only |
+| `NamedCameras` | converted, table below |
+| `ObjectsList` | converted; typed placement (audit table above, WI-H2b-08) |
+| `PlayerScriptsList` | dimensionful payloads are the `ScriptArgument` rows in the sides table |
+| `PolygonTriggers` | converted, table below |
+| `PostEffectsChunk` | no dimensionful field found: blend factors and shader parameter vectors, unconsumed at runtime |
+| `RiverAreas` | converted, table below |
+| `SidesList` | converted, table below (players, build lists, scripts) |
+| `SkyboxSettings` | converted, table below |
+| `StandingWaterAreas` | converted, table below |
+| `StandingWaveAreas` | converted, table below |
+| `Teams` | no dimensionful field: team templates carry IDs, names, flags, and waypoint references |
+| `TriggerAreas` | converted, table below |
+| `WaypointsList` | positions converted through the waypoints audit row; `WaypointPath.cs:7-8` is waypoint IDs only, dimensionless |
+| `WorldInfo` | no dimensionful field found: asset property bag of text and settings values |
+
+#### Converted fields
+
+Exponent `L` marks world lengths converting by `s`. The conversion owner is the section reader at the `Game`/`Scene3D` load path; the inverse writer is the section's `WriteTo` reached through `MapFile.WriteTo`, and stored source bytes stay unchanged. Consumers are cited as of `7d9468677`.
+
+Water and triggers:
+
+| Source site | Field | Class | Runtime consumer |
+|---|---|---|---|
+| `PolygonTrigger.cs:55` | `Point3D[] Points` | `L` (footprint XY and water level Z) | water geometry and level at `WaterArea.cs:156-160`; containment at `PolygonTrigger.cs:258`; save persist at `GameLogic.cs:546` |
+| `PolygonTrigger.cs:27` | `RiverStart` | point index, dimensionless | none |
+| `PolygonTrigger.cs:33` | `UvScrollSpeed` | texture-space rate | shader sampling; no world factor |
+| `StandingWaterArea.cs:19` | `Vector2[] Points` | `L` | `WaterArea.cs:147` |
+| `StandingWaterArea.cs:21` | `WaterHeight` (`uint`) | `L` | passed as geometry height at `WaterArea.cs:147`: a world Z length from an integer source |
+| `StandingWaterArea.cs:13` | `UvScrollSpeed` | texture-space rate | no world factor |
+| `RiverArea.cs:24` | `WaterHeight` (`uint`) | `L` | integer-sourced world Z; the river polygon is referenced by name through `PolygonTriggers`, no points stored |
+| `RiverArea.cs:31` | `Line2D[] Lines` | `L` (centerline endpoints) | no runtime consumer found today |
+| `RiverArea.cs:15` | `UvScrollSpeed` | texture-space rate | no world factor |
+| `StandingWaveArea.cs:19` | `Vector2[] Points` | `L` | `WaterArea.cs:139` |
+| `StandingWaveArea.cs:21-22` | `FinalWidth`, `FinalHeight` (`uint`) | `L` | `FinalHeight` at `WaterArea.cs:139`; `FinalWidth` unconsumed |
+| `StandingWaveArea.cs:23-24` | `InitialWidthFraction`, `InitialHeightFraction` | ratio, dimensionless | none |
+| `StandingWaveArea.cs:25-28` | `InitialVelocity`, `TimeToFade`, `TimeToCompress`, `TimeOffset2ndWave` | unclassified | none today; explicit diagnostic, do not convert |
+| `StandingWaveArea.cs:29` | `DistanceFromShore` (`uint`) | `L` by name | none today |
+| `StandingWaveArea.cs:16` | `UvScrollSpeed` | texture-space rate | no world factor |
+| `TriggerArea.cs:12` | `Vector2[] Points` | `L` | no runtime consumer found today; convert at the section reader |
+| `GlobalWaterSettings.cs:13` | `ReflectionPlaneZ` | `L` (world Z) | no runtime consumer found today |
+| `EnvironmentData.cs:10` | `WaterMaxAlphaDepth` | `L` (depth) | unconsumed today; `Terrain.cs:120-158` reads texture names and `IsMacroTextureStretched` only |
+| `EnvironmentData.cs:11` | `DeepWaterAlpha` | ratio, dimensionless | none |
+
+Trigger bounds and `Radius` (`PolygonTrigger.cs:57-84`) recompute from points and convert transitively; `PolygonTrigger.Persist` writes them into saves as runtime values. River and water texture names, colors, and alphas are dimensionless.
+
+Cameras and lighting:
+
+| Source site | Field | Class | Runtime consumer |
+|---|---|---|---|
+| `NamedCamera.cs:9` | `LookAtPoint` (`Vector3`) | `L` | collected at `Scene3D.cs:276`; the sole consumer is a commented script action (`ScriptActions.Camera.cs:74-93`), dormant |
+| `NamedCamera.cs:12-14` | `Pitch`, `Roll`, `Yaw` | angle | unchanged |
+| `NamedCamera.cs:16` | `FieldOfView` | ratio | unchanged |
+| `NamedCamera.cs:15` | `Zoom` | unclassified | no active runtime consumer; do not convert |
+| `NamedCamera.cs:17` | `Unknown` (`float`) | unclassified | explicit diagnostic, never convert |
+| `CameraAnimationFrame.cs:44` | `FreeCameraAnimationCameraFrame.Position` | `L` | parsed-but-unconsumed |
+| `CameraAnimationFrame.cs:73` | `LookAtCameraAnimationCameraFrame.Position` | `L` | parsed-but-unconsumed |
+| `CameraAnimationFrame.cs:102` | `LookAtCameraAnimationLookAtFrame.LookAt` | `L` | parsed-but-unconsumed |
+| `CameraAnimationFrame.cs:45, 74, 76` | `Rotation`, `Roll`, `FieldOfView` | angle or ratio | unchanged |
+| `GlobalLight.cs:10-12` | `Ambient`, `Color`, `Direction` | RGB triples and a unit direction | none are positions; none convert |
+| `GlobalLighting.cs:19` | `Time` | `TimeOfDay` enum | unchanged |
+| `GlobalLighting.cs:23` | `ShadowColor` | RGB | unchanged |
+| `GlobalLighting.cs:33` | `NoCloudFactor` | ratio | unchanged |
+| `GlobalLighting.cs:25` | `Unknown` byte block | unclassified | never converted |
+| `GlobalLighting.cs:28` | `Unknown2` (`Vector3?`) | unclassified | explicit diagnostic; never blanket-convert an unknown `Vector3` |
+| `GlobalLighting.cs:31` | `Unknown3` | unclassified | never converted |
+
+`CameraAnimationList` has no `Scene3D` consumer found today; it is inventoried as parsed-but-unconsumed, with conversion at its section reader if a consumer appears.
+
+Sides, players, scripts, castles, and skybox:
+
+| Source site | Field | Class | Runtime consumer |
+|---|---|---|---|
+| `Player.cs:78` | `MultiplayerStartIndex` | waypoint index, dimensionless | the start position rides the `Player_N_Start` waypoint through `ObjectsList`, already typed; no stored player position exists |
+| `Player.cs:63` | `StartMoney` | currency, dimensionless | none |
+| `Player.cs:68, 73` | `Color`, `NightColor` | RGB integers, dimensionless | none |
+| `Player.cs:107` | `SkirmishDifficulty` | enum integer, dimensionless | none |
+| `BuildListInfo.cs:22` | `Location` (`Vector3`) | `L` | AI build position; persisted to saves at `BuildListInfo.cs:101-102` |
+| `BuildListInfo.cs:25` | `RallyPointOffset` (`Vector2`) | `L` | AI rally placement; same persistence |
+| `ScriptArgument.cs:17` | `PositionValue` (`Vector3`) | `L` | converts at script load (`ScriptContent.cs:54`); map `SidesList` scripts and skirmish `.scb` scripts share this parse boundary |
+| `ScriptArgument.cs:13` | `FloatValue` | per `ScriptArgumentType` | semantics depend on the argument type: distance, angle, percent, or time; classified per argument type at the script boundary, and an argument type with no established dimension gets an explicit diagnostic, never a blanket float conversion |
+| `MPPositionInfo.cs:11-15` | flags, `Team`, `SideRestrictions` | dimensionless | no coordinates; multiplayer start positions also ride waypoints |
+| `SidesListUtility.cs:332, 390` | `PlayerTemplates.GetByName` | name reference | asset reference, no quantity |
+| `WaypointPath.cs:7-8` | `StartWaypointID`, `EndWaypointID` | dimensionless | path geometry rides the typed waypoint objects |
+| `CastleTemplate.cs:12` | `Offset` (`Vector3`) | `L` | `CastleBehavior.cs:56-65` adds it to a runtime map object position |
+| `CastleTemplate.cs:13` | `Angle` | angle | unchanged |
+| `CastleTemplate.cs:15-16` | `Priority`, `Phase` | dimensionless | none |
+| `CastlePerimeterPoint.cs:9` | `Position` (`Vector3`) | `L` | consumed through `CastleBehavior` |
+| `SkyboxSettings.cs:11` | `Position` (`Vector3`) | `L` | no runtime consumer found today; convert at the section reader |
+| `SkyboxSettings.cs:12` | `Scale` | dimensionless presentation multiplier | same treatment as `ImportedVisualInstaller.cs:34, 88` |
+| `SkyboxSettings.cs:13` | `Rotation` | angle | unchanged |
+
+Runtime asset references that bypass unit materialization: road templates resolved by name (`Scene3D.cs:260-261`), object definitions by `TypeName` (`GameObject.cs:45`), and polygon trigger state resolved by name in saves (`GameObject.cs:2116`) are name references with no stored quantity, so no conversion applies. Geometry radii arrive through the INI boundary already covered by WI-H2b-05/06, not through the map sections. Road segment endpoints are `MapObject` positions, already typed.
+
+#### Boundary test plan
+
+Home: new `RetainedBackendMetricTests.cs` under `test/Panopticon.Simulation.Tests/Content/Importing/MapSources/`; `RuntimeBridgeParityTests.cs` keeps the bridge-typed components (terrain spacing, elevation, placement). Each converted field class gets a legacy-load test asserting runtime values equal legacy values times `s`:
+
+| Converted field class | Mixed-unit failure mode caught |
+|---|---|
+| Water polygons and levels (`PolygonTrigger.Points`, `StandingWaterArea.Points` and `WaterHeight`, `RiverArea.Lines` and `WaterHeight`, `StandingWaveArea.Points` and `FinalHeight`, `GlobalWaterSettings.ReflectionPlaneZ`) | water plane offset from terrain by `1/s` |
+| Trigger and area points (`TriggerArea.Points`) | trigger regions misaligned with terrain by `1/s` |
+| Cameras (`NamedCamera.LookAtPoint`, animation frame `Position` and `LookAt`) | scripted camera framing lands `1/s` from its target |
+| Castles (`CastleTemplate.Offset`, `CastlePerimeterPoint.Position`) | a legacy offset added to a meter position at the `CastleBehavior.cs:62-65` add site displaces the footprint |
+| Skybox (`SkyboxSettings.Position`) | skybox anchored `1/s` from its terrain anchor |
+| Sides and scripts (`BuildListInfo.Location` and `RallyPointOffset`, `ScriptArgument.PositionValue`) | AI build, rally, and script-at-location effects offset by `1/s` |
+
+Proofs, in the same test home:
+
+| Proof | Asserts |
+|---|---|
+| Inverse | `MapFile.WriteTo` output bytes stay identical to the source after a load-and-write round trip with no runtime mutation, across the full retained set: stored source bytes unchanged, the runtime copy the only converted value |
+| No second scale through persistence | persist, reload, positions unchanged after first load; the polygon trigger and build list chunks reload as the same meters, not meters times `s` |
+| Unclassified negative | `GlobalLighting.Unknown2`, wave `InitialVelocity`, camera `Zoom` produce the named diagnostic and no conversion |
+| Terrain-relative alignment | water and trigger vertices compared against terrain-relative positions (vertex against the ground height below it, polygon center against its terrain cell), not absolute constants alone: a mixed-unit failure presents as water or triggers offset by `1/s` from terrain |
+
+Tolerances follow the numeric fixtures section: `s` times legacy values with the stated absolute tolerances.
+
 ### W3D, glTF, and NIF importers
 
 | Source site | Source unit | Runtime unit after cutover | Conversion owner | Inverse writer | Exponent | Test home |
@@ -440,8 +585,8 @@ No source ticket (WI-H2b-03 through 18) is startable until the Architect reviews
 | WI-H2b-04 (wp643) | 04a Generals tags, 04b materializers | `Units/Generals/GeneralsUnitAdapter.cs`, `Units/Materialization/UnitBodyMovementMaterializer.cs`, `UnitCombatMaterializer.cs`, `Units/Generals/GeneralsUnitImport.cs`, `src/Panopticon.Tools.TestHarness/UnitContentImportRunner.cs` | `GeneralsUnitAdapterTests.cs`, `UnitBodyMovementMaterializerTests.cs`, new `UnitCombatMaterializerTests.cs` | 03 | none |
 | WI-H2b-05 (wp644) | 05a INI helpers, 05b gameplay field enumeration | `src/Panopticon.Simulation/Data/Ini/IniParser.cs`, `GameData.cs`, `Logic/Object/` distance fields | `test/Panopticon.Simulation.Tests/Data/Ini/IniFileTests.cs`, per-object tests | 03, 04 | AQ-1 provisional-policy tests: per-game explicit source unit policy with no default fallthrough, and no double scale on BFME rows |
 | WI-H2b-06 (wp645) | 06a presentation INI, 06b globals | `Logic/Object/Draw/`, `Audio/AudioSettings.cs` (presentation distances only) | `ImportedModelMaterializerTests.cs`, `UnitVisualMaterializerTests.cs` | 05 | none |
-| WI-H2b-07 (wp646) | 07a terrain spacing, 07b elevation | `src/Panopticon.Simulation/Data/Map/MapFile.cs`, `HeightMapData.cs`, `Content/Importing/MapSources/RuntimeBridge.cs` | `LegacyMapReaderTests.cs`, `RuntimeBridgeParityTests.cs` | 03 | AQ-3 elevation integer round-trip proof; AQ-4 retained-backend inventory and map-sourced retained-field conversion (with 08) |
-| WI-H2b-08 (wp647) | 08a placement, 08b WorldBuilder | `Data/Map/MapObject.cs`, `ObjectsList.cs`, `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs`, `NewMapFactory` | `test/Panopticon.Tools.WorldBuilder.Core.Tests/NewMapFactoryTests.cs`, `MapCompanionTests.cs` | 07 | AQ-4 map-sourced retained-field conversion (with 07): water via polygon triggers, waypoint paths, sides and team positions, MP positions |
+| WI-H2b-07 (wp646) | 07a terrain spacing, 07b elevation, 07c retained render sections: water and triggers (`PolygonTriggers`, `StandingWaterAreas`, `RiverAreas`, `StandingWaveAreas`, `TriggerAreas`, `GlobalWaterSettings`), `EnvironmentData`, `GlobalLighting`, `NamedCameras`, `SkyboxSettings` | `src/Panopticon.Simulation/Data/Map/MapFile.cs`, `HeightMapData.cs`, `Content/Importing/MapSources/RuntimeBridge.cs` | `LegacyMapReaderTests.cs`, `RuntimeBridgeParityTests.cs`, `RetainedBackendMetricTests.cs` (render sections, with 08) | 03 | AQ-3 elevation integer round-trip proof; AQ-4 retained-backend inventory (section above) and conversion of the retained render sections per its field tables (with 08) |
+| WI-H2b-08 (wp647) | 08a placement, 08b WorldBuilder, 08c retained side sections: `SidesList` players, `BuildLists` coordinates and script arguments, `CastleTemplates` and perimeter points, `WaypointsList` paths, `MPPositionList` (no coordinates), `CameraAnimationList` (parsed-but-unconsumed reader conversion) | `Data/Map/MapObject.cs`, `ObjectsList.cs`, `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs`, `NewMapFactory` | `test/Panopticon.Tools.WorldBuilder.Core.Tests/NewMapFactoryTests.cs`, `MapCompanionTests.cs`, `RetainedBackendMetricTests.cs` (side sections, with 07) | 07 | AQ-4 map-sourced retained-field conversion (with 07) per the inventory field tables: build list locations and rally offsets, script argument positions, castle offsets, waypoint paths, sides and team positions, MP positions |
 | WI-H2b-09 (wp648) | 09a W3d mesh, 09b W3d animation | `src/Panopticon.Simulation/Content/Importing/W3d/` | `W3dModelImporterTests.cs`, `W3dAnimationImporterTests.cs`, `W3dMeshConverterTests.cs`, `W3dImportParityTests.cs` | 03 | AQ-5 known-bounds compatibility fixture (installed W3D hull bounds vs INI `GeometryMajorRadius`) |
 | WI-H2b-10 (wp649) | 10a glTF default and basis, 10b NIF expansion removal, 10c NIF particle translation | `Content/Importing/Gltf/GltfImportOptions.cs`, `GltfTransformConverter.cs`, `Content/Importing/Nif/NifTransformConverter.cs`, `NifParticleEffectConverter.cs`, ReplaySketch `ExternalModelImportOptions.cs` | `GltfImporterTests.cs`, `GltfSceneConverterTests.cs`, `NifModelImporterTests.cs`, `NifSkinConverterTests.cs`, ReplaySketch `ExternalModelProtocolTests.cs` | 09 | AQ-14 fixture (particle translation, created here); `MetersPerFoot` removal rides the same ticket as the feet expansion |
 | WI-H2b-11 (wp650) | 11a physics adapters, 11b terrain physics | `src/Panopticon.Physics/`, `src/Panopticon.Tools.TestHarness/TerrainPhysicsChunks.cs` | `LegacyPhysicsBodyTests.cs`, `PhysicsBehaviorTests.cs` | 05, 07, 09 | none |
