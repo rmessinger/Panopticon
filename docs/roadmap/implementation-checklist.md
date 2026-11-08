@@ -1582,7 +1582,7 @@ complete H2a group merges. Each item corresponds to one card.
     every retained section matches by SHA-256; the manifest accounts for every source section,
     and a missing section fails conversion; mask and blend bits are byte-identical with no
     polarity change.
-- [ ] H5-2 Legacy INI conversion tool (`WI-H5-02`).
+- [x] H5-2 Legacy INI conversion tool (`WI-H5-02`).
   - AC: a bounded Generals roster converts; converted packages re-read to the same closure;
     resolutions carrying error diagnostics refuse conversion with a per-record report; no
     partial rosters are written.
