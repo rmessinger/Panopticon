@@ -1550,7 +1550,7 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: manifests validate versions, layers, and chunk layout.
 - [x] H3-2 Chunk layer reader and writer (`WI-H3-02`).
   - AC: raw little-endian chunks round-trip byte-identically.
-- [ ] H3-3 Legacy-to-package importer hooks (`WI-H3-03`).
+- [x] H3-3 Legacy-to-package importer hooks (`WI-H3-03`).
   - AC: a legacy map imports into a package through H2.
 - [ ] H3-4 Map package round-trip tests (`WI-H3-04`).
   - AC: terrain, blend, and object data survive write and reload.
