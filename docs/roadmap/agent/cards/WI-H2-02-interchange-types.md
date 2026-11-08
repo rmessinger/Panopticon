@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2-02` |
 | Roadmap phase | [Track H · H2](../../track-h-storage-formats.md): interchange abstraction |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `M` |
 | Prerequisites | `WI-H2-01` |
@@ -36,11 +36,11 @@ Implement the engine-owned `MapInterchange` document model from the [H2 map inte
 
 ## Acceptance criteria
 
-- [ ] The model matches the deep dive component table, including `Provenance`, `ImportReport`, and `RetainedSection`, and carries an interchange schema version independent of the source payload and legacy section versions.
-- [ ] Every coordinate, height, spacing, and scale value declares its unit and frame per the quantity table; source values are preserved as read.
-- [ ] Model-level validation enforces the deep dive check list and returns typed diagnostics without publishing partial content.
-- [ ] Mask bit positions equal the B4b writer bits, and any bit outside the known set fails validation.
-- [ ] No file under the Maps folder references the `MapFile` type; `grep -rn "MapFile" src/Panopticon.Simulation/Content/Importing/Maps/` returns nothing.
+- [x] The model matches the deep dive component table, including `Provenance`, `ImportReport`, and `RetainedSection`, and carries an interchange schema version independent of the source payload and legacy section versions.
+- [x] Every coordinate, height, spacing, and scale value declares its unit and frame per the quantity table; source values are preserved as read.
+- [x] Model-level validation enforces the deep dive check list and returns typed diagnostics without publishing partial content.
+- [x] Mask bit positions equal the B4b writer bits, and any bit outside the known set fails validation.
+- [x] No file under the Maps folder references the `MapFile` type; `grep -rn "MapFile" src/Panopticon.Simulation/Content/Importing/Maps/` returns nothing.
 
 ## Validation commands
 
@@ -56,5 +56,6 @@ No `MapFile` dependency, no reader or adapter, no runtime materialization, and n
 
 ## On completion
 
+- Result: 2026-11-06 done: added 22 engine-owned contract types under `src/Panopticon.Simulation/Content/Importing/Maps/` (unit- and frame-explicit `MapQuantity`, interchange schema version independent of source payload and legacy section versions, `MapMaskFlags` bits equal to the B4b writer, 29-name section registry, retained-section byte integrity with SHA-256) plus typed model validation with 21 stable diagnostic codes. Repair commit `29fb94755` fixed independently reviewed findings: apron comparisons follow the physical lattice rule (east apron against the east neighbour's core column 1, west against core column 127, north against core row 1, south against core row 127, per `TerrainChunkGenerator` and `PayloadChunkCodec`); the test helper derives aprons from true lattice points; `MapInterchange.RetainedSections` and `TerrainLayout.Chunks` copy at construction (`with` expressions reassign without copying); transform origins and all model quantities validate finite values and a unit-frame table (GameUnit for map-local and legacy frames, Meters or Degrees in SourceCrs, Meters in SourceVertical); imagery rejects nonpositive dimensions with overflow-safe length math. Validation: `dotnet build` 0 errors with the 11 pre-existing warnings, focused `dotnet test --filter FullyQualifiedName~MapInterchange` 44/44 passed, `dotnet format --verify-no-changes` clean on both projects, brace and boundary checks clean, MCP run `20261106T192731Z-29fb9475` on `track-h-h2-2-interchange-types` (sha `29fb94755`) 4818 total / 4800 passed / 10 known failures (TF-01..TF-10) / 8 not executed / 0 new failures / 0 suspected deviations. Follow-up: WI-H2-03 reader seam and legacy adapter.
 - Set Status above to `Done` or `Blocked`.
 - Add a `Result:` line as the first bullet under `## On completion`: date, what changed, validation outcome, follow-up cards.
