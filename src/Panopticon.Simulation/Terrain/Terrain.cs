@@ -64,6 +64,9 @@ public sealed class Terrain : DisposableBase
     public readonly MapFile Map;
 
     public HeightMap HeightMap { get; }
+
+    internal bool[,] ImpassabilityOverride { get; set; }
+
     public TerrainDecalStore Decals { get; } = new();
     private readonly TerrainDecalRenderer _decalRenderer;
     internal int DecalMeshBuildCount => _decalRenderer.MeshBuildCount;
@@ -267,7 +270,7 @@ public sealed class Terrain : DisposableBase
         }
 
         var (x, y) = mapCoords.Value;
-        return Map.BlendTileData.Impassability[x, y];
+        return (ImpassabilityOverride ?? Map.BlendTileData.Impassability)[x, y];
     }
 
     /// <summary>

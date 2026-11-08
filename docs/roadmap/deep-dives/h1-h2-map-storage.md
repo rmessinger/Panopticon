@@ -502,9 +502,43 @@ Source digests are verified by the reader before the model is built, as part of 
 
 Failure policy: any failed check returns typed diagnostics and publishes no model content. Failed imports publish no partial content, per [`h2a-unit-content-import.md`](h2a-unit-content-import.md).
 
+### Runtime bridge responsibilities
+
+`RuntimeBridge` (`src/Panopticon.Simulation/Content/Importing/MapSources/RuntimeBridge.cs`) materializes resident terrain, masks, and objects from a validated `MapInterchange`. Typed fields are populated by the adapter and reconstructed exactly by the materializer:
+
+| Item | Rule |
+|---|---|
+| Elevations | `HeightSectionVersion` selects the scale: 5/128 (`0.0390625`) at version 5 and above, 5/8 (`0.625`) below |
+| Borders and area | `Border`, `TerrainBorders`, and `MapArea` carry the legacy values; `MapArea` is checked against the lattice |
+| `RoadType` | Raw bits copied to each `MapObject` |
+| Map properties | Five-kind `MapPropertyValue` union: boolean, integer, real, ASCII string, Unicode string. Any other kind fails with the `property-type` diagnostic |
+| Object order and IDs | `PlacedObjectSet` order and the `obj-` and `wp-` stable IDs |
+| Waypoint positions | Engine XY positions on `PlacedObject` |
+
+Derived fields are recomputed as `HeightMapData.Parse` computes them. `Area` is verified against the lattice, then `Width * Height` is used. `MinZ` and `MaxZ` are the minimum and maximum elevation multiplied by the scale.
+
+Exactness: both scales are exact in float32 because the largest numerator is 65535 * 5 = 327675, below 2^24. The materializer rejects non-finite, out-of-range, and non-reproducible elevations with `height-representable`. Object positions and angles that do not survive float32 storage fail with `object-representable`. No value is silently quantized.
+
+Waypoints: `PlacedObjectSet` is the runtime order source. `WaypointSet` is a semantic view only, so each waypoint spawns once.
+
+Buildability: no polarity is inferred. The runtime applies only the `Impassable` bit, from chunk core masks. The `Unbuildable` bit is carried in the model but no runtime feed applies it. A source without masks yields no feed, and the caller falls back to `BlendTileData`.
+
+Transitional backend: the H2 legacy bridge still reads these sections from the parsed `MapFile`, and the bridge does not materialize them: `BlendTileData`, standing and river water areas, `GlobalLighting`, `NamedCameras`, `WaypointsList` paths, and `SidesList`, `Teams`, and script data.
+
+Transactional scope: validation and materialization complete before any mutation of `TerrainLogic`, `Scene3D`, or `PlayerManager`. Failures during scene construction after that gate keep the existing non-transactional behavior. No full-rollback guarantee is claimed.
+
+H3 must-supply list: a future package reader ([WI-H3-01](../agent/cards/WI-H3-01-map-package-manifest-schema.md), [WI-H3-02](../agent/cards/WI-H3-02-chunk-layer-reader-writer.md)) must supply:
+
+- Borders, area, and section version.
+- `RoadType` per object.
+- Typed map properties.
+- Chunk mask layers for mask-carrying sources. Without them the bridge falls back to `BlendTileData` only where a legacy backend exists.
+
+Runtime loading from a non-legacy (H3 package) source is not claimed as supported in H2.
+
 ### Implementation cards
 
-Each card is Draft and follow-on scope from this design:
+Each card below is follow-on scope from this design:
 
 - [WI-H2-02](../agent/cards/WI-H2-02-interchange-types.md): engine-owned interchange types and model-level validation, with no `MapFile` dependency.
 - [WI-H2-03](../agent/cards/WI-H2-03-legacy-reader-seam.md): reader-source seam and legacy `MapFile` adapter, with no behavior change.

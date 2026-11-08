@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Panopticon.Content.Importing.Maps;
@@ -25,12 +26,14 @@ namespace Panopticon.Content.Importing.MapSources;
 /// the southern apron and lattice y increasing north (adapter orientation rule). An apron sample holds the
 /// real neighbour lattice point's value where it exists, else the clamped nearest core sample at the map
 /// edge (adapter clamp policy). Legacy sources carry no palette or mask layers, so chunks are heights-only
-/// and <see cref="BlendModel"/> stays empty. Placed objects take stable IDs "obj-{index}" (legacy objects
-/// carry no IDs) and their property dictionaries stringified; MapObject.Angle is radians and passes
-/// through. Waypoint stable IDs are positional "wp-{index}" over the starred waypoint objects in
-/// enumeration order (legacy waypoints carry no IDs); legacy waypoint names are not unique, so Name
+/// and <see cref="BlendModel"/> stays empty. Placed objects keep ObjectsList enumeration order, waypoint-type
+/// objects included, with stable IDs "obj-{index}" (legacy objects carry no IDs). Property dictionaries are
+/// typed through <see cref="MapPropertyValue"/>; RoadType bits pass through unmasked; MapObject.Angle is
+/// radians and passes through. Waypoint stable IDs are positional "wp-{index}" over the starred waypoint
+/// objects in enumeration order (legacy waypoints carry no IDs); legacy waypoint names are not unique, so Name
 /// carries the legacy name and duplicate names validate. The WaypointsList section carries only path
-/// records and is retained opaque. Retained bytes are the section
+/// records and is retained opaque. Terrain borders, MapArea, and HeightSectionVersion are carried verbatim
+/// from HeightMapData with no defaults. Retained bytes are the section
 /// serialized exactly as the legacy writer frames it (version, back-patched size, payload); the
 /// container-level section name index is excluded, and nested name indices come from a fresh per-section
 /// name table. Legacy sources carry no geospatial transform or source digests.
@@ -126,6 +129,9 @@ public sealed class LegacyMapReader : IMapReader
             (int)heights.BorderWidth,
             null!, // Legacy sources carry no geospatial transform; absence is recorded as null.
             MapNodataPolicy.Fail,
+            (int)heights.Version,
+            heights.Area,
+            heights.Borders.Select(border => new MapTerrainBorder(border.Corner1X, border.Corner1Y, border.X, border.Y)).ToArray(),
             chunks);
     }
 
@@ -183,19 +189,33 @@ public sealed class LegacyMapReader : IMapReader
                 new MapQuantity(mapObject.Position.Z, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineZ),
                 mapObject.Angle,
                 new AssetReference(DefaultSourceLabel, mapObject.TypeName),
-                StringifyProperties(mapObject.Properties)));
+                (uint)mapObject.RoadType,
+                ConvertProperties(mapObject.Properties, mapObject.TypeName, index)));
         }
 
         return new PlacedObjectSet(placed);
     }
 
-    private static IReadOnlyDictionary<string, string> StringifyProperties(AssetPropertyCollection properties)
+    private static IReadOnlyDictionary<string, MapPropertyValue> ConvertProperties(AssetPropertyCollection properties, string objectTypeName, int objectIndex)
     {
-        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        var result = new Dictionary<string, MapPropertyValue>(StringComparer.Ordinal);
 
         foreach (var property in properties)
         {
-            result[property.Key.Name] = property.Value?.ToString() ?? string.Empty;
+            result[property.Key.Name] = property.Key.PropertyType switch
+            {
+                AssetPropertyType.Boolean => new MapPropertyValue.BooleanValue((bool)property.Value!),
+                AssetPropertyType.Integer => new MapPropertyValue.IntegerValue((int)property.Value!),
+                AssetPropertyType.RealNumber => new MapPropertyValue.RealValue((float)property.Value!),
+                AssetPropertyType.AsciiString => new MapPropertyValue.AsciiStringValue((string)property.Value!),
+                AssetPropertyType.UnicodeString => new MapPropertyValue.UnicodeStringValue((string)property.Value!),
+                _ => throw new MapImportException(
+                    [
+                        new MapInterchangeDiagnostic(
+                            MapInterchangeDiagnostic.PropertyType,
+                            $"ObjectsList object {objectIndex} ({objectTypeName}) carries property '{property.Key.Name}' of unsupported type {property.Key.PropertyType}."),
+                    ]),
+            };
         }
 
         return result;

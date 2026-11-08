@@ -44,6 +44,29 @@ public class Navigation
         _heightMap = heightMap;
     }
 
+    /// <summary>
+    /// Runtime-bridge overload: passability comes from a materialized lattice feed
+    /// ([width, height], true = impassable) instead of BlendTileData; graph construction is
+    /// identical to the tile-data constructor.
+    /// </summary>
+    public Navigation(bool[,] impassableFeed, HeightMap heightMap)
+    {
+        var width = impassableFeed.GetLength(0);
+        var height = impassableFeed.GetLength(1);
+        _graph = new Graph(width, height);
+
+        for (var x = 0; x < _graph.Width; x++)
+        {
+            for (var y = 0; y < _graph.Height; y++)
+            {
+                var impassable = impassableFeed[x, y];
+                _graph.GetNode(x, y).Passability = impassable ? Passability.Impassable : Passability.Passable;
+            }
+        }
+
+        _heightMap = heightMap;
+    }
+
     /// <summary>Behavior knobs consulted by group movement (WI-N2-01).</summary>
     public NavigationOptions Options { get; } = new();
 
