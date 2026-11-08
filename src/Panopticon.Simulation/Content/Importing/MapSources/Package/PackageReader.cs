@@ -15,6 +15,13 @@ namespace Panopticon.Content.Importing.MapSources.Package;
 /// </summary>
 public sealed class PackageReader : IMapReader
 {
+    private static readonly Dictionary<string, MapNodataPolicy> ValidNodataPolicies = new(StringComparer.Ordinal)
+    {
+        [nameof(MapNodataPolicy.Fail)] = MapNodataPolicy.Fail,
+        [nameof(MapNodataPolicy.NearestValid)] = MapNodataPolicy.NearestValid,
+        [nameof(MapNodataPolicy.Constant)] = MapNodataPolicy.Constant,
+    };
+
     private readonly string _packageRoot;
 
     public PackageReader(string packageRoot)
@@ -28,14 +35,25 @@ public sealed class PackageReader : IMapReader
     public MapInterchange Read()
     {
         var manifestPath = Path.Combine(_packageRoot, MapPackageFormat.ManifestFileName);
+        var manifestInfo = new FileInfo(manifestPath);
 
-        if (!File.Exists(manifestPath))
+        if (!manifestInfo.Exists)
         {
             throw new MapImportException(
             [
                 new MapInterchangeDiagnostic(
                     MapPackageChunkDiagnostic.FileMissing,
                     $"Package manifest '{manifestPath}' does not exist."),
+            ]);
+        }
+
+        if (manifestInfo.Length > MapPackageFormat.MaxManifestBytes)
+        {
+            throw new MapImportException(
+            [
+                new MapInterchangeDiagnostic(
+                    MapPackageDiagnostic.ResourceLimitExceeded,
+                    $"Package manifest '{manifestPath}' length {manifestInfo.Length} bytes exceeds the limit of {MapPackageFormat.MaxManifestBytes} bytes."),
             ]);
         }
 
@@ -174,10 +192,19 @@ public sealed class PackageReader : IMapReader
             ]);
         }
 
-        var nodataPolicy = Enum.TryParse<MapNodataPolicy>(manifest.Layout.NodataPolicy, false, out var parsedPolicy)
-            ? parsedPolicy
-            : MapNodataPolicy.Fail;
+        if (manifest.Layout.NodataPolicy is null || !ValidNodataPolicies.TryGetValue(manifest.Layout.NodataPolicy, out var nodataPolicy))
+        {
+            throw new MapImportException(
+            [
+                new MapInterchangeDiagnostic(
+                    MapPackageDiagnostic.NodataPolicy,
+                    $"Invalid NodataPolicy '{manifest.Layout.NodataPolicy}' in package manifest; expected Fail, NearestValid, or Constant."),
+            ]);
+        }
 
+        var geospatialTransform = manifest.Layout.GeospatialTransform?.ToModel();
+
+#pragma warning disable CS8604
         var terrainLayout = new TerrainLayout(
             sampleSpacing,
             manifest.Layout.LatticeWidth,
@@ -185,12 +212,13 @@ public sealed class PackageReader : IMapReader
             manifest.Layout.ChunksX,
             manifest.Layout.ChunksY,
             manifest.Layout.Border,
-            manifest.Layout.GeospatialTransform?.ToModel()!,
+            geospatialTransform,
             nodataPolicy,
             manifest.Layout.HeightSectionVersion,
             manifest.Layout.MapArea,
             manifest.Layout.TerrainBorders.Select(b => b.ToModel()).ToArray(),
             chunks);
+#pragma warning restore CS8604
 
         var identity = new MapIdentity(
             manifest.Identity.Name,

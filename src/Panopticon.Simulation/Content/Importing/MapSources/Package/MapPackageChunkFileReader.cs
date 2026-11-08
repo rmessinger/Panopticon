@@ -130,6 +130,14 @@ public static class MapPackageChunkFileReader
         bytes = null;
         error = null;
 
+        if (expectedByteLength > MapPackageFormat.MaxPackageFileBytes)
+        {
+            error = new MapPackageDiagnostic(
+                MapPackageDiagnostic.ResourceLimitExceeded,
+                $"Package file '{entryPath}' declared byte length {expectedByteLength} exceeds the maximum allowed {MapPackageFormat.MaxPackageFileBytes} bytes.");
+            return false;
+        }
+
         if (!MapPackageFileGuard.TryResolve(packageRoot, entryPath, out var fullPath, out var guardError))
         {
             error = guardError;

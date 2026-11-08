@@ -24,4 +24,19 @@ public static class MapPackageFormat
     public const string LayerKindMasks = "masks";
 
     public const string LayerKindImagery = "imagery";
+
+    /// <summary>Maximum allowed size in bytes for a manifest.json file (64 MiB).</summary>
+    public const long MaxManifestBytes = 67_108_864;
+
+    /// <summary>Maximum allowed size in bytes for a manifest.json file (64 MiB).</summary>
+    public const long MaxManifestBytesBytes = MaxManifestBytes;
+
+    /// <summary>Maximum allowed lattice points along a single axis (1,048,576 points).</summary>
+    public const int MaxLatticePointsPerAxis = 1_048_576;
+
+    /// <summary>Maximum allowed total lattice points across the entire grid (268,435,456 points).</summary>
+    public const long MaxLatticePointsTotal = 268_435_456;
+
+    /// <summary>Maximum allowed size in bytes for a single layer or retained section payload file (1 GiB).</summary>
+    public const long MaxPackageFileBytes = 1_073_741_824;
 }

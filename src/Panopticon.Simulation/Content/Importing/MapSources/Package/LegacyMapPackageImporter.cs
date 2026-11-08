@@ -145,9 +145,7 @@ public sealed class LegacyMapPackageImporter
         foreach (var section in interchange.RetainedSections)
         {
             retainedLookup[section.SectionName] = section;
-            var digest = !string.IsNullOrEmpty(section.Sha256)
-                ? section.Sha256
-                : ComputeSha256Hex(section.Bytes.ToArray());
+            var digest = ComputeSha256Hex(section.Bytes.ToArray());
 
             retainedEntries.Add(new MapPackageRetainedEntry(
                 section.SectionName,
