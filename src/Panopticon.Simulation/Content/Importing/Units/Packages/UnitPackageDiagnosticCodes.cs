@@ -21,6 +21,7 @@ public static class UnitPackageDiagnosticCodes
     public const string UnsupportedDialect = "H4-UNSUPPORTED-DIALECT";
     public const string UnsupportedDialectVersion = "H4-UNSUPPORTED-DIALECT-VERSION";
     public const string UnknownField = "H4-UNKNOWN-FIELD";
+    public const string ReservedField = "H4-RESERVED-FIELD";
     public const string UnknownManifestMember = "H4-UNKNOWN-MANIFEST-MEMBER";
     public const string InvalidEnumValue = "H4-INVALID-ENUM";
     public const string DiagnosticCapExceeded = "H4-DIAGNOSTIC-CAP";

@@ -125,6 +125,9 @@ public static class UnitPackageRecordPayloadWriter
         WriteContentIdList(writer, "upgrades", unit.Upgrades, source);
         WriteAuthoredContentId(writer, "visual", unit.Visual, source);
         WriteContentIdList(writer, "presentation", unit.Presentation, source);
+        WriteAuthoredString(writer, "collisionLayer", unit.CollisionLayer, source);
+        WriteStringList(writer, "collisionMask", unit.CollisionMask);
+        WriteAuthoredString(writer, "physicsMaterial", unit.PhysicsMaterial, source);
         WriteModules(writer, unit, source);
     }
 

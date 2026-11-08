@@ -53,6 +53,13 @@ public sealed record UnitRecord : SourceRecord
 
     public ListOverride<ContentId> Presentation { get; init; } = ListOverride<ContentId>.Inherit;
 
+    /// <summary>Physics stable ids are plain strings; no name table validates them until AQ-H4-2 lands.</summary>
+    public Authored<string> CollisionLayer { get; init; }
+
+    public ListOverride<string> CollisionMask { get; init; } = ListOverride<string>.Inherit;
+
+    public Authored<string> PhysicsMaterial { get; init; }
+
     /// <summary>Ordered module edits; after resolution, one <see cref="ModuleEditOperation.Add"/> per surviving module.</summary>
     public IReadOnlyList<ModuleEdit> Modules
     {
@@ -103,6 +110,9 @@ public sealed record UnitRecord : SourceRecord
             Upgrades = Upgrades.ApplyOver(p?.Upgrades ?? ListOverride<ContentId>.Inherit),
             Visual = Authored<ContentId>.Inherit(Visual.WithOrigin(Id), p?.Visual ?? default),
             Presentation = Presentation.ApplyOver(p?.Presentation ?? ListOverride<ContentId>.Inherit),
+            CollisionLayer = Authored<string>.Inherit(CollisionLayer.WithOrigin(Id), p?.CollisionLayer ?? default),
+            CollisionMask = CollisionMask.ApplyOver(p?.CollisionMask ?? ListOverride<string>.Inherit, Id.Source.NameComparer),
+            PhysicsMaterial = Authored<string>.Inherit(PhysicsMaterial.WithOrigin(Id), p?.PhysicsMaterial ?? default),
             Modules = ModuleMerger.Merge(p?.ResolvedModules ?? [], Modules),
         };
     }

@@ -41,7 +41,16 @@ public static class UnitPackageRecordReader
         "upgrades",
         "visual",
         "presentation",
+        "collisionLayer",
+        "collisionMask",
+        "physicsMaterial",
         "modules",
+    };
+
+    private static readonly HashSet<string> ReservedUnitProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "physicsParticipation",
+        "collisionShapeSource",
     };
 
     private static readonly HashSet<string> KnownWeaponProperties = new(CommonRecordProperties, StringComparer.OrdinalIgnoreCase)
@@ -240,11 +249,15 @@ public static class UnitPackageRecordReader
                         rawVal,
                         rawBlock));
 
+                    var reserved = expectedKind == ContentKind.Unit && ReservedUnitProperties.Contains(prop.Name);
+
                     diagnostics.Add(new ImportDiagnostic(
                         ImportDiagnosticSeverity.Warning,
                         ImportStage.Read,
-                        UnitPackageDiagnosticCodes.UnknownField,
-                        $"Unknown record field '{prop.Name}' was retained as an unclassified field.",
+                        reserved ? UnitPackageDiagnosticCodes.ReservedField : UnitPackageDiagnosticCodes.UnknownField,
+                        reserved
+                            ? $"Reserved field '{prop.Name}' is pending AQ-H4-1 and was retained as an unclassified field without a typed parse."
+                            : $"Unknown record field '{prop.Name}' was retained as an unclassified field.",
                         recordId,
                         provenance));
                 }
@@ -387,6 +400,9 @@ public static class UnitPackageRecordReader
             Upgrades = root.TryGetProperty("upgrades", out var ug) ? UnitPackageListOverrideDto.ParseContentIdList(ug, source, ContentKind.Upgrade) : ListOverride<ContentId>.Inherit,
             Visual = root.TryGetProperty("visual", out var vs) ? UnitPackageAuthoredHelper.ParseContentId(vs, source, ContentKind.VisualState) : default,
             Presentation = root.TryGetProperty("presentation", out var ps) ? UnitPackageListOverrideDto.ParseContentIdList(ps, source, ContentKind.Unit) : ListOverride<ContentId>.Inherit,
+            CollisionLayer = root.TryGetProperty("collisionLayer", out var cl) ? UnitPackageAuthoredHelper.ParseString(cl, source) : default,
+            CollisionMask = root.TryGetProperty("collisionMask", out var cm) ? UnitPackageListOverrideDto.ParseStringList(cm) : ListOverride<string>.Inherit,
+            PhysicsMaterial = root.TryGetProperty("physicsMaterial", out var pm) ? UnitPackageAuthoredHelper.ParseString(pm, source) : default,
             Modules = modulesList,
         };
     }
