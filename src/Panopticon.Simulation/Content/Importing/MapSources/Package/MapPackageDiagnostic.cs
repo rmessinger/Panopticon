@@ -49,5 +49,23 @@ public sealed record MapPackageDiagnostic(string Code, string Message)
 
     public const string PropertyType = "property-type";
 
+    public const string ResourceLimitExceeded = "resource-limit-exceeded";
+
+    public const string ResourceLimit = ResourceLimitExceeded;
+
+    public const string DiagnosticCapExceeded = "diagnostic-cap-exceeded";
+
+    public const string DiagnosticCap = DiagnosticCapExceeded;
+
+    public const string RetainedNameDuplicate = "retained-name-duplicate";
+
+    public const string RetainedDuplicate = RetainedNameDuplicate;
+
+    public const string IdentitySourceKind = "identity-source-kind";
+
+    public const string SourceKind = IdentitySourceKind;
+
+    public const string NodataPolicy = "nodata-policy";
+
     public override string ToString() => $"{Code}: {Message}";
 }

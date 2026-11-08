@@ -561,6 +561,105 @@ public sealed class MapPackageManifestTests
         Assert.Equal(source.Sha256Digests[0], sourceDto.ToModel().Sha256Digests[0]);
     }
 
+    [Fact]
+    public void HostileLayout_CompletesQuickly_ReturnsResourceLimitDiagnostics_CappedAt101()
+    {
+        const int axisPoints = 1_000_000;
+        const int chunksAxis = 7813;
+        var layout = BuildValidLayout() with
+        {
+            LatticeWidth = axisPoints,
+            LatticeHeight = axisPoints,
+            ChunksX = chunksAxis,
+            ChunksY = chunksAxis,
+        };
+        var manifest = BuildValidManifest() with { Layout = layout, Layers = [] };
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var diagnostics = MapPackageManifestValidator.Validate(manifest);
+        sw.Stop();
+
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(3), $"Validation took {sw.ElapsedMilliseconds} ms, expected under a few seconds.");
+        Assert.Contains(diagnostics, d => d.Code == MapPackageDiagnostic.ResourceLimitExceeded);
+        Assert.True(diagnostics.Count <= 101, $"Expected at most 101 diagnostics, found {diagnostics.Count}.");
+    }
+
+    [Fact]
+    public void CoverageAggregation_LargeGridPartialHeights_EmitsSingleAggregateDiagnosticFast()
+    {
+        const int chunks = 300;
+        const int lattice = (chunks - 1) * 128 + 129;
+        var layout = BuildValidLayout() with
+        {
+            LatticeWidth = lattice,
+            LatticeHeight = lattice,
+            ChunksX = chunks,
+            ChunksY = chunks,
+        };
+        var layers = new[]
+        {
+            new MapPackageLayerEntry(0, 0, MapPackageFormat.LayerKindHeights, "layers/h_0_0.bin", MapPackageFormat.EncodingFloat32Le, 131, 131, 131 * 131 * 4, SampleSha256),
+            new MapPackageLayerEntry(1, 0, MapPackageFormat.LayerKindHeights, "layers/h_1_0.bin", MapPackageFormat.EncodingFloat32Le, 131, 131, 131 * 131 * 4, SampleSha256),
+        };
+        var manifest = BuildValidManifest() with { Layout = layout, Layers = layers };
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var diagnostics = MapPackageManifestValidator.Validate(manifest);
+        sw.Stop();
+
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(3), $"Validation took {sw.ElapsedMilliseconds} ms, expected under a few seconds.");
+        var chunkDiags = diagnostics.Where(d => d.Code == MapPackageDiagnostic.ChunkInventory).ToList();
+        Assert.Single(chunkDiags);
+        Assert.Contains("90000", chunkDiags[0].Message);
+        Assert.Contains("2", chunkDiags[0].Message);
+        Assert.True(diagnostics.Count < 10, $"Expected small diagnostics total, found {diagnostics.Count}.");
+    }
+
+    [Fact]
+    public void DuplicateRetainedSectionName_FailsValidation()
+    {
+        var retained = new[]
+        {
+            new MapPackageRetainedEntry("GlobalVersion", 1, "retained/GlobalVersion.bin", 4, SampleSha256),
+            new MapPackageRetainedEntry("GlobalVersion", 1, "retained/GlobalVersion2.bin", 4, SampleSha256),
+        };
+        var manifest = BuildValidManifest() with { RetainedSections = retained };
+
+        AssertContainsCode(manifest, MapPackageDiagnostic.RetainedNameDuplicate);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("1")]
+    [InlineData("bogus")]
+    public void NodataPolicy_InvalidNamesAndNumerics_FailValidation(string policy)
+    {
+        var layout = BuildValidLayout() with { NodataPolicy = policy };
+        var manifest = BuildValidManifest() with { Layout = layout };
+
+        AssertContainsCode(manifest, MapPackageDiagnostic.NodataPolicy);
+    }
+
+    [Theory]
+    [InlineData("9")]
+    [InlineData("bogus")]
+    public void SourceKind_InvalidNamesAndNumerics_FailValidation(string sourceKind)
+    {
+        var identity = new MapPackageIdentity("TestMap", sourceKind, 8);
+        var manifest = BuildValidManifest() with { Identity = identity };
+
+        AssertContainsCode(manifest, MapPackageDiagnostic.IdentitySourceKind);
+    }
+
+    [Fact]
+    public void SourceKind_LegacyMap_Accepted()
+    {
+        var identity = new MapPackageIdentity("TestMap", "LegacyMap", 8);
+        var manifest = BuildValidManifest() with { Identity = identity };
+
+        Assert.DoesNotContain(MapPackageManifestValidator.Validate(manifest), d => d.Code == MapPackageDiagnostic.IdentitySourceKind);
+    }
+
     private static MapPackageManifest BuildValidManifest() => new(
         MapPackageFormat.PackageFormatName,
         MapPackageFormat.CurrentPackageVersion,
