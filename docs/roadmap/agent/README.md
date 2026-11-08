@@ -163,7 +163,7 @@ pre-retirement results and is not written to.
 | [`README.md`](../README.md) | This loop and its conventions. |
 | [`task-card-template.md`](task-card-template.md) | Procedure and mapping-row format for a new ticket. |
 | [`legacy-card-mapping.md`](legacy-card-mapping.md) | Card-to-ticket mapping, one row per OpenProject ticket: card ID, title, ticket URL. |
-| [`cards/`](cards/) | Non-ticket data files kept beside the mapping: community map records, deployment proof. |
+| [`cards/`](cards/) | Non-ticket data file kept beside the mapping: deployment proof. |
 
 ## How to maintain this guide
 

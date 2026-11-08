@@ -14,8 +14,8 @@ empty for all other rows.
 Card content from before the OpenProject cutover is in git history at commit
 c94289f24d4d882b6f0009d116773d9fb595a350 ([browse the old
 cards](https://github.com/rmessinger/Panopticon/tree/c94289f24d4d882b6f0009d116773d9fb595a350/docs/roadmap/agent/cards)).
-The two non-ticket data files in `agent/cards/` remain there: `WI-M0-01-community-map-records.md`
-and `WI-M0-03-deployment-proof.json`.
+The non-ticket data file in `agent/cards/` remains there: `WI-M0-03-deployment-proof.json`. The
+community map records moved to [`data/community-map-records.md`](../data/community-map-records.md).
 
 New tickets append one row here instead of creating a stub file; see [ticket
 workflow](README.md#ticket-workflow) and the [template](task-card-template.md).
