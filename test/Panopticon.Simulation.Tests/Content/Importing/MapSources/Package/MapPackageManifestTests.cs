@@ -296,6 +296,52 @@ public sealed class MapPackageManifestTests
         AssertContainsCode(manifest, MapPackageDiagnostic.QuantityUnitFrame);
     }
 
+    [Theory]
+    [InlineData("0")]
+    [InlineData("1")]
+    [InlineData("gameunit")]
+    public void NumericOrNonCanonicalQuantityUnitAndFrameNamesFailValidation(string unit)
+    {
+        var layout = BuildValidLayout() with { SampleSpacing = new MapPackageQuantity(10.0, unit, "MapLocalXy") };
+        var manifest = BuildValidManifest() with { Layout = layout };
+
+        AssertContainsCode(manifest, MapPackageDiagnostic.QuantityUnitFrame);
+    }
+
+    [Fact]
+    public void NumericQuantityUnitAndFrameNamesFailValidationTogether()
+    {
+        var layout = BuildValidLayout() with { SampleSpacing = new MapPackageQuantity(10.0, "0", "1") };
+        var manifest = BuildValidManifest() with { Layout = layout };
+
+        AssertContainsCode(manifest, MapPackageDiagnostic.QuantityUnitFrame);
+    }
+
+    [Theory]
+    [InlineData("0", "1", false)]
+    [InlineData("GameUnit", "MapLocalXy", true)]
+    [InlineData("Meters", "SourceCrs", true)]
+    [InlineData("gameunit", "MapLocalXy", false)]
+    [InlineData("GameUnit", "maplocalxy", false)]
+    [InlineData("Parsecs", "MapLocalXy", false)]
+    [InlineData("GameUnit", "Parsecs", false)]
+    public void TryToMapQuantity_AcceptsExactDeclaredEnumNamesOnly(string unit, string frame, bool expected)
+    {
+        var parsed = new MapPackageQuantity(10.0, unit, frame).TryToMapQuantity(out var quantity);
+
+        Assert.Equal(expected, parsed);
+
+        if (expected)
+        {
+            Assert.Equal(Enum.Parse<MapQuantityUnit>(unit), quantity.Unit);
+            Assert.Equal(Enum.Parse<MapQuantityFrame>(frame), quantity.Frame);
+        }
+        else
+        {
+            Assert.Equal(default, quantity);
+        }
+    }
+
     [Fact]
     public void BothGameUnitAndMetersAreValidQuantities()
     {

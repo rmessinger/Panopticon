@@ -207,8 +207,15 @@ public sealed class H4UnitPackageReader : IUnitSourceAdapter
         try
         {
             var manifestPath = Path.Combine(_packageRoot, UnitPackageFormat.ManifestFileName);
+            var manifestInfo = new FileInfo(manifestPath);
 
-            if (File.Exists(manifestPath))
+            // Bounded probe: never read a manifest past the format cap; Read reports it typed.
+            if (manifestInfo.Exists && manifestInfo.Length > UnitPackageFormat.MaxManifestBytes)
+            {
+                return new ContentSource("unknown", false);
+            }
+
+            if (manifestInfo.Exists)
             {
                 var json = File.ReadAllText(manifestPath);
                 var (manifest, _) = UnitPackageManifestReader.ParseAndValidate(json);

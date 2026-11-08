@@ -38,6 +38,32 @@ public sealed class UnitPackageSecurityTests
     }
 
     [Fact]
+    public void OversizeManifest_ProbeStaysBoundedAndReadFailsTyped()
+    {
+        using var builder = new UnitPackageTestBuilder();
+        var packageDir = builder.Build();
+
+        var manifestPath = Path.Combine(packageDir, UnitPackageFormat.ManifestFileName);
+
+        // Create an oversized manifest (> 64 MiB) using sparse file
+        using (var fs = new FileStream(manifestPath, FileMode.Create, FileAccess.Write))
+        {
+            fs.SetLength(UnitPackageFormat.MaxManifestBytes + 1);
+        }
+
+        var reader = new H4UnitPackageReader(packageDir);
+
+        // The bounded probe never reads the oversized manifest and falls back to the unknown source.
+        Assert.Equal("unknown", reader.Source.Id);
+
+        var set = reader.Read([]);
+
+        var diag = Assert.Single(set.Diagnostics, d => d.Code == UnitPackageDiagnosticCodes.ResourceLimitExceeded);
+        Assert.True(diag.IsError);
+        Assert.Empty(set.Records);
+    }
+
+    [Fact]
     public void TraversalPathInRecordIsRejected()
     {
         using var builder = new UnitPackageTestBuilder();
