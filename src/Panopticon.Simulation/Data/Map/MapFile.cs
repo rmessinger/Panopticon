@@ -5,6 +5,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using Panopticon.Content.Importing.Maps;
+using Panopticon.Content.Importing.MapSources;
 using Panopticon.Data.Utilities.Extensions;
 using Panopticon.FileFormats;
 using Panopticon.FileFormats.RefPack;
@@ -20,82 +22,82 @@ public class MapFile
     internal const string FourCcUncompressed = "CkMp";
 
     [AddedIn(SageGame.Cnc3)]
-    public AssetList AssetList { get; private set; }
+    public AssetList AssetList { get; internal set; }
 
     [AddedIn(SageGame.Ra3)]
-    public GlobalVersion GlobalVersion { get; private set; }
+    public GlobalVersion GlobalVersion { get; internal set; }
 
     public HeightMapData HeightMapData { get; internal set; }
     public BlendTileData BlendTileData { get; internal set; }
     public WorldInfo WorldInfo { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public MPPositionList MPPositionList { get; private set; }
+    public MPPositionList MPPositionList { get; internal set; }
 
     public SidesList SidesList { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public LibraryMapLists LibraryMapLists { get; private set; }
+    public LibraryMapLists LibraryMapLists { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public Teams Teams { get; private set; }
+    public Teams Teams { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public PlayerScriptsList PlayerScriptsList { get; private set; }
+    public PlayerScriptsList PlayerScriptsList { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public BuildLists BuildLists { get; private set; }
+    public BuildLists BuildLists { get; internal set; }
 
-    public ObjectsList ObjectsList { get; private set; }
+    public ObjectsList ObjectsList { get; internal set; }
 
     // Either PolygonTriggers (Generals, ZH, BFME I) or TriggerAreas + StandingWaterAreas + RiverAreas + StandingWaveAreas (BFME II and later)
-    public PolygonTriggers PolygonTriggers { get; private set; }
+    public PolygonTriggers PolygonTriggers { get; internal set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public TriggerAreas TriggerAreas { get; private set; }
+    public TriggerAreas TriggerAreas { get; internal set; }
 
     [AddedIn(SageGame.Cnc3)]
-    public GlobalWaterSettings GlobalWaterSettings { get; private set; }
+    public GlobalWaterSettings GlobalWaterSettings { get; internal set; }
 
     [AddedIn(SageGame.Cnc3)]
-    public FogSettings FogSettings { get; private set; }
+    public FogSettings FogSettings { get; internal set; }
 
     [AddedIn(SageGame.Ra3)]
-    public MissionHotSpots MissionHotSpots { get; private set; }
+    public MissionHotSpots MissionHotSpots { get; internal set; }
 
     [AddedIn(SageGame.Ra3)]
-    public MissionObjectives MissionObjectives { get; private set; }
+    public MissionObjectives MissionObjectives { get; internal set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public StandingWaterAreas StandingWaterAreas { get; private set; }
+    public StandingWaterAreas StandingWaterAreas { get; internal set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public RiverAreas RiverAreas { get; private set; }
+    public RiverAreas RiverAreas { get; internal set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public StandingWaveAreas StandingWaveAreas { get; private set; }
+    public StandingWaveAreas StandingWaveAreas { get; internal set; }
 
-    public GlobalLighting GlobalLighting { get; private set; }
+    public GlobalLighting GlobalLighting { get; internal set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public PostEffectsChunk PostEffectsChunk { get; private set; }
+    public PostEffectsChunk PostEffectsChunk { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public EnvironmentData EnvironmentData { get; private set; }
+    public EnvironmentData EnvironmentData { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public NamedCameras NamedCameras { get; private set; }
+    public NamedCameras NamedCameras { get; internal set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public CameraAnimationList CameraAnimationList { get; private set; }
+    public CameraAnimationList CameraAnimationList { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public CastleTemplates CastleTemplates { get; private set; }
+    public CastleTemplates CastleTemplates { get; internal set; }
 
-    public WaypointsList WaypointsList { get; private set; }
+    public WaypointsList WaypointsList { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
-    public SkyboxSettings SkyboxSettings { get; private set; }
+    public SkyboxSettings SkyboxSettings { get; internal set; }
 
     // TODO(Port): This used to be simpler when PlayerScripts (incorrectly) lived in SidesList.
     // This will probably change as we port more stuff.
@@ -178,6 +180,149 @@ public class MapFile
     public static MapFile FromStream(Stream stream)
     {
         return Parse(stream, reader => ParseMapData(reader));
+    }
+
+    /// <summary>
+    /// Constructs a resident MapFile from a validated MapInterchange, receiving materialized
+    /// heights, objects, typed-home sections, and backend-parsed retained sections.
+    /// </summary>
+    internal static MapFile FromInterchange(MapInterchange interchange)
+    {
+        ArgumentNullException.ThrowIfNull(interchange);
+
+        var heightMapData = RuntimeBridge.MaterializeHeightMapData(interchange);
+        var mapObjects = RuntimeBridge.MaterializeMapObjects(interchange);
+        var objectsList = new ObjectsList();
+        foreach (var obj in mapObjects)
+        {
+            objectsList.AddObject(obj);
+        }
+
+        var blendTileData = RuntimeBridge.MaterializeBlendTileData(interchange, heightMapData);
+        var globalLighting = RuntimeBridge.MaterializeGlobalLighting(interchange);
+        var namedCameras = RuntimeBridge.MaterializeNamedCameras(interchange);
+        var standingWaterAreas = RuntimeBridge.MaterializeStandingWaterAreas(interchange);
+        var riverAreas = RuntimeBridge.MaterializeRiverAreas(interchange);
+        var standingWaveAreas = RuntimeBridge.MaterializeStandingWaveAreas(interchange);
+        var globalWaterSettings = RuntimeBridge.MaterializeGlobalWaterSettings(interchange);
+        var polygonTriggers = RuntimeBridge.MaterializePolygonTriggers(interchange);
+        var waypointsList = RuntimeBridge.MaterializeWaypointsList(interchange);
+
+        var retainedLookup = interchange.RetainedSections.ToDictionary(s => s.SectionName, StringComparer.Ordinal);
+        var mapHasAssetList = retainedLookup.ContainsKey(AssetList.AssetName);
+
+        AssetList? assetList = retainedLookup.TryGetValue(AssetList.AssetName, out var assetListSec)
+            ? MapBackendReaders.ReadAssetList(assetListSec)
+            : null;
+
+        GlobalVersion? globalVersion = null;
+        if (retainedLookup.TryGetValue(GlobalVersion.AssetName, out var gvSec))
+        {
+            using var gvStream = new MemoryStream(gvSec.Bytes.ToArray());
+            using var gvReader = new BinaryReader(gvStream);
+            globalVersion = GlobalVersion.Parse(gvReader, new MapParseContext(new AssetNameCollection()));
+        }
+        else if (interchange.Identity.LegacyGlobalVersion.HasValue)
+        {
+            globalVersion = new GlobalVersion { Version = (ushort)interchange.Identity.LegacyGlobalVersion.Value };
+        }
+
+        SidesList? sidesList = retainedLookup.TryGetValue(SidesList.AssetName, out var sidesSec)
+            ? MapBackendReaders.ReadSidesList(sidesSec, mapHasAssetList)
+            : null;
+
+        Teams? teams = retainedLookup.TryGetValue(Teams.AssetName, out var teamsSec)
+            ? MapBackendReaders.ReadTeams(teamsSec)
+            : null;
+
+        PlayerScriptsList? playerScriptsList = retainedLookup.TryGetValue(PlayerScriptsList.AssetName, out var scriptsSec)
+            ? MapBackendReaders.ReadPlayerScriptsList(scriptsSec)
+            : null;
+
+        TriggerAreas? triggerAreas = retainedLookup.TryGetValue(TriggerAreas.AssetName, out var triggerAreasSec)
+            ? MapBackendReaders.ReadTriggerAreas(triggerAreasSec)
+            : null;
+
+        BuildLists? buildLists = retainedLookup.TryGetValue(BuildLists.AssetName, out var buildListsSec)
+            ? MapBackendReaders.ReadBuildLists(buildListsSec, mapHasAssetList)
+            : null;
+
+        LibraryMapLists? libraryMapLists = retainedLookup.TryGetValue(LibraryMapLists.AssetName, out var libSec)
+            ? MapBackendReaders.ReadLibraryMapLists(libSec)
+            : null;
+
+        WorldInfo? worldInfo = retainedLookup.TryGetValue(WorldInfo.AssetName, out var worldInfoSec)
+            ? MapBackendReaders.ReadWorldInfo(worldInfoSec)
+            : null;
+
+        MPPositionList? mpPositionList = retainedLookup.TryGetValue(MPPositionList.AssetName, out var mpSec)
+            ? MapBackendReaders.ReadMPPositionList(mpSec)
+            : null;
+
+        FogSettings? fogSettings = retainedLookup.TryGetValue(FogSettings.AssetName, out var fogSec)
+            ? MapBackendReaders.ReadFogSettings(fogSec)
+            : null;
+
+        PostEffectsChunk? postEffectsChunk = retainedLookup.TryGetValue(PostEffectsChunk.AssetName, out var postSec)
+            ? MapBackendReaders.ReadPostEffectsChunk(postSec)
+            : null;
+
+        EnvironmentData? environmentData = retainedLookup.TryGetValue(EnvironmentData.AssetName, out var envSec)
+            ? MapBackendReaders.ReadEnvironmentData(envSec)
+            : null;
+
+        SkyboxSettings? skyboxSettings = retainedLookup.TryGetValue(SkyboxSettings.AssetName, out var skySec)
+            ? MapBackendReaders.ReadSkyboxSettings(skySec)
+            : null;
+
+        MissionHotSpots? missionHotSpots = retainedLookup.TryGetValue(MissionHotSpots.AssetName, out var hotSec)
+            ? MapBackendReaders.ReadMissionHotSpots(hotSec)
+            : null;
+
+        MissionObjectives? missionObjectives = retainedLookup.TryGetValue(MissionObjectives.AssetName, out var objSec)
+            ? MapBackendReaders.ReadMissionObjectives(objSec)
+            : null;
+
+        CameraAnimationList? cameraAnimationList = retainedLookup.TryGetValue(CameraAnimationList.AssetName, out var camSec)
+            ? MapBackendReaders.ReadCameraAnimationList(camSec)
+            : null;
+
+        CastleTemplates? castleTemplates = retainedLookup.TryGetValue(CastleTemplates.AssetName, out var castleSec)
+            ? MapBackendReaders.ReadCastleTemplates(castleSec)
+            : null;
+
+        return new MapFile
+        {
+            HeightMapData = heightMapData,
+            ObjectsList = objectsList,
+            BlendTileData = blendTileData,
+            GlobalLighting = globalLighting,
+            NamedCameras = namedCameras,
+            StandingWaterAreas = standingWaterAreas,
+            RiverAreas = riverAreas,
+            StandingWaveAreas = standingWaveAreas,
+            GlobalWaterSettings = globalWaterSettings,
+            PolygonTriggers = polygonTriggers,
+            WaypointsList = waypointsList,
+            AssetList = assetList,
+            GlobalVersion = globalVersion,
+            SidesList = sidesList,
+            Teams = teams,
+            PlayerScriptsList = playerScriptsList,
+            TriggerAreas = triggerAreas,
+            BuildLists = buildLists,
+            LibraryMapLists = libraryMapLists,
+            WorldInfo = worldInfo,
+            MPPositionList = mpPositionList,
+            FogSettings = fogSettings,
+            PostEffectsChunk = postEffectsChunk,
+            EnvironmentData = environmentData,
+            SkyboxSettings = skyboxSettings,
+            MissionHotSpots = missionHotSpots,
+            MissionObjectives = missionObjectives,
+            CameraAnimationList = cameraAnimationList,
+            CastleTemplates = castleTemplates,
+        };
     }
 
     /// <summary>
@@ -266,7 +411,7 @@ public class MapFile
             var east = (uint)Math.Round(fraction * playableWidth) * HeightMap.HorizontalScale;
             var north = (uint)Math.Round(fraction * playableHeight) * HeightMap.HorizontalScale;
             mapFile.ObjectsList.AddObject(
-                Waypoint.CreateWaypointMapObject(new Vector3(east, north, 0), slot, $"Player_{slot}_Start"));
+                Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(east, north, 0), slot, $"Player_{slot}_Start"));
         }
     }
 

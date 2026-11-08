@@ -20,7 +20,16 @@ public sealed record MapInterchange
         WaypointSet? waypoints,
         Provenance provenance,
         ImportReport report,
-        IReadOnlyList<RetainedSection> retainedSections)
+        IReadOnlyList<RetainedSection> retainedSections,
+        MapBlendTileData? blendTileData = null,
+        MapGlobalLightingRecord? globalLighting = null,
+        MapNamedCamerasRecord? namedCameras = null,
+        MapStandingWaterAreasRecord? standingWaterAreas = null,
+        MapRiverAreasRecord? riverAreas = null,
+        MapStandingWaveAreasRecord? standingWaveAreas = null,
+        MapGlobalWaterSettingsRecord? globalWaterSettings = null,
+        MapPolygonTriggersRecord? polygonTriggers = null,
+        MapWaypointPathsRecord? waypointPaths = null)
     {
         ArgumentNullException.ThrowIfNull(retainedSections);
         SchemaVersion = schemaVersion;
@@ -32,6 +41,15 @@ public sealed record MapInterchange
         Provenance = provenance;
         Report = report;
         RetainedSections = retainedSections.ToArray();
+        BlendTileData = blendTileData;
+        GlobalLighting = globalLighting;
+        NamedCameras = namedCameras;
+        StandingWaterAreas = standingWaterAreas;
+        RiverAreas = riverAreas;
+        StandingWaveAreas = standingWaveAreas;
+        GlobalWaterSettings = globalWaterSettings;
+        PolygonTriggers = polygonTriggers;
+        WaypointPaths = waypointPaths;
     }
 
     public int SchemaVersion { get; init; }
@@ -51,4 +69,22 @@ public sealed record MapInterchange
     public ImportReport Report { get; init; }
 
     public IReadOnlyList<RetainedSection> RetainedSections { get; init; }
+
+    public MapBlendTileData? BlendTileData { get; init; }
+
+    public MapGlobalLightingRecord? GlobalLighting { get; init; }
+
+    public MapNamedCamerasRecord? NamedCameras { get; init; }
+
+    public MapStandingWaterAreasRecord? StandingWaterAreas { get; init; }
+
+    public MapRiverAreasRecord? RiverAreas { get; init; }
+
+    public MapStandingWaveAreasRecord? StandingWaveAreas { get; init; }
+
+    public MapGlobalWaterSettingsRecord? GlobalWaterSettings { get; init; }
+
+    public MapPolygonTriggersRecord? PolygonTriggers { get; init; }
+
+    public MapWaypointPathsRecord? WaypointPaths { get; init; }
 }

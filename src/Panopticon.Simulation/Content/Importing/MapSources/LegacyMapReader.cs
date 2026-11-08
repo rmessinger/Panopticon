@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using Panopticon.Content.Importing.Maps;
@@ -89,7 +90,16 @@ public sealed class LegacyMapReader : IMapReader
             BuildWaypoints(),
             new Provenance(null, [], []),
             new ImportReport([], [], 0, 0, []),
-            BuildRetainedSections());
+            BuildRetainedSections(),
+            BuildBlendTileData(),
+            BuildGlobalLighting(),
+            BuildNamedCameras(),
+            BuildStandingWaterAreas(),
+            BuildRiverAreas(),
+            BuildStandingWaveAreas(),
+            BuildGlobalWaterSettings(),
+            BuildPolygonTriggers(),
+            BuildWaypointPaths());
 
         var diagnostics = MapInterchangeValidator.Validate(model);
 
@@ -254,6 +264,285 @@ public sealed class LegacyMapReader : IMapReader
         }
 
         return new WaypointSet(waypoints);
+    }
+
+    private MapBlendTileData? BuildBlendTileData()
+    {
+        if (_mapFile.BlendTileData is not { } blend)
+        {
+            return null;
+        }
+
+        var textures = (blend.Textures ?? []).Select(t => new MapBlendTextureRecord(
+            t.Name,
+            t.CellStart,
+            t.CellCount,
+            t.CellSize,
+            t.MagicValue)).ToArray();
+
+        var descriptions = (blend.BlendDescriptions ?? []).Select(d => new MapBlendDescriptionRecord(
+            d.SecondaryTextureTile,
+            d.RawBlendDirection,
+            (byte)d.Flags,
+            d.TwoSided,
+            d.MagicValue1)).ToArray();
+
+        var mappings = (blend.CliffTextureMappings ?? []).Select(c => new MapCliffTextureMappingRecord(
+            c.TextureTile,
+            c.BottomLeftCoords,
+            c.BottomRightCoords,
+            c.TopRightCoords,
+            c.TopLeftCoords,
+            c.Unknown2)).ToArray();
+
+        byte[,]? flammability = null;
+        if (blend.Flammability is not null)
+        {
+            var w = blend.Flammability.GetLength(0);
+            var h = blend.Flammability.GetLength(1);
+            flammability = new byte[w, h];
+            for (var y = 0; y < h; y++)
+            {
+                for (var x = 0; x < w; x++)
+                {
+                    flammability[x, y] = (byte)blend.Flammability[x, y];
+                }
+            }
+        }
+
+        return new MapBlendTileData(
+            blend.Version,
+            blend.NumTiles,
+            blend.Tiles,
+            blend.Blends,
+            blend.ThreeWayBlends,
+            blend.CliffTextures,
+            blend.Impassability ?? new bool[0, 0],
+            blend.TextureCellCount,
+            textures,
+            blend.MagicValue1,
+            blend.MagicValue2,
+            descriptions,
+            blend.ParsedCliffTextureMappingsCount,
+            mappings,
+            blend.ImpassabilityToPlayers,
+            blend.PassageWidths,
+            blend.Taintability,
+            blend.ExtraPassability,
+            flammability,
+            blend.Visibility,
+            blend.ImpassabilityToAirUnits,
+            blend.Buildability,
+            blend.TiberiumGrowability,
+            blend.DynamicShrubberyDensity);
+    }
+
+    private MapGlobalLightingRecord? BuildGlobalLighting()
+    {
+        if (_mapFile.GlobalLighting is not { } lighting)
+        {
+            return null;
+        }
+
+        var configs = new Dictionary<MapTimeOfDay, MapLightingConfigurationRecord>();
+        if (lighting.LightingConfigurations is not null)
+        {
+            foreach (var (time, config) in lighting.LightingConfigurations)
+            {
+                configs[(MapTimeOfDay)time] = new MapLightingConfigurationRecord(
+                    ToLightRecord(config.TerrainSun),
+                    ToLightRecord(config.TerrainAccent1),
+                    ToLightRecord(config.TerrainAccent2),
+                    ToLightRecord(config.ObjectSun),
+                    ToLightRecord(config.ObjectAccent1),
+                    ToLightRecord(config.ObjectAccent2),
+                    ToLightRecord(config.InfantrySun),
+                    ToLightRecord(config.InfantryAccent1),
+                    ToLightRecord(config.InfantryAccent2));
+            }
+        }
+
+        Vector3? noCloudFactor = lighting.NoCloudFactor.HasValue
+            ? new Vector3(lighting.NoCloudFactor.Value.R, lighting.NoCloudFactor.Value.G, lighting.NoCloudFactor.Value.B)
+            : null;
+
+        uint? unknown3 = lighting.Unknown3.HasValue ? ToArgb(lighting.Unknown3.Value) : null;
+
+        return new MapGlobalLightingRecord(
+            lighting.Version,
+            (MapTimeOfDay)lighting.Time,
+            configs,
+            ToArgb(lighting.ShadowColor),
+            lighting.Unknown,
+            lighting.Unknown2,
+            unknown3,
+            noCloudFactor);
+    }
+
+    private static uint ToArgb(MapColorArgb c) => (uint)((c.A << 24) | (c.R << 16) | (c.G << 8) | c.B);
+
+    private static MapGlobalLightRecord? ToLightRecord(GlobalLight? light) =>
+        light is null ? null : new MapGlobalLightRecord(light.Ambient, light.Color, light.Direction);
+
+    private MapNamedCamerasRecord? BuildNamedCameras()
+    {
+        if (_mapFile.NamedCameras is not { } cameras)
+        {
+            return null;
+        }
+
+        var records = (cameras.Cameras ?? []).Select(c => new MapNamedCameraRecord(
+            c.LookAtPoint,
+            c.Name,
+            c.Pitch,
+            c.Roll,
+            c.Yaw,
+            c.Zoom,
+            c.FieldOfView,
+            c.Unknown)).ToArray();
+
+        return new MapNamedCamerasRecord(cameras.Version, records);
+    }
+
+    private MapStandingWaterAreasRecord? BuildStandingWaterAreas()
+    {
+        if (_mapFile.StandingWaterAreas is not { } waterAreas)
+        {
+            return null;
+        }
+
+        var records = (waterAreas.Areas ?? []).Select(a => new MapStandingWaterAreaRecord(
+            a.UniqueID,
+            a.Name,
+            a.LayerName,
+            a.UvScrollSpeed,
+            a.UseAdditiveBlending,
+            a.BumpMapTexture,
+            a.SkyTexture,
+            a.Points,
+            a.WaterHeight,
+            a.FxShader,
+            a.DepthColors)).ToArray();
+
+        return new MapStandingWaterAreasRecord(waterAreas.Version, records);
+    }
+
+    private MapStandingWaveAreasRecord? BuildStandingWaveAreas()
+    {
+        if (_mapFile.StandingWaveAreas is not { } waveAreas)
+        {
+            return null;
+        }
+
+        var records = (waveAreas.Areas ?? []).Select(a => new MapStandingWaveAreaRecord(
+            a.UniqueID,
+            a.Name,
+            a.LayerName,
+            a.UvScrollSpeed,
+            a.UseAdditiveBlending,
+            a.Points,
+            a.FinalWidth,
+            a.FinalHeight,
+            a.InitialWidthFraction,
+            a.InitialHeightFraction,
+            a.InitialVelocity,
+            a.TimeToFade,
+            a.TimeToCompress,
+            a.TimeOffset2ndWave,
+            a.DistanceFromShore,
+            a.Texture,
+            a.EnablePcaWave,
+            a.WaveParticleFXName)).ToArray();
+
+        return new MapStandingWaveAreasRecord(waveAreas.Version, records);
+    }
+
+    private MapRiverAreasRecord? BuildRiverAreas()
+    {
+        if (_mapFile.RiverAreas is not { } riverAreas)
+        {
+            return null;
+        }
+
+        var records = (riverAreas.Areas ?? []).Select(a => new MapRiverAreaRecord(
+            a.UniqueID,
+            a.Name,
+            a.LayerName,
+            a.UvScrollSpeed,
+            a.UseAdditiveBlending,
+            a.RiverTexture,
+            a.NoiseTexture,
+            a.AlphaEdgeTexture,
+            a.SparkleTexture,
+            a.Color.R,
+            a.Color.G,
+            a.Color.B,
+            a.Alpha,
+            a.WaterHeight,
+            a.RiverType,
+            a.MinimumWaterLod,
+            (a.Lines ?? []).Select(l => new MapRiverLineRecord(l.V0, l.V1)).ToArray())).ToArray();
+
+        return new MapRiverAreasRecord(riverAreas.Version, records);
+    }
+
+    private MapGlobalWaterSettingsRecord? BuildGlobalWaterSettings()
+    {
+        if (_mapFile.GlobalWaterSettings is not { } waterSettings)
+        {
+            return null;
+        }
+
+        return new MapGlobalWaterSettingsRecord(
+            waterSettings.Version,
+            waterSettings.ReflectionOn,
+            waterSettings.ReflectionPlaneZ);
+    }
+
+    private MapPolygonTriggersRecord? BuildPolygonTriggers()
+    {
+        if (_mapFile.PolygonTriggers is not { } triggers)
+        {
+            return null;
+        }
+
+        var records = (triggers.Triggers ?? []).Select(t => new MapPolygonTriggerRecord(
+            t.Name,
+            t.LayerName,
+            t.TriggerId,
+            t.IsWater,
+            t.IsRiver,
+            t.RiverStart,
+            (t.Points ?? []).Select(p => new Vector3((float)p.X, (float)p.Y, (float)p.Z)).ToArray(),
+            t.UseAdditiveBlending,
+            t.UvScrollSpeed,
+            t.RiverTexture,
+            t.NoiseTexture,
+            t.AlphaEdgeTexture,
+            t.SparkleTexture,
+            t.BumpMapTexture,
+            t.SkyTexture,
+            t.Unknown,
+            t.RiverColor.R,
+            t.RiverColor.G,
+            t.RiverColor.B,
+            t.RiverAlpha)).ToArray();
+
+        return new MapPolygonTriggersRecord(triggers.Version, records);
+    }
+
+    private MapWaypointPathsRecord? BuildWaypointPaths()
+    {
+        if (_mapFile.WaypointsList is not { } waypoints)
+        {
+            return null;
+        }
+
+        var records = (waypoints.WaypointPaths ?? []).Select(p => new MapWaypointPathRecord(
+            p.StartWaypointID,
+            p.EndWaypointID)).ToArray();
+
+        return new MapWaypointPathsRecord(waypoints.Version, records);
     }
 
     private IReadOnlyList<RetainedSection> BuildRetainedSections()
