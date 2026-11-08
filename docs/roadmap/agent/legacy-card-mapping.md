@@ -418,6 +418,9 @@ workflow](README.md#ticket-workflow) and the [template](task-card-template.md).
 | `WI-H1-01` |  | `WI-H1-01-map-format-audit.md` | Audit legacy map storage | https://projects.reid-corp.com/work_packages/618 |
 | `WI-H1-02` |  | `WI-H1-02-format-decision-options.md` | Confirm settled H3 format choices against the audit | https://projects.reid-corp.com/work_packages/619 |
 | `WI-H2-01` |  | `WI-H2-01-map-interchange-design.md` | Design map interchange for the settled package format | https://projects.reid-corp.com/work_packages/620 |
+| `WI-H2-02` |  | `WI-H2-02-interchange-types.md` | Add engine-owned map interchange types | https://projects.reid-corp.com/work_packages/958 |
+| `WI-H2-03` |  | `WI-H2-03-legacy-reader-seam.md` | Route the legacy map reader through the seam | https://projects.reid-corp.com/work_packages/959 |
+| `WI-H2-04` |  | `WI-H2-04-runtime-bridge.md` | Bridge the runtime load path to the interchange | https://projects.reid-corp.com/work_packages/957 |
 | `WI-H2a-01` |  | `WI-H2a-01-unit-loading-audit.md` | Audit unit-content loading | https://projects.reid-corp.com/work_packages/621 |
 | `WI-H2a-02` |  | `WI-H2a-02-unit-import-design.md` | Ground the import contract and architecture | https://projects.reid-corp.com/work_packages/622 |
 | `WI-H2a-03` |  | `WI-H2a-03-interchange-contracts.md` | Add engine-owned interchange contracts | https://projects.reid-corp.com/work_packages/623 |
