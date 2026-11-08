@@ -28,9 +28,6 @@ public static class MapPackageFormat
     /// <summary>Maximum allowed size in bytes for a manifest.json file (64 MiB).</summary>
     public const long MaxManifestBytes = 67_108_864;
 
-    /// <summary>Maximum allowed size in bytes for a manifest.json file (64 MiB).</summary>
-    public const long MaxManifestBytesBytes = MaxManifestBytes;
-
     /// <summary>Maximum allowed lattice points along a single axis (1,048,576 points).</summary>
     public const int MaxLatticePointsPerAxis = 1_048_576;
 

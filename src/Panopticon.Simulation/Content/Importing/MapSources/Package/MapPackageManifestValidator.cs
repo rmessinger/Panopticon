@@ -103,6 +103,10 @@ public static class MapPackageManifestValidator
         nameof(MapNodataPolicy.Constant),
     };
 
+    private static readonly HashSet<string> ValidQuantityUnits = new(Enum.GetNames<MapQuantityUnit>(), StringComparer.Ordinal);
+
+    private static readonly HashSet<string> ValidQuantityFrames = new(Enum.GetNames<MapQuantityFrame>(), StringComparer.Ordinal);
+
     /// <summary>
     /// Validates that Identity.SourceKind names an exact MapSourceKind enum value.
     /// The field represents authored provenance: the manifest records the source the package content was authored from,
@@ -871,8 +875,8 @@ public static class MapPackageManifestValidator
 
     private static void RequireUnitFrame(MapPackageQuantity quantity, string field, List<MapPackageDiagnostic> diagnostics)
     {
-        var unitValid = Enum.TryParse<MapQuantityUnit>(quantity.Unit, false, out _);
-        var frameValid = Enum.TryParse<MapQuantityFrame>(quantity.Frame, false, out _);
+        var unitValid = quantity.Unit is not null && ValidQuantityUnits.Contains(quantity.Unit);
+        var frameValid = quantity.Frame is not null && ValidQuantityFrames.Contains(quantity.Frame);
 
         if (unitValid && frameValid)
         {
