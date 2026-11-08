@@ -2,7 +2,7 @@ namespace Panopticon.Tools.H5Migrate;
 
 /// <summary>
 /// Diagnostic codes of the H5Migrate CLI's own recoverable failures; this class owns
-/// H5-CLI-001..012 exclusively. Component-owned codes (manifest, importer, reader) stay
+/// H5-CLI-001..015 exclusively. Component-owned codes (manifest, importer, reader) stay
 /// with their components and are printed verbatim.
 /// </summary>
 internal static class H5MigrateCliDiagnostics
@@ -42,4 +42,10 @@ internal static class H5MigrateCliDiagnostics
 
     /// <summary>The written unit package differed semantically or structurally from the source resolution on re-read.</summary>
     internal const string VerificationFailed = "H5-CLI-012";
+
+    internal const string MissingRecord = "H5-CLI-013";
+
+    internal const string ExtraRecord = "H5-CLI-014";
+
+    internal const string MaterializedTemplateMismatch = "H5-CLI-015";
 }

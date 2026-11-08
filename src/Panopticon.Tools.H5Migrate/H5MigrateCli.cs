@@ -23,8 +23,9 @@ namespace Panopticon.Tools.H5Migrate;
 /// <summary>
 /// In-process entry of the H5Migrate CLI (WI-H5-01, WI-H5-02):
 /// `convert-map --input &lt;legacy .map path&gt; --out &lt;package dir&gt;`,
-/// `convert-ini --out &lt;package dir&gt; [--game-path &lt;path&gt;] [--p6b] [&lt;unit name&gt; ...]`.
-/// Exit codes: 0 success, 1 operational or input failure, 2 usage error. The pipeline parses
+/// `convert-ini --out &lt;package dir&gt; [--game-path &lt;path&gt;] [--p6b] [&lt;unit name&gt; ...]`,
+/// `validate --package &lt;package dir&gt; (--input &lt;legacy .map&gt; | [--game-path &lt;path&gt;] [--p6b] [&lt;unit name&gt; ...]) [--json]`.
+/// Exit codes: 0 success or identical content, 1 operational failure or mismatch, 2 usage error. The pipeline parses
 /// legacy content, writes staged packages atomically, verifies the result before reporting success,
 /// and deletes the output on failure so no partial packages remain.
 /// </summary>
@@ -57,11 +58,132 @@ public static class H5MigrateCli
         var parser = new Parser(with => with.HelpWriter = null);
 
         return parser
-            .ParseArguments<ConvertMapOptions, ConvertIniOptions>(arguments)
+            .ParseArguments<ConvertMapOptions, ConvertIniOptions, ValidateOptions>(arguments)
             .MapResult(
                 (ConvertMapOptions convertMapOptions) => RunConvertMap(convertMapOptions, standardOut, errorOut, cancellationToken),
                 (ConvertIniOptions convertIniOptions) => RunConvertIni(convertIniOptions, standardOut, errorOut, cancellationToken),
+                (ValidateOptions validateOptions) => RunValidate(validateOptions, standardOut, errorOut, cancellationToken),
                 _ => UsageFailure(arguments, errorOut));
+    }
+
+    private static int RunValidate(ValidateOptions options, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
+    {
+        var mapMode = options.InputPath is not null;
+        var unitsMode = HasRosterSpecification(options.P6b, options.Units, options.PositionalUnits);
+
+        if (string.IsNullOrWhiteSpace(options.PackageDirectory) || !Path.IsPathRooted(options.PackageDirectory) || mapMode == unitsMode)
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "usage: h5migrate validate --input <absolute legacy .map path> --package <package dir> [--json] | validate --package <package dir> [--game-path <path>] [--p6b] [<unit name> ...] [--json] (the package path must be absolute; give either --input or a roster)"));
+            return UsageExit;
+        }
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RoundTripReport report;
+
+            if (mapMode)
+            {
+                if (!Path.IsPathRooted(options.InputPath))
+                {
+                    errorOut.WriteLine(
+                        NormalizeWhitespace(
+                            "usage: h5migrate validate --input <absolute legacy .map path> --package <package dir> (the input path must be absolute)"));
+                    return UsageExit;
+                }
+
+                if (!File.Exists(options.InputPath))
+                {
+                    errorOut.WriteLine(FormatDiagnostic("error", H5MigrateCliDiagnostics.InputMissing, "validate",
+                        $"The input map file '{options.InputPath}' does not exist."));
+                    return OperationalFailureExit;
+                }
+
+                var parseDiagnostics = new List<MapPackageDiagnostic>();
+                var sourceMap = TryParseSourceMap(options.InputPath, parseDiagnostics);
+
+                if (sourceMap is null)
+                {
+                    foreach (var diag in parseDiagnostics)
+                    {
+                        errorOut.WriteLine(FormatDiagnostic("error", diag.Code, "validate", diag.Message));
+                    }
+
+                    return OperationalFailureExit;
+                }
+
+                report = RoundTripValidator.ValidateMap(sourceMap, options.InputPath, options.PackageDirectory);
+            }
+            else
+            {
+                var gamePath = options.GamePath ?? options.InstallPath ?? Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
+                if (string.IsNullOrWhiteSpace(gamePath) || !Directory.Exists(gamePath))
+                {
+                    errorOut.WriteLine(
+                        FormatDiagnostic("error", H5MigrateCliDiagnostics.InstallMissing, "validate",
+                            $"Generals installation not found: '{gamePath ?? "(not set)"}'. Set CNC_GENERALS_PATH or pass --game-path."));
+                    return OperationalFailureExit;
+                }
+
+                using var fileSystem = new CompositeFileSystem(
+                    new DiskFileSystem(gamePath),
+                    new BigFileSystem(gamePath));
+
+                if (fileSystem.GetFile(@"Data\INI\Armor.ini") is null)
+                {
+                    errorOut.WriteLine(
+                        FormatDiagnostic("error", H5MigrateCliDiagnostics.InstallMissing, "validate",
+                            $"Generals installation at '{gamePath}' does not contain expected data files."));
+                    return OperationalFailureExit;
+                }
+
+                var staging = GeneralsIniLoader.Load(fileSystem);
+                var roster = ResolveRosterUnits(options.P6b, options.Units, options.PositionalUnits);
+                var adapter = new GeneralsUnitAdapter(staging, SageGame.CncGenerals);
+                var set = adapter.Read(roster);
+                var resolution = UnitImportResolution.Resolve(set, GeneralsUnitAdapter.CreateRegistry());
+
+                if (!resolution.Succeeded)
+                {
+                    foreach (var line in IniConversionRecordReport.Create(resolution).FormatLines("validate"))
+                    {
+                        errorOut.WriteLine(line);
+                    }
+
+                    return OperationalFailureExit;
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                report = RoundTripValidator.ValidateUnits(
+                    resolution,
+                    adapter.Natives,
+                    new IniRetainedPayloadProvider(fileSystem),
+                    options.PackageDirectory);
+            }
+
+            if (options.Json)
+            {
+                standardOut.WriteLine(RoundTripReportWriter.ToJson(report));
+            }
+            else
+            {
+                foreach (var line in RoundTripReportWriter.ToText(report))
+                {
+                    standardOut.WriteLine(line);
+                }
+            }
+
+            return report.Passed ? SuccessExit : OperationalFailureExit;
+        }
+        catch (OperationCanceledException)
+        {
+            errorOut.WriteLine(NormalizeWhitespace("cancelled: the validation was cancelled before a report was produced"));
+            return OperationalFailureExit;
+        }
     }
 
     private static int RunConvertMap(ConvertMapOptions options, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
@@ -338,35 +460,45 @@ public static class H5MigrateCli
 
     private static bool HasRosterSpecification(ConvertIniOptions options)
     {
-        return options.P6b
-            || (options.Units is not null && options.Units.Any(u => !string.IsNullOrWhiteSpace(u)))
-            || (options.PositionalUnits is not null && options.PositionalUnits.Any(u => !string.IsNullOrWhiteSpace(u)));
+        return HasRosterSpecification(options.P6b, options.Units, options.PositionalUnits);
+    }
+
+    private static bool HasRosterSpecification(bool p6b, IEnumerable<string>? units, IEnumerable<string>? positionalUnits)
+    {
+        return p6b
+            || (units is not null && units.Any(u => !string.IsNullOrWhiteSpace(u)))
+            || (positionalUnits is not null && positionalUnits.Any(u => !string.IsNullOrWhiteSpace(u)));
     }
 
     private static IReadOnlyList<string> ResolveRosterUnits(ConvertIniOptions options)
     {
-        var units = new List<string>
+        return ResolveRosterUnits(options.P6b, options.Units, options.PositionalUnits);
+    }
+
+    private static IReadOnlyList<string> ResolveRosterUnits(bool p6b, IEnumerable<string>? units, IEnumerable<string>? positionalUnits)
+    {
+        var resolved = new List<string>
         {
             // Generals objects inherit default modules from DefaultThingTemplate.
             "DefaultThingTemplate",
         };
 
-        if (options.P6b)
+        if (p6b)
         {
-            units.AddRange(P6bArchetypeUnits);
+            resolved.AddRange(P6bArchetypeUnits);
         }
 
-        if (options.Units is not null)
+        if (units is not null)
         {
-            units.AddRange(options.Units.Where(u => !string.IsNullOrWhiteSpace(u)));
+            resolved.AddRange(units.Where(u => !string.IsNullOrWhiteSpace(u)));
         }
 
-        if (options.PositionalUnits is not null)
+        if (positionalUnits is not null)
         {
-            units.AddRange(options.PositionalUnits.Where(u => !string.IsNullOrWhiteSpace(u)));
+            resolved.AddRange(positionalUnits.Where(u => !string.IsNullOrWhiteSpace(u)));
         }
 
-        return units.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return resolved.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     private static void CleanupDirectory(string directory, TextWriter errorOut)

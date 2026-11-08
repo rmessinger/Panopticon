@@ -1578,7 +1578,7 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: a bounded Generals roster converts; converted packages re-read to the same closure;
     resolutions carrying error diagnostics refuse conversion with a per-record report; no
     partial rosters are written.
-- [ ] H5-3 Round-trip validator and report (`WI-H5-03`).
+- [x] H5-3 Round-trip validator and report (`WI-H5-03`).
   - AC: each failure class produces a named diagnostic and a report entry; identical content
     passes; provenance-only unit differences pass only through the explicit allowlist; exit
     code and JSON report are machine-checkable.
