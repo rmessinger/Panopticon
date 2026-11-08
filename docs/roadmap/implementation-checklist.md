@@ -1565,7 +1565,7 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: a fixture package reads to an equal `UnitContentSet` with valued unclassified fields and re-issued handles.
 - [x] H4-3 Package writer from resolved records (`WI-H4-03`).
   - AC: a resolved closure writes and reads back equal; error resolutions refuse to write.
-- [ ] H4-4 Physics fields and forward compatibility (`WI-H4-04`).
+- [x] H4-4 Physics fields and forward compatibility (`WI-H4-04`).
   - AC: physics fields round-trip with no BepuPhysics types or handles; a future-field package loads with a warning and re-emits the field.
 - [ ] H4-5 Bounded INI parity proof (`WI-H4-05`).
   - AC: a bounded Generals roster materializes equal on both paths, plus one behavioral assertion.
