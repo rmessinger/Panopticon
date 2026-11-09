@@ -287,7 +287,8 @@ public static class Program
             null,
             ViewportScale: config.ViewportScale,
             FixedRenderClock: config.FixedRenderClock,
-            PayloadDirectory: payloadDirectory);
+            PayloadDirectory: payloadDirectory,
+            ProfileSourcePath: path);
         var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
         Environment.ExitCode = result.ExitCode;
     }

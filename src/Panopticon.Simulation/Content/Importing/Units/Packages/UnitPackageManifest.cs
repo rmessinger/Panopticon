@@ -12,12 +12,19 @@ public sealed class UnitPackageManifest
     private readonly IReadOnlyList<UnitPackageRecordIndexEntry> _records;
     private readonly IReadOnlyList<UnitPackageRetainedPayloadEntry> _retainedPayloads;
     private readonly IReadOnlyList<string> _unknownMembers;
+    private readonly IReadOnlyList<ContentId> _overrides;
 
     public string ContainerKind { get; }
 
     public int SchemaVersion { get; }
 
     public UnitPackageSourceIdentity? Source { get; }
+
+    public IReadOnlyList<ContentId> Overrides
+    {
+        get => _overrides;
+        init => _overrides = value.ToArray();
+    }
 
     public IReadOnlyList<UnitPackageRootRecordEntry> Roots
     {
@@ -53,7 +60,8 @@ public sealed class UnitPackageManifest
         IEnumerable<UnitPackageRecordIndexEntry>? records = null,
         IEnumerable<UnitPackageRetainedPayloadEntry>? retainedPayloads = null,
         UnitPackageProvenance? provenance = null,
-        IEnumerable<string>? unknownMembers = null)
+        IEnumerable<string>? unknownMembers = null,
+        IEnumerable<ContentId>? overrides = null)
     {
         ContainerKind = containerKind;
         SchemaVersion = schemaVersion;
@@ -63,5 +71,6 @@ public sealed class UnitPackageManifest
         _retainedPayloads = retainedPayloads?.ToArray() ?? [];
         Provenance = provenance;
         _unknownMembers = unknownMembers?.ToArray() ?? [];
+        _overrides = overrides?.ToArray() ?? [];
     }
 }

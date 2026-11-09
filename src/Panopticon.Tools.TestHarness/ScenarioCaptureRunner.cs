@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Packages;
 using Panopticon.Content.Translation;
 using Panopticon.Data;
 using Panopticon.Graphics;
@@ -86,10 +87,48 @@ public static class ScenarioCaptureRunner
         in CaptureRunSettings settings,
         ITestHarnessReporter reporter)
     {
-        var validationErrors = CaptureProfileValidator.Validate(profile);
-        if (validationErrors.Count > 0)
+        var packageDescriptors = ParsePackageDescriptors(profile, settings.ProfileSourcePath);
+        for (var i = 0; i < profile.ContentImports.Count; i++)
         {
-            foreach (var error in validationErrors)
+            if (!packageDescriptors.ContainsKey(i) &&
+                UnitContentImportRunner.TryExtractPackageDescriptor(profile.ContentImports[i], out var desc) &&
+                desc is not null)
+            {
+                packageDescriptors[i] = desc;
+            }
+        }
+
+        var validationErrors = CaptureProfileValidator.Validate(profile);
+        var mutableErrors = validationErrors.Count > 0 && packageDescriptors.Count > 0
+            ? FilterPackageImportValidationErrors(validationErrors, profile, packageDescriptors)
+            : validationErrors.ToList();
+
+        foreach (var (idx, desc) in packageDescriptors)
+        {
+            if (string.IsNullOrWhiteSpace(desc.PackagePath))
+            {
+                mutableErrors.Add($"Content import [{idx}] needs a non-empty PackagePath.");
+            }
+            else if (!Directory.Exists(desc.PackagePath))
+            {
+                mutableErrors.Add($"Content import [{idx}] package directory '{desc.PackagePath}' does not exist.");
+            }
+            else if (!File.Exists(Path.Combine(desc.PackagePath, UnitPackageFormat.ManifestFileName)))
+            {
+                mutableErrors.Add($"Content import [{idx}] package manifest '{Path.Combine(desc.PackagePath, UnitPackageFormat.ManifestFileName)}' does not exist.");
+            }
+
+            if (!string.Equals(desc.Adapter, "H4UnitPackage", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(desc.Adapter, "H4Package", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(desc.Adapter, "Package", StringComparison.OrdinalIgnoreCase))
+            {
+                mutableErrors.Add($"Content import [{idx}] adapter '{desc.Adapter}' is not supported; expected 'H4UnitPackage'.");
+            }
+        }
+
+        if (mutableErrors.Count > 0)
+        {
+            foreach (var error in mutableErrors)
             {
                 reporter.Error($"Profile '{profile.Name}': {error}");
             }
@@ -197,9 +236,11 @@ public static class ScenarioCaptureRunner
             }
         }
 
-        foreach (var import in profile.ContentImports)
+        for (var i = 0; i < profile.ContentImports.Count; i++)
         {
-            if (!UnitContentImportRunner.Import(game, import, reporter))
+            var import = profile.ContentImports[i];
+            var descriptor = packageDescriptors.TryGetValue(i, out var d) ? d : null;
+            if (!UnitContentImportRunner.Import(game, import, reporter, descriptor))
             {
                 reporter.Error($"Content import '{import.Source}' failed; no partial content was published.");
                 return new CaptureRunResult(1, outputDirectory, null, 0, 0, [], [], null);
@@ -496,8 +537,145 @@ public static class ScenarioCaptureRunner
             return game.AssetStore.ObjectDefinitions.GetByName(definition);
         }
 
-        var source = definition[..separator] == ContentSource.Ee2.Id ? ContentSource.Ee2 : null;
+        var sourceName = definition[..separator];
+        if (sourceName is "generals" or "h4" or "package")
+        {
+            return game.AssetStore.ObjectDefinitions.GetByName(definition[(separator + 1)..]);
+        }
+
+        var source = sourceName == ContentSource.Ee2.Id ? ContentSource.Ee2 : null;
         return source is null ? null : game.AssetStore.GetSourceContent(source).ObjectDefinitions.GetByName(definition[(separator + 1)..]);
+    }
+
+    private static Dictionary<int, HarnessPackageImportDescriptor> ParsePackageDescriptors(
+        CaptureProfile profile,
+        string? profileSourcePath)
+    {
+        var result = new Dictionary<int, HarnessPackageImportDescriptor>();
+        if (string.IsNullOrWhiteSpace(profileSourcePath) || !File.Exists(profileSourcePath))
+        {
+            return result;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(profileSourcePath));
+            if (!doc.RootElement.TryGetProperty("ContentImports", out var importsProp) &&
+                !doc.RootElement.TryGetProperty("contentImports", out importsProp))
+            {
+                return result;
+            }
+
+            if (importsProp.ValueKind != JsonValueKind.Array)
+            {
+                return result;
+            }
+
+            var idx = 0;
+            foreach (var elem in importsProp.EnumerateArray())
+            {
+                if (elem.ValueKind == JsonValueKind.Object)
+                {
+                    string? adapter = null;
+                    if (elem.TryGetProperty("Adapter", out var aProp) || elem.TryGetProperty("adapter", out aProp))
+                    {
+                        adapter = aProp.GetString();
+                    }
+
+                    string? packagePath = null;
+                    if (elem.TryGetProperty("PackagePath", out var pProp) || elem.TryGetProperty("packagePath", out pProp) ||
+                        elem.TryGetProperty("Path", out pProp) || elem.TryGetProperty("path", out pProp))
+                    {
+                        packagePath = pProp.GetString();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(adapter) || !string.IsNullOrWhiteSpace(packagePath))
+                    {
+                        var roots = new List<string>();
+                        if (elem.TryGetProperty("Roots", out var rProp) || elem.TryGetProperty("roots", out rProp) ||
+                            elem.TryGetProperty("UnitTypes", out rProp) || elem.TryGetProperty("unitTypes", out rProp))
+                        {
+                            if (rProp.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var r in rProp.EnumerateArray())
+                                {
+                                    if (r.GetString() is { } s && !string.IsNullOrWhiteSpace(s))
+                                    {
+                                        roots.Add(s);
+                                    }
+                                }
+                            }
+                        }
+
+                        result[idx] = new HarnessPackageImportDescriptor(
+                            packagePath ?? string.Empty,
+                            adapter ?? "H4UnitPackage",
+                            roots.Count > 0 ? roots : null);
+                    }
+                }
+
+                idx++;
+            }
+        }
+        catch
+        {
+            // Ignore JSON read errors here; CaptureProfileLoader reports malformed files
+        }
+
+        return result;
+    }
+
+    private static List<string> FilterPackageImportValidationErrors(
+        IReadOnlyList<string> errors,
+        CaptureProfile profile,
+        Dictionary<int, HarnessPackageImportDescriptor> packageDescriptors)
+    {
+        var filtered = new List<string>();
+        var packageSources = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "generals", "h4", "package" };
+        foreach (var (idx, _) in packageDescriptors)
+        {
+            if (idx < profile.ContentImports.Count)
+            {
+                packageSources.Add(profile.ContentImports[idx].Source);
+            }
+        }
+
+        foreach (var err in errors)
+        {
+            var isIgnorable = false;
+            foreach (var (idx, _) in packageDescriptors)
+            {
+                if (idx < profile.ContentImports.Count)
+                {
+                    var src = profile.ContentImports[idx].Source;
+                    if (err.StartsWith($"Content import source '{src}' is not supported", StringComparison.Ordinal) ||
+                        err.StartsWith($"Content import '{src}' needs", StringComparison.Ordinal))
+                    {
+                        isIgnorable = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isIgnorable)
+            {
+                foreach (var src in packageSources)
+                {
+                    if (err.Contains($"references source '{src}', which no ContentImports entry publishes", StringComparison.Ordinal))
+                    {
+                        isIgnorable = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isIgnorable)
+            {
+                filtered.Add(err);
+            }
+        }
+
+        return filtered;
     }
 
     private static Player ResolvePlayerSlot(Game game, int slotIndex)
@@ -1463,7 +1641,8 @@ public sealed record CaptureRunSettings(
     bool FixedRenderClock = false,
     bool FreezeLogicDuringCapture = false,
     Action<Game, int>? BeforeRender = null,
-    string? PayloadDirectory = null);
+    string? PayloadDirectory = null,
+    string? ProfileSourcePath = null);
 
 public sealed record CaptureRunResult(
     int ExitCode,
