@@ -118,6 +118,9 @@ public static class UnitPackageRoundTripAssert
         ContentIdListEquals("Upgrades", expected.Upgrades, actual.Upgrades);
         AuthoredContentIdEquals("Visual", expected.Visual, actual.Visual);
         ContentIdListEquals("Presentation", expected.Presentation, actual.Presentation);
+        AuthoredStringEquals("CollisionLayer", expected.CollisionLayer, actual.CollisionLayer);
+        StringListEquals("CollisionMask", expected.CollisionMask, actual.CollisionMask);
+        AuthoredStringEquals("PhysicsMaterial", expected.PhysicsMaterial, actual.PhysicsMaterial);
         ModulesEquals(expected, actual, natives);
     }
 
