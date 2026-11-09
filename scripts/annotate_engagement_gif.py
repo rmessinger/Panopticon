@@ -5,6 +5,9 @@ The manifest is written by the TestHarness `EngagementCapture` scenario and carr
 the engine's own screen-space projection of every actor. Labels are therefore anchored to what was
 actually rendered instead of being positioned by hand.
 
+Manifest units: actor and projectile WorldX/WorldY/WorldZ and VelX/VelY/VelZ are meters
+(velocities meters per logic frame); screen X/Y and RadiusPixels are pixels.
+
 Usage:
     python3 scripts/annotate_engagement_gif.py <capture-dir> <output.gif> [--scale 1.0] [--duration 120]
 """

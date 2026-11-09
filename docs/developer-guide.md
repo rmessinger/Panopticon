@@ -91,3 +91,23 @@ Entry point: `Panopticon.Launcher` project. Default game: C&C Generals. Game sel
 ### Developer Mode
 
 Toggle: `F11` inside the launcher. Function: engine-internals display, for debugging.
+
+## Units
+
+Runtime distance unit: meters. Positions, lengths, bounds, and translations are meters; authored
+rates are meters per second; per-logic-frame values are meters per logic frame (acceleration:
+meters per logic frame squared). Angles, health, damage, costs, ratios, cells, and pixels are not
+lengths and carry no conversion.
+
+Source conversion applies once at each source boundary, with the inverse on legacy write:
+
+| Boundary | Meters per source unit |
+|---|---|
+| Generals INI parse, map read/write, W3D/glTF/NIF import, replay and save read/write | 0.3048 (one foot; `UnitConversionPolicy.GeneralsFeetToMeters`) |
+| BFME, BFME II, RotWK | 0.3048, provisional compatibility scale, not a measured calibration |
+| EE2 unit import | similarity scale of the profile source distance: mixed profile 12 x 0.3048 = 3.6576 m; reference profiles 18.2505 x 0.3048 = 5.5627524 m |
+
+Entry point: `UnitConversionPolicy` in
+`src/Panopticon.Simulation/Content/Importing/Units/Materialization/UnitConversionPolicy.cs`,
+declared per game by `SourceUnitPolicy` with no default fallthrough. Design and seam inventory:
+[the H2b metric deep dive](roadmap/deep-dives/h2b-metric-core.md).

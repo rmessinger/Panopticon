@@ -18,9 +18,15 @@ namespace Panopticon.Tools.TestHarness;
 /// legacy <see cref="EngagementCaptureOptions"/> into a generic capture profile (attacker and
 /// target actors, one Attack command, a projectile expectation, and target-destroyed stop
 /// behavior), preserving the defaults, artifact shape, annotator contract, and exit codes.
+///
+/// Manifest units: actor and projectile WorldX/WorldY/WorldZ and VelX/VelY/VelZ are meters
+/// (velocities meters per logic frame); screen X/Y and RadiusPixels are pixels; health and
+/// angles carry no distance unit.
 /// </summary>
 public static class EngagementCaptureRunner
 {
+    private const float MinimumSeparationMeters = 10f;
+
     public static void Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
     {
         var options = config.EngagementCapture ?? new EngagementCaptureOptions();
@@ -34,6 +40,9 @@ public static class EngagementCaptureRunner
 
         var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
 
+        reporter.Info(FormattableString.Invariant(
+            $"Engagement separation: {EffectiveSeparation(options):0.###} m"));
+
         if (result.Manifest is { } manifest)
         {
             // Legacy reporter line: the health bookends of the shot cycle.
@@ -46,9 +55,12 @@ public static class EngagementCaptureRunner
         Environment.ExitCode = result.ExitCode;
     }
 
+    internal static float EffectiveSeparation(EngagementCaptureOptions options) =>
+        MathF.Max(MinimumSeparationMeters, options.Separation);
+
     internal static CaptureProfile ToProfile(EngagementCaptureOptions options)
     {
-        var separation = MathF.Max(10f, options.Separation);
+        var separation = EffectiveSeparation(options);
         var axis = new Vector2(
             MathF.Cos(MathUtility.ToRadians(options.AxisAngleDegrees)),
             MathF.Sin(MathUtility.ToRadians(options.AxisAngleDegrees)));

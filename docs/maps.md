@@ -1,6 +1,6 @@
 # Generals Maps
 
-55 maps ship in `maps.big`. Sizes are world units: playable area first, total heightmap grid (including the unbuildable border) second. Data read with `MapFile.FromFileSystemEntry` via a scratch tool; re-run to regenerate.
+55 maps ship in `maps.big`. Sizes are world units at source map scale (see [Units](developer-guide.md#units) for the runtime unit system): playable area first, total heightmap grid (including the unbuildable border) second. Data read with `MapFile.FromFileSystemEntry` via a scratch tool; re-run to regenerate.
 
 ## Skirmish and multiplayer
 
