@@ -2,13 +2,17 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
+using Panopticon.Content.Importing.MapSources.Package;
 using Panopticon.Data.Map;
 using Panopticon.FileFormats;
 using Panopticon.Logic.Map;
 using Panopticon.Mathematics;
 using Panopticon.Tests.Data;
+using Panopticon.Tools.H5Migrate;
 using Xunit;
 
 namespace Panopticon.Tests.Data.Map;
@@ -323,5 +327,145 @@ public sealed class PolygonTriggerVersionMatrixTests
         Assert.Equal(777u, reparsedPkgTrigger.TriggerId);
         Assert.True(reparsedPkgTrigger.IsWater);
         Assert.Equal(3, reparsedPkgTrigger.Points.Length);
+    }
+
+    [Theory]
+    [InlineData((ushort)1)]
+    [InlineData((ushort)2)]
+    [InlineData((ushort)3)]
+    [InlineData((ushort)4)]
+    public void ReadRetainedPolygonTriggers_VersionMatrix_FieldPresenceAndAbsence(ushort version)
+    {
+        var points = new[]
+        {
+            new Point3D(0, 0, 0),
+            new Point3D(100, 0, 0),
+            new Point3D(100, 100, 0)
+        };
+
+        var craftedBytes = CraftPolygonTriggersSection(
+            version,
+            name: "RetainedTrigger",
+            layerName: "RetainedLayer",
+            triggerId: 42,
+            isWater: true,
+            isRiver: true,
+            riverStart: 2,
+            points,
+            includeDefaultWaterForV1: false);
+
+        var retained = new RetainedSection(
+            PolygonTriggers.AssetName,
+            version,
+            craftedBytes,
+            "sha256");
+
+        var asset = MapBackendReaders.ReadRetainedPolygonTriggers(retained);
+        Assert.Equal(version, asset.Version);
+        var trigger = Assert.Single(asset.Triggers);
+        Assert.Equal("RetainedTrigger", trigger.Name);
+        Assert.Equal(42u, trigger.TriggerId);
+        Assert.Equal(3, trigger.Points.Length);
+
+        if (version >= 4)
+        {
+            Assert.Equal("RetainedLayer", trigger.LayerName);
+        }
+        else
+        {
+            Assert.Null(trigger.LayerName);
+        }
+
+        if (version >= 2)
+        {
+            Assert.True(trigger.IsWater);
+        }
+        else
+        {
+            Assert.False(trigger.IsWater);
+        }
+
+        if (version >= 3)
+        {
+            Assert.True(trigger.IsRiver);
+            Assert.Equal(2u, trigger.RiverStart);
+        }
+        else
+        {
+            Assert.False(trigger.IsRiver);
+            Assert.Equal(0u, trigger.RiverStart);
+        }
+    }
+
+    [Fact]
+    public void ConvertedMapPackage_GeneralsV1Source_MaterializesPolygonTriggersViaRetainedBackend()
+    {
+        var installation = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals);
+        using var fileSystem = installation.CreateFileSystem();
+        var entry = fileSystem.GetFile("maps/alpine assault/alpine assault.map");
+        Assert.NotNull(entry);
+
+        var originalMap = MapFile.FromFileSystemEntry(entry);
+        Assert.NotNull(originalMap.PolygonTriggers);
+        Assert.True(originalMap.PolygonTriggers.Version < 4, $"Expected Generals legacy version < 4, but was {originalMap.PolygonTriggers.Version}");
+        Assert.NotEmpty(originalMap.PolygonTriggers.Triggers);
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), "PanopticonTest_H5V1PolygonTriggers_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var sourceMapPath = Path.Combine(tempRoot, "alpine assault.map");
+            using (var sourceStream = entry.Open())
+            using (var fileStream = File.Create(sourceMapPath))
+            {
+                sourceStream.CopyTo(fileStream);
+            }
+
+            var packageDir = Path.Combine(tempRoot, "package");
+            using var outWriter = new StringWriter();
+            using var errWriter = new StringWriter();
+
+            var exitCode = H5MigrateCli.Run(
+                ["convert-map", "--input", Path.GetFullPath(sourceMapPath), "--out", Path.GetFullPath(packageDir)],
+                outWriter,
+                errWriter,
+                CancellationToken.None);
+
+            Assert.True(exitCode == 0, $"CLI conversion failed: {errWriter}{outWriter}");
+
+            var packageReader = new PackageReader(packageDir);
+            var interchange = packageReader.Read();
+
+            Assert.Null(interchange.PolygonTriggers);
+            var retained = Assert.Single(interchange.RetainedSections, s => s.SectionName == PolygonTriggers.AssetName);
+            Assert.Equal((int)originalMap.PolygonTriggers.Version, retained.SectionVersion);
+
+            var reloadedMap = MapFile.FromInterchange(interchange);
+            Assert.NotNull(reloadedMap.PolygonTriggers);
+            Assert.Equal(originalMap.PolygonTriggers.Version, reloadedMap.PolygonTriggers.Version);
+            Assert.Equal(originalMap.PolygonTriggers.Triggers.Count, reloadedMap.PolygonTriggers.Triggers.Count);
+
+            for (var i = 0; i < originalMap.PolygonTriggers.Triggers.Count; i++)
+            {
+                var expected = originalMap.PolygonTriggers.Triggers[i];
+                var actual = reloadedMap.PolygonTriggers.Triggers[i];
+
+                Assert.Equal(expected.Name, actual.Name);
+                Assert.Equal(expected.TriggerId, actual.TriggerId);
+                Assert.Equal(expected.Points.Length, actual.Points.Length);
+                for (var p = 0; p < expected.Points.Length; p++)
+                {
+                    Assert.Equal(expected.Points[p], actual.Points[p]);
+                }
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
     }
 }

@@ -264,11 +264,10 @@ internal static class MapBackendReaders
         var dataSize = reader.ReadUInt32();
         var numTriggers = reader.ReadUInt32();
         var triggers = new List<PolygonTrigger>((int)numTriggers);
-        var parseVersion = version < 4 ? (ushort)4 : version;
 
         for (var i = 0; i < numTriggers; i++)
         {
-            var area = PolygonTrigger.Parse(reader, parseVersion);
+            var area = PolygonTrigger.Parse(reader, version);
             if (area != null)
             {
                 triggers.Add(area);
