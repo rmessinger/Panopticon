@@ -16,6 +16,9 @@ internal static class MaterializationFixtures
         Source);
 
     public static UnitConversionPolicy Policy { get; } = new(SageGame.CncGenerals, gameUnitsPerMeter: 10);
+    public static UnitConversionPolicy MetricGeneralsPolicy { get; } = new(SageGame.CncGenerals);
+    public static UnitConversionPolicy Ee2MixedPolicy { get; } = new(SageGame.CncGenerals, metersPerSourceDistance: UnitConversionPolicy.ScaleEe2SourceDistance(12));
+    public static UnitConversionPolicy Ee2ReferencePolicy { get; } = new(SageGame.CncGenerals, metersPerSourceDistance: UnitConversionPolicy.ScaleEe2SourceDistance(18.2505));
 
     public sealed class LegacyTable(params object[] values) : ILegacyNativeTable
     {

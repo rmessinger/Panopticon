@@ -9,6 +9,8 @@ public enum QuantityUnit
     SourceDistance,
     SourceDistancePerSecond,
     Meters,
+    MetersPerSecond,
+    MetersPerSecondSquared,
     Seconds,
     Milliseconds,
     LogicFrames,
