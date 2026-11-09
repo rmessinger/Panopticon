@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Ini;
 using Panopticon.FileFormats;
 using Panopticon.Logic.Object;
@@ -18,6 +19,8 @@ public sealed class BuildListInfo : IPersistableObject
     private string _templateName;
     public string TemplateName { get => _templateName; private set => _templateName = value; }
 
+    private Vector3? _sourceLocation;
+    private Vector3? _convertedLocation;
     private Vector3 _location;
     public Vector3 Location { get => _location; private set => _location = value; }
 
@@ -136,7 +139,8 @@ public sealed class BuildListInfo : IPersistableObject
     {
         var buildingName = reader.ReadUInt16PrefixedAsciiString();
         var templateName = reader.ReadUInt16PrefixedAsciiString();
-        var location = reader.ReadVector3();
+        var sourceLocation = reader.ReadVector3();
+        var location = sourceLocation * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var angle = reader.ReadSingle();
         var isInitiallyBuilt = reader.ReadBooleanChecked();
 
@@ -145,6 +149,8 @@ public sealed class BuildListInfo : IPersistableObject
             BuildingName = buildingName,
             TemplateName = templateName,
             Location = location,
+            _sourceLocation = sourceLocation,
+            _convertedLocation = location,
             Angle = angle,
             IsInitiallyBuilt = isInitiallyBuilt
         };
@@ -174,7 +180,9 @@ public sealed class BuildListInfo : IPersistableObject
     {
         writer.WriteUInt16PrefixedAsciiString(BuildingName);
         writer.WriteUInt16PrefixedAsciiString(TemplateName);
-        writer.Write(Location);
+        writer.Write(_sourceLocation is { } source && Location == _convertedLocation
+            ? source
+            : Location / (float)UnitConversionPolicy.GeneralsFeetToMeters);
         writer.Write(Angle);
         writer.Write(IsInitiallyBuilt);
 

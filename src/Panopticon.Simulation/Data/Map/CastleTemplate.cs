@@ -1,5 +1,6 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
@@ -7,6 +8,7 @@ namespace Panopticon.Data.Map;
 [AddedIn(SageGame.Bfme)]
 public sealed class CastleTemplate
 {
+    private Vector3? _sourceOffset;
     public string Name { get; private set; }
     public string TemplateName { get; private set; }
     public Vector3 Offset { get; private set; }
@@ -17,11 +19,15 @@ public sealed class CastleTemplate
 
     internal static CastleTemplate Parse(BinaryReader reader, ushort version)
     {
+        var name = reader.ReadUInt16PrefixedAsciiString();
+        var templateName = reader.ReadUInt16PrefixedAsciiString();
+        var rawOffset = reader.ReadVector3();
         var result = new CastleTemplate
         {
-            Name = reader.ReadUInt16PrefixedAsciiString(),
-            TemplateName = reader.ReadUInt16PrefixedAsciiString(),
-            Offset = reader.ReadVector3(),
+            _sourceOffset = rawOffset,
+            Name = name,
+            TemplateName = templateName,
+            Offset = rawOffset * (float)UnitConversionPolicy.GeneralsFeetToMeters,
             Angle = reader.ReadSingle()
         };
 
@@ -38,7 +44,7 @@ public sealed class CastleTemplate
     {
         writer.WriteUInt16PrefixedAsciiString(Name);
         writer.WriteUInt16PrefixedAsciiString(TemplateName);
-        writer.Write(Offset);
+        writer.Write(_sourceOffset ?? (Offset / (float)UnitConversionPolicy.GeneralsFeetToMeters));
         writer.Write(Angle);
 
         if (version >= 4)

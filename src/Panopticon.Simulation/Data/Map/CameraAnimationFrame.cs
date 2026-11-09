@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
@@ -41,6 +42,7 @@ public abstract class CameraAnimationFrame
 
 public sealed class FreeCameraAnimationCameraFrame : CameraAnimationFrame
 {
+    private Vector3? _sourcePosition;
     public Vector3 Position { get; private set; }
     public Quaternion Rotation { get; private set; }
     public float FieldOfView { get; private set; }
@@ -49,7 +51,9 @@ public sealed class FreeCameraAnimationCameraFrame : CameraAnimationFrame
     {
         return Parse<FreeCameraAnimationCameraFrame>(reader, x =>
         {
-            x.Position = reader.ReadVector3();
+            var rawPosition = reader.ReadVector3();
+            x._sourcePosition = rawPosition;
+            x.Position = rawPosition * (float)UnitConversionPolicy.GeneralsFeetToMeters;
             x.Rotation = reader.ReadQuaternion();
 
             // TODO: Not sure if this is really the field of view, but it's inversely related to focal length.
@@ -61,7 +65,7 @@ public sealed class FreeCameraAnimationCameraFrame : CameraAnimationFrame
     {
         WriteTo(writer, () =>
         {
-            writer.Write(Position);
+            writer.Write(_sourcePosition ?? (Position / (float)UnitConversionPolicy.GeneralsFeetToMeters));
             writer.Write(Rotation);
             writer.Write(FieldOfView);
         });
@@ -70,6 +74,7 @@ public sealed class FreeCameraAnimationCameraFrame : CameraAnimationFrame
 
 public sealed class LookAtCameraAnimationCameraFrame : CameraAnimationFrame
 {
+    private Vector3? _sourcePosition;
     public Vector3 Position { get; private set; }
     public float Roll { get; private set; }
     public float FieldOfView { get; private set; }
@@ -78,7 +83,9 @@ public sealed class LookAtCameraAnimationCameraFrame : CameraAnimationFrame
     {
         return Parse<LookAtCameraAnimationCameraFrame>(reader, x =>
         {
-            x.Position = reader.ReadVector3();
+            var rawPosition = reader.ReadVector3();
+            x._sourcePosition = rawPosition;
+            x.Position = rawPosition * (float)UnitConversionPolicy.GeneralsFeetToMeters;
             x.Roll = reader.ReadSingle();
 
             // TODO: Not sure if this is really the field of view, but it's inversely related to focal length.
@@ -90,7 +97,7 @@ public sealed class LookAtCameraAnimationCameraFrame : CameraAnimationFrame
     {
         WriteTo(writer, () =>
         {
-            writer.Write(Position);
+            writer.Write(_sourcePosition ?? (Position / (float)UnitConversionPolicy.GeneralsFeetToMeters));
             writer.Write(Roll);
             writer.Write(FieldOfView);
         });
@@ -99,13 +106,16 @@ public sealed class LookAtCameraAnimationCameraFrame : CameraAnimationFrame
 
 public sealed class LookAtCameraAnimationLookAtFrame : CameraAnimationFrame
 {
+    private Vector3? _sourceLookAt;
     public Vector3 LookAt { get; private set; }
 
     internal static LookAtCameraAnimationLookAtFrame Parse(BinaryReader reader)
     {
         return Parse<LookAtCameraAnimationLookAtFrame>(reader, x =>
         {
-            x.LookAt = reader.ReadVector3();
+            var rawLookAt = reader.ReadVector3();
+            x._sourceLookAt = rawLookAt;
+            x.LookAt = rawLookAt * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         });
     }
 
@@ -113,7 +123,7 @@ public sealed class LookAtCameraAnimationLookAtFrame : CameraAnimationFrame
     {
         WriteTo(writer, () =>
         {
-            writer.Write(LookAt);
+            writer.Write(_sourceLookAt ?? (LookAt / (float)UnitConversionPolicy.GeneralsFeetToMeters));
         });
     }
 }

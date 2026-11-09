@@ -1,11 +1,15 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Scripting;
 
 public sealed class ScriptArgument
 {
+    private Vector3? _sourcePositionValue;
+    private Vector3? _convertedPositionValue;
+
     public ScriptArgumentType ArgumentType { get; set; }
 
     // Either...
@@ -50,11 +54,13 @@ public sealed class ScriptArgument
         int? uintValue = null;
         float? floatValue = null;
         string stringValue = null;
+        Vector3? sourcePositionValue = null;
         Vector3? positionValue = null;
 
         if (argumentType == ScriptArgumentType.PositionCoordinate)
         {
-            positionValue = reader.ReadVector3();
+            sourcePositionValue = reader.ReadVector3();
+            positionValue = sourcePositionValue.Value * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         }
         else
         {
@@ -71,7 +77,9 @@ public sealed class ScriptArgument
             FloatValue = floatValue,
             StringValue = stringValue,
 
-            PositionValue = positionValue
+            PositionValue = positionValue,
+            _sourcePositionValue = sourcePositionValue,
+            _convertedPositionValue = positionValue
         };
     }
 
@@ -81,7 +89,10 @@ public sealed class ScriptArgument
 
         if (ArgumentType == ScriptArgumentType.PositionCoordinate)
         {
-            writer.Write(PositionValue.Value);
+            var position = PositionValue.Value;
+            writer.Write(_sourcePositionValue is { } source && position == _convertedPositionValue
+                ? source
+                : position / (float)UnitConversionPolicy.GeneralsFeetToMeters);
         }
         else
         {
@@ -121,6 +132,8 @@ public sealed class ScriptArgument
             ArgumentType = ArgumentType,
             FloatValue = FloatValue,
             PositionValue = PositionValue,
+            _sourcePositionValue = _sourcePositionValue,
+            _convertedPositionValue = _convertedPositionValue,
             IntValue = IntValue,
             StringValue = ArgumentType switch
             {

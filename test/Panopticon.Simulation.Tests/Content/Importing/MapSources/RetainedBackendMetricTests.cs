@@ -151,6 +151,178 @@ public sealed class RetainedBackendMetricTests
     }
 
     [Fact]
+    public void CastleTemplate_OffsetConvertsFromLegacyToMeters()
+    {
+        var source = WriteBytes(writer =>
+        {
+            writer.WriteUInt16PrefixedAsciiString("Castle");
+            writer.WriteUInt16PrefixedAsciiString("CastleTemplate");
+            writer.Write(new Vector3(10, 20, 30));
+            writer.Write(0.5f);
+            writer.Write(2u);
+            writer.Write(1u);
+        });
+
+        using var stream = new MemoryStream(source);
+        using var reader = new BinaryReader(stream);
+        var template = CastleTemplate.Parse(reader, version: 4);
+
+        AssertVector(new Vector3(10, 20, 30) * S, template.Offset);
+        Assert.Equal(0.5f, template.Angle);
+        Assert.Equal(source, WriteBytes(writer => template.WriteTo(writer, version: 4)));
+    }
+
+    [Fact]
+    public void CastlePerimeterPoint_PositionConvertsFromLegacyToMeters()
+    {
+        var floatSource = WriteBytes(writer =>
+        {
+            writer.Write(100f);
+            writer.Write(200f);
+        });
+
+        using (var stream = new MemoryStream(floatSource))
+        using (var reader = new BinaryReader(stream))
+        {
+            var point = CastlePerimeterPoint.Parse(reader, version: 3);
+            AssertVector(new Vector3(100 * S, 200 * S, 0), point.Position);
+            Assert.Equal(floatSource, WriteBytes(writer => point.WriteTo(writer, version: 3)));
+        }
+
+        var intSource = WriteBytes(writer =>
+        {
+            writer.Write(100);
+            writer.Write(200);
+            writer.Write(7);
+        });
+
+        using (var stream = new MemoryStream(intSource))
+        using (var reader = new BinaryReader(stream))
+        {
+            var point = CastlePerimeterPoint.Parse(reader, version: 2);
+            AssertVector(new Vector3(100 * S, 200 * S, 7 * S), point.Position);
+            Assert.Equal(intSource, WriteBytes(writer => point.WriteTo(writer, version: 2)));
+        }
+    }
+
+    [Fact]
+    public void CameraAnimationFrames_PositionsConvertFromLegacyToMeters()
+    {
+        var freeSource = WriteBytes(writer =>
+        {
+            writer.Write(1u);
+            writer.WriteFourCc("line", bigEndian: true);
+            writer.Write(new Vector3(100, 200, 300));
+            writer.Write(Quaternion.Identity);
+            writer.Write(45f);
+        });
+
+        using (var stream = new MemoryStream(freeSource))
+        using (var reader = new BinaryReader(stream))
+        {
+            var frame = FreeCameraAnimationCameraFrame.Parse(reader);
+            AssertVector(new Vector3(100, 200, 300) * S, frame.Position);
+            Assert.Equal(freeSource, WriteBytes(writer => frame.WriteTo(writer)));
+        }
+
+        var lookAtCameraSource = WriteBytes(writer =>
+        {
+            writer.Write(2u);
+            writer.WriteFourCc("catm", bigEndian: true);
+            writer.Write(new Vector3(400, 500, 600));
+            writer.Write(0.1f);
+            writer.Write(30f);
+        });
+
+        using (var stream = new MemoryStream(lookAtCameraSource))
+        using (var reader = new BinaryReader(stream))
+        {
+            var frame = LookAtCameraAnimationCameraFrame.Parse(reader);
+            AssertVector(new Vector3(400, 500, 600) * S, frame.Position);
+            Assert.Equal(lookAtCameraSource, WriteBytes(writer => frame.WriteTo(writer)));
+        }
+
+        var lookAtSource = WriteBytes(writer =>
+        {
+            writer.Write(3u);
+            writer.WriteFourCc("line", bigEndian: true);
+            writer.Write(new Vector3(700, 800, 900));
+        });
+
+        using (var stream = new MemoryStream(lookAtSource))
+        using (var reader = new BinaryReader(stream))
+        {
+            var frame = LookAtCameraAnimationLookAtFrame.Parse(reader);
+            AssertVector(new Vector3(700, 800, 900) * S, frame.LookAt);
+            Assert.Equal(lookAtSource, WriteBytes(writer => frame.WriteTo(writer)));
+        }
+    }
+
+    [Fact]
+    public void ScriptArgument_PositionValueConvertsFromLegacyToMeters()
+    {
+        var source = WriteBytes(writer =>
+        {
+            writer.Write((uint)Panopticon.Scripting.ScriptArgumentType.PositionCoordinate);
+            writer.Write(new Vector3(10, 20, 30));
+        });
+
+        using var stream = new MemoryStream(source);
+        using var reader = new BinaryReader(stream);
+        var argument = Panopticon.Scripting.ScriptArgument.Parse(reader);
+
+        AssertVector(new Vector3(10, 20, 30) * S, argument.PositionValue!.Value);
+        Assert.Equal(source, WriteBytes(writer => argument.WriteTo(writer)));
+    }
+
+    [Fact]
+    public void ScriptArgument_EditedPositionWritesInverseScale()
+    {
+        var source = WriteBytes(writer =>
+        {
+            writer.Write((uint)Panopticon.Scripting.ScriptArgumentType.PositionCoordinate);
+            writer.Write(new Vector3(10, 20, 30));
+        });
+
+        using var stream = new MemoryStream(source);
+        using var reader = new BinaryReader(stream);
+        var argument = Panopticon.Scripting.ScriptArgument.Parse(reader);
+        argument.PositionValue = new Vector3(3, 6, 9);
+
+        var written = WriteBytes(writer => argument.WriteTo(writer));
+        using var writtenStream = new MemoryStream(written);
+        using var writtenReader = new BinaryReader(writtenStream);
+        Assert.Equal((uint)Panopticon.Scripting.ScriptArgumentType.PositionCoordinate, writtenReader.ReadUInt32());
+        AssertVector(new Vector3(3, 6, 9) / S, writtenReader.ReadVector3());
+    }
+
+    [Fact]
+    public void BuildListInfo_LocationConvertsFromLegacyToMeters()
+    {
+        var source = WriteBytes(writer =>
+        {
+            writer.WriteUInt16PrefixedAsciiString("Barracks");
+            writer.WriteUInt16PrefixedAsciiString("TplBarracks");
+            writer.Write(new Vector3(100, 200, 0));
+            writer.Write(0.25f);
+            writer.Write(true);
+            writer.Write(3u);
+            writer.WriteUInt16PrefixedAsciiString("");
+            writer.Write(100);
+            writer.Write(true);
+            writer.Write(false);
+            writer.Write(true);
+        });
+
+        using var stream = new MemoryStream(source);
+        using var reader = new BinaryReader(stream);
+        var buildList = BuildListInfo.Parse(reader, BuildListInfo.IncludeFields.Default);
+
+        AssertVector(new Vector3(100, 200, 0) * S, buildList.Location);
+        Assert.Equal(source, WriteBytes(writer => buildList.WriteTo(writer, BuildListInfo.IncludeFields.Default)));
+    }
+
+    [Fact]
     public void InverseProof_StoredSourceBytesUnchanged_AcrossRetainedRenderSections()
     {
         // 1. PolygonTrigger
@@ -364,6 +536,22 @@ public sealed class RetainedBackendMetricTests
         // Both are in consistent units; water plane does not differ by 1/s
         Assert.True(waterZ > 0);
         Assert.True(groundZ > 0);
+    }
+
+    private static byte[] WriteBytes(Action<BinaryWriter> write)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+        write(writer);
+        writer.Flush();
+        return stream.ToArray();
+    }
+
+    private static void AssertVector(Vector3 expected, Vector3 actual)
+    {
+        Assert.Equal(expected.X, actual.X, Tolerance);
+        Assert.Equal(expected.Y, actual.Y, Tolerance);
+        Assert.Equal(expected.Z, actual.Z, Tolerance);
     }
 
     private static byte[] CreatePolygonTriggerBytes(string name, uint id, bool isWater, Point3D[] points)
