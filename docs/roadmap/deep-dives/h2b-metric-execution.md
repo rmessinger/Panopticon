@@ -63,35 +63,27 @@ Scenario: `capture-rebel-attack.json`. Result: exit 0, 30 frames. Log: `run2-reb
 
 ## Full suite
 
-Command: `dotnet test src --filter Category!=Interactive`, both installs. Result: Panopticon.Simulation.Tests 3340 passed, 30 failed, 8 skipped, of 3378 (`full-suite.log`). Mathematics 53, Geospatial 1284, Geospatial.Preview 40, WorldBuilder.Core 29, and ReplaySketch 530 are green.
+Command: `dotnet test src --filter Category!=Interactive`, both installs. Final local runs at tip `e0600e089`: `full-suite-v2.log` and `full-suite-v3.log`. Each run: Panopticon.Simulation.Tests 3382 total, 3364 passed, 8 skipped, 10 failed. Mathematics 53, Geospatial 1284, Geospatial.Preview 40, WorldBuilder.Core 29, and ReplaySketch 530 are green in both runs. The earlier run at `0420abbf5` (3340 passed, 30 failed, `full-suite.log`) is superseded.
 
 | Class | Count | Basis |
 |---|---|---|
-| Known failures | 9 | `test/known-failures.json` entries TF-01 to TF-09. TF-10 passed this run. |
-| Pre-existing at branch base | 19 | GroundFootprint 2, JetAIUpdateAttack 1, MissileAIUpdateFlight 3, ProjectileDamageTiming 6, TerrainDecalMesher 2, Card24ProofFixture 1, GeneratedMapPreview 1, SedanProofHeightSampling 3 |
-| Navigation async-path flakes | 2 | AsyncPathRequestTests. Repeat runs went 2, 1, then 0 failures (`full-suite.log`, `nav-flake-repeat.log`, `nav-flake-capture.log`). No `known-failures.json` change. |
-| Introduced by the cutover | 0 | none |
+| Known failures | 9 | `test/known-failures.json` entries TF-01 to TF-09, present in both runs |
+| Run-order flake | 1 per run | v2: `ModelAnimationTests.Bind_OmitsOutOfRangeDirectChannels_And_WarnsOncePerHierarchy`, passes in isolation at tip and base. v3: `AsyncPathRequestTests.PendingHandle_DestroyedRequesterIsCancelledByDrain`, the navigation family documented as nondeterministic |
+| Deterministic failures beyond the manifest | 0 | none |
+
+Cutover regressions: 19 failures in GroundFootprint 2, JetAIUpdateAttack 1, MissileAIUpdateFlight 3, ProjectileDamageTiming 6, TerrainDecalMesher 2, Card24ProofFixture 1, GeneratedMapPreview 1, and SedanProofHeightSampling 3 were introduced by the cutover. They were first measured against `c6dadf9c7`, which is the wrong reference. The earlier "19 pre-existing at branch base, 0 introduced by the cutover" claim is retracted. Against the true pre-cutover base `c0ee1be135`, all 52 tests in those families pass. The 19 were fixed by commits `e8e703df4`, `963cde406` (DistanceToTargetBeforeDiving parse boundary), `4cf677204` (decal tile snap), `1916004b3`, `872beb0d6` (ghost bone matrices), `29e84c9fa`, and `e0600e089`.
 
 Fixed by H2b relative to the base run: `ValidationGroundCameraTests.FrameFormation`, two GeospatialPreview PlayerStarts tests, and the `ScenarioCaptureRunner` ConstructionProfile test.
 
 ## MCP test run
 
-Pre-PR check at sha `0420abbf59d4a15c876a8c2f8979f925d804ad3c`, run id `20261109T142121Z-0420abbf`, filter `Category!=Interactive`. Total 5314, passed 5277, failed 28, skipped 9.
+Pre-PR check at sha `e0600e089`, run id `20261109T154225Z-e0600e08`, filter `Category!=Interactive`. Totals and classification are recorded with that run. The earlier run `20261109T142121Z-0420abbf` at sha `0420abbf59d4a15c876a8c2f8979f925d804ad3c` is superseded.
 
-| Class | Count | Basis |
-|---|---|---|
-| Known failures | 9 | TF-01 to TF-09, all present |
-| New relative to manifest | 19 | Pre-existing at base, see below |
-| Suspected deviations | 0 | none |
-| Manifest entries not executed | 0 | none |
-
-TF-10 passed and is resolved. No host crash.
-
-The 19 manifest-new failures were re-run at clean base `c6dadf9c7` with the same filter families. All 19 fail identically at base (19 failed of 52 in the family filter), so the cutover does not introduce them. The two AsyncPathRequestTests failures seen in the local full-suite run passed in this MCP run (nondeterministic navigation flake).
+Real-asset importer suites: filter `W3dImportParity|NifParticle|W3dModelImporter` with the Generals install: 79 passed, 0 failed (`~/log/track-h-h2b-metric-post/real-asset-importers.log`). Run at the `2b90a1c5c` working tree, whose source is identical to `e0600e089`. The delta is docs-only.
 
 ## Local gates
 
-| Gate | Result at tip `10dc7e7da` |
+| Gate | Result at tip `e0600e089` |
 |---|---|
 | `dotnet build src` | 0 errors, 15 unique warnings in src scope, pre-existing |
 | `dotnet format src --verify-no-changes` | exit 0 |
@@ -122,7 +114,7 @@ Scope of the screenshot pairs: the `c6dadf9c7` pair is a late-stage checkpoint (
 
 Model tab captures: both sides use the deterministic screenshot-mode stub fixture. They demonstrate that the model tab UI functions. They do not demonstrate real asset geometry conversion. Screenshot mode has no seam to select an installed W3D or NIF asset. The real model flow requires the interactive TestHarness external-model host.
 
-Real-asset conversion evidence: headless importer suites run with the Generals install across the `W3dImportParity`, `W3dModelImporter`, and `NifParticle` filters: 79 passed, 0 failed. These check installed W3D hull bounds against INI `GeometryMajorRadius` (AQ-5) and NIF particle translation (AQ-14).
+Real-asset conversion evidence: headless importer suites run with the Generals install across the `W3dImportParity`, `W3dModelImporter`, and `NifParticle` filters: 79 passed, 0 failed (`real-asset-importers.log`). These check installed W3D hull bounds against INI `GeometryMajorRadius` (AQ-5) and NIF particle translation (AQ-14).
 
 ## Known limitations
 
