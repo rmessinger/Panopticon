@@ -30,8 +30,9 @@ public static class UnitPackageConversionVerifier
         UnitContentSet reloadedSet,
         UnitImportResolution reloadedResolution,
         ILegacyNativeTable? reloadedNatives,
-        IniRetainedPayloadProvider provider,
-        string packageDirectory)
+        IUnitPackageRetainedPayloadProvider provider,
+        string packageDirectory,
+        bool allowProvenanceAllowlist = false)
     {
         ArgumentNullException.ThrowIfNull(expectedResolution);
         ArgumentNullException.ThrowIfNull(reloadedSet);
@@ -69,7 +70,7 @@ public static class UnitPackageConversionVerifier
                 continue;
             }
 
-            VerifyRecord(expectedRecord, actualRecord, reloadedNatives, diagnostics);
+            VerifyRecord(expectedRecord, actualRecord, reloadedNatives, allowProvenanceAllowlist, diagnostics);
         }
 
         VerifyRetainedBlocks(expectedResolution, provider, packageDirectory, diagnostics);
@@ -81,6 +82,7 @@ public static class UnitPackageConversionVerifier
         SourceRecord expected,
         SourceRecord actual,
         ILegacyNativeTable? natives,
+        bool allowProvenanceAllowlist,
         List<UnitPackageConversionDiagnostic> diagnostics)
     {
         if (!expected.Id.Equals(actual.Id))
@@ -90,7 +92,7 @@ public static class UnitPackageConversionVerifier
                 $"Record id mismatch: expected {expected.Id}, got {actual.Id}."));
         }
 
-        if (expected.Provenance != actual.Provenance)
+        if (!ProvenanceMatches(expected.Provenance, actual.Provenance, allowProvenanceAllowlist))
         {
             diagnostics.Add(new UnitPackageConversionDiagnostic(
                 H5MigrateCliDiagnostics.VerificationFailed,
@@ -237,6 +239,19 @@ public static class UnitPackageConversionVerifier
 
                 break;
         }
+    }
+
+    private static bool ProvenanceMatches(Provenance? expected, Provenance? actual, bool allowProvenanceAllowlist)
+    {
+        if (Equals(expected, actual))
+        {
+            return true;
+        }
+
+        return allowProvenanceAllowlist
+            && expected is not null
+            && actual is not null
+            && RoundTripProvenanceAllowlist.Permits(expected, actual);
     }
 
     private static void VerifyUnclassified(
@@ -533,7 +548,7 @@ public static class UnitPackageConversionVerifier
 
     private static void VerifyRetainedBlocks(
         UnitImportResolution resolution,
-        IniRetainedPayloadProvider provider,
+        IUnitPackageRetainedPayloadProvider provider,
         string packageDirectory,
         List<UnitPackageConversionDiagnostic> diagnostics)
     {
