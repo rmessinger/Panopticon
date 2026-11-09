@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
@@ -12,6 +13,8 @@ namespace Panopticon.Data.Rep;
 [DebuggerDisplay("[{Header.Timecode}]: {Order.OrderType} ({Order.Arguments.Count})")]
 public sealed class ReplayChunk
 {
+    private const float MetersPerLegacyUnit = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
     public ReplayChunkHeader Header { get; private set; }
     public Order Order { get; private set; }
 
@@ -60,7 +63,7 @@ public sealed class ReplayChunk
                         break;
 
                     case OrderArgumentType.Position:
-                        order.AddPositionArgument(reader.ReadVector3());
+                        order.AddPositionArgument(reader.ReadVector3() * MetersPerLegacyUnit);
                         break;
 
                     case OrderArgumentType.ScreenPosition:
@@ -145,7 +148,7 @@ public sealed class ReplayChunk
                         break;
 
                     case OrderArgumentType.Position:
-                        writer.Write(arg.Value.Position);
+                        writer.Write(arg.Value.Position / MetersPerLegacyUnit);
                         break;
 
                     case OrderArgumentType.ScreenPosition:

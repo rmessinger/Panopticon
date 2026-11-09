@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Gui.ControlBar;
 using Panopticon.Logic.AI.Hierarchy;
 using Panopticon.Logic.Object;
@@ -406,7 +407,7 @@ public sealed class OrderProcessor
                         // we must target it as an object so that weapon damage is actually applied
                         // (position-targeted WeaponTarget.DoDamage currently deals no damage).
                         // Buildings are not inserted into the quadtree, so do a linear scan.
-                        const float searchRadius = 300f;
+                        const float searchRadius = 300f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
                         var targetObject = GameObjects.Objects
                             .Where(o => o.Owner != null
                                 && player.Enemies.Contains(o.Owner)
