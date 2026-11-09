@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Client;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Graphics;
 using Panopticon.Graphics.Cameras;
 using Panopticon.Graphics.Rendering;
@@ -113,8 +114,8 @@ public class MuzzleFlashVisibilityTests : IDisposable
 
         foreach (var attackerName in new[] { "AmericaVehicleHumvee", "AmericaInfantryRanger" })
         {
-            var attacker = Spawn(attackerName, new Vector3(600, 600, 0), usa);
-            var target = Spawn("CarAsian1", new Vector3(680, 600, 0), china);
+            var attacker = Spawn(attackerName, new Vector3(600, 600, 0) * (float)UnitConversionPolicy.GeneralsFeetToMeters, usa);
+            var target = Spawn("CarAsian1", new Vector3(680, 600, 0) * (float)UnitConversionPolicy.GeneralsFeetToMeters, china);
             target.BodyModule.SetMaxHealth(100000f, MaxHealthChangeType.FullyHeal);
 
             var idleLeaks = 0;

@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Security.Cryptography;
 using Panopticon.Content;
 using Panopticon.Content.Importing;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Content.Importing.W3d;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -26,6 +27,9 @@ public class ReferenceScaleManifestTests
 {
     private const decimal ExtentTolerance = 0.01m;
 
+    private const decimal MetersPerLegacyFoot = (decimal)UnitConversionPolicy.GeneralsFeetToMeters;
+    private const decimal GeometryTolerance = 0.0001m;
+
     private static readonly ReferenceScaleManifest Manifest = ReferenceScaleManifest.Load();
 
     [GameFact(SageGame.CncGenerals)]
@@ -45,9 +49,9 @@ public class ReferenceScaleManifestTests
 
             var shape = definition.Geometry.Shapes.Single();
             Assert.Equal(expected.Geometry.Shape, shape.Type.ToString(), ignoreCase: true);
-            Assert.Equal(expected.Geometry.MajorRadius, (decimal)shape.MajorRadius);
-            Assert.Equal(expected.Geometry.MinorRadius, (decimal)shape.MinorRadius);
-            Assert.Equal(expected.Geometry.Height, (decimal)shape.Height);
+            AssertGeometry(expected.Geometry.MajorRadius, shape.MajorRadius);
+            AssertGeometry(expected.Geometry.MinorRadius, shape.MinorRadius);
+            AssertGeometry(expected.Geometry.Height, shape.Height);
 
             var model = definition.Draws.Values.Select(c => c.Data).OfType<W3dModelDrawModuleData>()
                 .SelectMany(m => m.ConditionStates)
@@ -73,7 +77,7 @@ public class ReferenceScaleManifestTests
             if (expected.HullLengthUnits is not null && expected.HullExclusions is not null)
             {
                 var hull = MeasureMergedBox(imported!, expected.HullExclusions);
-                var hullLength = (decimal)(hull.Max.X - hull.Min.X);
+                var hullLength = (decimal)(hull.Max.X - hull.Min.X) / MetersPerLegacyFoot;
                 Assert.InRange(hullLength, expected.HullLengthUnits.Value - ExtentTolerance, expected.HullLengthUnits.Value + ExtentTolerance);
                 Assert.Equal(expected.HullLengthUnits, Manifest.Baseline.HullLengthUnits);
             }
@@ -119,11 +123,17 @@ public class ReferenceScaleManifestTests
         return merged!.Value;
     }
 
+    private static void AssertGeometry(decimal expectedFeet, float measuredMeters)
+    {
+        var expectedMeters = expectedFeet * MetersPerLegacyFoot;
+        Assert.InRange((decimal)measuredMeters, expectedMeters - GeometryTolerance, expectedMeters + GeometryTolerance);
+    }
+
     private static void AssertExtents(string objectName, string label, ReferenceScaleExtents expected, AxisAlignedBoundingBox measured)
     {
-        var x = (decimal)(measured.Max.X - measured.Min.X);
-        var y = (decimal)(measured.Max.Y - measured.Min.Y);
-        var z = (decimal)(measured.Max.Z - measured.Min.Z);
+        var x = (decimal)(measured.Max.X - measured.Min.X) / MetersPerLegacyFoot;
+        var y = (decimal)(measured.Max.Y - measured.Min.Y) / MetersPerLegacyFoot;
+        var z = (decimal)(measured.Max.Z - measured.Min.Z) / MetersPerLegacyFoot;
 
         Assert.InRange(x, expected.X - ExtentTolerance, expected.X + ExtentTolerance);
         Assert.InRange(y, expected.Y - ExtentTolerance, expected.Y + ExtentTolerance);

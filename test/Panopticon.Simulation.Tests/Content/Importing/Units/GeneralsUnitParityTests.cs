@@ -1,6 +1,7 @@
 using System.Linq;
 using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Generals;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic.Object;
 using Panopticon.Tests.Data;
 using Xunit;
@@ -27,6 +28,8 @@ public sealed class GeneralsUnitParityTests(ITestOutputHelper output)
         "AmericaParticleCannonUplink",
     ];
 
+    private const double LegacyFeet = UnitConversionPolicy.GeneralsFeetToMeters;
+
     private static ContentId Unit(string name) => new(ContentSource.Generals, ContentKind.Unit, name);
 
     [GameFact(SageGame.CncGenerals)]
@@ -49,7 +52,7 @@ public sealed class GeneralsUnitParityTests(ITestOutputHelper output)
 
             compared += Compare(name, "MaxHealth", objects.Get(name, "MaxHealth"), record.MaxHealth);
             compared += Compare(name, "BuildCost", objects.Get(name, "BuildCost"), record.BuildCost);
-            compared += Compare(name, "VisionRange", objects.Get(name, "VisionRange"), record.VisionRange);
+            compared += Compare(name, "VisionRange", objects.Get(name, "VisionRange"), record.VisionRange, scale: LegacyFeet);
 
             if (objects.Get(name, "BuildTime") is { } seconds)
             {
@@ -60,7 +63,7 @@ public sealed class GeneralsUnitParityTests(ITestOutputHelper output)
             foreach (var weaponId in record.Weapons.Resolved)
             {
                 var weapon = report.Set.Records.OfType<WeaponRecord>().Single(r => r.Id.Equals(weaponId));
-                compared += Compare(weaponId.Name, "AttackRange", weapons.Get(weaponId.Name, "AttackRange"), weapon.AttackRange);
+                compared += Compare(weaponId.Name, "AttackRange", weapons.Get(weaponId.Name, "AttackRange"), weapon.AttackRange, scale: LegacyFeet);
                 compared += Compare(weaponId.Name, "PrimaryDamage", weapons.Get(weaponId.Name, "PrimaryDamage"), weapon.PrimaryDamage);
                 if (weapons.Get(weaponId.Name, "DelayBetweenShots") is { } delay)
                 {
@@ -72,7 +75,7 @@ public sealed class GeneralsUnitParityTests(ITestOutputHelper output)
             foreach (var locomotorId in record.Locomotors.Resolved)
             {
                 var locomotor = report.Set.Records.OfType<LocomotorRecord>().Single(r => r.Id.Equals(locomotorId));
-                compared += Compare(locomotorId.Name, "Speed", locomotors.Get(locomotorId.Name, "Speed"), locomotor.Speed, tolerance: 1e-3);
+                compared += Compare(locomotorId.Name, "Speed", locomotors.Get(locomotorId.Name, "Speed"), locomotor.Speed, tolerance: 1e-3, scale: LegacyFeet);
             }
         }
 
@@ -108,7 +111,7 @@ public sealed class GeneralsUnitParityTests(ITestOutputHelper output)
         Assert.Same(store.WeaponTemplates.GetByName(crusader.Weapons.Resolved[0].Name), nativeCrusaderWeapon);
     }
 
-    private int Compare(string block, string field, double? authored, Authored<Quantity> published, double tolerance = 1e-4)
+    private int Compare(string block, string field, double? authored, Authored<Quantity> published, double tolerance = 1e-4, double scale = 1.0)
     {
         if (authored is null)
         {
@@ -117,7 +120,8 @@ public sealed class GeneralsUnitParityTests(ITestOutputHelper output)
         }
 
         Assert.True(published.IsPresent, $"{block}.{field} is authored but missing from the published record.");
-        Assert.True(System.Math.Abs(authored.Value - published.Value.Value) <= tolerance, $"{block}.{field}: authored {authored} but published {published.Value.Value}.");
+        var expected = authored.Value * scale;
+        Assert.True(System.Math.Abs(expected - published.Value.Value) <= tolerance, $"{block}.{field}: authored {authored} scaled to {expected} but published {published.Value.Value}.");
         return 1;
     }
 }
