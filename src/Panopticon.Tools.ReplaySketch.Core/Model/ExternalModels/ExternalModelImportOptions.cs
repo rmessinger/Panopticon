@@ -24,7 +24,7 @@ public sealed class ExternalModelImportOptions
     public IReadOnlyDictionary<string, ExternalMorphWeightRange> MorphWeightRanges { get; }
 
     public static ExternalModelImportOptions Default { get; } = new(
-        1f / 0.3048f,
+        1f,
         null,
         null);
 

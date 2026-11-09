@@ -105,7 +105,7 @@ public class GltfPrimitiveConverterTests
         var result = GltfPrimitiveConverter.Convert(primitive, IdentityAttachment(), Options, _ => PlaceholderMaterial());
 
         var mesh = Assert.Single(result.Meshes);
-        var s = 1f / 0.3048f;
+        var s = 1f;
         Assert.Equal(new Vector3(0, 0, 0), mesh.Vertices[0].Position);
         Assert.Equal(new Vector3(0, s, 0), mesh.Vertices[1].Position);
 
@@ -132,7 +132,7 @@ public class GltfPrimitiveConverterTests
         // Authored triangle order (0, 2, 1) is preserved: the split assigns local indices by
         // first use, so vertices come back ordered v0, v2, v1 with sequential indices.
         var vertices = result.Meshes[0].Vertices;
-        var s = 1f / 0.3048f;
+        var s = 1f;
         Assert.Equal(new Vector3(0, 0, 0), vertices[0].Position);
         Assert.Equal(new Vector3(0, 0, s), vertices[1].Position);
         Assert.Equal(new Vector3(0, s, 0), vertices[2].Position);
@@ -298,7 +298,7 @@ public class GltfPrimitiveConverterTests
         var result = GltfPrimitiveConverter.Convert(primitive, attachment, Options, _ => PlaceholderMaterial());
 
         var vertices = result.Meshes[0].Vertices;
-        var s = 1f / 0.3048f;
+        var s = 1f;
 
         // glTF (1, 0, 0) scaled by (2, 4, 2) -> (2, 0, 0), then basis -> Panopticon (0, 2, 0) * s.
         Assert.Equal(new Vector3(0, 2 * s, 0), vertices[1].Position);
@@ -394,7 +394,7 @@ public class GltfPrimitiveConverterTests
 
         var result = GltfPrimitiveConverter.Convert(primitive, IdentityAttachment(), Options, _ => PlaceholderMaterial());
 
-        var s = 1f / 0.3048f;
+        var s = 1f;
 
         // Vertex 1 replaced by (1, 1, 1) -> Panopticon (1, 1, 1) * s.
         Assert.Equal(new Vector3(s, s, s), result.Meshes[0].Vertices[1].Position);
@@ -461,7 +461,7 @@ public class GltfPrimitiveConverterTests
 
         var result = GltfPrimitiveConverter.Convert(primitive, IdentityAttachment(), Options, _ => PlaceholderMaterial());
 
-        var s = 1f / 0.3048f;
+        var s = 1f;
         Assert.Equal(new Vector3(0, s, 0), result.Meshes[0].Vertices[1].Position);
         Assert.Equal(new Vector3(1, 0, 0), result.Meshes[0].Vertices[1].Normal);
     }

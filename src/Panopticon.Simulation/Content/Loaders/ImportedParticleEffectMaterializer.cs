@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Content;
 using Panopticon.Content.Importing;
-using Panopticon.Content.Importing.Nif;
 using Panopticon.Graphics;
 using Panopticon.Graphics.ParticleSystems;
 using Panopticon.Mathematics;
@@ -15,7 +14,7 @@ namespace Panopticon.Content.Loaders;
 /// <summary>
 /// Engine-owned materialization of imported particle interchange values into existing
 /// <see cref="FXParticleSystemTemplate"/> modules. Lengths and speeds arrive in source units
-/// (meters) and are converted to engine units (feet) here once; the per-frame runtime stays
+/// (meters) and stay meters in the engine; the per-frame runtime stays
 /// format-agnostic. Cone emission is expressed as a cylindrical velocity around local +Z with
 /// the axis rotation folded into <see cref="MaterializedParticleSystem.EmitterTransform"/>, so
 /// spawn matrices orient the cone without runtime changes. An optional world scale (from DDF
@@ -190,7 +189,7 @@ internal static class ImportedParticleEffectMaterializer
         ImportedParticleSystem system,
         float worldScale)
     {
-        var sizeEngine = system.InitialSize * NifTransformConverter.FeetPerMeter * worldScale;
+        var sizeEngine = system.InitialSize * worldScale;
         var growSeconds = 0f;
         foreach (var modifier in system.Modifiers)
         {
@@ -360,10 +359,10 @@ internal static class ImportedParticleEffectMaterializer
             // The runtime integrates Position += Velocity once per 30 Hz tick, so speeds
             // convert to per-tick displacements here, not per-second values.
             var angle = system.Velocity.ConeAngle;
-            var radialLow = system.Velocity.SpeedLow * MathF.Sin(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
-            var radialHigh = system.Velocity.SpeedHigh * MathF.Sin(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
-            var normalLow = system.Velocity.SpeedLow * MathF.Cos(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
-            var normalHigh = system.Velocity.SpeedHigh * MathF.Cos(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
+            var radialLow = system.Velocity.SpeedLow * MathF.Sin(angle) / FramesPerSecond;
+            var radialHigh = system.Velocity.SpeedHigh * MathF.Sin(angle) / FramesPerSecond;
+            var normalLow = system.Velocity.SpeedLow * MathF.Cos(angle) / FramesPerSecond;
+            var normalHigh = system.Velocity.SpeedHigh * MathF.Cos(angle) / FramesPerSecond;
 
             template.EmissionVelocity = new FXParticleEmissionVelocityCylinder
             {
@@ -373,8 +372,8 @@ internal static class ImportedParticleEffectMaterializer
         }
         else
         {
-            var speedLow = system.Velocity.SpeedLow * NifTransformConverter.FeetPerMeter / FramesPerSecond;
-            var speedHigh = system.Velocity.SpeedHigh * NifTransformConverter.FeetPerMeter / FramesPerSecond;
+            var speedLow = system.Velocity.SpeedLow / FramesPerSecond;
+            var speedHigh = system.Velocity.SpeedHigh / FramesPerSecond;
             template.EmissionVelocity = new FXParticleEmissionVelocitySphere
             {
                 Speed = new RandomVariable(speedLow, speedHigh, DistributionType.Uniform),
@@ -393,7 +392,7 @@ internal static class ImportedParticleEffectMaterializer
 
             case ImportedParticleEmitterKind.Line:
                 {
-                    var half = LineAxis(system.Emitter.Dimensions) * (system.Emitter.Dimensions * 0.5f * NifTransformConverter.FeetPerMeter);
+                    var half = LineAxis(system.Emitter.Dimensions) * (system.Emitter.Dimensions * 0.5f);
                     template.EmissionVolume = new FXParticleEmissionVolumeLine
                     {
                         StartPoint = Vector3.Transform(-half, inverseAxisRotation),
@@ -413,7 +412,7 @@ internal static class ImportedParticleEffectMaterializer
 
                     template.EmissionVolume = new FXParticleEmissionVolumeBox
                     {
-                        HalfSize = system.Emitter.Dimensions * (0.5f * NifTransformConverter.FeetPerMeter),
+                        HalfSize = system.Emitter.Dimensions * 0.5f,
                     };
                     break;
                 }

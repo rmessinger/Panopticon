@@ -183,7 +183,7 @@ public class GltfSkinConverterTests
 
         // Converted IBM keeps unit scale and carries the translation in converted axes:
         // glTF (0, 0, -1) becomes Panopticon (-s, 0, 0).
-        var s = 1f / 0.3048f;
+        var s = 1f;
         var jointB = skin.Skeleton.Bones[skin.JointToBoneIndex[0]];
 
         // Converted IBM keeps unit scale and carries glTF (0, -1, 0) to Panopticon (0, 0, -s).

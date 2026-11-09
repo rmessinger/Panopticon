@@ -135,11 +135,6 @@ public sealed class NifSkinConverterTests
         e.M12 = 1.0f;
         e.M21 = -1.0f;
         e.M22 = 0.0f;
-        e.M11 *= NifTransformConverter.FeetPerMeter;
-        e.M12 *= NifTransformConverter.FeetPerMeter;
-        e.M21 *= NifTransformConverter.FeetPerMeter;
-        e.M22 *= NifTransformConverter.FeetPerMeter;
-        e.M33 *= NifTransformConverter.FeetPerMeter;
         return e;
     }
 

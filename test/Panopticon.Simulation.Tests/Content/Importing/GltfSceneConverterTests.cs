@@ -155,7 +155,7 @@ public class GltfSceneConverterTests
 
         // glTF +Z (asset front) becomes Panopticon +X (object forward).
         var bone = Assert.Single(plan.Skeleton.Bones);
-        Assert.Equal(1f / 0.3048f, bone.BindTranslation.X, 4);
+        Assert.Equal(1f, bone.BindTranslation.X, 4);
         Assert.Equal(0, bone.BindTranslation.Y);
         Assert.Equal(0, bone.BindTranslation.Z);
     }
@@ -174,8 +174,8 @@ public class GltfSceneConverterTests
 
         var bone = Assert.Single(plan.Skeleton.Bones);
 
-        // glTF (x, y, z) meters -> Panopticon (z, x, y) world units at s = 1/0.3048 per meter.
-        var s = 1f / 0.3048f;
+        // glTF (x, y, z) meters -> Panopticon (z, x, y) world units at s = 1 per meter.
+        var s = 1f;
         Assert.Equal(6 * s, bone.BindTranslation.X, 2);
         Assert.Equal(2 * s, bone.BindTranslation.Y, 2);
         Assert.Equal(4 * s, bone.BindTranslation.Z, 2);
@@ -245,7 +245,7 @@ public class GltfSceneConverterTests
         var plan = Convert(model);
 
         // glTF +X becomes Panopticon +Y, then the parent's uniform scale doubles it.
-        Assert.Equal(new Vector3(0, 2f / 0.3048f, 0), plan.Skeleton.Bones[1].BindTranslation);
+        Assert.Equal(new Vector3(0, 2f, 0), plan.Skeleton.Bones[1].BindTranslation);
     }
 
     [Fact]

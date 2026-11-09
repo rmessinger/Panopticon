@@ -11,8 +11,6 @@ namespace Panopticon.Tests.Content.Importing;
 
 public class GltfAnimationImporterTests
 {
-    private static readonly float FeetPerMeter = 1f / 0.3048f;
-
     private static string B64(params float[] values)
     {
         var bytes = new byte[values.Length * 4];
@@ -129,11 +127,11 @@ public class GltfAnimationImporterTests
         // glTF +Y is Panopticon +Z, so the authored Y delta of one meter lands in Z.
         Assert.Equal(0f, x.Keyframes[0].FloatValue, 4);
         Assert.Equal(0f, y.Keyframes[0].FloatValue, 4);
-        Assert.Equal(FeetPerMeter, z.Keyframes[0].FloatValue, 2);
+        Assert.Equal(1f, z.Keyframes[0].FloatValue, 2);
 
         // Reconstruction: offset matrix * rest matrix equals the converted animated matrix.
-        var restMatrix = Matrix4x4.CreateTranslation(3 * FeetPerMeter, 1 * FeetPerMeter, 2 * FeetPerMeter);
-        var animatedMatrix = Matrix4x4.CreateTranslation(3 * FeetPerMeter, 1 * FeetPerMeter, 3 * FeetPerMeter);
+        var restMatrix = Matrix4x4.CreateTranslation(3, 1, 2);
+        var animatedMatrix = Matrix4x4.CreateTranslation(3, 1, 3);
         var offsetMatrix = Matrix4x4.CreateTranslation(
             x.Keyframes[0].FloatValue,
             y.Keyframes[0].FloatValue,
@@ -175,7 +173,7 @@ public class GltfAnimationImporterTests
 
         // Reconstruction: offset rotation matrix * rest rotation matrix equals the converted
         // animated rotation matrix.
-        var basis = GltfTransformConverter.CreateBasis(FeetPerMeter);
+        var basis = GltfTransformConverter.CreateBasis(GltfImportOptions.Default.UnitsPerMeter);
         var restMatrix = Matrix4x4.CreateFromQuaternion(GltfTransformConverter.ConvertRotation(rest, basis));
         var animatedMatrix = Matrix4x4.CreateFromQuaternion(GltfTransformConverter.ConvertRotation(half, basis));
         var offsetMatrix = Matrix4x4.CreateFromQuaternion(channel.Keyframes[1].QuaternionValue) * restMatrix;

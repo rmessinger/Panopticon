@@ -137,8 +137,8 @@ public class GltfImporterTests
         Assert.NotNull(payload.BaseColorTexture);
         Assert.Equal(ImportedImageSourceKind.EmbeddedBytes, payload.BaseColorTexture!.ImageSource.Kind);
 
-        // Basis-converted bounds: positions (0..1) meters map to world units at 3.28084.
-        var s = 1f / 0.3048f;
+        // Basis-converted bounds: positions (0..1) meters map to world units at 1 per meter.
+        var s = 1f;
 
         // Converted axes: box max maps glTF (maxZ, maxX, maxY) = (0, 1, 1) meters.
         Assert.Equal(new Vector3(0, s, s), mesh.BoundingBox.Max);

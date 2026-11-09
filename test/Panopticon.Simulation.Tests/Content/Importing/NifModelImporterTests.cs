@@ -237,11 +237,10 @@ public sealed class NifModelImporterTests
         Assert.Equal(1, subObject.ParentBoneIndex);
 
         // The shape bakes identity-relative to its direct parent bone:
-        // (1, 0, 0) -> (0, 1, 0) * feet; the doubled ancestors act only
+        // (1, 0, 0) -> (0, 1, 0) meters; the doubled ancestors act only
         // through the bone chain.
         var mesh = (ImportedMesh)subObject.RenderObject;
-        const float f = 3.280839895f;
-        AssertEqual(new Vector3(0, 1 * f, 0), mesh.Vertices[1].Position);
+        AssertEqual(new Vector3(0, 1, 0), mesh.Vertices[1].Position);
     }
 
     [Fact]
@@ -266,7 +265,7 @@ public sealed class NifModelImporterTests
 
         // The unanimated shape keeps its C4c placement: identity bake, v * E.
         var mesh = (ImportedMesh)subObject.RenderObject;
-        AssertEqual(new Vector3(0, 3.280839895f, 0), mesh.Vertices[1].Position);
+        AssertEqual(new Vector3(0, 1, 0), mesh.Vertices[1].Position);
     }
 
     [Fact]
@@ -378,18 +377,12 @@ public sealed class NifModelImporterTests
 
     private static Matrix4x4 SourceToEngineMatrix()
     {
-        // The source-to-engine map E: Rz(90) with meters-to-feet, the same
-        // conversion NifTransformConverter applies inside its bake.
+        // The source-to-engine map E: Rz(90), the same conversion NifTransformConverter applies inside its bake.
         var e = Matrix4x4.Identity;
         e.M11 = 0.0f;
         e.M12 = 1.0f;
         e.M21 = -1.0f;
         e.M22 = 0.0f;
-        e.M11 *= NifTransformConverter.FeetPerMeter;
-        e.M12 *= NifTransformConverter.FeetPerMeter;
-        e.M21 *= NifTransformConverter.FeetPerMeter;
-        e.M22 *= NifTransformConverter.FeetPerMeter;
-        e.M33 *= NifTransformConverter.FeetPerMeter;
         return e;
     }
 
@@ -464,29 +457,28 @@ public sealed class NifModelImporterTests
     public void BakesSourceToEngineMatrixIntoPositions()
     {
         // One meter along source -Y (the forward axis) must land on +X at
-        // 3.28084 world units; source +Z (up) stays up.
+        // One meter along source -Y (the forward axis) must land on +X;
+        // source +Z (up) stays up.
         var model = Import(StaticModelBytes());
         var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
         // Vertices were (0,0,0), (1,0,0), (0,1,0), (0,0,1):
-        // engine = (-y, x, z) * feet.
-        const float f = 3.280839895f;
+        // engine = (-y, x, z) meters.
         AssertEqual(new Vector3(0, 0, 0), mesh.Vertices[0].Position);
-        AssertEqual(new Vector3(0, f, 0), mesh.Vertices[1].Position);
-        AssertEqual(new Vector3(-f, 0, 0), mesh.Vertices[2].Position);
-        AssertEqual(new Vector3(0, 0, f), mesh.Vertices[3].Position);
+        AssertEqual(new Vector3(0, 1, 0), mesh.Vertices[1].Position);
+        AssertEqual(new Vector3(-1, 0, 0), mesh.Vertices[2].Position);
+        AssertEqual(new Vector3(0, 0, 1), mesh.Vertices[3].Position);
     }
 
     [Fact]
     public void BakesShapeTransformIntoPositionsAndNormals()
     {
         // Shape translated (0, -2, 0) in source space: forward by 2 meters
-        // becomes +X by 2 * 3.28084.
+        // becomes +X by 2 meters.
         var model = Import(StaticModelBytes(shapeTranslation: (0, -2, 0)));
         var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
-        const float f = 3.280839895f;
-        AssertEqual(new Vector3(2 * f, 0, 0), mesh.Vertices[0].Position);
+        AssertEqual(new Vector3(2, 0, 0), mesh.Vertices[0].Position);
         // Normals were (0,0,1) and the bake is a pure rotation + uniform
         // scale, so they stay (0,0,1) after normalization.
         AssertEqual(new Vector3(0, 0, 1), mesh.Vertices[0].Normal);
@@ -498,9 +490,8 @@ public sealed class NifModelImporterTests
         var model = Import(StaticModelBytes());
         var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
-        const float f = 3.280839895f;
-        Assert.Equal(new Vector3(-f, 0, 0), mesh.BoundingBox.Min);
-        Assert.Equal(new Vector3(0, f, f), mesh.BoundingBox.Max);
+        Assert.Equal(new Vector3(-1, 0, 0), mesh.BoundingBox.Min);
+        Assert.Equal(new Vector3(0, 1, 1), mesh.BoundingBox.Max);
         Assert.True(mesh.BoundingSphere.Radius > 0);
     }
 

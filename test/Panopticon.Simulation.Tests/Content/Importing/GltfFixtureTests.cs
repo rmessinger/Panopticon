@@ -78,7 +78,7 @@ public class GltfFixtureTests
 
         // Sparse overlay replaces vertex 1 of the sparse mesh with (1, 1, 1).
         var sparseMesh = (ImportedMesh)model.SubObjects.First(s => s.DisplayName == "sparse_0").RenderObject;
-        var s = 1f / 0.3048f;
+        var s = 1f;
         Assert.Contains(sparseMesh.Vertices, v => v.Position == new System.Numerics.Vector3(s, s, s));
 
         // Unsigned-int indices preserve triangle order on the uintIndices mesh.
@@ -113,7 +113,7 @@ public class GltfFixtureTests
 
         // The rig's one-meter translation converts to world units on the converted +X axis.
         var rig = model.Skeleton.Bones.Single(b => b.Name == "rig");
-        Assert.Equal(1f / 0.3048f, rig.BindTranslation.X, 3);
+        Assert.Equal(1f, rig.BindTranslation.X, 3);
     }
 
     [Fact]

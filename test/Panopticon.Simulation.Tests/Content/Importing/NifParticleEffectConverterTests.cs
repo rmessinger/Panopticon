@@ -105,6 +105,19 @@ public sealed class NifParticleEffectConverterTests
     }
 
     [Fact]
+    public void ParticleTranslationStaysInMetersAcrossAllAxes()
+    {
+        // AQ-14: the source-to-engine map is Rz(90) only, so (2, 10, -3) meters maps to (-10, 2, -3) meters.
+        var file = BuildSingleSystemFile(particlesBody: NifTestGeometry.Shape(
+            name: "sparks", data: 2, controller: 3, translation: (2, 10, -3)));
+        var translation = Convert(file).Systems[0].LocalTransform.Translation;
+
+        Assert.Equal(-10.0f, translation.X, 5);
+        Assert.Equal(2.0f, translation.Y, 5);
+        Assert.Equal(-3.0f, translation.Z, 5);
+    }
+
+    [Fact]
     public void OrdersSystemsByBlockIndexAndFallsBackToIndexedNames()
     {
         var builder = new NifTestDataBuilder();

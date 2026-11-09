@@ -18,7 +18,6 @@ namespace Panopticon.Tests.Content.Importing;
 public sealed class Ee2NifImportTests
 {
     private const string ArchiveRelativePath = "zips/graphics.zip";
-    private const float FeetPerMeter = 3.280839895f;
 
     private const string TexturesArchiveRelativePath = "zips/textures.zip";
 
@@ -106,10 +105,10 @@ public sealed class Ee2NifImportTests
         // fix (stored 3x3 transposed into the row-vector engine layout; the
         // oars now bake outboard instead of under the keel). Source units
         // x [-19.47, 19.41], y [-23.91, 22.86], z [-8.61, 24.61];
-        // engine = (-y, x, z) * feet.
+        // engine = (-y, x, z), meters.
         AssertBounds(model,
-            new Vector3(-22.8616f, -19.4721f, -8.6116f) * FeetPerMeter,
-            new Vector3(23.9142f, 19.4147f, 24.6073f) * FeetPerMeter,
+            new Vector3(-22.8616f, -19.4721f, -8.6116f),
+            new Vector3(23.9142f, 19.4147f, 24.6073f),
             tolerance: 0.2f);
     }
 
@@ -166,10 +165,10 @@ public sealed class Ee2NifImportTests
         // fix (the root pitch sign flipped with the transpose, so the nose
         // and gear redistribute along the longitudinal and vertical axes).
         // Source units x [-9.57, 9.55], y [-8.09, 6.15], z [-0.21, 5.20];
-        // engine = (-y, x, z) * feet.
+        // engine = (-y, x, z), meters.
         AssertBounds(model,
-            new Vector3(-8.0884f, -9.5667f, -0.2140f) * FeetPerMeter,
-            new Vector3(6.1453f, 9.5501f, 5.2007f) * FeetPerMeter,
+            new Vector3(-8.0884f, -9.5667f, -0.2140f),
+            new Vector3(6.1453f, 9.5501f, 5.2007f),
             tolerance: 0.2f);
     }
 

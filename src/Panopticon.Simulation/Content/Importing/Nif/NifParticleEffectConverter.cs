@@ -74,11 +74,6 @@ internal static class NifParticleEffectConverter
         var localTransform = NifTransformConverter.ConjugateSourceToEngine(
             NifTransformConverter.CreateLocalMatrix(particles));
 
-        // Conjugation converts the translation to feet (the C4c bone-local
-        // convention); the interchange carries source units, so undo that
-        // scale. The rotation part conjugates without any scale change.
-        localTransform.Translation *= NifTransformConverter.MetersPerFoot;
-
         var emissionStart = MathF.Max(0, controller.EmitStartTime);
         var emissionStop = controller.EmitStopTime;
 

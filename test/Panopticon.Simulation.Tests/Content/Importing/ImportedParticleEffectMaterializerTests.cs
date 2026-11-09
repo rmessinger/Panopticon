@@ -12,7 +12,6 @@ namespace Panopticon.Tests.Content.Importing;
 
 public class ImportedParticleEffectMaterializerTests
 {
-    private const float FeetPerMeter = 1f / 0.3048f;
 
     private static readonly ImportedParticleColorKey[] ExplosionColorKeys =
     {
@@ -55,8 +54,8 @@ public class ImportedParticleEffectMaterializerTests
         Assert.Equal(15, template.Lifetime.High);
 
         var velocity = Assert.IsType<FXParticleEmissionVelocitySphere>(template.EmissionVelocity);
-        Assert.Equal(120 * FeetPerMeter / 30, velocity.Speed.Low, 4);
-        Assert.Equal(120 * FeetPerMeter / 30, velocity.Speed.High, 4);
+        Assert.Equal(120f / 30, velocity.Speed.Low, 4);
+        Assert.Equal(120f / 30, velocity.Speed.High, 4);
 
         Assert.IsType<FXParticleEmissionVolumePoint>(template.EmissionVolume);
         var physics = Assert.IsType<FXParticleDefaultPhysics>(template.Physics);
@@ -69,7 +68,7 @@ public class ImportedParticleEffectMaterializerTests
         var growFrames = MathF.Round(0.05f * 30, MidpointRounding.AwayFromZero);
         var expectedDamping = MathF.Pow(0.05f, 1f / growFrames);
         Assert.Equal(expectedDamping, update.SizeRateDamping.Low, 6);
-        Assert.Equal(5 * FeetPerMeter * (1 - expectedDamping) / (1 - MathF.Pow(expectedDamping, growFrames)), update.SizeRate.Low, 4);
+        Assert.Equal(5 * (1 - expectedDamping) / (1 - MathF.Pow(expectedDamping, growFrames)), update.SizeRate.Low, 4);
 
         Assert.Equal(new ColorRgbF(1, 1, 1), template.Colors.ColorKeyframes[0].Color);
         Assert.Equal(0u, template.Colors.ColorKeyframes[0].Time);
@@ -111,9 +110,9 @@ public class ImportedParticleEffectMaterializerTests
         Assert.Equal(38, template.Lifetime.High);
 
         var velocity = Assert.IsType<FXParticleEmissionVelocityCylinder>(template.EmissionVelocity);
-        Assert.Equal(5.625f * MathF.Sin(0.349f) * FeetPerMeter / 30, velocity.Radial.Low, 4);
-        Assert.Equal(9.375f * MathF.Sin(0.349f) * FeetPerMeter / 30, velocity.Radial.High, 4);
-        Assert.Equal(9.375f * MathF.Cos(0.349f) * FeetPerMeter / 30, velocity.Normal.High, 4);
+        Assert.Equal(5.625f * MathF.Sin(0.349f) / 30, velocity.Radial.Low, 4);
+        Assert.Equal(9.375f * MathF.Sin(0.349f) / 30, velocity.Radial.High, 4);
+        Assert.Equal(9.375f * MathF.Cos(0.349f) / 30, velocity.Normal.High, 4);
 
         // The spawn matrix maps local +Z onto the engine-frame cone axis (direction only;
         // the local translation applies to positions, not the axis check).
@@ -140,16 +139,16 @@ public class ImportedParticleEffectMaterializerTests
         var template = materialized.Systems[0].Template;
 
         // Quad sizes bake the world scale directly; the runtime does not scale them by the matrix.
-        Assert.Equal(2 * FeetPerMeter * 0.005f, template.Size.High, 6);
+        Assert.Equal(2 * 0.005f, template.Size.High, 6);
 
         // Speeds and volumes stay in unscaled source units: the spawn matrix carries the
         // scale and multiplies both through the runtime's transform path.
         var volume = Assert.IsType<FXParticleEmissionVolumeBox>(template.EmissionVolume);
-        Assert.Equal(1.5f * FeetPerMeter, volume.HalfSize.X, 6);
+        Assert.Equal(1.5f, volume.HalfSize.X, 6);
 
         var velocity = Assert.IsType<FXParticleEmissionVelocitySphere>(template.EmissionVelocity);
-        Assert.Equal(4 * FeetPerMeter / 30, velocity.Speed.Low, 6);
-        Assert.Equal(8 * FeetPerMeter / 30, velocity.Speed.High, 6);
+        Assert.Equal(4f / 30, velocity.Speed.Low, 6);
+        Assert.Equal(8f / 30, velocity.Speed.High, 6);
 
         Assert.Equal(0.005f, materialized.Systems[0].EmitterTransform.M11, 6);
 
@@ -181,7 +180,7 @@ public class ImportedParticleEffectMaterializerTests
         Assert.Equal(ParticleSystemShader.Alpha, template.Shader);
 
         var volume = Assert.IsType<FXParticleEmissionVolumeBox>(template.EmissionVolume);
-        Assert.Equal(1.5f * FeetPerMeter, volume.HalfSize.X, 4);
+        Assert.Equal(1.5f, volume.HalfSize.X, 4);
 
         // 60/s = 2 particles per tick.
         Assert.Equal(2, template.BurstCount.High);

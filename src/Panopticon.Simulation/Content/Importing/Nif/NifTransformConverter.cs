@@ -8,31 +8,21 @@ namespace Panopticon.Content.Importing.Nif;
 /// <summary>
 /// Transform math for NIF imports: node-local matrices, hierarchy
 /// accumulation, and the single source-to-engine conversion recorded by
-/// C4a-01 (right-handed Z-up, -Y forward, meters to upright +X-forward
-/// feet): Rz(+90 degrees) with a uniform meters-to-feet scale.
+/// C4a-01 (right-handed Z-up, -Y forward to upright +X-forward): Rz(+90
+/// degrees). Units stay meters; the source-to-engine map carries no scale.
 /// </summary>
 internal static class NifTransformConverter
 {
-    public const float MetersPerFoot = 0.3048f;
-    public const float FeetPerMeter = 1.0f / MetersPerFoot;
-
     private static readonly Matrix4x4 SourceToEngine = CreateSourceToEngine();
 
     private static Matrix4x4 CreateSourceToEngine()
     {
-        // e_x = -n_y, e_y = n_x, e_z = n_z (row-vector convention),
-        // times a uniform meters-to-feet scale.
-        var m = Matrix4x4.Identity;
-        m.M11 = 0.0f * FeetPerMeter;
-        m.M12 = 1.0f * FeetPerMeter;
-        m.M13 = 0.0f * FeetPerMeter;
-        m.M21 = -1.0f * FeetPerMeter;
-        m.M22 = 0.0f * FeetPerMeter;
-        m.M23 = 0.0f * FeetPerMeter;
-        m.M31 = 0.0f * FeetPerMeter;
-        m.M32 = 0.0f * FeetPerMeter;
-        m.M33 = 1.0f * FeetPerMeter;
-        return m;
+        // e_x = -n_y, e_y = n_x, e_z = n_z (row-vector convention).
+        return new Matrix4x4(
+            0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /// <summary>
@@ -111,7 +101,7 @@ internal static class NifTransformConverter
     /// One node's engine-frame bone-local transform: the source local
     /// conjugated by the source-to-engine map. The rotation conjugates by
     /// Rz(90) with the uniform node scale cancelling; the translation is
-    /// rotated by Rz(90) and converted to feet.
+    /// rotated by Rz(90) and stays in meters.
     /// </summary>
     internal static Matrix4x4 CreateBoneLocalMatrix(FileFormats.Nif.NifAvObject node)
     {
@@ -150,7 +140,7 @@ internal static class NifTransformConverter
 
     /// <summary>
     /// Converts a source-frame translation to the engine frame: rotated
-    /// by Rz(90 degrees) and scaled from meters to feet.
+    /// by Rz(90 degrees), units unchanged.
     /// </summary>
     internal static Vector3 ConvertSourceTranslationToEngine(Vector3 translation)
     {

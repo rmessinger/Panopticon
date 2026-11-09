@@ -20,7 +20,6 @@ namespace Panopticon.Tests.Content.Importing;
 public sealed class Ee2MorphImportTests
 {
     private const string GraphicsZipPath = "zips/graphics.zip";
-    private const float FeetPerMeter = 3.280839895f;
 
     private static string InstallationPath()
     {
@@ -68,10 +67,9 @@ public sealed class Ee2MorphImportTests
         // cooker float noise around 7e-13 and normalize away.
         Assert.Equal(600, deltas.Count(delta => delta.Length() > 1e-6f));
 
-        // The largest delta is 5.4214 source units; the bake is a pure
-        // rotation plus meters-to-feet, so lengths scale by FeetPerMeter.
+        // The largest delta is 5.4214 source meters; the bake is a pure rotation, so lengths stay meters.
         var maxLength = deltas.Max(delta => delta.Length());
-        Assert.InRange(maxLength, 5.4214f * FeetPerMeter - 0.05f, 5.4214f * FeetPerMeter + 0.05f);
+        Assert.InRange(maxLength, 5.4214f - 0.05f, 5.4214f + 0.05f);
     }
 
     [Fact]

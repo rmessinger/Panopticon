@@ -48,7 +48,7 @@ public sealed class GltfImportOptions
     public static GltfImportOptions Default { get; } = new();
 
     public GltfImportOptions(
-        float unitsPerMeter = 1f / 0.3048f,
+        float unitsPerMeter = 1f,
         long maxRootDocumentBytes = 16 * 1024 * 1024,
         long maxDataUriBytes = 16 * 1024 * 1024,
         long maxExternalResourceBytes = 16 * 1024 * 1024,

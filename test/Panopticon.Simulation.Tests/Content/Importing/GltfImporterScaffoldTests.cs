@@ -42,9 +42,9 @@ public class GltfImporterScaffoldTests
     }
 
     [Fact]
-    public void Options_DefaultUnitsAreFeet()
+    public void Options_DefaultUnitsArePerMeter()
     {
-        Assert.Equal(1f / 0.3048f, GltfImportOptions.Default.UnitsPerMeter, 5);
+        Assert.Equal(1f, GltfImportOptions.Default.UnitsPerMeter, 5);
     }
 
     [Theory]
