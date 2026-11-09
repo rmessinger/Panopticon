@@ -48,7 +48,7 @@ public class UnitBodyMovementMaterializerTests
         Assert.Equal("Walker", definition.Name);
         Assert.Equal(120f, body.MaxHealth);
         Assert.Equal(90f, body.InitialHealth);
-        Assert.Equal(5f, definition.Geometry.MajorRadius);
+        Assert.Equal(0.5f, definition.Geometry.MajorRadius);
         Assert.Equal(12f, definition.Geometry.Shapes[0].Height);
         Assert.Equal(200f, definition.VisionRange);
         Assert.True(definition.KindOf.Get(ObjectKinds.Infantry));
@@ -66,6 +66,19 @@ public class UnitBodyMovementMaterializerTests
         Assert.Equal(0.1f, locomotor.Acceleration, 5);
         Assert.Equal(LocomotorAppearance.TwoLegs, locomotor.Appearance);
         Assert.Equal(Surfaces.Ground | Surfaces.Rubble, locomotor.Surfaces);
+
+        var metricLocomotor = Locomotor("MetricLegs") with
+        {
+            Speed = Authored.Of(new Quantity(30, QuantityUnit.MetersPerSecond)),
+            TurnRate = Authored.Of(new Quantity(180, QuantityUnit.DegreesPerSecond)),
+            Acceleration = Authored.Of(new Quantity(90, QuantityUnit.MetersPerSecondSquared)),
+            Braking = Authored.Of(new Quantity(180, QuantityUnit.MetersPerSecondSquared)),
+        };
+        var metricContent = Materialize(Set(Walker() with { Locomotors = ListOverride<ContentId>.Replace([metricLocomotor.Id]) }, metricLocomotor));
+        var template = metricContent.Get<LocomotorTemplate>(metricLocomotor.Id);
+        Assert.Equal(1f, template.MaxSpeed, 5);
+        Assert.Equal(0.1f, template.Acceleration, 5);
+        Assert.Equal(0.2f, template.Braking, 5);
     }
 
     [Fact]
@@ -85,7 +98,8 @@ public class UnitBodyMovementMaterializerTests
         var radius = Assert.Single(content.Conversions, c => c.Field == nameof(UnitRecord.GeometryMajorRadius));
 
         Assert.Equal(new Quantity(0.5, QuantityUnit.Meters), radius.Source);
-        Assert.Equal(5, radius.Runtime);
+        Assert.Equal(0.5, radius.Runtime);
+        Assert.Equal("meters", radius.RuntimeUnit);
     }
 
     [Fact]
@@ -107,12 +121,28 @@ public class UnitBodyMovementMaterializerTests
     }
 
     [Fact]
-    public void MetersWithoutScaleFail()
+    public void MetersPassesThroughWithoutDeclaredScale()
     {
         var resolution = UnitImportResolution.Resolve(Set(Walker(), Legs()), Registry);
         var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(new UnitConversionPolicy(SageGame.CncGenerals)));
 
+        Assert.True(content.Succeeded);
+        var definition = content.Get<ObjectDefinition>(Id(ContentKind.Unit, "Walker"));
+        Assert.Equal(0.5f, definition.Geometry.MajorRadius);
+    }
+
+    [Fact]
+    public void SourceDistanceWithoutDeclaredScaleFails()
+    {
+        var unitWithSourceDistance = Walker() with
+        {
+            GeometryMajorRadius = Authored.Of(new Quantity(2, QuantityUnit.SourceDistance)),
+        };
+        var resolution = UnitImportResolution.Resolve(Set(unitWithSourceDistance, Legs()), Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(new UnitConversionPolicy(SageGame.CncGenerals)));
+
         Assert.False(content.Succeeded);
+        Assert.Contains(content.Diagnostics, d => d.Code == DiagnosticCodes.MaterializationFailed && d.Message.Contains("meters-per-source-distance"));
     }
 
     [Fact]

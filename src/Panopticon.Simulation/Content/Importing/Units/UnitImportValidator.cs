@@ -15,8 +15,8 @@ public sealed class UnitImportValidator
     private static readonly QuantityUnit[] HealthUnits = [QuantityUnit.HitPoints, QuantityUnit.Scalar];
     private static readonly QuantityUnit[] DistanceUnits = [QuantityUnit.GameDistance, QuantityUnit.Meters, QuantityUnit.SourceDistance];
     private static readonly QuantityUnit[] TimeUnits = [QuantityUnit.Seconds, QuantityUnit.Milliseconds, QuantityUnit.LogicFrames];
-    private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond, QuantityUnit.SourceDistancePerSecond];
-    private static readonly QuantityUnit[] AccelerationUnits = [QuantityUnit.DistancePerSecondSquared];
+    private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond, QuantityUnit.SourceDistancePerSecond, QuantityUnit.MetersPerSecond];
+    private static readonly QuantityUnit[] AccelerationUnits = [QuantityUnit.DistancePerSecondSquared, QuantityUnit.MetersPerSecondSquared];
     private static readonly QuantityUnit[] TurnUnits = [QuantityUnit.DegreesPerSecond];
     private static readonly QuantityUnit[] CostUnits = [QuantityUnit.Currency];
     private static readonly QuantityUnit[] DamageUnits = [QuantityUnit.HitPoints, QuantityUnit.Scalar];

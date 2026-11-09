@@ -79,7 +79,15 @@ public static class UnitContentImportRunner
         }
 
         var publisher = new UnitContentPublisher(game.AssetStore);
-        var policy = new UnitConversionPolicy(game.SageGame, gameUnitsPerSourceDistance: import.GameUnitsPerSourceDistance);
+
+        // Three scales stay distinct and are never conflated:
+        // 1. Authored profile compatibility scale: scenario-chosen (12 in capture-mixed-source-ee2.json, converted by similarity: 12 * 0.3048 = 3.6576 m per source distance).
+        // 2. Reference presentation anchor: 18.2505 * 0.3048 = 5.5627524 m per source distance (derived in Ee2ReferenceScale as 50 model units * 0.1 m * 3.6501).
+        // 3. True physical source calibration: 5 m per tile (50 model units * 0.1 m/unit). Not substituted silently.
+        var metersPerSourceDistance = import.GameUnitsPerSourceDistance > 0
+            ? UnitConversionPolicy.ScaleEe2SourceDistance(import.GameUnitsPerSourceDistance)
+            : (double?)null;
+        var policy = new UnitConversionPolicy(game.SageGame, metersPerSourceDistance: metersPerSourceDistance);
         var damageEffects = import.DamageEffects.ToDictionary(
             pair => new ContentId(set.Source, ContentKind.Unit, pair.Key), pair => pair.Value);
         var impactEffectDamageTypes = import.ImpactEffectDamageTypes.ToDictionary(
@@ -109,8 +117,10 @@ public static class UnitContentImportRunner
         }
 
         // The model scale is applied once, at install: the imported model's root bone binds carry
-        // game units, so the runtime world matrix stays unscaled.
-        var modelScale = import.GameUnitsPerSourceModelUnit is { } scale ? (float)scale : 1f;
+        // game units, so the runtime world matrix stays unscaled. Converted by similarity.
+        var modelScale = import.GameUnitsPerSourceModelUnit is { } scale
+            ? (float)UnitConversionPolicy.ScaleEe2SourceModelUnit(scale)
+            : 1f;
         var installer = new ImportedVisualInstaller(
             new NifModelImporter(), new NifAnimationImporter(), sourceContext, game.AssetStore.LoadContext, modelScale);
         var publication = publisher.Publish(content, installer);

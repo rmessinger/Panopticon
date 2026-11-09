@@ -351,6 +351,6 @@ internal static class UnitBodyMovementMaterializer
 
     internal static double ConvertDistance(SourceRecord record, string field, Quantity value, UnitMaterializationContext context)
     {
-        return context.Convert(record.Id, field, value, context.Policy.ToGameDistance(value), "game distance");
+        return context.Convert(record.Id, field, value, context.Policy.ToDistance(value), "meters");
     }
 }

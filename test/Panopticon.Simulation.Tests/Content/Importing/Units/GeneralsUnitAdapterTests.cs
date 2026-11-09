@@ -132,16 +132,28 @@ public class GeneralsUnitAdapterTests
         Assert.Equal(225, ranger.BuildCost.Value.Value);
         Assert.Equal(150, ranger.BuildTime.Value.Value);
         Assert.Equal(QuantityUnit.LogicFrames, ranger.BuildTime.Value.Unit);
+        Assert.Equal(10.0, ranger.GeometryMajorRadius.Value.Value);
+        Assert.Equal(QuantityUnit.Meters, ranger.GeometryMajorRadius.Value.Unit);
+        Assert.Equal(12.0, ranger.GeometryHeight.Value.Value);
+        Assert.Equal(QuantityUnit.Meters, ranger.GeometryHeight.Value.Unit);
+        Assert.Equal(150.0, ranger.VisionRange.Value.Value);
+        Assert.Equal(QuantityUnit.Meters, ranger.VisionRange.Value.Unit);
         Assert.Equal(["INFANTRY", "SELECTABLE"], ranger.KindOf.Resolved.Order());
         Assert.Equal(["RangerRifle"], ranger.Weapons.Resolved.Select(id => id.Name));
         Assert.Equal("InfantryArmor", ranger.Armor.Value.Name);
 
         var locomotor = report.Set.Records.OfType<LocomotorRecord>().Single();
         Assert.Equal(30, locomotor.Speed.Value.Value, 3);
+        Assert.Equal(QuantityUnit.MetersPerSecond, locomotor.Speed.Value.Unit);
         Assert.Equal(180, locomotor.TurnRate.Value.Value, 3);
+        Assert.Equal(QuantityUnit.DegreesPerSecond, locomotor.TurnRate.Value.Unit);
         Assert.Equal(["GROUND", "RUBBLE"], locomotor.Surfaces.Resolved);
 
         var weapon = report.Set.Records.OfType<WeaponRecord>().Single();
+        Assert.Equal(100.0, weapon.AttackRange.Value.Value);
+        Assert.Equal(QuantityUnit.Meters, weapon.AttackRange.Value.Unit);
+        Assert.Equal(0.0, weapon.MinimumAttackRange.Value.Value);
+        Assert.Equal(QuantityUnit.Meters, weapon.MinimumAttackRange.Value.Unit);
         // 500 ms becomes 16 frames through the engine's single-precision conversion.
         Assert.Equal(16, weapon.ReloadTime.Value.Value);
         Assert.Equal("SMALL_ARMS", weapon.DamageType.Value);
@@ -173,6 +185,28 @@ public class GeneralsUnitAdapterTests
         Assert.Equal("ActiveBody", body.Family);
         Assert.Same(native.Behaviors["ModuleTag_Body"].Data, adapter.Natives.Get(body.Legacy!.Handle));
         Assert.Same(native, adapter.Natives.Get(ranger.Legacy!.Handle));
+    }
+
+    [Fact]
+    public void LegacyBindingDoesNotDoubleScaleNormalizedNativeValues()
+    {
+        var (_, staging) = Parse(Ini);
+        var adapter = new GeneralsUnitAdapter(staging, SageGame.CncGenerals);
+        var set = adapter.Read([]);
+        var ranger = set.Records.OfType<UnitRecord>().Single(r => r.Id.Equals(Unit("Ranger")));
+        var native = staging.Objects.Single(o => o.Name == "Ranger");
+
+        // Legacy binding handle resolves directly to the normalized native data with no factor applied.
+        var boundObject = Assert.IsType<ObjectDefinition>(adapter.Natives.Get(ranger.Legacy!.Handle));
+        Assert.Equal(native.Geometry.MajorRadius, boundObject.Geometry.MajorRadius);
+        Assert.Equal(native.VisionRange, boundObject.VisionRange);
+
+        // When materialized through the pipeline, the metric value equals the normalized native value, not its square.
+        var body = ranger.ResolvedModules.Single(m => m.Tag == "ModuleTag_Body");
+        var boundBody = Assert.IsType<ActiveBodyModuleData>(adapter.Natives.Get(body.Legacy!.Handle));
+        var nativeBody = (ActiveBodyModuleData)native.Behaviors["ModuleTag_Body"].Data;
+        Assert.Equal(nativeBody.MaxHealth, boundBody.MaxHealth);
+        Assert.NotEqual(nativeBody.MaxHealth * nativeBody.MaxHealth, boundBody.MaxHealth);
     }
 
     [Fact]

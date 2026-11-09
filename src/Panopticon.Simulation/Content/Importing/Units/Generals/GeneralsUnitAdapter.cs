@@ -86,13 +86,13 @@ public sealed class GeneralsUnitAdapter : IUnitSourceAdapter
         return new WeaponRecord(Id(ContentKind.Weapon, weapon.Name), NativeProvenance)
         {
             Legacy = _natives.Bind(weapon),
-            AttackRange = Authored.Of(new Quantity(weapon.AttackRange, QuantityUnit.GameDistance)),
-            MinimumAttackRange = Authored.Of(new Quantity(weapon.MinimumAttackRange, QuantityUnit.GameDistance)),
+            AttackRange = Authored.Of(new Quantity(weapon.AttackRange, QuantityUnit.Meters)),
+            MinimumAttackRange = Authored.Of(new Quantity(weapon.MinimumAttackRange, QuantityUnit.Meters)),
             ReloadTime = Authored.Of(new Quantity(weapon.CoolDownDelayBetweenShots.Min.Value, QuantityUnit.LogicFrames)),
             ClipSize = Authored.Of(weapon.ClipSize),
             ClipReloadTime = Authored.Of(new Quantity(weapon.ClipReloadTime.Min.Value, QuantityUnit.LogicFrames)),
             PrimaryDamage = damage is null ? default : Authored.Of(new Quantity(damage.Damage, QuantityUnit.HitPoints)),
-            PrimaryDamageRadius = damage is null ? default : Authored.Of(new Quantity(damage.Radius, QuantityUnit.GameDistance)),
+            PrimaryDamageRadius = damage is null ? default : Authored.Of(new Quantity(damage.Radius, QuantityUnit.Meters)),
             DamageType = damage is null ? default : Authored.Of(EnumName(damage.DamageType)),
             Presentation = projectile?.ProjectileTemplate?.Name is { } projectileName
                 ? ListOverride<ContentId>.Replace([Id(ContentKind.Unit, projectileName)])
@@ -124,9 +124,9 @@ public sealed class GeneralsUnitAdapter : IUnitSourceAdapter
         return new LocomotorRecord(Id(ContentKind.Locomotor, locomotor.Name), NativeProvenance)
         {
             Legacy = _natives.Bind(locomotor),
-            Speed = Authored.Of(new Quantity(locomotor.MaxSpeed * Fps, QuantityUnit.DistancePerSecond)),
+            Speed = Authored.Of(new Quantity(locomotor.MaxSpeed * Fps, QuantityUnit.MetersPerSecond)),
             TurnRate = Authored.Of(new Quantity(locomotor.MaxTurnRate * Fps * 180.0 / Math.PI, QuantityUnit.DegreesPerSecond)),
-            Acceleration = Authored.Of(new Quantity(locomotor.Acceleration * Fps * Fps, QuantityUnit.DistancePerSecondSquared)),
+            Acceleration = Authored.Of(new Quantity(locomotor.Acceleration * Fps * Fps, QuantityUnit.MetersPerSecondSquared)),
             Appearance = Authored.Of(EnumName(locomotor.Appearance)),
             Surfaces = ListOverride<string>.Replace(Enum.GetValues<Surfaces>()
                 .Where(surface => surface != Surfaces.None && locomotor.Surfaces.HasFlag(surface))
@@ -190,9 +190,9 @@ public sealed class GeneralsUnitAdapter : IUnitSourceAdapter
             DisplayName = definition.DisplayName is null ? default : Authored.Of(definition.DisplayName),
             MaxHealth = body is null ? default : Authored.Of(new Quantity(body.MaxHealth, QuantityUnit.HitPoints)),
             InitialHealth = body is null ? default : Authored.Of(new Quantity(body.InitialHealth, QuantityUnit.HitPoints)),
-            GeometryMajorRadius = Authored.Of(new Quantity(definition.Geometry.MajorRadius, QuantityUnit.GameDistance)),
-            GeometryHeight = Authored.Of(new Quantity(definition.Geometry.Shapes[0].Height, QuantityUnit.GameDistance)),
-            VisionRange = Authored.Of(new Quantity(definition.VisionRange, QuantityUnit.GameDistance)),
+            GeometryMajorRadius = Authored.Of(new Quantity(definition.Geometry.MajorRadius, QuantityUnit.Meters)),
+            GeometryHeight = Authored.Of(new Quantity(definition.Geometry.Shapes[0].Height, QuantityUnit.Meters)),
+            VisionRange = Authored.Of(new Quantity(definition.VisionRange, QuantityUnit.Meters)),
             KindOf = ListOverride<string>.Replace(definition.KindOf.GetSetBits().Select(EnumName)),
             Weapons = ListOverride<ContentId>.Replace(weapons),
             Armor = armor is null ? default : Authored.Of(Id(ContentKind.Armor, armor)),

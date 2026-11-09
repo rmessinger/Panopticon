@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic.Object;
 using Xunit;
 using static Panopticon.Tests.Content.Importing.Units.MaterializationFixtures;
@@ -106,5 +107,95 @@ public class UnitCombatMaterializerTests
         var unit = Unit("U") with { MaxHealth = Authored.Of(Hp(5)), Weapons = ListOverride<ContentId>.Replace(ids) };
 
         Assert.False(Materialize(Set(unit, weapons.ToArray())).Succeeded);
+    }
+
+    [Fact]
+    public void ProjectileSpeedWithMetersPerSecondConvertsToMetersPerFrame()
+    {
+        var projectile = new ProjectileRecord(Id(ContentKind.Projectile, "Laser"), At(6))
+        {
+            Speed = Authored.Of(Quantity.FromMetersPerSecond(60)),
+        };
+        var gun = Weapon("Gun") with { Projectile = Authored.Of(projectile.Id) };
+        var unit = Unit("Shooter") with { MaxHealth = Authored.Of(Hp(100)), Weapons = ListOverride<ContentId>.Replace([gun.Id]) };
+
+        var weapon = Materialize(Set(unit, gun, projectile)).Get<WeaponTemplate>(gun.Id);
+
+        Assert.Equal(2.0f, weapon.WeaponSpeed, 4);
+    }
+
+    [Fact]
+    public void ProjectileSpeedWithSourceDistancePerSecondConvertsViaPolicy()
+    {
+        var projectile = new ProjectileRecord(Id(ContentKind.Projectile, "Missile"), At(7))
+        {
+            Speed = Authored.Of(new Quantity(1.725, QuantityUnit.SourceDistancePerSecond)),
+        };
+        var launcher = Weapon("Launcher") with { Projectile = Authored.Of(projectile.Id) };
+        var unit = Unit("Carrier") with { MaxHealth = Authored.Of(Hp(100)), Weapons = ListOverride<ContentId>.Replace([launcher.Id]) };
+
+        var resolution = UnitImportResolution.Resolve(Set(unit, launcher, projectile), Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new Panopticon.Content.Importing.Units.Materialization.UnitMaterializationContext(Ee2MixedPolicy));
+
+        var weapon = content.Get<WeaponTemplate>(launcher.Id);
+        // 1.725 * (12 * 0.3048 = 3.6576) / 30 = 0.210312 m per frame
+        Assert.Equal(0.210312f, weapon.WeaponSpeed, 5);
+    }
+
+    [Fact]
+    public void WeaponRangeWithMetersMaterializesDirectly()
+    {
+        var gun = Weapon("Sniper") with
+        {
+            AttackRange = Authored.Of(Quantity.FromMeters(30.48)),
+            MinimumAttackRange = Authored.Of(Quantity.FromMeters(3.048)),
+            PrimaryDamageRadius = Authored.Of(Quantity.FromMeters(1.524)),
+        };
+        var unit = Unit("SniperUnit") with { MaxHealth = Authored.Of(Hp(50)), Weapons = ListOverride<ContentId>.Replace([gun.Id]) };
+
+        var content = Materialize(Set(unit, gun));
+        var weapon = content.Get<WeaponTemplate>(gun.Id);
+        var nugget = Assert.IsType<DamageNugget>(Assert.Single(weapon.Nuggets));
+
+        Assert.Equal(30.48f, weapon.AttackRange, 4);
+        Assert.Equal(3.048f, weapon.MinimumAttackRange, 4);
+        Assert.Equal(1.524f, nugget.Radius, 4);
+    }
+
+    [Fact]
+    public void WeaponRangeWithSourceDistanceConvertsViaPolicy()
+    {
+        var bomb = Weapon("Bomb") with
+        {
+            AttackRange = Authored.Of(Quantity.FromSourceDistance(0.8)),
+            PrimaryDamageRadius = Authored.Of(Quantity.FromSourceDistance(0.0625)),
+        };
+        var bomber = Unit("Bomber") with { MaxHealth = Authored.Of(Hp(100)), Weapons = ListOverride<ContentId>.Replace([bomb.Id]) };
+
+        var resolution = UnitImportResolution.Resolve(Set(bomber, bomb), Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new Panopticon.Content.Importing.Units.Materialization.UnitMaterializationContext(Ee2MixedPolicy));
+
+        var weapon = content.Get<WeaponTemplate>(bomb.Id);
+        var nugget = Assert.IsType<DamageNugget>(Assert.Single(weapon.Nuggets));
+
+        // 0.8 * 3.6576 = 2.92608 m; 0.0625 * 3.6576 = 0.2286 m
+        Assert.Equal(2.92608f, weapon.AttackRange, 5);
+        Assert.Equal(0.2286f, nugget.Radius, 5);
+    }
+
+    [Fact]
+    public void SourceDistanceWithoutDeclaredScaleFails()
+    {
+        var bomb = Weapon("UnscaledBomb") with
+        {
+            AttackRange = Authored.Of(Quantity.FromSourceDistance(1.0)),
+        };
+        var unit = Unit("Unit") with { MaxHealth = Authored.Of(Hp(50)), Weapons = ListOverride<ContentId>.Replace([bomb.Id]) };
+
+        var resolution = UnitImportResolution.Resolve(Set(unit, bomb), Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new Panopticon.Content.Importing.Units.Materialization.UnitMaterializationContext(MetricGeneralsPolicy));
+
+        Assert.False(content.Succeeded);
+        Assert.Contains(content.Diagnostics, d => d.Code == DiagnosticCodes.MaterializationFailed && d.Message.Contains("meters-per-source-distance"));
     }
 }
