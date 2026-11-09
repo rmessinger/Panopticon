@@ -877,6 +877,10 @@ public sealed class Game : DisposableBase, IGame
             useMaskFeed ? maskFeed : null);
     }
 
+    // Both helpers use nullable entry parameters; scope the annotations to these members
+    // so the legacy file's disabled annotations context stays unchanged.
+#nullable enable
+
     private static bool IsArchiveAddressedPackage(string mapPath, FileSystemEntry? entry)
     {
         if (entry != null && entry.FileSystem is not DiskFileSystem)
@@ -938,6 +942,8 @@ public sealed class Game : DisposableBase, IGame
         packageDirectory = string.Empty;
         return false;
     }
+
+#nullable restore
 
     public Window LoadWindow(string wndFileName)
     {
