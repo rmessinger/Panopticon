@@ -516,6 +516,61 @@ config conflicts on cherry-pick, re-apply the two `NavigationDeadlockCapture*` k
 Annotate with `python3 scripts/annotate_capture_gif.py <capture-dir> <out.gif> --navigation
 --annotated-dir <frames-dir>`.
 
+## Recipe: WorldBuilder package edit capture (headless)
+
+WI-H6-02 extended WorldBuilder headless capture with package addressing and a scripted
+edit / save / reload workflow. `CNC_GENERALS_PATH` is required.
+
+```sh
+# Convert a corpus map to an H3 package (absolute input path required).
+dotnet run --project src/Panopticon.Tools.H5Migrate --no-build -- \
+  convert-map --input "/path/to/Generals/maps/deepdivide/deepdivide.map" \
+  --out /tmp/opencode/h6-02/deepdivide-pkg
+
+# Legacy single-shot form: <mapPath> may be a legacy .map (archive-capable, unchanged)
+# or an H3 package directory containing manifest.json.
+CNC_GENERALS_PATH="/path/to/Generals" dotnet run \
+  --project src/Panopticon.Tools.WorldBuilder.Avalonia --no-build -- \
+  --screenshot out.png /tmp/opencode/h6-02/deepdivide-pkg
+
+# Full workflow: before-edit / after-edit / after-reload stills plus 6 ordered real
+# frames per stage under frames/<stage>/.
+CNC_GENERALS_PATH="/path/to/Generals" dotnet run \
+  --project src/Panopticon.Tools.WorldBuilder.Avalonia --no-build -- \
+  --screenshot /tmp/opencode/h6-02/deepdivide-pkg --wb-workflow /tmp/opencode/h6-02/capture
+```
+
+Workflow stages: open the package through `EditorMap.OpenPackage`, render it through the
+runtime's directory-package load branch (`Game.LoadMap` accepts a package directory with
+`manifest.json`), apply one `HeightBrushTool` mound stroke and one `PlaceObjectTool`
+placement plus a companion edit through the editor's public edit surface, save through the
+package save path, reopen, and render after-edit and after-reload stages from the saved
+package. The workflow prints a `Reload equality:` line and exits non-zero on mismatch or a
+conversion diagnostic. GIF assembly orders the three stage directories chronologically:
+
+```sh
+ffmpeg -y -framerate 2 -pattern_type glob -i 'ordered/*.png' \
+  -vf "split[a][b];[a]palettegen[p];[b][p]paletteuse" out.gif
+```
+
+Limitations found by this recipe:
+
+- Rendering the live edited editor state by materializing it to a legacy `.map`
+  (`MapFile.WriteTo`) fails on Generals maps with polygon triggers:
+  `PolygonTrigger.WriteTo` writes `LayerName` and the water/river fields unconditionally,
+  while `PolygonTrigger.Parse` gates them on asset version 4/2/3. Re-serialized bytes
+  misalign on read and the next parse fails in `ReadPoint3D`. The workflow therefore
+  renders the saved package instead; all after stills come from the runtime package
+  branch. The asymmetry is Simulation-side (`src/Panopticon.Simulation`).
+- `HeightBrushTool` strokes cannot be undone: `OnPointerUp` calls `HeightMapEdit.Capture`
+  with a no-op action after the stroke already applied, so the pushed edit's before and
+  after patches are identical. Discovered by a WI-H6-02 round-trip test; the test was
+  dropped and the defect is reported rather than encoded.
+- The package save rejects edits that push an elevation outside the 0..255 representable
+  range with a named `height-representable` diagnostic. Re-running the workflow on an
+  already-edited package can therefore exceed the range; convert a fresh package for a
+  repeat run.
+
 ## History
 
 Past session transcripts are stored in `~/.local/share/opencode/opencode.db` (SQLite, `part`
