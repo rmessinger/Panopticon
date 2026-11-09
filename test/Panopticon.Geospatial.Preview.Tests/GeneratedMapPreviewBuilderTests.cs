@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
@@ -20,6 +21,9 @@ namespace Panopticon.Geospatial.Preview.Tests;
 public sealed class GeneratedMapPreviewBuilderTests
 {
     private const double Quantum = GeneratedMapPreviewBuilder.HeightQuantumGameUnits;
+
+    private static Vector3 MetricPosition(double x, double y, double z) =>
+        new((float)(x * UnitConversionPolicy.GeneralsFeetToMeters), (float)(y * UnitConversionPolicy.GeneralsFeetToMeters), (float)(z * UnitConversionPolicy.GeneralsFeetToMeters));
 
     [Fact]
     public void WholeMap_BuildsAndRoundTrips_RestoredHeightsWithinOneQuantum()
@@ -108,7 +112,7 @@ public sealed class GeneratedMapPreviewBuilderTests
 
         // Engine XY is payload game XY minus the crop origin; Z keeps the rebased elevation.
         var gamma = FindWaypoint(map, "gamma");
-        Assert.Equal(new Vector3(620f, 720f, (float)(1350d - 1224d)), gamma.Position);
+        Assert.Equal(MetricPosition(620d, 720d, 1350d - 1224d), gamma.Position);
     }
 
     [Fact]
@@ -152,7 +156,7 @@ public sealed class GeneratedMapPreviewBuilderTests
         // Stored index is crop index + border and the engine XY of the stored core equals
         // crop XY directly, never shifted by border * 10.
         var alpha = FindWaypoint(map, "alpha");
-        Assert.Equal(new Vector3(640f, 640f, 100f), alpha.Position);
+        Assert.Equal(MetricPosition(640d, 640d, 100d), alpha.Position);
 
         // Border cells extend the nearest core edge; corners take the core corner.
         Assert.Equal(map.HeightMapData.Elevations[5, 100], map.HeightMapData.Elevations[0, 100]);
@@ -316,8 +320,8 @@ public sealed class GeneratedMapPreviewBuilderTests
         var start1 = FindWaypoint(result.MapFile!, "Player_1_Start");
         var start2 = FindWaypoint(result.MapFile!, "Player_2_Start");
 
-        Assert.Equal(new Vector3(640f, 640f, 0f), start1.Position);
-        Assert.Equal(new Vector3(1920f, 1920f, 0f), start2.Position);
+        Assert.Equal(MetricPosition(640d, 640d, 0d), start1.Position);
+        Assert.Equal(MetricPosition(1920d, 1920d, 0d), start2.Position);
         Assert.Empty(result.Report!.OverriddenPlayerStartSlots);
     }
 
@@ -342,11 +346,11 @@ public sealed class GeneratedMapPreviewBuilderTests
         // its factory default and no duplicate start objects remain.
         var starts = map.ObjectsList.Objects.Where(o => IsWaypointNamed(o, "Player_1_Start")).ToArray();
         Assert.Single(starts);
-        Assert.Equal(new Vector3(500f, 300f, 0f), starts[0].Position);
+        Assert.Equal(MetricPosition(500d, 300d, 0d), starts[0].Position);
         Assert.Equal(1, (int)starts[0].Properties["waypointID"].Value);
 
         var start2 = FindWaypoint(map, "Player_2_Start");
-        Assert.Equal(new Vector3(1920f, 1920f, 0f), start2.Position);
+        Assert.Equal(MetricPosition(1920d, 1920d, 0d), start2.Position);
         Assert.Equal([1], result.Report!.OverriddenPlayerStartSlots);
     }
 
@@ -402,7 +406,7 @@ public sealed class GeneratedMapPreviewBuilderTests
         var result = GeneratedMapPreviewBuilder.Build(reader, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, FormatDiagnostics(result));
-        Assert.Equal(new Vector3(2560f, 2560f, 100f), FindWaypoint(result.MapFile!, "edge").Position);
+        Assert.Equal(MetricPosition(2560d, 2560d, 100d), FindWaypoint(result.MapFile!, "edge").Position);
         Assert.Null(TryFindWaypoint(result.MapFile!, "beyond"));
         Assert.Equal(1, result.Report!.ExcludedWaypointCount);
         Assert.Equal(1, result.Report.ConvertedWaypointCount);
