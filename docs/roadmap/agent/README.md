@@ -80,7 +80,7 @@ https://projects.reid-corp.com/projects/panopticon. Work package URL:
 
 | Action | Tool |
 |---|---|
-| Find the ticket for a card ID (exact match) | `op_find_card_work_package(card_id, project_id?)` |
+| Find the ticket for a card ID (exact or alias match; legacy `WI-...` IDs resolve via description provenance and the mapping table, even after subject renames) | `op_find_card_work_package(card_id, project_id?)` |
 | Create a ticket | `op_create_work_package` |
 | Read a ticket | `op_get_work_package(wp_id)` |
 | Change status | `op_update_work_package` |
@@ -92,6 +92,7 @@ https://projects.reid-corp.com/projects/panopticon. Work package URL:
 - `op_update_work_package` requires the current `lock_version`, which `op_get_work_package` returns for the same ticket. Read the ticket immediately before updating it.
 - Ticket status, prerequisites, and completion records live only in OpenProject. Mapping rows carry no status and never mirror it.
 - Create a ticket only after `op_find_card_work_package` finds none for the card ID. Never overwrite an existing ticket or reuse a card ID that belongs to another ticket; a collision is reported.
+- New tickets take a descriptive subject with no card ID prefix and no `WI-...` ID allocation. The native work-package ID assigned at creation is the canonical reference once created.
 - `get_card(card_id, ref)` and `card_status(track, ref)` are deprecated frozen Markdown snapshots. Use them only to inspect source or history at an explicit ref. Their payload may be stale, so never use them for current status.
 - A card file created on an unmerged branch has no ticket. After that branch merges, look up its ID with `op_find_card_work_package`, create the ticket if none exists, and replace the card file with a row in [the legacy card mapping](legacy-card-mapping.md) in a follow-up change.
 
