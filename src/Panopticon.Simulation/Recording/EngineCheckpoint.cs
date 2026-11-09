@@ -49,7 +49,7 @@ public sealed class EngineCheckpointData
 public static class EngineCheckpoint
 {
     private const string Magic = "PNCK";
-    private const uint FormatVersion = 1;
+    private const uint FormatVersion = 2;
 
     private static readonly string[] RequiredSections =
     [
@@ -101,6 +101,12 @@ public static class EngineCheckpoint
         }
 
         var version = reader.ReadUInt32();
+        if (version < FormatVersion)
+        {
+            throw new InvalidDataException(
+                $"Engine checkpoint format version {version} predates the metric format (version {FormatVersion}). Pre-metric checkpoints are unsupported; regenerate the checkpoint.");
+        }
+
         if (version != FormatVersion)
         {
             throw new InvalidDataException($"Unsupported engine checkpoint format version {version}.");

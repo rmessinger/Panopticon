@@ -28,7 +28,7 @@ public class DomainStateRecorderTests : MockedGameTest
 
         public DomainStateSchema StateSchema { get; } = new(
             "transport-graph",
-            1,
+            2,
             new DomainRecordKind[]
             {
                 new(
@@ -153,7 +153,7 @@ public class DomainStateRecorderTests : MockedGameTest
         try
         {
             // Run output exposes the projection: schema version, artifact path, snapshot index.
-            Assert.Equal(1, output.DomainStateSchemaVersion);
+            Assert.Equal(2, output.DomainStateSchemaVersion);
             Assert.Equal(artifactPath, output.DomainStateArtifactPath);
             Assert.Equal(liveFrames.Keys.Where(f => f % 10 == 0).OrderBy(f => f), output.DomainStateSnapshotFrames);
 

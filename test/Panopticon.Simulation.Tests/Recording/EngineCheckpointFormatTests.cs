@@ -113,7 +113,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
         writer.Write("PNCK".Select(c => (byte)c).ToArray());
-        writer.Write(1u);
+        writer.Write(2u);
         writer.Write(1u);
         writer.Write(2L);
         writer.Write("run");
@@ -183,7 +183,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
         writer.Write("PNCK".Select(c => (byte)c).ToArray());
-        writer.Write(1u);
+        writer.Write(2u);
         writer.Write(1u);
         writer.Write(2L);
         writer.Write("run");

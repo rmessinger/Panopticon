@@ -197,7 +197,7 @@ public sealed class RegionIndexedStateTests : IDisposable
 
         var error = Assert.Throws<InvalidOperationException>(() => new WorldStateArtifactReader(path, SageGame.CncGenerals));
         Assert.Contains("99", error.Message);
-        Assert.Contains("1", error.Message);
+        Assert.Contains("understands 2", error.Message);
     }
 
     [Fact]

@@ -37,7 +37,7 @@ public class TransportStateProjectionTests : MockedGameTest
             Assert.NotNull(recording.DomainState);
         }
 
-        Assert.Equal(1, output.DomainStateSchemaVersion);
+        Assert.Equal(2, output.DomainStateSchemaVersion);
 
         var orderedFrames = sampledFrames.Values.OrderBy(f => f.Frame).ToList();
         Assert.NotEmpty(orderedFrames);

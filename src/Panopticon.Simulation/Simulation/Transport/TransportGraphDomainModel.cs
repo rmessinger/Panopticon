@@ -22,7 +22,7 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainS
 {
     private static readonly DomainStateSchema ProjectionSchema = new(
         "transport-graph",
-        1,
+        2,
         new DomainRecordKind[]
         {
             new(

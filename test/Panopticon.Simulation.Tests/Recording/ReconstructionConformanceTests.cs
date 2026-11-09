@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using Panopticon;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
@@ -129,6 +130,29 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
     }
 
     [GameFact(SageGame.CncGenerals)]
+    public void TransportRecording_PredatingDomainSchemaIsRejected()
+    {
+        var game = BootGame();
+        _bootedGames.Add(game);
+        var domain = TransportGraphDomainModel.CreateDefault(game.GameEngine);
+        domain.Cadence = TestCadence;
+        var host = new SimulationHost(game.GameEngine, domain);
+        var bundle = Path.Combine(Path.GetTempPath(), "h2b-15-schema-" + Guid.NewGuid().ToString("N"));
+        var recording = RunRecording.Attach(
+            host, game, seed: Seed, scenarioId: "h2b-15-schema",
+            options: new RecordingOptions { Mode = RecordingMode.Operational, BundleDirectory = bundle, DefaultCadence = TestCadence });
+        host.Run(15);
+        recording.Complete();
+        recording.Dispose();
+
+        SetOperationalDomainSchemaVersion(Path.Combine(bundle, "operational.bin"), domain.StateSchema.Version - 1);
+
+        var reconstructor = RunReconstructor.Open(bundle, CreateTransportBootstrap());
+        var error = Assert.Throws<InvalidDataException>(() => reconstructor.Reconstruct(0, 15, new BufferedReconstructionSink()));
+        Assert.Contains("regenerate", error.Message);
+    }
+
+    [GameFact(SageGame.CncGenerals)]
     public void CachedBoundary_ServesLaterScrubWithTheFirstReconstructionsState()
     {
         var (bundle, _) = RecordRtsBundle(injectOrder: false, frames: 45);
@@ -202,6 +226,21 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
             domain.Cadence = TestCadence;
             return new SimulationHost(game.GameEngine, domain);
         });
+    }
+
+    private static void SetOperationalDomainSchemaVersion(string path, int version)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
+        using (var reader = new BinaryReader(stream, Encoding.Unicode, leaveOpen: true))
+        {
+            reader.ReadBytes(OperationalStreamWriter.Magic.Length);
+            reader.ReadUInt32();
+            reader.ReadString();
+            reader.ReadString();
+        }
+
+        using var writer = new BinaryWriter(stream, Encoding.Unicode, leaveOpen: true);
+        writer.Write(version);
     }
 
     private static byte[] PersistedSummary(WorldStateSummary summary, Game game)

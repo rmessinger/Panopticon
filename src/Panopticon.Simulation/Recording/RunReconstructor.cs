@@ -84,6 +84,12 @@ public sealed class RunReconstructor
 
         using (var reader = OpenReader(host))
         {
+            if (projection is not null && reader.DomainSchemaVersion != projection.StateSchema.Version)
+            {
+                throw new InvalidDataException(
+                    $"Operational recording domain schema version {reader.DomainSchemaVersion} is not understood by this domain (understands {projection.StateSchema.Version}); regenerate the recording.");
+            }
+
             // String ids are interned file-globally, so every chunk from the start must be
             // decoded in order; only in-window records are collected.
             var entries = reader.ReadIndex()

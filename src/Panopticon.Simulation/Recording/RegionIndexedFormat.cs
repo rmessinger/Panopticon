@@ -18,7 +18,7 @@ public static class RegionIndexedFormat
     public const byte RegionSnapshotTag = 5;
 
     /// <summary>Bump to invalidate older readers explicitly.</summary>
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     /// <summary>Default region schema: the domain's TopologyKey vocabulary.</summary>
     public const string DefaultSchemaId = "topology-key/1";
