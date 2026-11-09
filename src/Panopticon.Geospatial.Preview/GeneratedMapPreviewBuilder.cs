@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
@@ -23,6 +24,12 @@ namespace Panopticon.Geospatial.Preview;
 /// </summary>
 public static class GeneratedMapPreviewBuilder
 {
+    /// <summary>Runtime sample spacing on the engine lattice, in meters.</summary>
+    public const double SampleSpacingMeters = ChunkLayout.SampleSpacingGameUnits * UnitConversionPolicy.GeneralsFeetToMeters;
+
+    /// <summary>Runtime chunk span on the engine lattice, in meters.</summary>
+    public const double ChunkSpanMeters = ChunkLayout.ChunkSpanGameUnits * UnitConversionPolicy.GeneralsFeetToMeters;
+
     /// <summary>Legacy 16-bit height step (HeightMapData.VerticalScale of version 5 maps).</summary>
     public const double HeightQuantumGameUnits = 0.0390625;
 
@@ -395,10 +402,10 @@ public static class GeneratedMapPreviewBuilder
         double cropMinimumGameZ,
         GeoDiagnosticBag diagnostics)
     {
-        var originX = crop.ChunkXLo * (double)ChunkLayout.ChunkSpanGameUnits;
-        var originY = crop.ChunkYLo * (double)ChunkLayout.ChunkSpanGameUnits;
-        var maxEngineX = (coreWidth - 1) * (double)ChunkLayout.SampleSpacingGameUnits;
-        var maxEngineY = (coreHeight - 1) * (double)ChunkLayout.SampleSpacingGameUnits;
+        var originX = crop.ChunkXLo * ChunkSpanMeters;
+        var originY = crop.ChunkYLo * ChunkSpanMeters;
+        var maxEngineX = (coreWidth - 1) * SampleSpacingMeters;
+        var maxEngineY = (coreHeight - 1) * SampleSpacingMeters;
 
         var authoredStarts = new Dictionary<int, (double EngineX, double EngineY)>();
         var ordinary = new List<(string Name, double EngineX, double EngineY, double RebasedZ)>();
@@ -417,8 +424,8 @@ public static class GeneratedMapPreviewBuilder
             var name = feature.Attributes.TryGetValue("name", out var attributeName) && !string.IsNullOrWhiteSpace(attributeName)
                 ? attributeName
                 : feature.FeatureId;
-            var engineX = feature.Position.Value.X - originX;
-            var engineY = feature.Position.Value.Y - originY;
+            var engineX = (feature.Position.Value.X * UnitConversionPolicy.GeneralsFeetToMeters) - originX;
+            var engineY = (feature.Position.Value.Y * UnitConversionPolicy.GeneralsFeetToMeters) - originY;
 
             // Inclusive of the outer world edge; anything past the stored lattice is outside the crop.
             if (engineX < 0d || engineX > maxEngineX || engineY < 0d || engineY > maxEngineY)
@@ -460,7 +467,7 @@ public static class GeneratedMapPreviewBuilder
                 else
                 {
                     // Player starts use Z zero; ordinary waypoints keep the rebased absolute elevation.
-                    ordinary.Add((name, engineX, engineY, feature.Position.Value.Z - cropMinimumGameZ));
+                    ordinary.Add((name, engineX, engineY, (feature.Position.Value.Z - cropMinimumGameZ) * UnitConversionPolicy.GeneralsFeetToMeters));
                 }
             }
         }
