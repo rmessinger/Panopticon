@@ -59,7 +59,7 @@ public sealed class PolygonTrigger : IPersistableObject
 
     private Rectangle _bounds;
     private bool _boundsNeedsUpdate = true;
-    private Rectangle Bounds
+    public Rectangle Bounds
     {
         get
         {
@@ -365,18 +365,22 @@ public sealed class PolygonTrigger : IPersistableObject
             Points,
             static (StatePersister persister, ref Point3D item) =>
             {
-                persister.PersistPoint3DValue(ref item);
+                persister.PersistLengthPoint3DValue(ref item);
             }
         );
-
 
         // ZH Compatibility: this uses potentially outdated values for the bounds and radius
         // It is not clear if that was intentional or not.
         var topLeft = _bounds.TopLeft;
-        reader.PersistPoint2D(ref topLeft);
+        reader.PersistLengthPoint2D(ref topLeft);
         var bottomRight = _bounds.BottomRight;
-        reader.PersistPoint2D(ref bottomRight);
-        reader.PersistSingle(ref _radius);
+        reader.PersistLengthPoint2D(ref bottomRight);
+        reader.PersistLengthSingle(ref _radius);
         reader.PersistBoolean(ref _boundsNeedsUpdate);
+
+        if (reader.Mode == StatePersistMode.Read)
+        {
+            _bounds = Rectangle.FromCorners(topLeft, bottomRight);
+        }
     }
 }

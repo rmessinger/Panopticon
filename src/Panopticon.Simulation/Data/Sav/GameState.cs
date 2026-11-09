@@ -14,7 +14,11 @@ public sealed class GameState : IPersistableObject
 
     public void Persist(StatePersister reader)
     {
-        reader.PersistVersion(2);
+        var version = reader.PersistVersion(3);
+        if (version < 3)
+        {
+            reader.UnitContext = StreamUnitContext.LegacyFeet;
+        }
 
         reader.PersistEnum(ref GameType);
         reader.PersistAsciiString(ref MapPath);

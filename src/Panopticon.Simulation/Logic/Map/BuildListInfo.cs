@@ -22,13 +22,13 @@ public sealed class BuildListInfo : IPersistableObject
     private Vector3? _sourceLocation;
     private Vector3? _convertedLocation;
     private Vector3 _location;
-    public Vector3 Location { get => _location; private set => _location = value; }
+    public Vector3 Location { get => _location; internal set => _location = value; }
 
     private Vector2 _rallyPointOffset;
-    public Vector2 RallyPointOffset { get => _rallyPointOffset; private set => _rallyPointOffset = value; }
+    public Vector2 RallyPointOffset { get => _rallyPointOffset; internal set => _rallyPointOffset = value; }
 
     private float _angle;
-    public float Angle { get => _angle; private set => _angle = value; }
+    public float Angle { get => _angle; internal set => _angle = value; }
 
     private bool _isInitiallyBuilt;
     public bool IsInitiallyBuilt { get => _isInitiallyBuilt; private set => _isInitiallyBuilt = value; }
@@ -40,7 +40,7 @@ public sealed class BuildListInfo : IPersistableObject
     public string Script { get => _script; private set => _script = value; }
 
     private int _health = 100;
-    public int Health { get => _health; private set => _health = value; }
+    public int Health { get => _health; internal set => _health = value; }
 
     // Unused in Generals / ZH
     // No idea what it was supposed to be used for.
@@ -101,8 +101,8 @@ public sealed class BuildListInfo : IPersistableObject
 
         reader.PersistAsciiString(ref _buildingName);
         reader.PersistAsciiString(ref _templateName);
-        reader.PersistVector3(ref _location);
-        reader.PersistVector2(ref _rallyPointOffset);
+        reader.PersistLengthVector3(ref _location);
+        reader.PersistLengthVector2(ref _rallyPointOffset);
         reader.PersistSingle(ref _angle);
         reader.PersistBoolean(ref _isInitiallyBuilt);
         reader.PersistUInt32(ref _numRebuilds);

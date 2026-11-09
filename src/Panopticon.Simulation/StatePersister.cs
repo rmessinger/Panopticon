@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Panopticon.Content;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 using Panopticon.Logic.AI;
 using Panopticon.Logic.Object;
@@ -21,6 +22,11 @@ public abstract class StatePersister : DisposableBase
     public readonly IGame Game;
     public readonly SageGame SageGame;
     public readonly AssetStore AssetStore;
+
+    /// <summary>
+    /// Stream-level length interpretation. Decided by GameState / GameStateMap version; sub-chunk versions stay unchanged.
+    /// </summary>
+    public StreamUnitContext UnitContext { get; set; } = StreamUnitContext.Metric;
 
     protected StatePersister(IGame game, StatePersistMode mode)
     {
@@ -320,6 +326,15 @@ public enum StatePersistMode
 {
     Read,
     Write,
+}
+
+/// <summary>
+/// Stream-level length interpretation. Decided by GameState / GameStateMap version; sub-chunk versions stay unchanged.
+/// </summary>
+public enum StreamUnitContext
+{
+    Metric,
+    LegacyFeet,
 }
 
 public sealed class StateReader : StatePersister
@@ -951,6 +966,94 @@ public static class StatePersisterExtensions
         if (persister.Mode == StatePersistMode.Read)
         {
             value = new Point3D(x, y, z);
+        }
+    }
+
+    public static void PersistLengthSingle(this StatePersister persister, ref float value, [CallerArgumentExpression("value")] string name = "")
+    {
+        persister.PersistSingle(ref value, name);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            value = (float)(value * UnitConversionPolicy.GeneralsFeetToMeters);
+        }
+    }
+
+    public static void PersistLengthVector3(this StatePersister persister, ref Vector3 value, [CallerArgumentExpression("value")] string name = "")
+    {
+        persister.PersistVector3(ref value, name);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            value = new Vector3(
+                (float)(value.X * UnitConversionPolicy.GeneralsFeetToMeters),
+                (float)(value.Y * UnitConversionPolicy.GeneralsFeetToMeters),
+                (float)(value.Z * UnitConversionPolicy.GeneralsFeetToMeters));
+        }
+    }
+
+    public static void PersistLengthVector3Value(this StatePersister persister, ref Vector3 value)
+    {
+        persister.PersistVector3Value(ref value);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            value = new Vector3(
+                (float)(value.X * UnitConversionPolicy.GeneralsFeetToMeters),
+                (float)(value.Y * UnitConversionPolicy.GeneralsFeetToMeters),
+                (float)(value.Z * UnitConversionPolicy.GeneralsFeetToMeters));
+        }
+    }
+
+    public static void PersistLengthVector2(this StatePersister persister, ref Vector2 value, [CallerArgumentExpression("value")] string name = "")
+    {
+        persister.PersistVector2(ref value, name);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            value = new Vector2(
+                (float)(value.X * UnitConversionPolicy.GeneralsFeetToMeters),
+                (float)(value.Y * UnitConversionPolicy.GeneralsFeetToMeters));
+        }
+    }
+
+    public static void PersistLengthPoint2D(this StatePersister persister, ref Point2D value, [CallerArgumentExpression("value")] string name = "")
+    {
+        persister.PersistPoint2D(ref value, name);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            value = new Point2D(
+                (int)Math.Round(value.X * UnitConversionPolicy.GeneralsFeetToMeters),
+                (int)Math.Round(value.Y * UnitConversionPolicy.GeneralsFeetToMeters));
+        }
+    }
+
+    public static void PersistLengthPoint3D(this StatePersister persister, ref Point3D value, [CallerArgumentExpression("value")] string name = "")
+    {
+        persister.PersistPoint3D(ref value, name);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            var scale = UnitConversionPolicy.GeneralsFeetToMeters;
+            value = new Point3D(
+                (float)(value.X * scale),
+                (float)(value.Y * scale),
+                (float)(value.Z * scale));
+        }
+    }
+
+    public static void PersistLengthPoint3DValue(this StatePersister persister, ref Point3D value)
+    {
+        persister.PersistPoint3DValue(ref value);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            var scale = UnitConversionPolicy.GeneralsFeetToMeters;
+            value = new Point3D(
+                (float)(value.X * scale),
+                (float)(value.Y * scale),
+                (float)(value.Z * scale));
         }
     }
 

@@ -25,7 +25,11 @@ internal sealed class GameStateMap : IPersistableObject
             _gameType = liveGame.CurrentGameType;
         }
 
-        reader.PersistVersion(2);
+        var version = reader.PersistVersion(3);
+        if (version < 3)
+        {
+            reader.UnitContext = StreamUnitContext.LegacyFeet;
+        }
 
         reader.PersistAsciiString(ref _mapPath1);
         reader.PersistAsciiString(ref _mapPath2);
