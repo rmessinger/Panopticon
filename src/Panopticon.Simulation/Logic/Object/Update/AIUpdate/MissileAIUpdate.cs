@@ -452,9 +452,9 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
         { "DetonateOnNoFuel", (parser, x) => x.DetonateOnNoFuel = parser.ParseBoolean() },
         { "InitialVelocity", (parser, x) => x.InitialVelocity = parser.ParseVelocityToLogicFrames() },
         { "IgnitionDelay", (parser, x) => x.IgnitionDelay = parser.ParseTimeMillisecondsToLogicFrames() },
-        { "DistanceToTravelBeforeTurning", (parser, x) => x.DistanceToTravelBeforeTurning = parser.ParseInteger() },
-        { "DistanceToTargetBeforeDiving", (parser, x) => x.DistanceToTargetBeforeDiving = parser.ParseInteger() },
-        { "DistanceToTargetForLock", (parser, x) => x.DistanceToTargetForLock = parser.ParseInteger() },
+        { "DistanceToTravelBeforeTurning", (parser, x) => x.DistanceToTravelBeforeTurning = parser.ParseDistanceFloat() },
+        { "DistanceToTargetBeforeDiving", (parser, x) => x.DistanceToTargetBeforeDiving = parser.ParseDistanceFloat() },
+        { "DistanceToTargetForLock", (parser, x) => x.DistanceToTargetForLock = parser.ParseDistanceFloat() },
         { "GarrisonHitKillRequiredKindOf", (parser, x) => x.GarrisonHitKillRequiredKindOf = parser.ParseEnum<ObjectKinds>() },
         { "GarrisonHitKillForbiddenKindOf", (parser, x) => x.GarrisonHitKillForbiddenKindOf = parser.ParseEnum<ObjectKinds>() },
         { "GarrisonHitKillCount", (parser, x) => x.GarrisonHitKillCount = parser.ParseInteger() },
@@ -462,7 +462,7 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
         { "DetonateCallsKill", (parser, x) => x.DetonateCallsKill = parser.ParseBoolean() },
         { "IgnitionFX", (parser, x) => x.IgnitionFX = parser.ParseFXListReference() },
         { "KillSelfDelay", (parser, x) => x.KillSelfDelay = parser.ParseInteger() },
-        { "DistanceScatterWhenJammed", (parser, x) => x.DistanceScatterWhenJammed = parser.ParseInteger() },
+        { "DistanceScatterWhenJammed", (parser, x) => x.DistanceScatterWhenJammed = parser.ParseDistanceFloat() },
 
         // Panopticon extensions (not vanilla SAGE fields).
         { "ParabolicSteering", (parser, x) => x.ParabolicSteering = parser.ParseBoolean() },
@@ -474,9 +474,9 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
     public bool DetonateOnNoFuel { get; private set; }
     public float InitialVelocity { get; private set; }
     public LogicFrameSpan IgnitionDelay { get; private set; }
-    public int DistanceToTravelBeforeTurning { get; private set; }
-    public int DistanceToTargetBeforeDiving { get; private set; }
-    public int DistanceToTargetForLock { get; private set; }
+    public float DistanceToTravelBeforeTurning { get; private set; }
+    public float DistanceToTargetBeforeDiving { get; private set; }
+    public float DistanceToTargetForLock { get; private set; }
     public ObjectKinds GarrisonHitKillRequiredKindOf { get; private set; }
     public ObjectKinds GarrisonHitKillForbiddenKindOf { get; private set; }
     public int GarrisonHitKillCount { get; private set; }
@@ -490,7 +490,7 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
     public int KillSelfDelay { get; private set; }
 
     [AddedIn(SageGame.CncGeneralsZeroHour)]
-    public int DistanceScatterWhenJammed { get; private set; }
+    public float DistanceScatterWhenJammed { get; private set; }
 
     /// <summary>
     /// Panopticon extension: fly a launch-computed parabola (see <see cref="ParabolicTrajectory"/>)
