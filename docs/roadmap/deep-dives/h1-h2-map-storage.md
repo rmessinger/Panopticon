@@ -543,3 +543,39 @@ Each card below is follow-on scope from this design:
 - [WI-H2-02](../agent/cards/WI-H2-02-interchange-types.md): engine-owned interchange types and model-level validation, with no `MapFile` dependency.
 - [WI-H2-03](../agent/cards/WI-H2-03-legacy-reader-seam.md): reader-source seam and legacy `MapFile` adapter, with no behavior change.
 - [WI-H2-04](../agent/cards/WI-H2-04-runtime-bridge.md): runtime bridge from `MapInterchange` to resident terrain, with parity against the legacy load path.
+
+## H3 map package format
+
+```mermaid
+classDiagram
+    class MapPackageManifest
+    class MapPackageIdentity
+    class MapPackageTerrainLayout
+    class MapPackageBlendModel
+    class MapPackageMaterialPaletteEntry
+    class MapPackagePlacedObject
+    class MapPackageWaypoint
+    class MapPackageProvenance
+    class MapPackageSourceRecord
+    class MapPackageGeneratedFeature
+    class MapPackageLayerEntry
+    class MapPackageRetainedEntry
+    class InterchangeWriter
+    class PackageReader
+    MapPackageManifest *-- "1" MapPackageIdentity
+    MapPackageManifest *-- "1" MapPackageTerrainLayout
+    MapPackageManifest *-- "1" MapPackageBlendModel
+    MapPackageManifest *-- "0..*" MapPackagePlacedObject
+    MapPackageManifest *-- "0..*" MapPackageWaypoint
+    MapPackageManifest *-- "1" MapPackageProvenance
+    MapPackageManifest *-- "0..*" MapPackageLayerEntry
+    MapPackageManifest *-- "0..*" MapPackageRetainedEntry
+    MapPackageBlendModel *-- "0..*" MapPackageMaterialPaletteEntry
+    MapPackageProvenance *-- "0..*" MapPackageSourceRecord
+    MapPackageProvenance *-- "0..*" MapPackageGeneratedFeature
+    InterchangeWriter ..> MapPackageManifest : writes
+    PackageReader ..> MapPackageManifest : reads
+```
+
+The H3 map package format defines a loose directory container in version 1 with a root `manifest.json` document and manifest-controlled relative POSIX paths only. Three independent versions are tracked without conflation: package format version, interchange schema version, and source payload version. Every quantity-carrying field declares both unit and frame, with `GameUnit` and `Meters` both valid and never reinterpreted. Stored heights are preserved exactly in float32 little-endian format with byte lengths and SHA-256 digests. Retained sections are preserved as opaque binaries with declared section versions, byte lengths, and SHA-256 digests. Details live in the [H1-H3 map storage implementation plan](../implementation/track-h-h1-h3-map-storage.md).
+
