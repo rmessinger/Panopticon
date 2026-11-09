@@ -1612,7 +1612,7 @@ complete H2a group merges. Each item corresponds to one card.
     restores prior state; failed pack publishes nothing and leaves ScopeDepth unchanged.
 - [x] H6-4 INI edit and reload preservation check (`WI-H6-04`).
   - AC: session reload picks up an INI edit; zero package files created or read.
-- [ ] H7 Validation & round-trip regression (automated round-trip suite; ReplaySketch scenario on
+- [x] H7 Validation & round-trip regression (automated round-trip suite; ReplaySketch scenario on
   new-format content asserted headlessly).
   - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a
     ReplaySketch scenario using new-format content passes the same headless assertions as its
@@ -1628,7 +1628,7 @@ complete H2a group merges. Each item corresponds to one card.
 - [x] H7-3 ReplaySketch new-format scenario proof (`WI-H7-03`).
   - AC: legacy and converted-format variants pass the same assertion set; end states match under
     the same seed; both panels captured headlessly.
-- [ ] H7-4 Fault-injection catch proof (`WI-H7-04`).
+- [x] H7-4 Fault-injection catch proof (`WI-H7-04`).
   - AC: deliberate semantic injections pass integrity checks but fail the shared comparer with
     named diagnostics; unmodified suite passes in the same run.
 
