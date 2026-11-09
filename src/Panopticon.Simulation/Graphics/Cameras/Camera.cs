@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Mathematics;
 using Panopticon.Terrain;
 using Viewport = Veldrid.Viewport;
@@ -90,7 +91,7 @@ public sealed class Camera
         BoundingFrustum = new BoundingFrustum(Matrix4x4.Identity);
 
         _nearPlaneDistance = HeightMap.HorizontalScale;
-        _farPlaneDistance = 12000.0f;
+        _farPlaneDistance = 12000.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
         UpdateProjection();
     }

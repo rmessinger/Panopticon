@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using ImGuiNET;
 using Panopticon.Client;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Input.Cursors;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
@@ -22,6 +23,8 @@ namespace Panopticon.Graphics.Cameras;
 public sealed class TacticalView : IPersistableObject
 {
     internal static readonly NLog.Logger ZoomLogger = NLog.LogManager.GetLogger("Panopticon.Diagnostics.Zoom");
+
+    private const float MetersPerLegacyUnit = (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     public readonly LookAtTranslator LookAtTranslator;
 
@@ -88,8 +91,8 @@ public sealed class TacticalView : IPersistableObject
         }
     }
 
-    private float _groundLevel = 10.0f;
-    private float _zoomIncrement = 25.0f;
+    private float _groundLevel = 10.0f * MetersPerLegacyUnit;
+    private float _zoomIncrement = 25.0f * MetersPerLegacyUnit;
     private float _heightAboveGround;
     private float _minHeightAboveGround;
     private float _maxHeightAboveGround;
@@ -227,7 +230,7 @@ public sealed class TacticalView : IPersistableObject
     public void InitHeightForMap()
     {
         _groundLevel = _terrainLogic.GetGroundHeight(_pos.X, _pos.Y);
-        const float MaxGroundLevel = 120.0f;
+        const float MaxGroundLevel = 120.0f * MetersPerLegacyUnit;
         _groundLevel = Math.Min(_groundLevel, MaxGroundLevel);
 
         _cameraOffset.Z = _groundLevel + _gameData.CameraHeight;
@@ -298,7 +301,7 @@ public sealed class TacticalView : IPersistableObject
 
     float GetHeightAroundPos(Vector2 pos)
     {
-        const float terrainSampleSize = 40.0f;
+        const float terrainSampleSize = 40.0f * MetersPerLegacyUnit;
 
         var terrainHeight = _terrainLogic.GetGroundHeight(pos.X, pos.Y);
         var terrainHeightMax = terrainHeight;
@@ -416,7 +419,7 @@ public sealed class TacticalView : IPersistableObject
                 );
 
                 var dirLength = dir.Length();
-                if (dirLength < 0.1f)
+                if (dirLength < 0.1f * MetersPerLegacyUnit)
                 {
                     continue;
                 }
@@ -468,7 +471,7 @@ public sealed class TacticalView : IPersistableObject
                 );
 
                 var dirLength = dir.Length();
-                if (dirLength < 0.1f)
+                if (dirLength < 0.1f * MetersPerLegacyUnit)
                 {
                     continue;
                 }
@@ -613,7 +616,7 @@ public sealed class TacticalView : IPersistableObject
         var dir = pos - curPos;
         var dirLength = dir.Length();
 
-        if (dirLength < 0.1f)
+        if (dirLength < 0.1f * MetersPerLegacyUnit)
         {
             return;
         }
@@ -1308,7 +1311,7 @@ public sealed class TacticalView : IPersistableObject
         {
             if (cameraLockDrawable.GetFirstRenderObjInfo(out var boundingSphereRadius, out var transform))
             {
-                boundingSphereRadius = 1.0f;
+                boundingSphereRadius = 1.0f * MetersPerLegacyUnit;
                 var objPos = transform.Translation;
                 // Get position of top of object, assuming world z roughly along local z
                 objPos += Vector3.UnitZ * boundingSphereRadius;
@@ -1733,7 +1736,7 @@ public sealed class TacticalView : IPersistableObject
                 var dir = _rotateAnimation.Target.Position - _pos;
                 var dirLength = dir.Length();
 
-                if (dirLength >= 0.1f)
+                if (dirLength >= 0.1f * MetersPerLegacyUnit)
                 {
                     var angle = MathF.Acos(dir.X / dirLength);
                     if (dir.Y < 0.0f)

@@ -37,8 +37,8 @@ public sealed class AudioSettings : BaseSingletonAsset
         { "SampleCount2D", (parser, x) => x.SampleCount2D = parser.ParseInteger() },
         { "SampleCount3D", (parser, x) => x.SampleCount3D = parser.ParseInteger() },
         { "StreamCount", (parser, x) => x.StreamCount = parser.ParseInteger() },
-        { "GlobalMinRange", (parser, x) => x.GlobalMinRange = parser.ParseFloat() },
-        { "GlobalMaxRange", (parser, x) => x.GlobalMaxRange = parser.ParseFloat() },
+        { "GlobalMinRange", (parser, x) => x.GlobalMinRange = parser.ParseDistanceFloat() },
+        { "GlobalMaxRange", (parser, x) => x.GlobalMaxRange = parser.ParseDistanceFloat() },
         { "TimeBetweenDrawableSounds", (parser, x) => x.TimeBetweenDrawableSounds = parser.ParseInteger() },
         { "TimeToFadeAudio", (parser, x) => x.TimeToFadeAudio = parser.ParseTimeMilliseconds() },
         { "AudioFootprintInBytes", (parser, x) => x.AudioFootprintInBytes = parser.ParseInteger() },
@@ -84,9 +84,9 @@ public sealed class AudioSettings : BaseSingletonAsset
         { "SuppressOcclusion", (parser, x) => x.SuppressOcclusion = parser.ParseBoolean() },
         { "MinOcclusion", (parser, x) => x.MinOcclusion = parser.ParsePercentage() },
 
-        { "ZoomFadeDistanceForMaxEffect", (parser, x) => x.ZoomFadeDistanceForMaxEffect = parser.ParseInteger() },
-        { "ZoomFadeZeroEffectEdgeLength", (parser, x) => x.ZoomFadeZeroEffectEdgeLength = parser.ParseInteger() },
-        { "ZoomFadeFullEffectEdgeLength", (parser, x) => x.ZoomFadeFullEffectEdgeLength = parser.ParseInteger() },
+        { "ZoomFadeDistanceForMaxEffect", (parser, x) => x.ZoomFadeDistanceForMaxEffect = parser.ParseDistanceFloat() },
+        { "ZoomFadeZeroEffectEdgeLength", (parser, x) => x.ZoomFadeZeroEffectEdgeLength = parser.ParseDistanceFloat() },
+        { "ZoomFadeFullEffectEdgeLength", (parser, x) => x.ZoomFadeFullEffectEdgeLength = parser.ParseDistanceFloat() },
 
         { "GlobalPaddedCellReverbMultiplier", (parser, x) => x.GlobalPaddedCellReverbMultiplier = parser.ParsePercentage() },
         { "GlobalRoomReverbMultiplier", (parser, x) => x.GlobalRoomReverbMultiplier = parser.ParsePercentage() },
@@ -252,13 +252,13 @@ public sealed class AudioSettings : BaseSingletonAsset
     public bool SuppressOcclusion { get; private set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public int ZoomFadeDistanceForMaxEffect { get; private set; }
+    public float ZoomFadeDistanceForMaxEffect { get; private set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public int ZoomFadeZeroEffectEdgeLength { get; private set; }
+    public float ZoomFadeZeroEffectEdgeLength { get; private set; }
 
     [AddedIn(SageGame.Bfme2)]
-    public int ZoomFadeFullEffectEdgeLength { get; private set; }
+    public float ZoomFadeFullEffectEdgeLength { get; private set; }
 
     [AddedIn(SageGame.Bfme2)]
     public Percentage MinOcclusion { get; private set; }
