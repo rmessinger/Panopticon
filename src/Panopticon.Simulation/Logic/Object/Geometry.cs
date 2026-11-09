@@ -60,19 +60,19 @@ public sealed class Geometry : IPersistableObject
         reader.PersistBoolean(ref IsSmall);
 
         var height = shape.Height;
-        reader.PersistSingle(ref height);
+        reader.PersistLengthSingle(ref height);
         shape.Height = height;
 
         var majorRadius = shape.MajorRadius;
-        reader.PersistSingle(ref majorRadius);
+        reader.PersistLengthSingle(ref majorRadius);
         shape.MajorRadius = majorRadius;
 
         var minorRadius = shape.MinorRadius;
-        reader.PersistSingle(ref minorRadius);
+        reader.PersistLengthSingle(ref minorRadius);
         shape.MinorRadius = minorRadius;
 
-        reader.PersistSingle(ref _boundingCircleRadius);
-        reader.PersistSingle(ref _boundingSphereRadius);
+        reader.PersistLengthSingle(ref _boundingCircleRadius);
+        reader.PersistLengthSingle(ref _boundingSphereRadius);
     }
 
     public Geometry Clone()

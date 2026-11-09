@@ -187,7 +187,7 @@ public sealed class GenerateMinefieldBehavior : BehaviorModule, IUpgradeableModu
             reader.PersistBoolean(ref _upgraded);
         }
 
-        reader.PersistVector3(ref _generationPosition);
+        reader.PersistLengthVector3(ref _generationPosition);
 
         if (reader.SageGame >= SageGame.CncGeneralsZeroHour)
         {

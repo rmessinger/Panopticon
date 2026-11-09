@@ -142,7 +142,7 @@ public class GltfSceneConverterTests
     }
 
     [Fact]
-    public void OneMeter_BecomesApproximately_3_28084_WorldUnits()
+    public void OneMeter_StaysOneWorldUnit_MetricIdentity()
     {
         var model = CreateModel();
         var node = DefaultScene(model).CreateNode("m");

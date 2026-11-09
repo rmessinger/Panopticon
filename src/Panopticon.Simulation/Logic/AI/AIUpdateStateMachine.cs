@@ -93,7 +93,7 @@ internal class AIUpdateStateMachine : StateMachineBase
             _targetPositions,
             static (StatePersister persister, ref Vector3 item) =>
             {
-                persister.PersistVector3Value(ref item);
+                persister.PersistLengthVector3Value(ref item);
             });
 
         reader.PersistAsciiString(ref _targetWaypointName);

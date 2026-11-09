@@ -19,7 +19,7 @@ internal sealed class ChinookTakeoffAndLandingState : State
     {
         reader.PersistVersion(1);
 
-        reader.PersistVector3(ref _targetPosition);
+        reader.PersistLengthVector3(ref _targetPosition);
         reader.PersistBoolean(ref _landing);
     }
 }

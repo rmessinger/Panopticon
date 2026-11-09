@@ -92,7 +92,7 @@ public sealed class GarrisonContain : OpenContainModule
             _positions,
             static (StatePersister persister, ref Vector3 item) =>
             {
-                persister.PersistVector3Value(ref item);
+                persister.PersistLengthVector3Value(ref item);
             });
 
         reader.PersistBoolean(ref _originalTeamSet);

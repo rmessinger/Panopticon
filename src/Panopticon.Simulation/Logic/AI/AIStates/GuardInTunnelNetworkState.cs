@@ -96,7 +96,7 @@ internal sealed class GuardInTunnelNetworkStateMachine : StateMachineBase
         base.Persist(reader);
 
         reader.PersistObjectId(ref _guardObjectId);
-        reader.PersistVector3(ref _guardPosition);
+        reader.PersistLengthVector3(ref _guardPosition);
     }
 
     private sealed class GuardInTunnelNetworkIdleState : State

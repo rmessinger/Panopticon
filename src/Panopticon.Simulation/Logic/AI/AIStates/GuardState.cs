@@ -60,7 +60,7 @@ internal sealed class GuardStateMachine : StateMachineBase
 
         reader.PersistObjectId(ref _guardObjectId);
         reader.PersistObjectId(ref _guardObjectId2);
-        reader.PersistVector3(ref _guardPosition);
+        reader.PersistLengthVector3(ref _guardPosition);
         reader.PersistAsciiString(ref _guardPolygonTriggerName);
     }
 

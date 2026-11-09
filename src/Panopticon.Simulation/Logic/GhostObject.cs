@@ -57,10 +57,10 @@ public sealed class GhostObject : IPersistableObject
         reader.PersistByte(ref geometryIsSmall);
         _geometryIsSmall = geometryIsSmall == 1;
 
-        reader.PersistSingle(ref _geometryMajorRadius);
-        reader.PersistSingle(ref _geometryMinorRadius);
+        reader.PersistLengthSingle(ref _geometryMajorRadius);
+        reader.PersistLengthSingle(ref _geometryMinorRadius);
         reader.PersistSingle(ref _angle);
-        reader.PersistVector3(ref _position);
+        reader.PersistLengthVector3(ref _position);
 
         reader.SkipUnknownBytes(12);
 
@@ -111,7 +111,7 @@ public sealed class GhostObject : IPersistableObject
                 var modelTransform = reader.Mode == StatePersistMode.Write
                     ? Matrix4x3.FromMatrix4x4(modelInstance.GetWorldMatrix())
                     : Matrix4x3.Identity;
-                reader.PersistMatrix4x3(ref modelTransform, readVersion: false);
+                reader.PersistLengthMatrix4x3(ref modelTransform, readVersion: false);
 
                 if (reader.Mode == StatePersistMode.Read)
                 {
