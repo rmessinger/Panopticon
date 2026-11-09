@@ -1612,7 +1612,7 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: public map converter in both directions; EditorMap opens and saves H3 packages;
     companion members round-trip byte for byte; loose-directory diagnostic rejects archive
     paths; legacy .map paths unchanged.
-- [ ] H6-2 WorldBuilder package edit round trip with capture evidence (`WI-H6-02`).
+- [x] H6-2 WorldBuilder package edit round trip with capture evidence (`WI-H6-02`).
   - AC: save-reopen state equals edited state for heights, objects, and companions; headless
     `--screenshot` extended to accept package directories; capture evidence recorded.
 - [ ] H6-3 Staged pack loading through H4 adapter and AssetStore scopes (`WI-H6-03`).
