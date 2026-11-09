@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
@@ -23,6 +24,9 @@ namespace Panopticon.Tests.Logic.Object.Update;
 [Collection("SerialGameTests")]
 public class MissileAIUpdateFlightTests : IDisposable
 {
+    // Fixture coordinates are authored in legacy game units and scaled to meters.
+    private const float Scale = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
     private readonly ITestOutputHelper _output;
     private Game? _game;
 
@@ -88,8 +92,8 @@ public class MissileAIUpdateFlightTests : IDisposable
         var usa = scene.Players[2];
         var china = scene.Players[0];
 
-        var defender = Spawn("AmericaInfantryMissileDefender", new Vector3(600, 600, 0), usa);
-        var tank = Spawn("ChinaTankBattleMaster", new Vector3(720, 600, 0), china);
+        var defender = Spawn("AmericaInfantryMissileDefender", new Vector3(600f * Scale, 600f * Scale, 0), usa);
+        var tank = Spawn("ChinaTankBattleMaster", new Vector3(720f * Scale, 600f * Scale, 0), china);
         Step(30);
 
         Assert.NotNull(defender.CurrentWeapon);
@@ -105,7 +109,7 @@ public class MissileAIUpdateFlightTests : IDisposable
         for (var i = 0; i < 300; i++)
         {
             Step(1);
-            var targetPos = tank.IsEffectivelyDead ? new Vector3(720, 600, 0) : tank.Translation;
+            var targetPos = tank.IsEffectivelyDead ? new Vector3(720f * Scale, 600f * Scale, 0) : tank.Translation;
             foreach (var missile in LiveMissiles())
             {
                 sawMissile = true;
@@ -137,7 +141,7 @@ public class MissileAIUpdateFlightTests : IDisposable
 
         // The pre-fix bug: the missile dropped vertically at the muzzle, never closing the
         // (initially 120-unit) horizontal gap. Homing must bring it near the target.
-        Assert.True(minHorizontalDistance < 30,
+        Assert.True(minHorizontalDistance < 30f * Scale,
             $"Missile never closed on the target: min horizontal distance {minHorizontalDistance}");
 
         Assert.True(orientationSamples > 0, "No moving missile orientation was sampled");
@@ -165,8 +169,8 @@ public class MissileAIUpdateFlightTests : IDisposable
     {
         using var game = _game = CreateGame();
         var scene = game.Scene3D;
-        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600, 600, 0), scene.Players[2]);
-        var target = Spawn("AmericaInfantryRanger", new Vector3(900, 600, 0), scene.Players[3]);
+        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600f * Scale, 600f * Scale, 0), scene.Players[2]);
+        var target = Spawn("AmericaInfantryRanger", new Vector3(900f * Scale, 600f * Scale, 0), scene.Players[3]);
         Step(30);
         launcher.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, target.Id));
 
@@ -182,8 +186,8 @@ public class MissileAIUpdateFlightTests : IDisposable
             }
 
             var distance = (target.Translation - missile.Translation).Vector2XY().Length();
-            if (missile.Translation.Z > target.Translation.Z + 30
-                && (removeDuringDive ? distance < 80 : distance > 150))
+            if (missile.Translation.Z > target.Translation.Z + (30f * Scale)
+                && (removeDuringDive ? distance < 80f * Scale : distance > 150f * Scale))
             {
                 break;
             }
@@ -212,9 +216,9 @@ public class MissileAIUpdateFlightTests : IDisposable
         using var game = _game = CreateGame();
         var usa = game.Scene3D.Players[2];
 
-        var missile = Spawn("HumveeMissile", new Vector3(600, 600, 120), usa);
+        var missile = Spawn("HumveeMissile", new Vector3(600f * Scale, 600f * Scale, 120f * Scale), usa);
         missile.SetWarhead(new WeaponTemplate());
-        missile.CurrentWeapon!.SetTarget(new WeaponTarget(new Vector3(1400, 600, 120)));
+        missile.CurrentWeapon!.SetTarget(new WeaponTarget(new Vector3(1400f * Scale, 600f * Scale, 120f * Scale)));
 
         var previousPosition = missile.Translation;
         var minimumAlignment = 1.0f;
@@ -226,7 +230,7 @@ public class MissileAIUpdateFlightTests : IDisposable
             var displacement = missile.Translation - previousPosition;
             previousPosition = missile.Translation;
             if (frame < 35
-                || missile.Physics is not { Velocity: { Z: < -0.05f } }
+                || missile.Physics is not { Velocity: { Z: < -0.05f * Scale } }
                 || displacement.LengthSquared() <= 1e-6f)
             {
                 continue;

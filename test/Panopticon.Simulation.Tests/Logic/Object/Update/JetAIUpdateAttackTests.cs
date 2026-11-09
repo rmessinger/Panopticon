@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
@@ -20,6 +21,9 @@ namespace Panopticon.Tests.Logic.Object.Update;
 [Collection("SerialGameTests")]
 public class JetAIUpdateAttackTests : IDisposable
 {
+    // Fixture coordinates are authored in legacy game units and scaled to meters.
+    private const float Scale = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
     private readonly ITestOutputHelper _output;
     private Game? _game;
 
@@ -75,8 +79,8 @@ public class JetAIUpdateAttackTests : IDisposable
     {
         using var game = _game = CreateGame();
         var scene = game.Scene3D;
-        var aurora = Spawn("AmericaJetAurora", new Vector3(600, 600, 150), scene.Players[2]);
-        var target = Spawn("ChinaTankBattleMaster", new Vector3(1400, 600, 0), scene.Players[0]);
+        var aurora = Spawn("AmericaJetAurora", new Vector3(600f * Scale, 600f * Scale, 150f * Scale), scene.Players[2]);
+        var target = Spawn("ChinaTankBattleMaster", new Vector3(1400f * Scale, 600f * Scale, 0), scene.Players[0]);
         aurora.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, target.Id));
         aurora.AIUpdate!.SetTargetPoint(target.Translation);
         Step(30);
@@ -98,7 +102,7 @@ public class JetAIUpdateAttackTests : IDisposable
     public void KilledGroundedAurora_IsRemoved()
     {
         using var game = _game = CreateGame();
-        var position = new Vector3(600, 600, game.GameEngine.Terrain.HeightMap.GetHeight(600f, 600f));
+        var position = new Vector3(600f * Scale, 600f * Scale, game.GameEngine.Terrain.HeightMap.GetHeight(600f * Scale, 600f * Scale));
         var aurora = Spawn("AmericaJetAurora", position, game.Scene3D.Players[2]);
 
         aurora.Kill();
@@ -115,8 +119,8 @@ public class JetAIUpdateAttackTests : IDisposable
         var usa = scene.Players[2];
         var civilian = scene.Players[1];
 
-        var aurora = Spawn("AmericaJetAurora", new Vector3(600, 600, 0), usa);
-        var car = Spawn("CarAsian1", new Vector3(1400, 600, 0), civilian);
+        var aurora = Spawn("AmericaJetAurora", new Vector3(600f * Scale, 600f * Scale, 0), usa);
+        var car = Spawn("CarAsian1", new Vector3(1400f * Scale, 600f * Scale, 0), civilian);
         car.BodyModule.SetMaxHealth(30);
         Step(30);
 
@@ -142,8 +146,8 @@ public class JetAIUpdateAttackTests : IDisposable
         var usa = scene.Players[2];
         var civilian = scene.Players[1];
 
-        var aurora = Spawn("AmericaJetAurora", new Vector3(600, 600, 0), usa);
-        var car = Spawn("CarAsian1", new Vector3(600, 680, 0), civilian);
+        var aurora = Spawn("AmericaJetAurora", new Vector3(600f * Scale, 600f * Scale, 0), usa);
+        var car = Spawn("CarAsian1", new Vector3(600f * Scale, 680f * Scale, 0), civilian);
         car.BodyModule.SetMaxHealth(30);
         Step(30);
 

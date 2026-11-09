@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -21,6 +22,9 @@ namespace Panopticon.Tests.Logic.Object.Weapon;
 [Collection("SerialGameTests")]
 public class ProjectileDamageTimingTests : IDisposable
 {
+    // Fixture coordinates are authored in legacy game units and scaled to meters.
+    private const float Scale = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
     private readonly ITestOutputHelper _output;
     private Game? _game;
 
@@ -68,11 +72,11 @@ public class ProjectileDamageTimingTests : IDisposable
     {
         using var game = _game = CreateGame();
         var scene = game.Scene3D;
-        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600, 600, 0), scene.Players[2]);
+        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600f * Scale, 600f * Scale, 0), scene.Players[2]);
         var radius = launcher.CurrentWeapon!.Template.Nuggets.OfType<DamageNugget>().Max(nugget => nugget.Radius);
         Assert.True(radius > 0);
-        var target = Spawn("AmericaInfantryRanger", new Vector3(900, 600, 0), scene.Players[3]);
-        var nearby = Spawn("AmericaInfantryRanger", new Vector3(900, 600 + radius / 2f, 0), scene.Players[3]);
+        var target = Spawn("AmericaInfantryRanger", new Vector3(900f * Scale, 600f * Scale, 0), scene.Players[3]);
+        var nearby = Spawn("AmericaInfantryRanger", new Vector3(900f * Scale, (600f * Scale) + (radius / 2f), 0), scene.Players[3]);
         foreach (var infantry in new[] { target, nearby })
         {
             infantry.BodyModule.SetMaxHealth(10000f, MaxHealthChangeType.FullyHeal);
@@ -107,11 +111,11 @@ public class ProjectileDamageTimingTests : IDisposable
     {
         using var game = _game = CreateGame();
         var scene = game.Scene3D;
-        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600, 600, 0), scene.Players[2]);
-        var center = Spawn("AmericaInfantryRanger", new Vector3(900, 600, 0), scene.Players[3]);
-        var outer = Spawn("AmericaInfantryRanger", new Vector3(924, 600, 0), scene.Players[3]);
-        var outside = Spawn("AmericaInfantryRanger", new Vector3(1000, 600, 0), scene.Players[3]);
-        var ally = Spawn("AmericaInfantryRanger", new Vector3(900, 624, 0), scene.Players[2]);
+        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600f * Scale, 600f * Scale, 0), scene.Players[2]);
+        var center = Spawn("AmericaInfantryRanger", new Vector3(900f * Scale, 600f * Scale, 0), scene.Players[3]);
+        var outer = Spawn("AmericaInfantryRanger", new Vector3(924f * Scale, 600f * Scale, 0), scene.Players[3]);
+        var outside = Spawn("AmericaInfantryRanger", new Vector3(1000f * Scale, 600f * Scale, 0), scene.Players[3]);
+        var ally = Spawn("AmericaInfantryRanger", new Vector3(900f * Scale, 624f * Scale, 0), scene.Players[2]);
         var infantry = new[] { center, outer, outside, ally };
         launcher.Owner.Allies.Remove(center.Owner);
         center.Owner.Allies.Remove(launcher.Owner);
@@ -163,8 +167,8 @@ public class ProjectileDamageTimingTests : IDisposable
     {
         using var game = _game = CreateGame();
         var scene = game.Scene3D;
-        var infantry = Spawn("AmericaInfantryRanger", new Vector3(600, 600, 0), scene.Players[2]);
-        var enemy = Spawn("AmericaInfantryRanger", new Vector3(1000, 600, 0), scene.Players[3]);
+        var infantry = Spawn("AmericaInfantryRanger", new Vector3(600f * Scale, 600f * Scale, 0), scene.Players[2]);
+        var enemy = Spawn("AmericaInfantryRanger", new Vector3(1000f * Scale, 600f * Scale, 0), scene.Players[3]);
         infantry.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, enemy.Id));
         infantry.CurrentWeapon.Fire();
         var firingFlag = ModelConditionFlagUtility.GetFiringFlag(infantry.CurrentWeapon.WeaponIndex);
@@ -194,11 +198,11 @@ public class ProjectileDamageTimingTests : IDisposable
         // NukeCannonShell is a Bezier projectile whose kinematic Speed is per logic frame.
         foreach (var (attackerName, budget) in new[] { ("ChinaTankDragon", 60), ("ChinaVehicleNukeLauncher", 300) })
         {
-            var attacker = Spawn(attackerName, new Vector3(600, 600, 0), china);
+            var attacker = Spawn(attackerName, new Vector3(600f * Scale, 600f * Scale, 0), china);
             // The nuke cannon's NukeCannonGun has a 200-unit minimum attack range (dead zone);
             // the car must sit inside the 200..350 window or the weapon holds fire.
-            var carDistance = attackerName == "ChinaVehicleNukeLauncher" ? 260 : 80;
-            var car = Spawn("CarAsian1", new Vector3(600 + carDistance, 600, 0), civilian);
+            var carDistance = (attackerName == "ChinaVehicleNukeLauncher" ? 260f : 80f) * Scale;
+            var car = Spawn("CarAsian1", new Vector3((600f * Scale) + carDistance, 600f * Scale, 0), civilian);
             car.BodyModule.SetMaxHealth(30f, MaxHealthChangeType.FullyHeal);
             for (var i = 0; i < 30; i++)
             {
@@ -235,8 +239,8 @@ public class ProjectileDamageTimingTests : IDisposable
         var usa = scene.Players[2];
         var china = scene.Players[0];
 
-        var defender = Spawn("AmericaInfantryMissileDefender", new Vector3(600, 600, 0), usa);
-        var tank = Spawn("ChinaTankBattleMaster", new Vector3(720, 600, 0), china);
+        var defender = Spawn("AmericaInfantryMissileDefender", new Vector3(600f * Scale, 600f * Scale, 0), usa);
+        var tank = Spawn("ChinaTankBattleMaster", new Vector3(720f * Scale, 600f * Scale, 0), china);
         for (var i = 0; i < 30; i++)
         {
             game.Update([]);
@@ -292,7 +296,7 @@ public class ProjectileDamageTimingTests : IDisposable
         Assert.True(firstDamageFrame - lastMissileFrame <= 2,
             $"Damage landed on frame {firstDamageFrame}, but the missile vanished on frame {lastMissileFrame}");
 
-        Assert.True(lastMissileDistance < 60,
+        Assert.True(lastMissileDistance < 60f * Scale,
             $"Missile vanished while still {lastMissileDistance} units from the target, yet damage landed later");
     }
 
@@ -304,8 +308,8 @@ public class ProjectileDamageTimingTests : IDisposable
         var china = scene.Players[0];
         var civilian = scene.Players[1];
 
-        var launcher = Spawn("ChinaVehicleNukeLauncher", new Vector3(520, 600, 0), china);
-        var target = Spawn("CarAsian1", new Vector3(760, 600, 0), civilian);
+        var launcher = Spawn("ChinaVehicleNukeLauncher", new Vector3(520f * Scale, 600f * Scale, 0), china);
+        var target = Spawn("CarAsian1", new Vector3(760f * Scale, 600f * Scale, 0), civilian);
         target.BodyModule.SetMaxHealth(100000f, MaxHealthChangeType.FullyHeal);
         for (var i = 0; i < 30; i++)
         {
@@ -366,13 +370,13 @@ public class ProjectileDamageTimingTests : IDisposable
 
         var rock = Spawn(
             "GLAAngryMobRockProjectileObject",
-            new Vector3(560, 600, 40),
+            new Vector3(560f * Scale, 600f * Scale, 40f * Scale),
             gla);
         var launchRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.6f);
         rock.SetRotation(launchRotation);
         rock.SetWarhead(new WeaponTemplate());
-        rock.CurrentWeapon!.SetTarget(new WeaponTarget(new Vector3(760, 600, 40)));
-        rock.Speed = 4.0f;
+        rock.CurrentWeapon!.SetTarget(new WeaponTarget(new Vector3(760f * Scale, 600f * Scale, 40f * Scale)));
+        rock.Speed = 4.0f * Scale;
 
         var projectileBehavior = Assert.IsType<BezierProjectileBehavior>(
             rock.FindBehavior<BezierProjectileBehavior>());
@@ -384,7 +388,7 @@ public class ProjectileDamageTimingTests : IDisposable
             game.Update([]);
         }
 
-        Assert.True(Vector3.Distance(rock.Translation, new Vector3(560, 600, 40)) > 1.0f);
+        Assert.True(Vector3.Distance(rock.Translation, new Vector3(560f * Scale, 600f * Scale, 40f * Scale)) > 1.0f * Scale);
         var currentForward = Vector3.Normalize(rock.TransformMatrix.GetXVector());
         Assert.InRange(Vector3.Dot(initialForward, currentForward), 0.99999f, 1.00001f);
     }
