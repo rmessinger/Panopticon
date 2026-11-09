@@ -1569,6 +1569,10 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: physics fields round-trip with no BepuPhysics types or handles; a future-field package loads with a warning and re-emits the field.
 - [x] H4-5 Bounded INI parity proof (`WI-H4-05`).
   - AC: a bounded Generals roster materializes equal on both paths, plus one behavioral assertion.
+- [x] H5 Legacy migration & compatibility tooling (`.map`/INI → new formats, round-trip
+  validator).
+  - AC: a converted legacy map and unit roster load through the new formats and play identically
+    (per the P0 assertion layer) to the original `.map`/INI content.
 - [x] H5-1 Legacy map conversion tool (`WI-H5-01`).
   - AC: a legacy `.map` converts to an H3 package; typed sections re-read semantically equal;
     every retained section matches by SHA-256; the manifest accounts for every source section,
@@ -1587,7 +1591,7 @@ complete H2a group merges. Each item corresponds to one card.
     waypoint paths, sides, teams, scripts, and trigger areas equivalent to the original;
     every retained section has a disposition; silent drops fail validation and load; the
     legacy `.map` path is unchanged.
-- [ ] H5-5 Behavioral equivalence harness (`WI-H5-05`).
+- [x] H5-5 Behavioral equivalence harness (`WI-H5-05`).
   - AC: end-state assertions (outcomes, survivors, engagement assertions per the existing
     run-and-assert pattern) match across both runs; any divergence fails with a named diff
     report; the play-identically claim is proven by this ticket only.
