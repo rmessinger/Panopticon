@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Security.Cryptography;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data;
 using Panopticon.Data.Map;
 using Panopticon.IO;
@@ -364,7 +365,7 @@ public sealed class RuntimeBridgeParityTests
         var exact = BuildObjectModel(0.5);
         var single = Assert.Single(RuntimeBridge.MaterializeMapObjects(exact));
 
-        Assert.Equal(0.5f, single.Position.X);
+        Assert.Equal(0.5f * (float)UnitConversionPolicy.GeneralsFeetToMeters, single.Position.X);
     }
 
     [Fact]
@@ -747,6 +748,35 @@ public sealed class RuntimeBridgeParityTests
     }
 
     private static byte MaskByteFor(int x, int y) => (byte)(((y * MaskedLatticeSize) + x) % 4);
+
+    [Fact]
+    public void Aq3_ElevationIntegersRoundTripUnchanged()
+    {
+        // 8-bit elevation range: 0..255
+        const float scale8Bit = 0.625f;
+        for (var rawElevation = 0; rawElevation <= 255; rawElevation++)
+        {
+            var heightSample = rawElevation * scale8Bit;
+            var recoveredElevation = (ushort)MathF.Round(heightSample / scale8Bit);
+            Assert.Equal(rawElevation, recoveredElevation);
+        }
+
+        // 16-bit elevation range samples up to 65535
+        const float scale16Bit = 0.0390625f;
+        int[] samples16Bit = [0, 1, 2, 10, 100, 255, 256, 500, 1000, 5000, 16384, 32767, 65535];
+        foreach (var rawElevation in samples16Bit)
+        {
+            var heightSample = rawElevation * scale16Bit;
+            var recoveredElevation = (ushort)MathF.Round(heightSample / scale16Bit);
+            Assert.Equal(rawElevation, recoveredElevation);
+        }
+
+        // Model round-trip through RuntimeBridge:
+        var model = BuildSingleChunkModel();
+        var materialized = RuntimeBridge.MaterializeHeightMapData(model);
+        Assert.NotNull(materialized);
+        Assert.Equal(LatticeElevation(InteriorStoredColumn - 1, InteriorStoredRow - 1), materialized.Elevations[InteriorStoredRow - 1, InteriorStoredColumn - 1]);
+    }
 
     private static int LatticeElevation(int x, int y) => (((x + 2) * 7) + ((y + 2) * 13)) % 100;
 

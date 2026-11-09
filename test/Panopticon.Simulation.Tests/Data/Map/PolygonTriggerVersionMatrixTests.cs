@@ -7,6 +7,7 @@ using System.Threading;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
 using Panopticon.Content.Importing.MapSources.Package;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.FileFormats;
 using Panopticon.Logic.Map;
@@ -91,7 +92,9 @@ public sealed class PolygonTriggerVersionMatrixTests
         writer.Write((uint)points.Length);
         foreach (var point in points)
         {
-            writer.Write(point);
+            writer.Write((int)point.X);
+            writer.Write((int)point.Y);
+            writer.Write((int)point.Z);
         }
     }
 
@@ -209,7 +212,8 @@ public sealed class PolygonTriggerVersionMatrixTests
         }
 
         var originalPoint0 = asset1.Triggers[0].Points[0];
-        var editedPoint0 = new Point3D(999, 888, 777);
+        var legacyToMeters = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        var editedPoint0 = new Point3D(999 * legacyToMeters, 888 * legacyToMeters, 777 * legacyToMeters);
         asset1.Triggers[0].Points[0] = editedPoint0;
 
         using var editedStream = new MemoryStream();
@@ -221,7 +225,10 @@ public sealed class PolygonTriggerVersionMatrixTests
         using var reparseReader = new BinaryReader(reparseStream);
         var reparsedAsset = PolygonTriggers.Parse(reparseReader, new MapParseContext(new AssetNameCollection()));
 
-        Assert.Equal(editedPoint0, reparsedAsset.Triggers[0].Points[0]);
+        var reparsedPoint0 = reparsedAsset.Triggers[0].Points[0];
+        Assert.Equal(editedPoint0.X, reparsedPoint0.X, 4);
+        Assert.Equal(editedPoint0.Y, reparsedPoint0.Y, 4);
+        Assert.Equal(editedPoint0.Z, reparsedPoint0.Z, 4);
 
         if (version >= 2)
         {

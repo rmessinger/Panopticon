@@ -21,6 +21,8 @@ namespace Panopticon.Tests.Tools.WorldBuilder.Core;
 /// </summary>
 public sealed class WbPackageBoundaryEditRoundTripTests : IDisposable
 {
+    private const float PositionTolerance = 1e-4f;
+
     private readonly string _tempRoot;
     private readonly ITestOutputHelper _output;
 
@@ -112,7 +114,7 @@ public sealed class WbPackageBoundaryEditRoundTripTests : IDisposable
         var placed = Assert.Single(
             reopened.MapFile.ObjectsList.Objects,
             o => o.TypeName == "AmericaVehicleHumvee");
-        Assert.Equal(placeWorld, placed.Position);
+        AssertPositionEqual(placeWorld, placed.Position);
     }
 
     [Fact]
@@ -295,10 +297,17 @@ public sealed class WbPackageBoundaryEditRoundTripTests : IDisposable
         for (var index = 0; index < expected.Length; index++)
         {
             Assert.Equal(expected[index].TypeName, actual[index].TypeName);
-            Assert.Equal(expected[index].Position, actual[index].Position);
+            AssertPositionEqual(expected[index].Position, actual[index].Position);
             Assert.Equal(expected[index].Angle, actual[index].Angle);
             Assert.Equal(expected[index].RoadType, actual[index].RoadType);
         }
+    }
+
+    private static void AssertPositionEqual(Vector3 expected, Vector3 actual)
+    {
+        Assert.True(
+            Vector3.Distance(expected, actual) <= PositionTolerance,
+            $"Position {actual} differs from expected {expected} by more than {PositionTolerance} m.");
     }
 
     private static Vector3 CenterWorld(HeightMapData heightMapData) => OffsetWorld(heightMapData, 0, 0);

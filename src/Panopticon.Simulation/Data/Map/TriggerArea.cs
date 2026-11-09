@@ -1,11 +1,13 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
 
 public sealed class TriggerArea
 {
+    private Vector2[] _sourcePoints;
     public string Name { get; private set; }
     public string LayerName { get; private set; }
     public uint ID { get; private set; }
@@ -20,11 +22,14 @@ public sealed class TriggerArea
         var id = reader.ReadUInt32();
 
         var numPoints = reader.ReadUInt32();
+        var rawPoints = new Vector2[numPoints];
         var points = new Vector2[numPoints];
 
         for (var i = 0; i < numPoints; i++)
         {
-            points[i] = reader.ReadVector2();
+            var raw = reader.ReadVector2();
+            rawPoints[i] = raw;
+            points[i] = raw * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         }
 
         var unknown2 = reader.ReadUInt32();
@@ -38,6 +43,7 @@ public sealed class TriggerArea
             Name = name,
             LayerName = layerName,
             ID = id,
+            _sourcePoints = rawPoints,
             Points = points
         };
     }
@@ -51,9 +57,19 @@ public sealed class TriggerArea
         writer.Write(ID);
 
         writer.Write((uint)Points.Length);
-        foreach (var point in Points)
+        if (_sourcePoints != null && _sourcePoints.Length == Points.Length)
         {
-            writer.Write(point);
+            foreach (var point in _sourcePoints)
+            {
+                writer.Write(point);
+            }
+        }
+        else
+        {
+            foreach (var point in Points)
+            {
+                writer.Write(point / (float)UnitConversionPolicy.GeneralsFeetToMeters);
+            }
         }
 
         writer.Write((uint)0);

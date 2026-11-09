@@ -1,4 +1,5 @@
 using System.IO;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
@@ -7,6 +8,7 @@ public sealed class EnvironmentData : Asset
 {
     public const string AssetName = "EnvironmentData";
 
+    private float? _sourceWaterMaxAlphaDepth;
     public float WaterMaxAlphaDepth { get; private set; }
     public float DeepWaterAlpha { get; private set; }
 
@@ -29,7 +31,9 @@ public sealed class EnvironmentData : Asset
 
             if (version >= 3)
             {
-                result.WaterMaxAlphaDepth = reader.ReadSingle();
+                var rawDepth = reader.ReadSingle();
+                result._sourceWaterMaxAlphaDepth = rawDepth;
+                result.WaterMaxAlphaDepth = (float)UnitConversionPolicy.ScaleLength(rawDepth);
                 result.DeepWaterAlpha = reader.ReadSingle();
             }
 
@@ -62,7 +66,7 @@ public sealed class EnvironmentData : Asset
         {
             if (Version >= 3)
             {
-                writer.Write(WaterMaxAlphaDepth);
+                writer.Write(_sourceWaterMaxAlphaDepth ?? (float)UnitConversionPolicy.UnscaleLength(WaterMaxAlphaDepth));
                 writer.Write(DeepWaterAlpha);
             }
 

@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Utilities.Extensions;
 using Panopticon.FileFormats;
 using Panopticon.Mathematics;
@@ -8,6 +10,9 @@ namespace Panopticon.Data.Map;
 
 public sealed class RiverArea
 {
+    private Line2D[] _sourceLines;
+    private uint? _sourceWaterHeight;
+
     public uint UniqueID { get; private set; }
     public string Name { get; private set; }
     public string LayerName { get; private set; }
@@ -21,7 +26,7 @@ public sealed class RiverArea
     public string SparkleTexture { get; private set; }
     public ColorRgb Color { get; private set; }
     public float Alpha { get; private set; }
-    public uint WaterHeight { get; private set; }
+    public float WaterHeight { get; private set; }
 
     [AddedIn(SageGame.Cnc3)]
     public string RiverType { get; private set; }
@@ -53,7 +58,9 @@ public sealed class RiverArea
         }
 
         result.Alpha = reader.ReadSingle();
-        result.WaterHeight = reader.ReadUInt32();
+        var rawHeight = reader.ReadUInt32();
+        result._sourceWaterHeight = rawHeight;
+        result.WaterHeight = (float)UnitConversionPolicy.ScaleLength(rawHeight);
 
         if (version >= 3)
         {
@@ -63,12 +70,19 @@ public sealed class RiverArea
         result.MinimumWaterLod = reader.ReadUInt16PrefixedAsciiString();
 
         var numLines = reader.ReadUInt32();
+        var rawLines = new Line2D[numLines];
         result.Lines = new Line2D[numLines];
 
         for (var i = 0; i < numLines; i++)
         {
-            result.Lines[i] = reader.ReadLine2D();
+            var raw = reader.ReadLine2D();
+            rawLines[i] = raw;
+            result.Lines[i] = new Line2D(
+                raw.V0 * (float)UnitConversionPolicy.GeneralsFeetToMeters,
+                raw.V1 * (float)UnitConversionPolicy.GeneralsFeetToMeters);
         }
+
+        result._sourceLines = rawLines;
 
         return result;
     }
@@ -87,7 +101,7 @@ public sealed class RiverArea
         writer.Write(Color);
         writer.Write((byte)0);
         writer.Write(Alpha);
-        writer.Write(WaterHeight);
+        writer.Write(_sourceWaterHeight ?? (uint)Math.Round(UnitConversionPolicy.UnscaleLength(WaterHeight)));
 
         if (version >= 3)
         {
@@ -97,9 +111,21 @@ public sealed class RiverArea
         writer.WriteUInt16PrefixedAsciiString(MinimumWaterLod);
 
         writer.Write((uint)Lines.Length);
-        foreach (var line in Lines)
+        if (_sourceLines != null && _sourceLines.Length == Lines.Length)
         {
-            writer.Write(line);
+            foreach (var line in _sourceLines)
+            {
+                writer.Write(line);
+            }
+        }
+        else
+        {
+            foreach (var line in Lines)
+            {
+                writer.Write(new Line2D(
+                    line.V0 / (float)UnitConversionPolicy.GeneralsFeetToMeters,
+                    line.V1 / (float)UnitConversionPolicy.GeneralsFeetToMeters));
+            }
         }
     }
 }

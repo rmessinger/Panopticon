@@ -80,7 +80,7 @@ public sealed class WaterArea : DisposableBase
     }
 
     private void CreateGeometry(AssetLoadContext loadContext,
-                            Vector2[] points, uint height)
+                            Vector2[] points, float height)
     {
         Triangulator.Triangulate(
             points,
@@ -157,7 +157,7 @@ public sealed class WaterArea : DisposableBase
             .Select(x => new Vector2(x.X, x.Y))
             .ToArray();
 
-        CreateGeometry(loadContext, triggerPoints, (uint)trigger.Points[0].Z);
+        CreateGeometry(loadContext, triggerPoints, trigger.Points[0].Z);
     }
 
     internal void BuildRenderList(RenderList renderList)

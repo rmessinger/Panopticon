@@ -9,7 +9,7 @@ namespace Panopticon.Tools.WorldBuilder.Core;
 /// </summary>
 public sealed class SpillPaintTool : IEditorTool
 {
-    private const int HorizontalScale = 10;
+    private const float HorizontalScale = Panopticon.Terrain.HeightMap.HorizontalScale;
 
     public string Name => "Spill Paint";
 

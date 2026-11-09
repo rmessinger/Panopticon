@@ -7,7 +7,7 @@ namespace Panopticon.Tools.WorldBuilder.Core;
 /// </summary>
 public sealed class PaintSingleTileTool : IEditorTool
 {
-    private const int HorizontalScale = 10;
+    private const float HorizontalScale = Panopticon.Terrain.HeightMap.HorizontalScale;
 
     public string Name => "Paint Single Tile";
 

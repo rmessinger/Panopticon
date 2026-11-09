@@ -9,7 +9,7 @@ namespace Panopticon.Tools.WorldBuilder.Core;
 /// </summary>
 public sealed class HeightBrushTool : IEditorTool
 {
-    private const int HorizontalScale = 10;
+    private const float HorizontalScale = Panopticon.Terrain.HeightMap.HorizontalScale;
 
     private bool _isDragging;
     private ushort[,]? _strokeBefore;

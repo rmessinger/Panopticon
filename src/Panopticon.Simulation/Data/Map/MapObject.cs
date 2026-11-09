@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
@@ -10,7 +11,14 @@ public sealed class MapObject : Asset
 {
     public const string AssetName = "Object";
 
+    private Vector3? _sourcePosition;
+    private Vector3 _convertedPosition;
+
     public Vector3 Position { get; set; }
+
+    internal Vector3 LegacyPosition => _sourcePosition is { } source && Position == _convertedPosition
+        ? source
+        : Position / (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     /// <summary>
     /// Angle of the object in radians.
@@ -39,12 +47,16 @@ public sealed class MapObject : Asset
     {
         return ParseAsset(reader, context, version =>
         {
+            var rawPos = reader.ReadVector3();
+            var convertedPos = rawPos * (float)UnitConversionPolicy.GeneralsFeetToMeters;
             return new MapObject(
-                reader.ReadVector3(),
+                convertedPos,
                 reader.ReadSingle(),
                 reader.ReadUInt32AsEnumFlags<RoadType>(),
                 reader.ReadUInt16PrefixedAsciiString())
             {
+                _sourcePosition = rawPos,
+                _convertedPosition = convertedPos,
                 Properties = AssetPropertyCollection.Parse(reader, context)
             };
         });
@@ -54,7 +66,7 @@ public sealed class MapObject : Asset
     {
         WriteAssetTo(writer, () =>
         {
-            writer.Write(Position);
+            writer.Write(LegacyPosition);
             writer.Write(Angle);
             writer.Write((uint)RoadType);
             writer.WriteUInt16PrefixedAsciiString(TypeName);

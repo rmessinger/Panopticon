@@ -16,8 +16,8 @@ public sealed class ScenarioPopulationTests
 {
     // NewMapFactory defaults: 32x32 playable, border 6 -> elevation grid 45x45 -> playable world
     // rectangle [60, 390) on both axes (6 border tiles * 10 units per tile).
-    private const float MinWorld = 60f;
-    private const float SpanWorld = 330f;
+    private static readonly float MinWorld = 6 * Panopticon.Terrain.HeightMap.HorizontalScale;
+    private static readonly float SpanWorld = 33 * Panopticon.Terrain.HeightMap.HorizontalScale;
 
     private static EditorMap NewSavedMap(string root)
     {

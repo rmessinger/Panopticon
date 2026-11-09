@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using Panopticon.Content.Importing.Maps;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Map;
 
@@ -156,7 +157,7 @@ public sealed class LegacyMapReader : IMapReader
         var storedWidth = coreWidth + (2 * MapChunkGeometry.ApronSamplesPerSide);
         var storedHeight = coreHeight + (2 * MapChunkGeometry.ApronSamplesPerSide);
         var samples = new float[storedWidth * storedHeight];
-        var scale = heights.VerticalScale;
+        var scale = heights.LegacyVerticalScale;
         var originX = cx * IntervalsPerChunkAxis;
         var originY = cy * IntervalsPerChunkAxis;
 
@@ -192,11 +193,12 @@ public sealed class LegacyMapReader : IMapReader
         for (var index = 0; index < objectsList.Objects.Length; index++)
         {
             var mapObject = objectsList.Objects[index];
+            var legacyPosition = mapObject.LegacyPosition;
             placed.Add(new PlacedObject(
                 $"{ObjectStableIdPrefix}{index}",
-                new MapQuantity(mapObject.Position.X, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
-                new MapQuantity(mapObject.Position.Y, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
-                new MapQuantity(mapObject.Position.Z, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineZ),
+                new MapQuantity(legacyPosition.X, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
+                new MapQuantity(legacyPosition.Y, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
+                new MapQuantity(legacyPosition.Z, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineZ),
                 mapObject.Angle,
                 new AssetReference(DefaultSourceLabel, mapObject.TypeName),
                 (uint)mapObject.RoadType,
@@ -255,12 +257,13 @@ public sealed class LegacyMapReader : IMapReader
                 continue;
             }
 
+            var legacyPosition = mapObject.LegacyPosition;
             waypoints.Add(new Waypoint(
                 $"{WaypointStableIdPrefix}{waypoints.Count}",
                 name,
-                new MapQuantity(mapObject.Position.X, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
-                new MapQuantity(mapObject.Position.Y, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
-                new MapQuantity(mapObject.Position.Z, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineZ)));
+                new MapQuantity(legacyPosition.X, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
+                new MapQuantity(legacyPosition.Y, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineXy),
+                new MapQuantity(legacyPosition.Z, MapQuantityUnit.GameUnit, MapQuantityFrame.LegacyEngineZ)));
         }
 
         return new WaypointSet(waypoints);
@@ -392,7 +395,7 @@ public sealed class LegacyMapReader : IMapReader
         }
 
         var records = (cameras.Cameras ?? []).Select(c => new MapNamedCameraRecord(
-            c.LookAtPoint,
+            c.LookAtPoint / (float)UnitConversionPolicy.GeneralsFeetToMeters,
             c.Name,
             c.Pitch,
             c.Roll,
@@ -419,8 +422,8 @@ public sealed class LegacyMapReader : IMapReader
             a.UseAdditiveBlending,
             a.BumpMapTexture,
             a.SkyTexture,
-            a.Points,
-            a.WaterHeight,
+            a.Points.Select(p => p / (float)UnitConversionPolicy.GeneralsFeetToMeters).ToArray(),
+            (uint)Math.Round(UnitConversionPolicy.UnscaleLength(a.WaterHeight)),
             a.FxShader,
             a.DepthColors)).ToArray();
 
@@ -440,16 +443,16 @@ public sealed class LegacyMapReader : IMapReader
             a.LayerName,
             a.UvScrollSpeed,
             a.UseAdditiveBlending,
-            a.Points,
-            a.FinalWidth,
-            a.FinalHeight,
+            a.Points.Select(p => p / (float)UnitConversionPolicy.GeneralsFeetToMeters).ToArray(),
+            (uint)Math.Round(UnitConversionPolicy.UnscaleLength(a.FinalWidth)),
+            (uint)Math.Round(UnitConversionPolicy.UnscaleLength(a.FinalHeight)),
             a.InitialWidthFraction,
             a.InitialHeightFraction,
             a.InitialVelocity,
             a.TimeToFade,
             a.TimeToCompress,
             a.TimeOffset2ndWave,
-            a.DistanceFromShore,
+            (uint)Math.Round(UnitConversionPolicy.UnscaleLength(a.DistanceFromShore)),
             a.Texture,
             a.EnablePcaWave,
             a.WaveParticleFXName)).ToArray();
@@ -478,10 +481,12 @@ public sealed class LegacyMapReader : IMapReader
             a.Color.G,
             a.Color.B,
             a.Alpha,
-            a.WaterHeight,
+            (uint)Math.Round(UnitConversionPolicy.UnscaleLength(a.WaterHeight)),
             a.RiverType,
             a.MinimumWaterLod,
-            (a.Lines ?? []).Select(l => new MapRiverLineRecord(l.V0, l.V1)).ToArray())).ToArray();
+            (a.Lines ?? []).Select(l => new MapRiverLineRecord(
+                l.V0 / (float)UnitConversionPolicy.GeneralsFeetToMeters,
+                l.V1 / (float)UnitConversionPolicy.GeneralsFeetToMeters)).ToArray())).ToArray();
 
         return new MapRiverAreasRecord(riverAreas.Version, records);
     }
@@ -496,7 +501,7 @@ public sealed class LegacyMapReader : IMapReader
         return new MapGlobalWaterSettingsRecord(
             waterSettings.Version,
             waterSettings.ReflectionOn,
-            waterSettings.ReflectionPlaneZ);
+            (float)UnitConversionPolicy.UnscaleLength(waterSettings.ReflectionPlaneZ));
     }
 
     private MapPolygonTriggersRecord? BuildPolygonTriggers()
@@ -513,7 +518,10 @@ public sealed class LegacyMapReader : IMapReader
             t.IsWater,
             t.IsRiver,
             t.RiverStart,
-            (t.Points ?? []).Select(p => new Vector3((float)p.X, (float)p.Y, (float)p.Z)).ToArray(),
+            (t.Points ?? []).Select(p => new Vector3(
+                (float)UnitConversionPolicy.UnscaleLength(p.X),
+                (float)UnitConversionPolicy.UnscaleLength(p.Y),
+                (float)UnitConversionPolicy.UnscaleLength(p.Z))).ToArray(),
             t.UseAdditiveBlending,
             t.UvScrollSpeed,
             t.RiverTexture,

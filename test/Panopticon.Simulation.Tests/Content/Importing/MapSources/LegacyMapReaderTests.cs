@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Security.Cryptography;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.IO;
 using Panopticon.Tests.Data;
@@ -34,6 +35,10 @@ public sealed class LegacyMapReaderTests
     private const int CorpusValidatingTarget = 3;
 
     private const int ChunkIntervals = MapChunkGeometry.IntervalsPerChunkAxis;
+
+    private const double PositionPrecision = 4;
+
+    private static readonly float LegacyUnitToMeters = (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     private readonly ITestOutputHelper _output;
 
@@ -110,35 +115,37 @@ public sealed class LegacyMapReaderTests
         }
 
         var model = new LegacyMapReader(mapFile).Read();
-        var scale = mapFile.HeightMapData.VerticalScale;
 
-        Assert.Equal(0.625f, scale);
+        Assert.Equal(0.625f * LegacyUnitToMeters, mapFile.HeightMapData.VerticalScale);
+
+        // Stored heights stay in legacy GameUnit space; the metric scale applies only to MapFile accessors.
+        const float legacyScale = 0.625f;
 
         // Interior core sample of chunk (0, 0): core (5, 9) at stored column 6, row 10.
-        Assert.Equal(elevations[5, 9] * scale, StoredHeight(model, 0, 0, 6, 10));
+        Assert.Equal(elevations[5, 9] * legacyScale, StoredHeight(model, 0, 0, 6, 10));
 
         // East apron of chunk (0, 0) at lattice (129, 40): the real neighbour lattice point.
-        Assert.Equal(elevations[129, 40] * scale, StoredHeight(model, 0, 0, 130, 41));
+        Assert.Equal(elevations[129, 40] * legacyScale, StoredHeight(model, 0, 0, 130, 41));
 
         // North apron of chunk (0, 0) at lattice (100, 129): the real neighbour lattice point.
-        Assert.Equal(elevations[100, 129] * scale, StoredHeight(model, 0, 0, 101, 130));
+        Assert.Equal(elevations[100, 129] * legacyScale, StoredHeight(model, 0, 0, 101, 130));
 
         // Map-edge aprons follow the clamp policy: lattice (-1, -1) clamps to (0, 0).
-        Assert.Equal(elevations[0, 0] * scale, StoredHeight(model, 0, 0, 0, 0));
+        Assert.Equal(elevations[0, 0] * legacyScale, StoredHeight(model, 0, 0, 0, 0));
 
         // The northeast apron of chunk (1, 1) sits at lattice (211, 211), clamped to (210, 210).
-        Assert.Equal(elevations[210, 210] * scale, StoredHeight(model, 1, 1, 84, 84));
+        Assert.Equal(elevations[210, 210] * legacyScale, StoredHeight(model, 1, 1, 84, 84));
 
         // The shared seam point at lattice (128, 40) reads identically from both neighbouring chunks.
-        Assert.Equal(elevations[128, 40] * scale, StoredHeight(model, 0, 0, 129, 41));
-        Assert.Equal(elevations[128, 40] * scale, StoredHeight(model, 1, 0, 1, 41));
+        Assert.Equal(elevations[128, 40] * legacyScale, StoredHeight(model, 0, 0, 129, 41));
+        Assert.Equal(elevations[128, 40] * legacyScale, StoredHeight(model, 1, 0, 1, 41));
     }
 
     [Fact]
     public void ObjectsMapToPlacedObjectSet()
     {
         var mapFile = CreateEmptyMap();
-        var mapObject = new MapObject(new Vector3(10, 20, 30), 1.5f, RoadType.None, "AmericaTankCrusher");
+        var mapObject = new MapObject(new Vector3(10, 20, 30) * LegacyUnitToMeters, 1.5f, RoadType.None, "AmericaTankCrusher");
         mapObject.Properties.AddInteger("hitpoints", 400);
         mapObject.Properties.AddAsciiString("caption", "crusher");
         mapFile.ObjectsList.AddObject(mapObject);
@@ -147,12 +154,12 @@ public sealed class LegacyMapReaderTests
         var placed = Assert.Single(model.Objects!.Objects);
 
         Assert.Equal("obj-0", placed.StableId);
-        Assert.Equal(10, placed.X.Value);
+        Assert.Equal(10.0, placed.X.Value, PositionPrecision);
         Assert.Equal(MapQuantityUnit.GameUnit, placed.X.Unit);
         Assert.Equal(MapQuantityFrame.LegacyEngineXy, placed.X.Frame);
-        Assert.Equal(20, placed.Y.Value);
+        Assert.Equal(20.0, placed.Y.Value, PositionPrecision);
         Assert.Equal(MapQuantityFrame.LegacyEngineXy, placed.Y.Frame);
-        Assert.Equal(30, placed.Z.Value);
+        Assert.Equal(30.0, placed.Z.Value, PositionPrecision);
         Assert.Equal(MapQuantityFrame.LegacyEngineZ, placed.Z.Frame);
         Assert.Equal(1.5, placed.OrientationRadians);
         Assert.Equal(new AssetReference("legacy", "AmericaTankCrusher"), placed.Type);
@@ -165,7 +172,7 @@ public sealed class LegacyMapReaderTests
     public void WaypointObjectsMapToWaypointSet()
     {
         var mapFile = CreateEmptyMap();
-        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(100, 200, 0), 1, "Player_1_Start"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(100, 200, 0) * LegacyUnitToMeters, 1, "Player_1_Start"));
 
         var model = new LegacyMapReader(mapFile).Read();
         var waypoint = Assert.Single(model.Waypoints!.Waypoints);
@@ -173,10 +180,10 @@ public sealed class LegacyMapReaderTests
         // StableId is positional and Name carries the legacy waypoint name; legacy waypoints carry no IDs.
         Assert.Equal("wp-0", waypoint.StableId);
         Assert.Equal("Player_1_Start", waypoint.Name);
-        Assert.Equal(100, waypoint.X.Value);
+        Assert.Equal(100.0, waypoint.X.Value, PositionPrecision);
         Assert.Equal(MapQuantityFrame.LegacyEngineXy, waypoint.X.Frame);
-        Assert.Equal(200, waypoint.Y.Value);
-        Assert.Equal(0, waypoint.Z.Value);
+        Assert.Equal(200.0, waypoint.Y.Value, PositionPrecision);
+        Assert.Equal(0.0, waypoint.Z.Value, PositionPrecision);
         Assert.Equal(MapQuantityFrame.LegacyEngineZ, waypoint.Z.Frame);
     }
 
@@ -247,16 +254,16 @@ public sealed class LegacyMapReaderTests
     public void ObjectsKeepEnumerationOrderWithPositionalIds()
     {
         var mapFile = CreateEmptyMap();
-        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(1, 0, 0), 0, RoadType.None, "TypeA"));
-        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(2, 0, 0), 1, "Start"));
-        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(3, 0, 0), 0, RoadType.None, "TypeB"));
+        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(1, 0, 0) * LegacyUnitToMeters, 0, RoadType.None, "TypeA"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(2, 0, 0) * LegacyUnitToMeters, 1, "Start"));
+        mapFile.ObjectsList.AddObject(new MapObject(new Vector3(3, 0, 0) * LegacyUnitToMeters, 0, RoadType.None, "TypeB"));
 
         var model = new LegacyMapReader(mapFile).Read();
         var placed = model.Objects!.Objects;
 
         Assert.Equal(["obj-0", "obj-1", "obj-2"], placed.Select(item => item.StableId).ToArray());
         Assert.Equal(["TypeA", Panopticon.Scripting.Waypoint.ObjectTypeName, "TypeB"], placed.Select(item => item.Type.Name).ToArray());
-        Assert.Equal([1, 2, 3], placed.Select(item => item.X.Value).ToArray());
+        Assert.Equal([1.0, 2.0, 3.0], placed.Select(item => Math.Round(item.X.Value, (int)PositionPrecision)).ToArray());
     }
 
     [Fact]
@@ -306,16 +313,16 @@ public sealed class LegacyMapReaderTests
         // Legacy waypoint names are not unique; stable IDs are positional, so duplicate names
         // yield distinct stable IDs and the model validates.
         var mapFile = CreateEmptyMap();
-        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(1, 2, 3), 1, "Start"));
-        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(4, 5, 6), 2, "Start"));
-        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(7, 8, 9), 3, "Finish"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(1, 2, 3) * LegacyUnitToMeters, 1, "Start"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(4, 5, 6) * LegacyUnitToMeters, 2, "Start"));
+        mapFile.ObjectsList.AddObject(Panopticon.Scripting.Waypoint.CreateWaypointMapObject(new Vector3(7, 8, 9) * LegacyUnitToMeters, 3, "Finish"));
 
         var model = new LegacyMapReader(mapFile).Read();
 
         Assert.Empty(MapInterchangeValidator.Validate(model));
         Assert.Equal(["wp-0", "wp-1", "wp-2"], model.Waypoints!.Waypoints.Select(waypoint => waypoint.StableId).ToArray());
         Assert.Equal(["Start", "Start", "Finish"], model.Waypoints!.Waypoints.Select(waypoint => waypoint.Name).ToArray());
-        Assert.Equal([1, 4, 7], model.Waypoints!.Waypoints.Select(waypoint => waypoint.X.Value).ToArray());
+        Assert.Equal([1.0, 4.0, 7.0], model.Waypoints!.Waypoints.Select(waypoint => Math.Round(waypoint.X.Value, (int)PositionPrecision)).ToArray());
     }
 
     [Fact]

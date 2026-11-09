@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Scripting;
 using Xunit;
@@ -465,7 +466,7 @@ public class MapFileTests
         Assert.Equal("WaterRippleBump2.tga", standingWaterArea0.BumpMapTexture);
         Assert.Equal("SkyEnv2.tga", standingWaterArea0.SkyTexture);
         Assert.Equal(7, standingWaterArea0.Points.Length);
-        Assert.Equal(2u, standingWaterArea0.WaterHeight);
+        Assert.Equal(LegacyToMeters(2), standingWaterArea0.WaterHeight, 4);
         Assert.Equal(string.Empty, standingWaterArea0.FxShader);
         Assert.Equal("LUTDepthTint.tga", standingWaterArea0.DepthColors);
 
@@ -506,7 +507,7 @@ public class MapFileTests
         Assert.Equal(128, riverArea0.Color.G);
         Assert.Equal(64, riverArea0.Color.B);
         Assert.Equal(0.8f, riverArea0.Alpha, 2);
-        Assert.Equal(5u, riverArea0.WaterHeight);
+        Assert.Equal(LegacyToMeters(5), riverArea0.WaterHeight, 4);
         Assert.Equal("Medium", riverArea0.MinimumWaterLod);
         Assert.Equal(4, riverArea0.Lines.Length);
 
@@ -542,15 +543,15 @@ public class MapFileTests
         Assert.Equal(1u, standingWaveArea0.UniqueID);
         Assert.Equal("Wave Area 1", standingWaveArea0.Name);
         Assert.Equal(string.Empty, standingWaveArea0.LayerName);
-        Assert.Equal(36u, standingWaveArea0.FinalWidth);
-        Assert.Equal(25u, standingWaveArea0.FinalHeight);
+        Assert.Equal(LegacyToMeters(36), standingWaveArea0.FinalWidth, 4);
+        Assert.Equal(LegacyToMeters(25), standingWaveArea0.FinalHeight, 4);
         Assert.Equal(56u, standingWaveArea0.InitialWidthFraction);
         Assert.Equal(86u, standingWaveArea0.InitialHeightFraction);
         Assert.Equal(14u, standingWaveArea0.InitialVelocity);
         Assert.Equal(2236u, standingWaveArea0.TimeToFade);
         Assert.Equal(2018u, standingWaveArea0.TimeToCompress);
         Assert.Equal(3709u, standingWaveArea0.TimeOffset2ndWave);
-        Assert.Equal(49u, standingWaveArea0.DistanceFromShore);
+        Assert.Equal(LegacyToMeters(49), standingWaveArea0.DistanceFromShore, 4);
         Assert.Equal("wave256.tga", standingWaveArea0.Texture);
         Assert.True(standingWaveArea0.EnablePcaWave);
 
@@ -559,15 +560,15 @@ public class MapFileTests
         Assert.Equal(2u, standingWaveArea1.UniqueID);
         Assert.Equal("Wave Area 2", standingWaveArea1.Name);
         Assert.Equal(string.Empty, standingWaveArea1.LayerName);
-        Assert.Equal(28u, standingWaveArea1.FinalWidth);
-        Assert.Equal(18u, standingWaveArea1.FinalHeight);
+        Assert.Equal(LegacyToMeters(28), standingWaveArea1.FinalWidth, 4);
+        Assert.Equal(LegacyToMeters(18), standingWaveArea1.FinalHeight, 4);
         Assert.Equal(50u, standingWaveArea1.InitialWidthFraction);
         Assert.Equal(100u, standingWaveArea1.InitialHeightFraction);
         Assert.Equal(5u, standingWaveArea1.InitialVelocity);
         Assert.Equal(2000u, standingWaveArea1.TimeToFade);
         Assert.Equal(1000u, standingWaveArea1.TimeToCompress);
         Assert.Equal(3000u, standingWaveArea1.TimeOffset2ndWave);
-        Assert.Equal(40u, standingWaveArea1.DistanceFromShore);
+        Assert.Equal(LegacyToMeters(40), standingWaveArea1.DistanceFromShore, 4);
         Assert.Equal("wave256.tga", standingWaveArea1.Texture);
         Assert.False(standingWaveArea1.EnablePcaWave);
     }
@@ -739,13 +740,15 @@ public class MapFileTests
     {
         var mapFile = GetMapFile();
 
-        Assert.Equal(500.5f, mapFile.SkyboxSettings.Position.X);
-        Assert.Equal(393.5f, mapFile.SkyboxSettings.Position.Y);
-        Assert.Equal(97.5f, mapFile.SkyboxSettings.Position.Z);
+        Assert.Equal(LegacyToMeters(500.5f), mapFile.SkyboxSettings.Position.X, 4);
+        Assert.Equal(LegacyToMeters(393.5f), mapFile.SkyboxSettings.Position.Y, 4);
+        Assert.Equal(LegacyToMeters(97.5f), mapFile.SkyboxSettings.Position.Z, 4);
         Assert.Equal(2.5f, mapFile.SkyboxSettings.Scale);
         Assert.Equal(10.5 * (float)Math.PI / 180, mapFile.SkyboxSettings.Rotation);
         Assert.Equal("MountainSnow", mapFile.SkyboxSettings.TextureScheme);
     }
+
+    private static float LegacyToMeters(float legacy) => legacy * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     private static MapFile GetMapFile([CallerMemberName] string? testName = null)
     {

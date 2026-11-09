@@ -940,13 +940,13 @@ public static class StatePersisterExtensions
     private static void PersistPoint3DImpl(this StatePersister persister, ref Point3D value)
     {
         var x = value.X;
-        persister.PersistInt32(ref x);
+        persister.PersistSingle(ref x);
 
         var y = value.Y;
-        persister.PersistInt32(ref y);
+        persister.PersistSingle(ref y);
 
         var z = value.Z;
-        persister.PersistInt32(ref z);
+        persister.PersistSingle(ref z);
 
         if (persister.Mode == StatePersistMode.Read)
         {

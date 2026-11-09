@@ -8,7 +8,7 @@ namespace Panopticon.Tools.WorldBuilder.Core;
 /// </summary>
 public sealed class MeshMoldTool : IEditorTool
 {
-    private const int HorizontalScale = 10;
+    private const float HorizontalScale = Panopticon.Terrain.HeightMap.HorizontalScale;
 
     private bool _isDragging;
 

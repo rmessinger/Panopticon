@@ -6,10 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Content.Importing.Maps;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Data.Utilities.Extensions;
 using Panopticon.FileFormats;
 using Panopticon.Logic.Map;
+using Panopticon.Terrain;
 
 namespace Panopticon.Content.Importing.MapSources;
 
@@ -33,6 +35,20 @@ public static class RuntimeBridge
         var layout = model.Layout;
         var latticeWidth = layout.LatticeWidth;
         var latticeHeight = layout.LatticeHeight;
+
+        var spacingMeters = layout.SampleSpacing.Unit == MapQuantityUnit.Meters
+            ? layout.SampleSpacing.Value
+            : UnitConversionPolicy.ScaleLength(layout.SampleSpacing.Value);
+
+        if (!double.IsFinite(spacingMeters) || Math.Abs(spacingMeters - HeightMap.HorizontalScale) > 1e-4)
+        {
+            throw new MapImportException(
+            [
+                new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.HeightRepresentable,
+                    $"TerrainLayout.SampleSpacing converts to {spacingMeters} m; the runtime terrain spacing is {HeightMap.HorizontalScale} m."),
+            ]);
+        }
 
         // Mirrors the HeightMapData.Parse Area guard: the legacy HeightMapData section stores the
         // whole-map lattice point count, and a mismatch means the chunk lattice cannot rebuild it.
@@ -84,7 +100,7 @@ public static class RuntimeBridge
         // times numerator 5 is 327675 < 2^24, and the divisions by 8 and 128 are exact, so
         // ushort * scale is exact in float32 and legacy-derived samples invert to their exact
         // quantized elevation; genuinely nonrepresentable H3/synthetic values fail honestly below.
-        // The expression must stay identical to HeightMapData.VerticalScale.
+        // The expression must stay identical to HeightMapData.LegacyVerticalScale.
         var scale = layout.HeightSectionVersion >= 5 ? 0.0390625f : 0.625f;
         var maxElevation = layout.HeightSectionVersion >= 5 ? 65535 : 255;
 
@@ -137,13 +153,18 @@ public static class RuntimeBridge
             var source = placed[index];
             var subject = $"PlacedObject '{source.StableId}'";
 
+            var rawX = ToRepresentableFloat(source.X.Value, $"{subject} X", diagnostics);
+            var rawY = ToRepresentableFloat(source.Y.Value, $"{subject} Y", diagnostics);
+            var rawZ = ToRepresentableFloat(source.Z.Value, $"{subject} Z", diagnostics);
+
+            var posX = source.X.Unit == MapQuantityUnit.Meters ? rawX : rawX * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+            var posY = source.Y.Unit == MapQuantityUnit.Meters ? rawY : rawY * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+            var posZ = source.Z.Unit == MapQuantityUnit.Meters ? rawZ : rawZ * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
             // TypeName accepts any AssetReference scope: scope resolution happens downstream of
             // this bridge, so the scope is not checked here.
             var mapObject = new MapObject(
-                new Vector3(
-                    ToRepresentableFloat(source.X.Value, $"{subject} X", diagnostics),
-                    ToRepresentableFloat(source.Y.Value, $"{subject} Y", diagnostics),
-                    ToRepresentableFloat(source.Z.Value, $"{subject} Z", diagnostics)),
+                new Vector3(posX, posY, posZ),
                 ToRepresentableFloat(source.OrientationRadians, $"{subject} Angle", diagnostics),
                 (RoadType)source.RoadType,
                 source.Type.Name);

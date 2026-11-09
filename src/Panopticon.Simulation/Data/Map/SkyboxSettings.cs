@@ -1,5 +1,6 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
@@ -8,6 +9,7 @@ public sealed class SkyboxSettings : Asset
 {
     public const string AssetName = "SkyboxSettings";
 
+    private Vector3? _sourcePosition;
     public Vector3 Position { get; private set; }
     public float Scale { get; private set; }
     public float Rotation { get; private set; }
@@ -15,12 +17,17 @@ public sealed class SkyboxSettings : Asset
 
     internal static SkyboxSettings Parse(BinaryReader reader, MapParseContext context)
     {
-        return ParseAsset(reader, context, version => new SkyboxSettings
+        return ParseAsset(reader, context, version =>
         {
-            Position = reader.ReadVector3(),
-            Scale = reader.ReadSingle(),
-            Rotation = reader.ReadSingle(),
-            TextureScheme = reader.ReadUInt16PrefixedAsciiString()
+            var rawPos = reader.ReadVector3();
+            return new SkyboxSettings
+            {
+                _sourcePosition = rawPos,
+                Position = rawPos * (float)UnitConversionPolicy.GeneralsFeetToMeters,
+                Scale = reader.ReadSingle(),
+                Rotation = reader.ReadSingle(),
+                TextureScheme = reader.ReadUInt16PrefixedAsciiString()
+            };
         });
     }
 
@@ -28,7 +35,7 @@ public sealed class SkyboxSettings : Asset
     {
         WriteAssetTo(writer, () =>
         {
-            writer.Write(Position);
+            writer.Write(_sourcePosition ?? (Position / (float)UnitConversionPolicy.GeneralsFeetToMeters));
             writer.Write(Scale);
             writer.Write(Rotation);
             writer.WriteUInt16PrefixedAsciiString(TextureScheme);

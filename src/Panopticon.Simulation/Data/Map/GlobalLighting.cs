@@ -109,6 +109,11 @@ public sealed class GlobalLighting : Asset
             {
                 unknown2 = reader.ReadVector3();
                 unknown3 = MapColorArgb.Parse(reader);
+
+                if (unknown2.HasValue)
+                {
+                    RetainedBackendDiagnostics.ReportUnclassified("GlobalLighting.Unknown2");
+                }
             }
 
             ColorRgbF? noCloudFactor = null;

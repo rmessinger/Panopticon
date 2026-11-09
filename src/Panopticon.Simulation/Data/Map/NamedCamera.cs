@@ -1,11 +1,13 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 
 namespace Panopticon.Data.Map;
 
 public sealed class NamedCamera
 {
+    private Vector3? _sourceLookAtPoint;
     public Vector3 LookAtPoint { get; private set; }
     public string Name { get; private set; }
 
@@ -18,9 +20,11 @@ public sealed class NamedCamera
 
     internal static NamedCamera Parse(BinaryReader reader)
     {
-        return new NamedCamera
+        var rawLookAt = reader.ReadVector3();
+        var result = new NamedCamera
         {
-            LookAtPoint = reader.ReadVector3(),
+            _sourceLookAtPoint = rawLookAt,
+            LookAtPoint = rawLookAt * (float)UnitConversionPolicy.GeneralsFeetToMeters,
             Name = reader.ReadUInt16PrefixedAsciiString(),
             Pitch = reader.ReadSingle(),
             Roll = reader.ReadSingle(),
@@ -29,11 +33,23 @@ public sealed class NamedCamera
             FieldOfView = reader.ReadSingle(),
             Unknown = reader.ReadSingle()
         };
+
+        if (result.Zoom != 0f)
+        {
+            RetainedBackendDiagnostics.ReportUnclassified("NamedCamera.Zoom");
+        }
+
+        if (result.Unknown != 0f)
+        {
+            RetainedBackendDiagnostics.ReportUnclassified("NamedCamera.Unknown");
+        }
+
+        return result;
     }
 
     internal void WriteTo(BinaryWriter writer)
     {
-        writer.Write(LookAtPoint);
+        writer.Write(_sourceLookAtPoint ?? (LookAtPoint / (float)UnitConversionPolicy.GeneralsFeetToMeters));
         writer.WriteUInt16PrefixedAsciiString(Name);
         writer.Write(Pitch);
         writer.Write(Roll);

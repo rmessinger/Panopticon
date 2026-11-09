@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Mathematics;
 
@@ -9,7 +10,9 @@ namespace Panopticon.Terrain;
 public sealed class HeightMap
 {
     // Corresponds to MAP_XY_FACTOR in ZH
-    public const int HorizontalScale = 10;
+    internal const int LegacyHorizontalScale = 10;
+
+    public const float HorizontalScale = (float)(LegacyHorizontalScale * UnitConversionPolicy.GeneralsFeetToMeters);
 
     private readonly float _verticalScale;
     internal float VerticalScale => _verticalScale;
@@ -19,8 +22,8 @@ public sealed class HeightMap
     public int Width { get; }
     public int Height { get; }
 
-    public int MaxXCoordinate => (Width - 2 * (int)_heightMapData.BorderWidth) * HorizontalScale;
-    public int MaxYCoordinate => (Height - 2 * (int)_heightMapData.BorderWidth) * HorizontalScale;
+    public float MaxXCoordinate => (Width - 2 * (int)_heightMapData.BorderWidth) * HorizontalScale;
+    public float MaxYCoordinate => (Height - 2 * (int)_heightMapData.BorderWidth) * HorizontalScale;
 
     public float MinZ => _heightMapData.MinZ;
     public float MaxZ => _heightMapData.MaxZ;

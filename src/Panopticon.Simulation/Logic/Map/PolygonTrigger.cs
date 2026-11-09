@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Numerics;
 using NLog;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 using Panopticon.Mathematics;
 
@@ -52,6 +53,8 @@ public sealed class PolygonTrigger : IPersistableObject
     [AddedIn(SageGame.Bfme)]
     public float RiverAlpha { get; private set; }
 
+    private Point3D[]? _sourcePoints;
+    private Point3D[]? _convertedPoints;
     public Point3D[] Points { get; internal set; } = [];
 
     private Rectangle _bounds;
@@ -143,12 +146,21 @@ public sealed class PolygonTrigger : IPersistableObject
             return null;
         }
 
+        var rawPoints = new Point3D[numPoints];
         result.Points = new Point3D[numPoints];
 
         for (var i = 0; i < numPoints; i++)
         {
-            result.Points[i] = reader.ReadPoint3D();
+            var raw = reader.ReadPoint3D();
+            rawPoints[i] = raw;
+            result.Points[i] = new Point3D(
+                (float)UnitConversionPolicy.ScaleLength(raw.X),
+                (float)UnitConversionPolicy.ScaleLength(raw.Y),
+                (float)UnitConversionPolicy.ScaleLength(raw.Z));
         }
+
+        result._sourcePoints = rawPoints;
+        result._convertedPoints = (Point3D[])result.Points.Clone();
 
         return result;
     }
@@ -156,8 +168,8 @@ public sealed class PolygonTrigger : IPersistableObject
     public static PolygonTrigger CreateDefaultWaterArea(uint id)
     {
         // TODO: This should be defined in a more central location
-        const int MapXYFactor = 10;
-        const int DefaultWaterLevel = 7;
+        const float MapXYFactor = (float)(10 * UnitConversionPolicy.GeneralsFeetToMeters);
+        const float DefaultWaterLevel = (float)(7 * UnitConversionPolicy.GeneralsFeetToMeters);
 
         var trigger = new PolygonTrigger()
         {
@@ -178,25 +190,30 @@ public sealed class PolygonTrigger : IPersistableObject
     private void UpdateBounds()
     {
         // Magic constant from ZH
-        const int BigInt = 0x7ffff0;
-        var topLeft = new Point2D(BigInt, BigInt);
-        var bottomRight = new Point2D(-BigInt, -BigInt);
+        const float BigFloat = 0x7ffff0;
+        var minX = BigFloat;
+        var minY = BigFloat;
+        var maxX = -BigFloat;
+        var maxY = -BigFloat;
 
         foreach (var point in Points)
         {
-            var point2D = point.ToPoint2D();
-            topLeft = Point2D.Min(topLeft, point2D);
-            bottomRight = Point2D.Max(bottomRight, point2D);
+            minX = Math.Min(minX, point.X);
+            minY = Math.Min(minY, point.Y);
+            maxX = Math.Max(maxX, point.X);
+            maxY = Math.Max(maxY, point.Y);
         }
 
-        _bounds = Rectangle.FromCorners(topLeft, bottomRight);
+        _bounds = Rectangle.FromCorners(
+            new Point2D((int)MathF.Floor(minX), (int)MathF.Floor(minY)),
+            new Point2D((int)MathF.Ceiling(maxX), (int)MathF.Ceiling(maxY)));
         _boundsNeedsUpdate = false;
 
-        var halfWidth = (bottomRight.X - topLeft.X) * 0.5f;
+        var halfWidth = (maxX - minX) * 0.5f;
         // ZH Compatibility: This is wrong, but it matches the original implementation
         // It should actually be (bottomRight.Y - topLeft.Y) * 0.5f
         // As a result the radius is significantly larger than it should be.
-        var halfHeight = (bottomRight.Y + topLeft.Y) * 0.5f;
+        var halfHeight = (maxY + minY) * 0.5f;
         _radius = MathF.Sqrt(halfWidth * halfWidth + halfHeight * halfHeight);
     }
 
@@ -245,9 +262,23 @@ public sealed class PolygonTrigger : IPersistableObject
 
         writer.Write((uint)Points.Length);
 
-        foreach (var point in Points)
+        if (_sourcePoints != null && _convertedPoints != null && Points.AsSpan().SequenceEqual(_convertedPoints))
         {
-            writer.Write(point);
+            foreach (var point in _sourcePoints)
+            {
+                writer.Write((int)Math.Round(point.X));
+                writer.Write((int)Math.Round(point.Y));
+                writer.Write((int)Math.Round(point.Z));
+            }
+        }
+        else
+        {
+            foreach (var point in Points)
+            {
+                writer.Write((int)Math.Round(UnitConversionPolicy.UnscaleLength(point.X)));
+                writer.Write((int)Math.Round(UnitConversionPolicy.UnscaleLength(point.Y)));
+                writer.Write((int)Math.Round(UnitConversionPolicy.UnscaleLength(point.Z)));
+            }
         }
     }
 

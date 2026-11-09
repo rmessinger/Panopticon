@@ -51,7 +51,7 @@ public sealed class ScenarioPopulationDocument
         Editor = new InitialPopulationEditor(scenario);
 
         // WI-A5-35 established the playable rectangle: border tiles excluded, horizontal scale
-        // 10 world units per tile, elevation grid dimensions from HeightMapData.
+        // HeightMap.HorizontalScale world metres per tile, elevation grid dimensions from HeightMapData.
         var heightMap = map.MapFile.HeightMapData;
         var border = heightMap.BorderWidth;
         _minWorldX = border * Panopticon.Terrain.HeightMap.HorizontalScale;

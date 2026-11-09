@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Scripting;
 using Xunit;
@@ -41,7 +42,7 @@ public sealed class MapFileCreateFromHeightsTests
 
         Assert.Equal((ushort)5, reloaded.HeightMapData.Version);
         Assert.True(reloaded.HeightMapData.ElevationsAre16Bit);
-        Assert.Equal(0.0390625f, reloaded.HeightMapData.VerticalScale);
+        Assert.Equal(0.0390625f * (float)UnitConversionPolicy.GeneralsFeetToMeters, reloaded.HeightMapData.VerticalScale);
         Assert.Equal((uint)size, reloaded.HeightMapData.Width);
         Assert.Equal((uint)size, reloaded.HeightMapData.Height);
         Assert.Equal(border, reloaded.HeightMapData.BorderWidth);
@@ -118,11 +119,16 @@ public sealed class MapFileCreateFromHeightsTests
         Assert.Equal(1, (int)objects[0].Properties["waypointID"].Value);
         Assert.Equal(2, (int)objects[1].Properties["waypointID"].Value);
 
-        // (east, north, 0): Scene3D adds terrain height to Z itself. Exact values pin the
-        // axes (124 and 72 playable samples, 25% / 75% in world units), so an axis swap,
-        // border offset, or baked height fails on this non-square, non-flat grid.
-        Assert.Equal(new Vector3(310f, 180f, 0f), objects[0].Position);
-        Assert.Equal(new Vector3(930f, 540f, 0f), objects[1].Position);
+        // (east, north, 0): Scene3D adds terrain height to Z itself. Values in metres pin the
+        // axes (124 and 72 playable samples, 25% / 75%), so an axis swap, border offset, or
+        // baked height fails on this non-square, non-flat grid.
+        var meters = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        Assert.Equal(310f * meters, objects[0].Position.X, 4);
+        Assert.Equal(180f * meters, objects[0].Position.Y, 4);
+        Assert.Equal(0f, objects[0].Position.Z, 4);
+        Assert.Equal(930f * meters, objects[1].Position.X, 4);
+        Assert.Equal(540f * meters, objects[1].Position.Y, 4);
+        Assert.Equal(0f, objects[1].Position.Z, 4);
     }
 
     [Fact]
@@ -130,12 +136,13 @@ public sealed class MapFileCreateFromHeightsTests
     {
         var map = MapFile.CreateEmpty(playableWidth: 16, playableHeight: 16, borderWidth: 2, initialHeight: 200);
         Assert.False(map.HeightMapData.ElevationsAre16Bit);
-        Assert.Equal(0.625f, map.HeightMapData.VerticalScale);
+        var verticalScale = 0.625f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        Assert.Equal(verticalScale, map.HeightMapData.VerticalScale);
 
         var reloaded = WriteAndReload(map);
 
         Assert.False(reloaded.HeightMapData.ElevationsAre16Bit);
-        Assert.Equal(0.625f, reloaded.HeightMapData.VerticalScale);
+        Assert.Equal(verticalScale, reloaded.HeightMapData.VerticalScale);
         foreach (var elevation in reloaded.HeightMapData.Elevations)
         {
             Assert.Equal(200, elevation);
