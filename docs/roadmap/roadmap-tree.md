@@ -18,7 +18,8 @@ The diagrams below cover two views:
 - [2. Progression](#2-progression-dependency-flow): phase-level dependency flow, including
   cross-track edges.
 
-Status is not encoded here. The authoritative status for each phase lives in its track document.
+Status is not encoded here. OpenProject summaries are canonical for phase status; the track
+document's Status column is a temporary secondary reference.
 
 > For interactive zoom and pan, open [`roadmap-tree.html`](roadmap-tree.html) over HTTP, for
 > example with `python3 -m http.server` from this folder; browsers block local `file://` fetches.

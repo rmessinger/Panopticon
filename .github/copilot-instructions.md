@@ -115,22 +115,22 @@ Configuration is in `TestHarness.json` (output directory). Set `GamePath` if aut
 
 To capture frames for automated visual validation, use `FrameCapturer` in `Panopticon.Simulation`, or run the headless test `DefaultScenario_CapturesFrames_ForVisualValidation`. Captured frames land in `$TMPDIR/panopticon_frames/<test_name>_<timestamp>/` alongside a `validation_guide.md` listing per-frame checks. See `src/Panopticon.Tools.TestHarness/AGENTS.md` for the full agent validation workflow, common failure modes, and shader subsystem triage hints.
 
-## Roadmap and Agent Task Cards
+## Roadmap and Agent Tickets
 
 The long-term plan lives under `docs/roadmap/`. `docs/roadmap/README.md` is the index; per-track docs are `track-p-*.md`, `track-a-*.md`, `track-b-*.md`, and `track-c-*.md`. When changing the plan, follow `docs/roadmap/agent/MAINTAINING.md` to propagate changes across all parallel docs. Documentation generally (including the roadmap) follows the concise style in `CONTRIBUTING.md`.
 
-For incremental, low-effort implementation work, use the agent task-card system in `docs/roadmap/agent/`:
+For incremental, low-effort implementation work, use the OpenProject ticket system in `docs/roadmap/agent/`:
 
-- Cards live in `docs/roadmap/agent/cards/` named `<PHASE>-<NN>-<slug>.md`.
-- Each card is self-contained: exact files to read, ordered steps, acceptance criteria, and validation commands.
-- Pick a card with Status `Ready`, execute it, then mark it `Done` or `Blocked` and record the result in the card's `Result:` line (`## On completion`).
-- The template for new cards is `docs/roadmap/agent/task-card-template.md`.
+- Tickets live in OpenProject project Panopticon (id 4); `docs/roadmap/agent/legacy-card-mapping.md` maps card IDs to tickets.
+- Each ticket is self-contained: exact files to read, ordered steps, acceptance criteria, and validation commands.
+- Pick a startable ticket, execute it, then set its OpenProject status and record a completion comment per the ticket lifecycle (see `docs/roadmap/agent/README.md`).
+- The authoring procedure for new tickets is `docs/roadmap/agent/task-card-template.md`.
 
-If a phase has no ready cards but needs advancing, decompose it into new cards using the template rather than executing the phase open-endedly.
+If a phase has no startable ticket but needs advancing, decompose it into new tickets using the template rather than executing the phase open-endedly.
 
 ## Agent Communication
 
-Card results are recorded in the card itself: a `Result:` line as the first bullet of the card's `## On completion` section (see `docs/roadmap/agent/README.md`). The repo-root `.exchange` file is a frozen archive of pre-retirement results.
+Ticket results are recorded as an OpenProject completion comment (`op_add_work_package_comment`) plus a status write (`op_update_work_package`) verified by readback, per the ticket workflow in `docs/roadmap/agent/README.md`. Roadmap doc entries are a temporary reference, never the ticket state. The repo-root `.exchange` file is a frozen archive of pre-retirement results.
 
 ## PR Guidelines
 

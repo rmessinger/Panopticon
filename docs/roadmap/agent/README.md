@@ -14,11 +14,11 @@
 Roadmap phases (P, A, B, C) are large and design-heavy. Execution at that scale requires strong
 reasoning. Most phases decompose into many small, mechanical, low-ambiguity steps: cataloging
 code, replicating an existing pattern, adding a test, or applying a narrow refactor. Those steps do
-not require a high-effort model when they are written down precisely. This guide stores them as task
-cards.
+not require a high-effort model when they are written down precisely. This guide decomposes them
+into OpenProject tickets.
 
-A good task card is self-contained: a cheap agent can execute it by reading the card and the exact
-files it names, without roadmap-wide context.
+A good ticket is self-contained: a cheap agent can execute it by reading the ticket description and
+the exact files it names, without roadmap-wide context.
 
 ---
 
@@ -26,11 +26,11 @@ files it names, without roadmap-wide context.
 
 Every agent working from this guide follows the same loop:
 
-1. Pick a ticket. Take one OpenProject ticket from project Panopticon whose status permits starting
-   work and whose `follows` prerequisites have reached a completed status. Do one ticket at a time.
-   If the ticket's description was written against types its prerequisites have not implemented
-   yet, reconcile the description with the landed code before starting. Current status names:
-   `op_list_statuses`.
+1. Pick a ticket. Take one OpenProject ticket from project Panopticon that is startable per the
+   [ticket lifecycle](#ticket-lifecycle) and whose `follows` prerequisites have reached a completed
+   status. Do one ticket at a time. If the ticket's description was written against types its
+   prerequisites have not implemented yet, reconcile the description with the landed code before
+   starting.
 2. Read only what the ticket names. The ticket description lists the exact files / line ranges and
    the roadmap phase it serves. Read those. Do not go spelunking the whole codebase.
 3. Make the change. Keep the diff small and surgical: scoped to the ticket's "Files likely to
@@ -38,17 +38,18 @@ Every agent working from this guide follows the same loop:
    (see step 6) rather than guessing.
 4. Validate. Run the ticket's validation commands (and the [standard checks](#standard-validation)).
    The change is not done until they pass.
-5. Update status. Set the ticket's status to a completed status, or to a status that marks it
-   blocked with a reason, using `op_update_work_package`. Update the matching phase row's Status in the
-   [track doc](../README.md#tracks-at-a-glance) if the ticket completes a phase, and tick the
-   matching item(s) in the [implementation checklist](../implementation-checklist.md).
+5. Update status in OpenProject. Set the ticket's status per the
+   [ticket lifecycle](#ticket-lifecycle) with `op_update_work_package`, then verify the write by
+   reading the ticket back. Roadmap docs are a temporary reference: update the matching phase row's
+   Status in the [track doc](../README.md#tracks-at-a-glance) and the matching item(s) in the
+   [implementation checklist](../implementation-checklist.md) as secondary bookkeeping; a doc entry
+   never substitutes for the OpenProject write.
 6. Record the result. Add an OpenProject completion comment with
    `op_add_work_package_comment` (see [Recording results](#recording-results)). This lets the next
    agent or a human continue without re-discovering the work.
 
 > Golden rule: a ticket is a contract. If a ticket cannot be satisfied within its stated scope and
-> guardrails, it is set to a status that marks it blocked, with an explanation, rather than expanded
-> to force completion.
+> guardrails, it is set to `On hold` with an explanation, rather than expanded to force completion.
 
 ---
 
@@ -62,7 +63,8 @@ in fresh sessions can't see it. Rely only on OpenProject and repo artifacts:
 - [`legacy-card-mapping.md`](legacy-card-mapping.md): one row per ticket (canonical card ID,
   title, ticket URL). Rows carry no status.
 - The Status column in each [track document](../README.md#document-map) (`Not started` /
-  `In progress` / `Done`): the authoritative phase state.
+  `In progress` / `Done`): a human-readable phase snapshot. Temporary reference only; runtime
+  ticket state lives in OpenProject.
 
 If no startable ticket matches a phase that needs advancement, a new ticket can be created (see
 [Ticket workflow](#ticket-workflow) and the [template](task-card-template.md)) by decomposing that
@@ -92,6 +94,36 @@ https://projects.reid-corp.com/projects/panopticon. Work package URL:
 - Create a ticket only after `op_find_card_work_package` finds none for the card ID. Never overwrite an existing ticket or reuse a card ID that belongs to another ticket; a collision is reported.
 - `get_card(card_id, ref)` and `card_status(track, ref)` are deprecated frozen Markdown snapshots. Use them only to inspect source or history at an explicit ref. Their payload may be stale, so never use them for current status.
 - A card file created on an unmerged branch has no ticket. After that branch merges, look up its ID with `op_find_card_work_package`, create the ticket if none exists, and replace the card file with a row in [the legacy card mapping](legacy-card-mapping.md) in a follow-up change.
+
+### Ticket lifecycle
+
+Status names are the project's existing OpenProject statuses, listed by `op_list_statuses`; never
+invent status names. Lifecycle mapping:
+
+| Transition | Status to set | Also required |
+|---|---|---|
+| Work starts | `In progress` | verified readback |
+| Blocked | `On hold` | comment stating the blocker and the unblock condition |
+| Implementation complete on an open branch | `Developed` | completion comment per [Recording results](#recording-results) |
+| Merged to main, acceptance complete and approved | `Closed` | comment citing the merged PR or merge commit and the acceptance evidence |
+
+- A ticket is startable when its status is open (not `Closed`, not `Rejected`, not `On hold`) and
+  every `follows` prerequisite is `Closed`. A prerequisite that is `Developed` on an open branch
+  counts only when it belongs to the same planned stack, its dependency is declared, and its
+  validation is recorded; a status value alone never implies this.
+- `Developed` means the implementation is complete on an open branch or PR, not that the work is
+  merged. Never set `Closed` from an unmerged branch: `Closed` means merged to `main` with
+  acceptance complete and approved, citing the merged PR or merge commit and the acceptance
+  evidence.
+- Every status write follows one procedure: `op_get_work_package` for the current `lock_version`
+  immediately before the update, `op_update_work_package` with it, then `op_get_work_package`
+  again to confirm the new status. On a `lock_version` conflict, re-read and retry once. Only a
+  confirmed readback counts as updated.
+- If the OpenProject API is unavailable, a status name is rejected, or a write cannot be verified,
+  report the ticket as a pending tracking blocker naming the intended transition. Never claim a
+  status was updated, and never fall back to recording status only in roadmap docs.
+
+---
 
 ## Standard validation
 
@@ -149,10 +181,12 @@ output where the card specifies.
 ## Recording results
 
 A completed or blocked ticket records its result as an OpenProject comment through
-`op_add_work_package_comment`: date, what changed, validation outcome, and follow-up tickets. The
-status change is made separately with `op_update_work_package`. The card `Status` field and the
-`Result:` line are retired. The repo-root `.exchange` file is a frozen, read-only archive of
-pre-retirement results and is not written to.
+`op_add_work_package_comment`: date, what changed, validation outcome, the commit SHA, the PR
+number when one is open, and follow-up tickets. The status change is made separately with
+`op_update_work_package` per the [ticket lifecycle](#ticket-lifecycle). Tracking for a ticket is
+reported as updated only after both writes succeed and the status write is verified by readback.
+The card `Status` field and the `Result:` line are retired. The repo-root `.exchange` file is a
+frozen, read-only archive of pre-retirement results and is not written to.
 
 ---
 
