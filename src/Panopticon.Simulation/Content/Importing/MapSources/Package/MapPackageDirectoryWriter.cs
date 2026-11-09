@@ -122,6 +122,20 @@ public static class MapPackageDirectoryWriter
                 }
             }
 
+            if (manifest.Companions is not null)
+            {
+                foreach (var entry in manifest.Companions)
+                {
+                    var failure = StageCompanionFile(stage, entry, payloads);
+
+                    if (failure is not null)
+                    {
+                        diagnostics.Add(failure);
+                        return new MapPackageWriteResult(false, diagnostics);
+                    }
+                }
+            }
+
             var manifestFailure = StageManifest(stage, manifest);
 
             if (manifestFailure is not null)
@@ -255,6 +269,31 @@ public static class MapPackageDirectoryWriter
         return WriteStagedFile(stage, entry.Path, encoded);
     }
 
+    private static MapPackageDiagnostic? StageCompanionFile(string stage, MapPackageCompanionEntry? entry, IMapPackagePayloadProvider payloads)
+    {
+        if (entry is null)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageDiagnostic.NullComponent,
+                "A companion member entry is null; the package cannot be staged.");
+        }
+
+        byte[] encoded;
+
+        try
+        {
+            encoded = payloads.GetCompanion(entry);
+        }
+        catch (Exception ex)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageChunkDiagnostic.PayloadProviderFailed,
+                $"Staging payload data for companion member '{entry.Name}' failed: {ex.Message}");
+        }
+
+        return WriteStagedFile(stage, entry.Path, encoded);
+    }
+
     private static MapPackageDiagnostic? StageManifest(string stage, MapPackageManifest manifest)
     {
         try
@@ -362,6 +401,24 @@ public static class MapPackageDirectoryWriter
             if (failure is not null)
             {
                 return failure;
+            }
+        }
+
+        if (manifest.Companions is not null)
+        {
+            foreach (var entry in manifest.Companions)
+            {
+                if (entry is null)
+                {
+                    return new MapPackageDiagnostic(MapPackageDiagnostic.NullComponent, "A companion entry is null; the staged package cannot be verified.");
+                }
+
+                var failure = VerifyStagedFile(stage, entry.Path, entry.ByteLength, entry.Sha256);
+
+                if (failure is not null)
+                {
+                    return failure;
+                }
             }
         }
 
@@ -525,6 +582,40 @@ public static class MapPackageDirectoryWriter
         {
             foreach (var entry in manifest.RetainedSections)
             {
+                var normalized = NormalizeRelativePath(entry.Path);
+
+                if (!seenRelativePaths.Add(normalized))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.PathInvalid,
+                        $"Multiple package entries resolve to the same relative path '{entry.Path}'."));
+                    return false;
+                }
+            }
+        }
+
+        if (manifest.Companions is not null)
+        {
+            var seenCompanionNames = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var entry in manifest.Companions)
+            {
+                if (entry is null)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.NullComponent,
+                        "A companion member entry is null; the package cannot be written."));
+                    return false;
+                }
+
+                if (!seenCompanionNames.Add(entry.Name))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.CompanionNameDuplicate,
+                        $"Duplicate companion member name '{entry.Name}'."));
+                    return false;
+                }
+
                 var normalized = NormalizeRelativePath(entry.Path);
 
                 if (!seenRelativePaths.Add(normalized))

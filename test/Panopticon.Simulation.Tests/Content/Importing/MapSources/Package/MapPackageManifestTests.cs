@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources.Package;
@@ -704,6 +705,96 @@ public sealed class MapPackageManifestTests
         var manifest = BuildValidManifest() with { Identity = identity };
 
         Assert.DoesNotContain(MapPackageManifestValidator.Validate(manifest), d => d.Code == MapPackageDiagnostic.IdentitySourceKind);
+    }
+
+    [Fact]
+    public void Manifest_WithCompanions_PassesValidationAndRoundTripsJson()
+    {
+        var companions = new MapPackageCompanionEntry[]
+        {
+            new("map.ini", "companions/map.ini", 64, SampleSha256),
+            new("map.str", "companions/map.str", 128, SampleSha256),
+        };
+
+        var manifest = BuildValidManifest() with { Companions = companions };
+        var diagnostics = MapPackageManifestValidator.Validate(manifest);
+        Assert.Empty(diagnostics);
+
+        var json = manifest.ToJson();
+        var (parsed, parseDiagnostics) = MapPackageManifestJson.Parse(json);
+        Assert.Empty(parseDiagnostics);
+        Assert.NotNull(parsed);
+        Assert.NotNull(parsed!.Companions);
+        Assert.Equal(2, parsed.Companions!.Count);
+        Assert.Equal("map.ini", parsed.Companions[0].Name);
+        Assert.Equal(SampleSha256, parsed.Companions[0].Sha256);
+        Assert.Equal("companions/map.ini", parsed.Companions[0].Path);
+        Assert.Equal(64, parsed.Companions[0].ByteLength);
+    }
+
+    [Fact]
+    public void Manifest_WithDuplicateCompanionName_FailsValidation()
+    {
+        var companions = new MapPackageCompanionEntry[]
+        {
+            new("map.ini", "companions/map.ini", 64, SampleSha256),
+            new("map.ini", "companions/other.ini", 64, SampleSha256),
+        };
+
+        var manifest = BuildValidManifest() with { Companions = companions };
+        AssertOnlyCode(manifest, MapPackageDiagnostic.CompanionNameDuplicate);
+    }
+
+    [Fact]
+    public void Manifest_WithInvalidCompanionDigest_FailsValidation()
+    {
+        var companions = new MapPackageCompanionEntry[]
+        {
+            new("map.ini", "companions/map.ini", 64, "invalid-digest"),
+        };
+
+        var manifest = BuildValidManifest() with { Companions = companions };
+        AssertOnlyCode(manifest, MapPackageDiagnostic.DigestInvalid);
+    }
+
+    [Fact]
+    public void Manifest_WithInvalidCompanionPath_FailsValidation()
+    {
+        var companions = new MapPackageCompanionEntry[]
+        {
+            new("map.ini", "../outside.ini", 64, SampleSha256),
+        };
+
+        var manifest = BuildValidManifest() with { Companions = companions };
+        AssertOnlyCode(manifest, MapPackageDiagnostic.PathInvalid);
+    }
+
+    [Fact]
+    public void Manifest_CompanionSlot_ForwardCompatibility_LoadsUnderReaderGracefully()
+    {
+        // When a package has companion members, a reader that consumes only MapInterchange
+        // loads it without error and ignores the companion slot gracefully.
+        var tempRoot = Path.Combine(Path.GetTempPath(), "manifest_forward_compat_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var manifest = BuildValidManifest() with
+            {
+                Companions = [new MapPackageCompanionEntry("map.ini", "companions/map.ini", 10, SampleSha256)],
+            };
+
+            var json = manifest.ToJson();
+            var (parsed, diagnostics) = MapPackageManifestJson.ParseAndValidate(json);
+            Assert.Empty(diagnostics);
+            Assert.NotNull(parsed);
+            Assert.NotNull(parsed!.Companions);
+            Assert.Single(parsed.Companions!);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
     }
 
     private static MapPackageManifest BuildValidManifest() => new(

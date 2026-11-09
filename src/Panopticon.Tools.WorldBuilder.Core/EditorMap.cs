@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using Panopticon.Content.Importing.MapSources;
 using Panopticon.Data.Map;
 
 namespace Panopticon.Tools.WorldBuilder.Core;
@@ -14,6 +17,12 @@ public sealed class EditorMap
 
     public bool IsDirty { get; private set; }
 
+    /// <summary>Whether this map was loaded from or saved as an H3 package directory container.</summary>
+    public bool IsPackage { get; private set; }
+
+    /// <summary>Conversion context preserving scoped references and layout tags for package round trips.</summary>
+    public PackageConversionContext? PackageContext { get; set; }
+
     /// <summary>Content of the companion map.ini file; written on save.</summary>
     public string MapIniContent { get; set; } = string.Empty;
 
@@ -24,10 +33,11 @@ public sealed class EditorMap
 
     public UndoRedoStack<IMapEdit> UndoStack => _undoStack;
 
-    private EditorMap(MapFile mapFile, string? filePath)
+    private EditorMap(MapFile mapFile, string? filePath, bool isPackage = false)
     {
         MapFile = mapFile;
         FilePath = filePath;
+        IsPackage = isPackage;
     }
 
     /// <summary>Creates a new blank map from a freshly-constructed MapFile.</summary>
@@ -50,12 +60,54 @@ public sealed class EditorMap
         };
     }
 
+    /// <summary>
+    /// Opens an existing H3 map package directory from disk.
+    /// Rejects archive-addressed paths and populates companion members.
+    /// </summary>
+    public static EditorMap OpenPackage(string packageDirectory)
+    {
+        var result = MapPackageConverter.OpenPackage(packageDirectory);
+
+        return new EditorMap(result.MapFile, packageDirectory, isPackage: true)
+        {
+            IsDirty = false,
+            MapIniContent = result.MapIniContent,
+            MapStrContent = result.MapStrContent,
+            PackageContext = result.Context,
+        };
+    }
+
+    /// <summary>
+    /// Opens an existing H3 map package from a FileSystemEntry.
+    /// Rejects archive-addressed entries with an UnsupportedAddressing diagnostic.
+    /// </summary>
+    public static EditorMap OpenPackage(Panopticon.IO.FileSystemEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        var result = MapPackageConverter.OpenPackage(entry.FilePath, entry);
+
+        return new EditorMap(result.MapFile, entry.FilePath, isPackage: true)
+        {
+            IsDirty = false,
+            MapIniContent = result.MapIniContent,
+            MapStrContent = result.MapStrContent,
+            PackageContext = result.Context,
+        };
+    }
+
     /// <summary>Saves the map to disk at the current FilePath.</summary>
     public void Save()
     {
         if (FilePath is null)
         {
-            throw new InvalidOperationException("Cannot save without a file path — use SaveAs.");
+            throw new InvalidOperationException("Cannot save without a file path; use SaveAs.");
+        }
+
+        if (IsPackage)
+        {
+            MapPackageConverter.SavePackage(MapFile, FilePath, MapIniContent, MapStrContent, PackageContext);
+            IsDirty = false;
+            return;
         }
 
         using (var stream = File.Create(FilePath))
@@ -84,10 +136,19 @@ public sealed class EditorMap
         }
     }
 
-    /// <summary>Saves the map to a new path and updates FilePath.</summary>
+    /// <summary>Saves the map to a new legacy .map path and updates FilePath.</summary>
     public void SaveAs(string filePath)
     {
         FilePath = filePath;
+        IsPackage = false;
+        Save();
+    }
+
+    /// <summary>Saves the map to an H3 package directory and updates FilePath.</summary>
+    public void SaveAsPackage(string packageDirectory)
+    {
+        FilePath = packageDirectory;
+        IsPackage = true;
         Save();
     }
 

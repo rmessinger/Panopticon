@@ -1608,6 +1608,18 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: WorldBuilder authors, saves, and reloads a map in the new format, and a ModCollector-
     staged content pack's object definitions load through the new format alongside built-in
     content.
+- [x] H6-1 WorldBuilder package open and save boundary conversion (`WI-H6-01`).
+  - AC: public map converter in both directions; EditorMap opens and saves H3 packages;
+    companion members round-trip byte for byte; loose-directory diagnostic rejects archive
+    paths; legacy .map paths unchanged.
+- [ ] H6-2 WorldBuilder package edit round trip with capture evidence (`WI-H6-02`).
+  - AC: save-reopen state equals edited state for heights, objects, and companions; headless
+    `--screenshot` extended to accept package directories; capture evidence recorded.
+- [ ] H6-3 Staged pack loading through H4 adapter and AssetStore scopes (`WI-H6-03`).
+  - AC: pack definitions resolve by name alongside built-in content; reverse-order unload
+    restores prior state; failed pack publishes nothing and leaves ScopeDepth unchanged.
+- [ ] H6-4 INI edit and reload preservation check (`WI-H6-04`).
+  - AC: session reload picks up an INI edit; zero package files created or read.
 - [ ] H7 Validation & round-trip regression (automated round-trip suite; ReplaySketch scenario on
   new-format content asserted headlessly).
   - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a

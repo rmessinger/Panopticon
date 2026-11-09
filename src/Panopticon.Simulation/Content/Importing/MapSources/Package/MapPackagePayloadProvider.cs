@@ -23,4 +23,7 @@ public interface IMapPackagePayloadProvider
 
     /// <summary>Opaque bytes for one retained section entry.</summary>
     byte[] GetRetainedSection(MapPackageRetainedEntry entry);
+
+    /// <summary>Raw UTF-8 text bytes for one companion member entry.</summary>
+    byte[] GetCompanion(MapPackageCompanionEntry entry) => [];
 }
