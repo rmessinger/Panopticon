@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Content;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Grid;
@@ -31,6 +32,9 @@ namespace Panopticon.Tests.Tools.GeoImport;
 /// </summary>
 public class Card24ProofFixtureTests
 {
+    // Metric cutover scale: runtime lattice coordinates and heights are in meters.
+    private const float S = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
     private const double HeightToleranceGameUnits = 0.01d;
 
     private const int CropOriginChunkX = 1;
@@ -217,8 +221,8 @@ public class Card24ProofFixtureTests
         AssertStoredHeight(mapFile, 128, 128, ExpectedQuantized(256, 128, cropMinimum));
         AssertStoredHeight(mapFile, 64, 64, ExpectedQuantized(192, 64, cropMinimum));
 
-        var restored = mapFile.HeightMapData.Elevations[64, 64] * mapFile.HeightMapData.VerticalScale + transform.CropMinimumGameZ;
-        Assert.Equal(Card24ProofFixture.SurfaceHeight(1920d, 640d), restored, GeneratedMapPreviewBuilder.HeightQuantumGameUnits / 2d + 1e-9d);
+        var restored = mapFile.HeightMapData.Elevations[64, 64] * mapFile.HeightMapData.VerticalScale + (transform.CropMinimumGameZ * S);
+        Assert.Equal(Card24ProofFixture.SurfaceHeight(1920d, 640d) * S, restored, ((GeneratedMapPreviewBuilder.HeightQuantumGameUnits * S) / 2d) + 1e-9d);
 
         // Engine coordinates are payload lattice minus the crop origin 1280. The eastern
         // edge column holds nodes at or over the extent east bound, the southern edge row
@@ -261,15 +265,15 @@ public class Card24ProofFixtureTests
         // Waypoints: authored player starts override the factory slots at Z 0, the ordinary
         // waypoint keeps its rebased elevation, and the out-of-crop waypoint is excluded.
         var playerOne = FindWaypoint(mapFile, "Player_1_Start");
-        Assert.Equal(new Vector3(220f, 300f, 0f), playerOne!.Position);
+        Assert.Equal(new Vector3(220f * S, 300f * S, 0f), playerOne!.Position);
         var playerTwo = FindWaypoint(mapFile, "Player_2_Start");
-        Assert.Equal(new Vector3(1020f, 900f, 0f), playerTwo!.Position);
+        Assert.Equal(new Vector3(1020f * S, 900f * S, 0f), playerTwo!.Position);
 
         var ridgePeak = FindWaypoint(mapFile, "ridgepeak");
         Assert.NotNull(ridgePeak);
-        var expectedRidgeZ = (float)((double)Card24ProofFixture.ExpectedHeightAtLattice(192, 64) - cropMinimum);
-        Assert.Equal(640f, ridgePeak!.Position.X);
-        Assert.Equal(640f, ridgePeak.Position.Y);
+        var expectedRidgeZ = (float)(((double)Card24ProofFixture.ExpectedHeightAtLattice(192, 64) - cropMinimum) * S);
+        Assert.Equal(640f * S, ridgePeak!.Position.X);
+        Assert.Equal(640f * S, ridgePeak.Position.Y);
         Assert.Equal(expectedRidgeZ, ridgePeak.Position.Z, 4);
 
         Assert.Null(FindWaypoint(mapFile, "farpoint"));

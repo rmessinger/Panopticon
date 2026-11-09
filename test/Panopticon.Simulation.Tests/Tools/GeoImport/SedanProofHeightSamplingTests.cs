@@ -1,4 +1,5 @@
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Terrain;
 using Xunit;
@@ -7,7 +8,9 @@ namespace Panopticon.Tests.Tools.GeoImport;
 
 public sealed class SedanProofHeightSamplingTests
 {
-    private const float Quantum = 0.0390625f;
+    // Metric cutover scale: runtime lattice coordinates and heights are in meters.
+    private const float S = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+    private const float Quantum = 0.0390625f * S;
 
     [Fact]
     public void SampleContinuousEngineHeight_CellCentreAndNonHalfFractional_MatchesBilinearAndDiffersFromIntegerTileLookup()
@@ -19,18 +22,18 @@ public sealed class SedanProofHeightSamplingTests
         var f01 = 463 * Quantum;
         var f11 = 465 * Quantum;
 
-        var tile = heightMap.GetTilePosition(new Vector2(15f, 25f))!.Value;
+        var tile = heightMap.GetTilePosition(new Vector2(15f * S, 25f * S))!.Value;
         var swNodeHeight = heightMap.GetHeight(tile.X, tile.Y);
         Assert.Equal(f00, swNodeHeight);
 
         var cellCentre = 0.25f * (f00 + f10 + f01 + f11);
-        Assert.Equal(cellCentre, SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 15.0, 25.0));
-        Assert.Equal(0.1953125f, cellCentre - swNodeHeight);
+        Assert.Equal(cellCentre, SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 15.0 * S, 25.0 * S));
+        Assert.Equal(0.1953125f * S, cellCentre - swNodeHeight, 1e-5f);
 
         const float wx = 0.25f;
         const float wy = 0.75f;
         var expectedNonHalf = ((f10 * wx + f00 * (1f - wx)) * (1f - wy)) + ((f11 * wx + f01 * (1f - wx)) * wy);
-        var sampledNonHalf = SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 12.5, 27.5);
+        var sampledNonHalf = SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 12.5 * S, 27.5 * S);
 
         Assert.Equal(expectedNonHalf, sampledNonHalf);
         Assert.NotEqual(swNodeHeight, sampledNonHalf);
@@ -41,9 +44,9 @@ public sealed class SedanProofHeightSamplingTests
     {
         var heightMap = BuildQuadHeightMap();
 
-        var tile = heightMap.GetTilePosition(new Vector2(10f, 20f))!.Value;
+        var tile = heightMap.GetTilePosition(new Vector2(10f * S, 20f * S))!.Value;
 
-        Assert.Equal(heightMap.GetHeight(tile.X, tile.Y), SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 10.0, 20.0));
+        Assert.Equal(heightMap.GetHeight(tile.X, tile.Y), SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 10.0 * S, 20.0 * S));
     }
 
     [Fact]
@@ -56,7 +59,7 @@ public sealed class SedanProofHeightSamplingTests
 
         var expected = 0.25f * (457 + 463 + 463 + 465) * Quantum;
 
-        Assert.Equal(expected, SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 15.0, 25.0));
+        Assert.Equal(expected, SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, 15.0 * S, 25.0 * S));
     }
 
     [Theory]
@@ -68,7 +71,7 @@ public sealed class SedanProofHeightSamplingTests
     {
         var heightMap = BuildQuadHeightMap();
 
-        Assert.Null(SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, engineX, engineY));
+        Assert.Null(SedanProofHeightSampling.SampleContinuousEngineHeight(heightMap, engineX * S, engineY * S));
     }
 
     [Theory]

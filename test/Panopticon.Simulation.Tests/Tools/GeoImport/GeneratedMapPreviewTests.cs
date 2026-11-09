@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Geospatial.Preview;
 using Panopticon.Graphics;
@@ -35,6 +36,9 @@ namespace Panopticon.Tests.Tools.GeoImport;
 [Collection("SerialGameTests")]
 public sealed class GeneratedMapPreviewTests
 {
+    // Metric cutover scale: runtime lattice coordinates and heights are in meters.
+    private const float S = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
     private const string MapFileName = "card24preview";
 
     private const string CropArgument = "1,0,2,1";
@@ -155,7 +159,7 @@ public sealed class GeneratedMapPreviewTests
             view.InitHeightForMap();
             view.SetAngleAndPitchToDefault();
             view.SnapHeightAboveGround(CameraHeight);
-            view.LookAt(new Vector3(640f, 640f, 0f));
+            view.LookAt(new Vector3(640f * S, 640f * S, 0f));
 
             for (var i = 0; i < 3; i++)
             {
@@ -303,30 +307,32 @@ public sealed class GeneratedMapPreviewTests
 
         var playerOne = FindWaypoint(mapFile, "Player_1_Start");
         Assert.NotNull(playerOne);
-        Assert.Equal(new Vector3(220f, 300f, 0f), playerOne!.Position);
+        Assert.Equal(new Vector3(220f * S, 300f * S, 0f), playerOne!.Position);
 
         var playerTwo = FindWaypoint(mapFile, "Player_2_Start");
         Assert.NotNull(playerTwo);
-        Assert.Equal(new Vector3(1020f, 900f, 0f), playerTwo!.Position);
+        Assert.Equal(new Vector3(1020f * S, 900f * S, 0f), playerTwo!.Position);
 
         var ridgePeak = FindWaypoint(mapFile, "ridgepeak");
         Assert.NotNull(ridgePeak);
-        Assert.Equal(640f, ridgePeak!.Position.X);
-        Assert.Equal(640f, ridgePeak.Position.Y);
+        Assert.Equal(640f * S, ridgePeak!.Position.X);
+        Assert.Equal(640f * S, ridgePeak.Position.Y);
 
         Assert.Null(FindWaypoint(mapFile, "farpoint"));
     }
 
     private static void AssertTerrainHeights(Game game, List<ControlPointMetric> controlPoints)
     {
-        var quantum = GeneratedMapPreviewBuilder.HeightQuantumGameUnits;
+        var quantum = GeneratedMapPreviewBuilder.HeightQuantumGameUnits * S;
         var cropMinimum = (double)Card24ProofFixture.ExpectedCropMinimumGameZ();
 
-        foreach (var (engineX, engineY) in new[] { (640d, 640d), (100d, 100d), (1200d, 1200d) })
+        foreach (var (engineXLegacy, engineYLegacy) in new[] { (640d, 640d), (100d, 100d), (1200d, 1200d) })
         {
-            var gx = ((int)engineX / 10) + CropBaseLatticeX;
-            var gy = (int)engineY / 10;
-            var expected = (double)Card24ProofFixture.ExpectedHeightAtLattice(gx, gy) - cropMinimum;
+            var gx = ((int)engineXLegacy / 10) + CropBaseLatticeX;
+            var gy = (int)engineYLegacy / 10;
+            var expected = ((double)Card24ProofFixture.ExpectedHeightAtLattice(gx, gy) - cropMinimum) * S;
+            var engineX = engineXLegacy * S;
+            var engineY = engineYLegacy * S;
             var measured = game.Scene3D.Terrain.GetGroundHeight(new Vector2((float)engineX, (float)engineY));
 
             Assert.True(measured.HasValue, $"No terrain height at engine ({engineX}, {engineY}).");
