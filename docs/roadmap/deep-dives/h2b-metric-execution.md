@@ -9,7 +9,7 @@
 |---|---|
 | Baseline | Commit `7341141c4`, detached worktree, no source changes. Record: `~/log/track-h-h2b-baseline-v2/BASELINE-V2.md` |
 | Predetermined expectations | `~/log/track-h-h2b-baseline-v2/EXPECTED-POST-CUTOVER.md`, derived before any post-cutover run |
-| Post-cutover tip | Commit `10dc7e7da` (H2b-17), branch `track-h-h2b-1-metric-cutover`, clean tree |
+| Post-cutover tip | Commit `e0600e089` (H2b-17), branch `track-h-h2b-1-metric-cutover`, clean tree. Fix wave after the MCP run checkpoint `0420abbf5`: `e8e703df4`, `963cde406`, `4cf677204`, `1916004b3`, `872beb0d6`, `29e84c9fa`, `e0600e089`. The fix wave corrects the 19 regressions identified against the true base `c0ee1be135`. |
 | Post-cutover logs | `~/log/track-h-h2b-metric-post/` |
 | Installs | Generals (`CNC_GENERALS_PATH`) and Empire Earth II (`EMPIRE_EARTH_II_PATH`), both set and loaded for each run |
 
@@ -105,18 +105,24 @@ Shared viewer directory: `/mnt/pit2/Network Storage/temp/`
 |---|---|
 | `h2b-metric-post-mixed-ee2.gif` | Run 1 capture, post-cutover |
 | `h2b-metric-post-rebel-attack.gif` | Run 2 capture, post-cutover |
-| `h2b-metric-post-replaysketch-map-v2.png` | ReplaySketch map tab, post-cutover tip `0420abbf5`. Alpine Assault terrain with player markers. Captured with `CNC_GENERALS_PATH` set, `DISPLAY=:99`, `LIBGL_ALWAYS_SOFTWARE=1`, `REPLAYSKETCH_SCREENSHOT_TAB=map`. |
-| `h2b-metric-post-replaysketch-model-v2.png` | ReplaySketch model tab, post-cutover tip `0420abbf5`. Deterministic screenshot fixture, "Inspecting tank.gltf" with stub preview. |
-| `h2b-baseline-c6dadf9c7-replaysketch-map.png` | ReplaySketch map tab at base `c6dadf9c7`, captured identically to the v2 map |
-| `h2b-baseline-c6dadf9c7-replaysketch-model.png` | ReplaySketch model tab at base `c6dadf9c7`, captured identically to the v2 model |
+| `h2b-metric-post-replaysketch-map-v2.png` | ReplaySketch map tab, post-cutover checkpoint `0420abbf5`. Alpine Assault terrain with player markers. Captured with `CNC_GENERALS_PATH` set, `DISPLAY=:99`, `LIBGL_ALWAYS_SOFTWARE=1`, `REPLAYSKETCH_SCREENSHOT_TAB=map`. |
+| `h2b-metric-post-replaysketch-model-v2.png` | ReplaySketch model tab, post-cutover checkpoint `0420abbf5`. Screenshot-mode stub fixture (`ExternalModelScreenshotFixture`, `tank.gltf` placeholder, `FixturePreviewClient`): "Inspecting tank.gltf" and an empty preview panel with eligibility label "not ready". |
+| `h2b-baseline-c6dadf9c7-replaysketch-map.png` | ReplaySketch map tab at checkpoint `c6dadf9c7` (cutover card 14 tip, not the pre-cutover commit `7341141c4`), captured identically to the v2 map |
+| `h2b-baseline-c6dadf9c7-replaysketch-model.png` | ReplaySketch model tab at checkpoint `c6dadf9c7` (cutover card 14 tip), same stub fixture as the v2 model |
 | `h2b-metric-post-replaysketch-map.png` | Superseded. First attempt without `CNC_GENERALS_PATH`, shows the installation-error state. Retained, not overwritten. |
 | `h2b-metric-post-replaysketch-model.png` | Superseded. First attempt without `CNC_GENERALS_PATH`. Retained, not overwritten. |
 | `frames/h2b-metric-post-mixed-ee2/` | Run 1 per-frame PNGs and manifest |
 | `frames/h2b-metric-post-rebel-attack/` | Run 2 per-frame PNGs and manifest |
-| `h2b-baseline-v2-mixed-ee2-reconstructed-from-7341141c4.gif` | Baseline Run 1 GIF, not rewritten (timestamp predates post-cutover runs) |
-| `h2b-baseline-v2-rebel-attack-reconstructed-from-7341141c4.gif` | Baseline Run 2 GIF, not rewritten (timestamp predates post-cutover runs) |
+| `h2b-baseline-v2-mixed-ee2-reconstructed-from-7341141c4.gif` | Pre-cutover map-path visual baseline at `7341141c4`, Run 1, paired against `h2b-metric-post-mixed-ee2.gif`. Not rewritten (timestamp predates post-cutover runs). |
+| `h2b-baseline-v2-rebel-attack-reconstructed-from-7341141c4.gif` | Pre-cutover map-path visual baseline at `7341141c4`, Run 2, paired against `h2b-metric-post-rebel-attack.gif`. Not rewritten (timestamp predates post-cutover runs). |
 
-Screenshot equivalence: the v2 pair and the base `c6dadf9c7` pair were compared by independent image comparison. Map tab framing, terrain, and player markers are identical pre and post. Model tab layout, text, and blank stub preview are identical pre and post. Only surrounding UI state differs (map selector label, action-button enablement).
+Screenshot equivalence: the v2 pair (`0420abbf5`) and the `c6dadf9c7` pair were compared by independent image comparison. Map tab framing, terrain, and player markers are identical between the two pairs. Model tab layout, text, and empty preview panel are identical between the two pairs. Only surrounding UI state differs (map selector label, action-button enablement).
+
+Scope of the screenshot pairs: the `c6dadf9c7` pair is a late-stage checkpoint (cutover card 14 tip), not the pre-cutover commit `7341141c4`. The pair proves late-stage parity between the card 14 tip and the post-cutover checkpoint `0420abbf5`. It does not prove pre-cutover parity. The pre-cutover visual evidence for the map path is the baseline GIFs at `7341141c4` listed above.
+
+Model tab captures: both sides use the deterministic screenshot-mode stub fixture. They demonstrate that the model tab UI functions. They do not demonstrate real asset geometry conversion. Screenshot mode has no seam to select an installed W3D or NIF asset. The real model flow requires the interactive TestHarness external-model host.
+
+Real-asset conversion evidence: headless importer suites run with the Generals install across the `W3dImportParity`, `W3dModelImporter`, and `NifParticle` filters: 79 passed, 0 failed. These check installed W3D hull bounds against INI `GeometryMajorRadius` (AQ-5) and NIF particle translation (AQ-14).
 
 ## Known limitations
 
