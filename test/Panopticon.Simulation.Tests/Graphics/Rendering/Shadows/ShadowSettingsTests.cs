@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Graphics;
 using Panopticon.Graphics.Rendering.Shadows;
 using Panopticon.Graphics.Shaders;
@@ -68,6 +69,12 @@ public class ShadowSettingsTests
         Assert.Equal(0.7f, settings.NormalOffset);
         Assert.Equal(800f, settings.ShadowDistance);
         Assert.Equal(new Vector3(0.1f, 0.3f, 0.6f), settings.ShadowCascades4SplitDepths);
+    }
+
+    [Fact]
+    public void TestDefaultShadowDistanceIsMetricEquivalentOf1200LegacyUnits()
+    {
+        Assert.Equal(1200f * (float)UnitConversionPolicy.GeneralsFeetToMeters, new ShadowSettings().ShadowDistance, 1e-4f);
     }
 
     [Fact]

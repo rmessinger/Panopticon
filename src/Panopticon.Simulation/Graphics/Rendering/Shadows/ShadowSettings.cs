@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Mathematics;
 
 namespace Panopticon.Graphics.Rendering.Shadows;
@@ -48,7 +49,7 @@ public sealed class ShadowSettings
     /// <summary>
     /// Gets or sets the furthest distance from the camera that shadows will be rendered.
     /// </summary>
-    public float ShadowDistance { get; set; } = 1200.0f;
+    public float ShadowDistance { get; set; } = 1200.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     /// <summary>
     /// Gets or sets whether to stabilize the shadow map cascades.

@@ -11,7 +11,7 @@ public sealed class WaterTransparency : BaseSingletonAsset
     private static readonly IniParseTable<WaterTransparency> FieldParseTable = new IniParseTable<WaterTransparency>
     {
         { "TransparentWaterMinOpacity", (parser, x) => x.TransparentWaterMinOpacity = parser.ParseFloat() },
-        { "TransparentWaterDepth", (parser, x) => x.TransparentWaterDepth = parser.ParseFloat() },
+        { "TransparentWaterDepth", (parser, x) => x.TransparentWaterDepth = parser.ParseDistanceFloat() },
 
         { "SkyboxTextureN", (parser, x) => x.SkyboxTextureN = parser.ParseFileName() },
         { "SkyboxTextureE", (parser, x) => x.SkyboxTextureE = parser.ParseFileName() },
@@ -24,7 +24,7 @@ public sealed class WaterTransparency : BaseSingletonAsset
         { "AdditiveBlending", (parser, x) => x.AdditiveBlending = parser.ParseBoolean() },
         { "RadarWaterColor", (parser, x) => x.RadarWaterColor = parser.ParseColorRgb() },
         { "RiverTransparencyMultiplier", (parser, x) => x.RiverTransparencyMultiplier = parser.ParseFloat() },
-        { "ReflectionPlaneZ", (parser, x) => x.ReflectionPlaneZ = parser.ParseFloat() },
+        { "ReflectionPlaneZ", (parser, x) => x.ReflectionPlaneZ = parser.ParseDistanceFloat() },
         { "ReflectionOn", (parser, x) => x.ReflectionOn = parser.ParseBoolean() },
         { "ReflectionGuard", (parser, x) => x.ReflectionGuard = parser.ParseVector2() }
     };
