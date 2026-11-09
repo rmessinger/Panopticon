@@ -1590,7 +1590,7 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: each failure class produces a named diagnostic and a report entry; identical content
     passes; provenance-only unit differences pass only through the explicit allowlist; exit
     code and JSON report are machine-checkable.
-- [ ] H5-4 Retained-backend integration for converted maps (`WI-H5-04`).
+- [x] H5-4 Retained-backend integration for converted maps (`WI-H5-04`).
   - AC: a converted map loads and plays with lighting, cameras, water, blend navigation,
     waypoint paths, sides, teams, scripts, and trigger areas equivalent to the original;
     every retained section has a disposition; silent drops fail validation and load; the

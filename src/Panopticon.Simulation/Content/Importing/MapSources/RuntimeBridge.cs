@@ -2,10 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Data.Map;
+using Panopticon.Data.Utilities.Extensions;
+using Panopticon.FileFormats;
+using Panopticon.Logic.Map;
 
 namespace Panopticon.Content.Importing.MapSources;
 
@@ -318,6 +322,699 @@ public static class RuntimeBridge
         }
 
         return (float)value;
+    }
+
+    public static BlendTileData? MaterializeBlendTileData(MapInterchange model, HeightMapData? heightMapData = null)
+    {
+        ValidateOrThrow(model);
+
+        if (model.BlendTileData is { } blend)
+        {
+            var heights = heightMapData ?? MaterializeHeightMapData(model);
+            var bytes = SerializeBlendTileData(blend);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return BlendTileData.Parse(reader, context, heights);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == BlendTileData.AssetName);
+        if (retained is not null)
+        {
+            var heights = heightMapData ?? MaterializeHeightMapData(model);
+            return MapBackendReaders.ReadRetainedBlendTileData(retained, heights);
+        }
+
+        return null;
+    }
+
+    public static GlobalLighting? MaterializeGlobalLighting(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.GlobalLighting is { } lighting)
+        {
+            var bytes = SerializeGlobalLighting(lighting);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return GlobalLighting.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == GlobalLighting.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedGlobalLighting(retained);
+        }
+
+        return null;
+    }
+
+    public static NamedCameras? MaterializeNamedCameras(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.NamedCameras is { } cameras)
+        {
+            var bytes = SerializeNamedCameras(cameras);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return NamedCameras.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == NamedCameras.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedNamedCameras(retained);
+        }
+
+        return null;
+    }
+
+    public static StandingWaterAreas? MaterializeStandingWaterAreas(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.StandingWaterAreas is { } waterAreas)
+        {
+            var bytes = SerializeStandingWaterAreas(waterAreas);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return StandingWaterAreas.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == StandingWaterAreas.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedStandingWaterAreas(retained);
+        }
+
+        return null;
+    }
+
+    public static StandingWaveAreas? MaterializeStandingWaveAreas(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.StandingWaveAreas is { } waveAreas)
+        {
+            var bytes = SerializeStandingWaveAreas(waveAreas);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return StandingWaveAreas.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == StandingWaveAreas.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedStandingWaveAreas(retained);
+        }
+
+        return null;
+    }
+
+    public static RiverAreas? MaterializeRiverAreas(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.RiverAreas is { } riverAreas)
+        {
+            var bytes = SerializeRiverAreas(riverAreas);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return RiverAreas.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == RiverAreas.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedRiverAreas(retained);
+        }
+
+        return null;
+    }
+
+    public static GlobalWaterSettings? MaterializeGlobalWaterSettings(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.GlobalWaterSettings is { } waterSettings)
+        {
+            var bytes = SerializeGlobalWaterSettings(waterSettings);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return GlobalWaterSettings.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == GlobalWaterSettings.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedGlobalWaterSettings(retained);
+        }
+
+        return null;
+    }
+
+    public static PolygonTriggers? MaterializePolygonTriggers(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.PolygonTriggers is { } triggers)
+        {
+            var bytes = SerializePolygonTriggers(triggers);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return PolygonTriggers.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == PolygonTriggers.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedPolygonTriggers(retained);
+        }
+
+        return null;
+    }
+
+    public static WaypointsList? MaterializeWaypointsList(MapInterchange model)
+    {
+        ValidateOrThrow(model);
+
+        if (model.WaypointPaths is { } waypoints)
+        {
+            var bytes = SerializeWaypointsList(waypoints);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
+            var context = new MapParseContext(new AssetNameCollection());
+            return WaypointsList.Parse(reader, context);
+        }
+
+        var retained = model.RetainedSections.FirstOrDefault(s => s.SectionName == WaypointsList.AssetName);
+        if (retained is not null)
+        {
+            return MapBackendReaders.ReadRetainedWaypointsList(retained);
+        }
+
+        return null;
+    }
+
+    private static byte[] SerializeBlendTileData(MapBlendTileData data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write(data.NumTiles);
+        writer.WriteUInt16Array2D(data.Tiles);
+
+        var blendBitSize = data.Version >= 14 && data.Version < 24 ? 32u : 16u;
+        writer.WriteUIntArray2D(data.Blends, blendBitSize);
+        writer.WriteUIntArray2D(data.ThreeWayBlends, blendBitSize);
+        writer.WriteUIntArray2D(data.CliffTextures, blendBitSize);
+
+        if (data.Version > 6)
+        {
+            writer.WriteSingleBitBooleanArray2D(data.Impassability);
+        }
+
+        if (data.Version >= 10 && data.ImpassabilityToPlayers is not null)
+        {
+            writer.WriteSingleBitBooleanArray2D(data.ImpassabilityToPlayers);
+        }
+
+        if (data.Version >= 11 && data.PassageWidths is not null)
+        {
+            writer.WriteSingleBitBooleanArray2D(data.PassageWidths);
+        }
+
+        if (data.Version >= 14 && data.Version < 25 && data.Taintability is not null)
+        {
+            writer.WriteSingleBitBooleanArray2D(data.Taintability);
+        }
+
+        if (data.Version >= 15 && data.ExtraPassability is not null)
+        {
+            writer.WriteSingleBitBooleanArray2D(data.ExtraPassability);
+        }
+
+        if (data.Version >= 16 && data.Version < 25 && data.Flammability is not null)
+        {
+            writer.WriteByteArray2D(data.Flammability);
+        }
+
+        if (data.Version >= 17 && data.Visibility is not null)
+        {
+            writer.WriteSingleBitBooleanArray2D(data.Visibility, padValue: 0xFF);
+        }
+
+        if (data.Version >= 24)
+        {
+            if (data.Buildability is not null)
+            {
+                writer.WriteSingleBitBooleanArray2D(data.Buildability);
+            }
+
+            if (data.ImpassabilityToAirUnits is not null)
+            {
+                writer.WriteSingleBitBooleanArray2D(data.ImpassabilityToAirUnits);
+            }
+
+            if (data.TiberiumGrowability is not null)
+            {
+                writer.WriteSingleBitBooleanArray2D(data.TiberiumGrowability);
+            }
+        }
+
+        if (data.Version >= 25 && data.DynamicShrubberyDensity is not null)
+        {
+            writer.WriteByteArray2D(data.DynamicShrubberyDensity);
+        }
+
+        writer.Write(data.TextureCellCount);
+        writer.Write((uint)data.BlendDescriptions.Count + 1);
+        writer.Write(data.ParsedCliffTextureMappingsCount);
+        writer.Write((uint)data.Textures.Count);
+
+        foreach (var t in data.Textures)
+        {
+            writer.Write(t.CellStart);
+            writer.Write(t.CellCount);
+            writer.Write(t.CellSize);
+            writer.Write(t.MagicValue);
+            writer.WriteUInt16PrefixedAsciiString(t.Name);
+        }
+
+        writer.Write(data.MagicValue1);
+        writer.Write(data.MagicValue2);
+
+        foreach (var d in data.BlendDescriptions)
+        {
+            writer.Write(d.SecondaryTextureTile);
+            writer.Write(d.RawBlendDirection);
+            writer.Write(d.Flags);
+            writer.Write(d.TwoSided);
+            writer.Write(d.MagicValue1);
+            writer.Write(0u);
+        }
+
+        foreach (var c in data.CliffTextureMappings)
+        {
+            writer.Write(c.TextureTile);
+            writer.Write(c.BottomLeftCoords);
+            writer.Write(c.BottomRightCoords);
+            writer.Write(c.TopRightCoords);
+            writer.Write(c.TopLeftCoords);
+            writer.Write(c.Unknown2);
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializeGlobalLighting(MapGlobalLightingRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Time);
+
+        MapTimeOfDay[] times = [MapTimeOfDay.Morning, MapTimeOfDay.Afternoon, MapTimeOfDay.Evening, MapTimeOfDay.Night];
+        foreach (var t in times)
+        {
+            if (data.Configurations.TryGetValue(t, out var config))
+            {
+                WriteLight(writer, config.TerrainSun);
+                if (data.Version < 10)
+                {
+                    WriteLight(writer, config.ObjectSun);
+                    if (data.Version >= 7)
+                    {
+                        WriteLight(writer, config.InfantrySun);
+                    }
+                }
+
+                WriteLight(writer, config.TerrainAccent1);
+                if (data.Version < 10)
+                {
+                    WriteLight(writer, config.ObjectAccent1);
+                    if (data.Version >= 7)
+                    {
+                        WriteLight(writer, config.InfantryAccent1);
+                    }
+                }
+
+                WriteLight(writer, config.TerrainAccent2);
+                if (data.Version < 10)
+                {
+                    WriteLight(writer, config.ObjectAccent2);
+                    if (data.Version >= 7)
+                    {
+                        WriteLight(writer, config.InfantryAccent2);
+                    }
+                }
+            }
+            else
+            {
+                WriteEmptyConfig(writer, data.Version);
+            }
+        }
+
+        writer.Write(data.ShadowColorArgb);
+
+        if (data.Version >= 7 && data.Version < 11 && data.Unknown is not null)
+        {
+            writer.Write(data.Unknown);
+        }
+
+        if (data.Version >= 12 && data.Unknown2.HasValue && data.Unknown3Argb.HasValue)
+        {
+            writer.Write(data.Unknown2.Value);
+            writer.Write(data.Unknown3Argb.Value);
+        }
+
+        if (data.Version >= 8 && data.NoCloudFactor.HasValue)
+        {
+            writer.Write(data.NoCloudFactor.Value.X);
+            writer.Write(data.NoCloudFactor.Value.Y);
+            writer.Write(data.NoCloudFactor.Value.Z);
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static void WriteLight(BinaryWriter writer, MapGlobalLightRecord? light)
+    {
+        writer.Write(light?.Ambient ?? Vector3.Zero);
+        writer.Write(light?.Color ?? Vector3.Zero);
+        writer.Write(light?.Direction ?? Vector3.Zero);
+    }
+
+    private static void WriteEmptyConfig(BinaryWriter writer, ushort version)
+    {
+        for (var i = 0; i < 3; i++)
+        {
+            WriteLight(writer, null);
+            if (version < 10)
+            {
+                WriteLight(writer, null);
+                if (version >= 7)
+                {
+                    WriteLight(writer, null);
+                }
+            }
+        }
+    }
+
+    private static byte[] SerializeNamedCameras(MapNamedCamerasRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Cameras.Count);
+        foreach (var c in data.Cameras)
+        {
+            writer.Write(c.LookAtPoint);
+            writer.WriteUInt16PrefixedAsciiString(c.Name);
+            writer.Write(c.Pitch);
+            writer.Write(c.Roll);
+            writer.Write(c.Yaw);
+            writer.Write(c.Zoom);
+            writer.Write(c.FieldOfView);
+            writer.Write(c.Unknown);
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializeStandingWaterAreas(MapStandingWaterAreasRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Areas.Count);
+        foreach (var a in data.Areas)
+        {
+            writer.Write(a.UniqueId);
+            writer.WriteUInt16PrefixedAsciiString(a.Name);
+            writer.WriteUInt16PrefixedAsciiString(a.LayerName);
+            writer.Write(a.UvScrollSpeed);
+            writer.Write(a.UseAdditiveBlending);
+            writer.WriteUInt16PrefixedAsciiString(a.BumpMapTexture);
+            writer.WriteUInt16PrefixedAsciiString(a.SkyTexture);
+            writer.Write((uint)a.Points.Count);
+            foreach (var p in a.Points)
+            {
+                writer.Write(p);
+            }
+
+            writer.Write(a.WaterHeight);
+            writer.WriteUInt16PrefixedAsciiString(a.FxShader);
+            writer.WriteUInt16PrefixedAsciiString(a.DepthColors);
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializeStandingWaveAreas(MapStandingWaveAreasRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Areas.Count);
+        foreach (var a in data.Areas)
+        {
+            writer.Write(a.UniqueId);
+            writer.WriteUInt16PrefixedAsciiString(a.Name);
+            writer.WriteUInt16PrefixedAsciiString(a.LayerName);
+            writer.Write(a.UvScrollSpeed);
+            writer.Write(a.UseAdditiveBlending);
+            writer.Write((uint)a.Points.Count);
+            foreach (var p in a.Points)
+            {
+                writer.Write(p);
+            }
+
+            writer.Write(0u);
+            if (data.Version < 3)
+            {
+                writer.Write(a.FinalWidth);
+                writer.Write(a.FinalHeight);
+                writer.Write(a.InitialWidthFraction);
+                writer.Write(a.InitialHeightFraction);
+                writer.Write(a.InitialVelocity);
+                writer.Write(a.TimeToFade);
+                writer.Write(a.TimeToCompress);
+                writer.Write(a.TimeOffset2ndWave);
+                writer.Write(a.DistanceFromShore);
+            }
+
+            writer.WriteUInt16PrefixedAsciiString(a.Texture);
+            if (data.Version == 2)
+            {
+                writer.WriteBooleanUInt32(a.EnablePcaWave);
+            }
+
+            if (data.Version >= 4)
+            {
+                writer.WriteUInt16PrefixedAsciiString(a.WaveParticleFXName ?? string.Empty);
+            }
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializeRiverAreas(MapRiverAreasRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Areas.Count);
+        foreach (var a in data.Areas)
+        {
+            writer.Write(a.UniqueId);
+            writer.WriteUInt16PrefixedAsciiString(a.Name);
+            writer.WriteUInt16PrefixedAsciiString(a.LayerName);
+            writer.Write(a.UvScrollSpeed);
+            writer.Write(a.UseAdditiveBlending);
+            writer.WriteUInt16PrefixedAsciiString(a.RiverTexture);
+            writer.WriteUInt16PrefixedAsciiString(a.NoiseTexture);
+            writer.WriteUInt16PrefixedAsciiString(a.AlphaEdgeTexture);
+            writer.WriteUInt16PrefixedAsciiString(a.SparkleTexture);
+            writer.Write(a.ColorR);
+            writer.Write(a.ColorG);
+            writer.Write(a.ColorB);
+            writer.Write((byte)0);
+            writer.Write(a.Alpha);
+            writer.Write(a.WaterHeight);
+            if (data.Version >= 3)
+            {
+                writer.WriteUInt16PrefixedAsciiString(a.RiverType);
+            }
+
+            writer.WriteUInt16PrefixedAsciiString(a.MinimumWaterLod);
+            writer.Write((uint)a.Lines.Count);
+            foreach (var l in a.Lines)
+            {
+                writer.Write(l.Start);
+                writer.Write(l.End);
+            }
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializeGlobalWaterSettings(MapGlobalWaterSettingsRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.WriteBooleanUInt32(data.ReflectionOn);
+        writer.Write(data.ReflectionPlaneZ);
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializePolygonTriggers(MapPolygonTriggersRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Triggers.Count);
+        foreach (var t in data.Triggers)
+        {
+            writer.WriteUInt16PrefixedAsciiString(t.Name);
+            writer.WriteUInt16PrefixedAsciiString(t.LayerName ?? string.Empty);
+            writer.Write(t.TriggerId);
+            writer.Write(t.IsWater);
+            writer.Write(t.IsRiver);
+            writer.Write(t.RiverStart);
+            if (data.Version >= 5)
+            {
+                writer.Write(t.UseAdditiveBlending);
+                writer.Write(t.UvScrollSpeed);
+                writer.WriteUInt16PrefixedAsciiString(t.RiverTexture ?? string.Empty);
+                writer.WriteUInt16PrefixedAsciiString(t.NoiseTexture ?? string.Empty);
+                writer.WriteUInt16PrefixedAsciiString(t.AlphaEdgeTexture ?? string.Empty);
+                writer.WriteUInt16PrefixedAsciiString(t.SparkleTexture ?? string.Empty);
+                writer.WriteUInt16PrefixedAsciiString(t.BumpMapTexture ?? string.Empty);
+                writer.WriteUInt16PrefixedAsciiString(t.SkyTexture ?? string.Empty);
+                writer.Write(t.Unknown);
+                writer.Write(t.ColorR);
+                writer.Write(t.ColorG);
+                writer.Write(t.ColorB);
+                writer.Write(t.RiverAlpha);
+            }
+
+            writer.Write((uint)t.Points.Count);
+            foreach (var p in t.Points)
+            {
+                writer.Write((int)p.X);
+                writer.Write((int)p.Y);
+                writer.Write((int)p.Z);
+            }
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
+    }
+
+    private static byte[] SerializeWaypointsList(MapWaypointPathsRecord data)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        writer.Write(data.Version);
+        var sizePos = stream.Position;
+        writer.Write(0u);
+        var startPos = stream.Position;
+
+        writer.Write((uint)data.Paths.Count);
+        foreach (var p in data.Paths)
+        {
+            writer.Write(p.StartWaypointId);
+            writer.Write(p.EndWaypointId);
+        }
+
+        var endPos = stream.Position;
+        var dataSize = (uint)(endPos - startPos);
+        stream.Position = sizePos;
+        writer.Write(dataSize);
+        return stream.ToArray();
     }
 
     private static int CoreExtent(int latticePoints, int chunkIndex) => Math.Min(CorePointsPerAxis, latticePoints - (chunkIndex * IntervalsPerChunkAxis));
