@@ -1622,7 +1622,7 @@ complete H2a group merges. Each item corresponds to one card.
     the manifest accounts for every source section; deformation re-export after a HeightMapData edit
     verified through package reload; converter failure on unsupported retained section versions
     verified.
-- [ ] H7-2 Unit round-trip regression suite (`WI-H7-02`).
+- [x] H7-2 Unit round-trip regression suite (`WI-H7-02`).
   - AC: each materialized template field equals its counterpart on the converted path; valued
     unclassified fields match; diagnostic sets match; numeric enum rejection asserted.
 - [ ] H7-3 ReplaySketch new-format scenario proof (`WI-H7-03`).
