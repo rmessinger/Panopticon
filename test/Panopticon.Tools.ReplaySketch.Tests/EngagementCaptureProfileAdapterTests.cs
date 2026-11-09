@@ -40,11 +40,11 @@ public class EngagementCaptureProfileAdapterTests
         Assert.IsType<CaptureProjectileObservedExpectation>(Assert.Single(profile.Expectations));
         Assert.Equal("target", profile.StopWhenActorDestroyed);
 
-        // Placement: default center (600, 600), separation 120 along the 180-degree axis
-        // puts the attacker east and the target west, facing each other.
-        Assert.Equal(660f, profile.Actors[0].X, precision: 2);
-        Assert.Equal(600f, profile.Actors[0].Y, precision: 2);
-        Assert.Equal(540f, profile.Actors[1].X, precision: 2);
+        // Placement: default center (182.88, 182.88) m, separation 36.576 m along the
+        // 180-degree axis puts the attacker east and the target west, facing each other.
+        Assert.Equal(201.168f, profile.Actors[0].X, precision: 2);
+        Assert.Equal(182.88f, profile.Actors[0].Y, precision: 2);
+        Assert.Equal(164.592f, profile.Actors[1].X, precision: 2);
         Assert.Equal(180f, profile.Actors[0].FacingDegrees, precision: 1);
         Assert.Equal(0f, profile.Actors[1].FacingDegrees, precision: 1);
     }
@@ -52,10 +52,10 @@ public class EngagementCaptureProfileAdapterTests
     [Fact]
     public void LegacyOptions_RespectSeparationFloor()
     {
-        var options = new EngagementCaptureOptions { Separation = 0.5f, CenterX = 100, CenterY = 100 };
+        var options = new EngagementCaptureOptions { Separation = 0.5f, CenterX = 30.48f, CenterY = 30.48f };
         var profile = EngagementCaptureRunner.ToProfile(options);
 
         var dx = profile.Actors[0].X - profile.Actors[1].X;
-        Assert.True(MathF.Abs(dx) >= 9.9f, $"separation floor not applied: dx={dx}");
+        Assert.True(MathF.Abs(dx) >= 3.01752f, $"separation floor not applied: dx={dx}");
     }
 }

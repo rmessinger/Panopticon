@@ -1,8 +1,12 @@
+using Panopticon.Content.Importing.Units.Materialization;
+
 namespace Panopticon.Tools.TestHarness;
 
 /// <summary>
 /// Knobs for <see cref="EngagementCaptureRunner"/>: which two units fight, where, and how the
 /// capture is framed. Defaults capture a USA Missile Defender firing at a China BattleMaster.
+/// Distance and height values are meters; the defaults convert the historical legacy-unit
+/// values by the source unit scale, preserving the authored behavior.
 /// </summary>
 public sealed class EngagementCaptureOptions
 {
@@ -21,14 +25,14 @@ public sealed class EngagementCaptureOptions
     /// <summary>Annotation label for the target. Empty derives one from the definition.</summary>
     public string? TargetLabel { get; set; } = null;
 
-    /// <summary>World X of the midpoint between the two units.</summary>
-    public float CenterX { get; set; } = 600f;
+    /// <summary>World X of the midpoint between the two units, in meters.</summary>
+    public float CenterX { get; set; } = 600f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
-    /// <summary>World Y of the midpoint between the two units.</summary>
-    public float CenterY { get; set; } = 600f;
+    /// <summary>World Y of the midpoint between the two units, in meters.</summary>
+    public float CenterY { get; set; } = 600f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
-    /// <summary>World-unit distance between the two units. Must be inside the attacker's weapon range.</summary>
-    public float Separation { get; set; } = 120f;
+    /// <summary>Distance between the two units in meters. Must be inside the attacker's weapon range.</summary>
+    public float Separation { get; set; } = 120f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     /// <summary>
     /// Compass rotation of the attacker-to-target axis around the midpoint. Firing FX such as an
@@ -52,17 +56,17 @@ public sealed class EngagementCaptureOptions
     /// <summary>Fraction of the viewport width the two units should span after the camera fit.</summary>
     public float DesiredSpanFraction { get; set; } = 0.70f;
 
-    /// <summary>Starting height for the camera fit iteration.</summary>
-    public float InitialCameraHeight { get; set; } = 180f;
+    /// <summary>Starting height for the camera fit iteration, in meters.</summary>
+    public float InitialCameraHeight { get; set; } = 180f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
-    /// <summary>Lower bound for the fitted camera height.</summary>
-    public float MinCameraHeight { get; set; } = 60f;
+    /// <summary>Lower bound for the fitted camera height, in meters.</summary>
+    public float MinCameraHeight { get; set; } = 60f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     /// <summary>
-    /// Upper bound for the fitted camera height. Kept below the terrain pass's fog band
-    /// (roughly 900-1500) so a fit never lands on a frame of fog gray.
+    /// Upper bound for the fitted camera height, in meters. Kept below the terrain pass's fog
+    /// band (roughly 274-457 m) so a fit never lands on a frame of fog gray.
     /// </summary>
-    public float MaxCameraHeight { get; set; } = 800f;
+    public float MaxCameraHeight { get; set; } = 800f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     /// <summary>Directory for the PNG sequence and manifest. Empty uses $TMPDIR/panopticon_engagement.</summary>
     public string? OutputDirectory { get; set; } = null;

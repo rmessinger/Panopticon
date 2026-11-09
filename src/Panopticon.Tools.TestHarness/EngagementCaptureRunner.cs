@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data;
 using Panopticon.Mathematics;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
@@ -25,7 +26,8 @@ namespace Panopticon.Tools.TestHarness;
 /// </summary>
 public static class EngagementCaptureRunner
 {
-    private const float MinimumSeparationMeters = 10f;
+    // The authored floor was 10 legacy units; the source scale keeps it behavior-preserving.
+    private const float MinimumSeparationMeters = 10f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     public static void Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
     {

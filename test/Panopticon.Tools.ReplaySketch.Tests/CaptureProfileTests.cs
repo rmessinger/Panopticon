@@ -157,6 +157,150 @@ public class CaptureProfileTests
             var errors = CaptureProfileValidator.Validate(profile);
             Assert.True(errors.Count == 0, $"{name}: {string.Join("; ", errors)}");
         }
+
+        var legacy = CaptureProfileLoader.LoadEmbeddedCapture("capture-follow-move.json");
+        var scale = (float)Panopticon.Content.Importing.Units.Materialization.UnitConversionPolicy.GeneralsFeetToMeters;
+        Assert.Equal(470f * scale, legacy.Actors[0].X);
+        Assert.Equal(CaptureProfile.MetricSchemaMarker, legacy.UnitSchema);
+    }
+
+    [Fact]
+    public void Loader_MetricMarker_LoadsIdentity()
+    {
+        var path = WriteProfileFile("""
+            {
+              "UnitSchema": "metric-v1",
+              "Name": "metric",
+              "Actors": [ { "Id": "a", "Definition": "X", "Owner": "civilian", "X": 143.256, "Y": 213.36 } ],
+              "Commands": [],
+              "Expectations": []
+            }
+            """);
+
+        try
+        {
+            var profile = CaptureProfileLoader.LoadCaptureFromFile(path);
+
+            Assert.Equal(143.256f, profile.Actors[0].X);
+            Assert.Equal(213.36f, profile.Actors[0].Y);
+            Assert.Equal(CaptureProfile.MetricSchemaMarker, profile.UnitSchema);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Loader_MarkerlessProfile_ConvertsLegacyUnitsOnce()
+    {
+        var path = WriteProfileFile("""
+            {
+              "Name": "legacy",
+              "Actors": [
+                { "Id": "mover", "Definition": "X", "Owner": "civilian", "X": 470, "Y": 700, "Z": 65 }
+              ],
+              "Scorches": [ { "X": 550, "Y": 600, "Radius": 40, "Type": "Scorch1" } ],
+              "Camera": {
+                "Mode": "Explicit",
+                "LookAt": { "X": 540, "Y": 600 },
+                "Height": 350,
+                "FramingPoints": [ { "X": 600, "Y": 600 } ],
+                "InitialCameraHeight": 120,
+                "MinCameraHeight": 50,
+                "MaxCameraHeight": 300
+              },
+              "Commands": [
+                { "Type": "Move", "Frame": 0, "ActorId": "mover", "X": 570, "Y": 700 },
+                { "Type": "ApplyImpulse", "Frame": 1, "ActorId": "mover", "DeltaVelocityX": 8.0 }
+              ],
+              "Expectations": [ { "Type": "MinDisplacement", "ActorId": "mover", "MinDisplacement": 40 } ]
+            }
+            """);
+
+        try
+        {
+            var profile = CaptureProfileLoader.LoadCaptureFromFile(path);
+            var scale = (float)Panopticon.Content.Importing.Units.Materialization.UnitConversionPolicy.GeneralsFeetToMeters;
+
+            Assert.Equal(143.256f, profile.Actors[0].X, precision: 3);
+            Assert.Equal(700f * scale, profile.Actors[0].Y);
+            Assert.Equal(65f * scale, profile.Actors[0].Z!.Value);
+            Assert.Equal(40f * scale, profile.Scorches[0].Radius);
+            Assert.Equal(540f * scale, profile.Camera.LookAt!.X);
+            Assert.Equal(350f * scale, profile.Camera.Height);
+            Assert.Equal(600f * scale, profile.Camera.FramingPoints[0].Y);
+            Assert.Equal(120f * scale, profile.Camera.InitialCameraHeight);
+            Assert.Equal(50f * scale, profile.Camera.MinCameraHeight);
+            Assert.Equal(300f * scale, profile.Camera.MaxCameraHeight);
+            Assert.Equal(570f * scale, Assert.IsType<CaptureMoveCommand>(profile.Commands[0]).X);
+            Assert.Equal(8f * scale, Assert.IsType<CaptureApplyImpulseCommand>(profile.Commands[1]).DeltaVelocityX);
+            Assert.Equal(40f * scale, Assert.IsType<CaptureMinDisplacementExpectation>(profile.Expectations[0]).MinDisplacement);
+            Assert.Equal(CaptureProfile.MetricSchemaMarker, profile.UnitSchema);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Loader_ConvertedProfile_SerializesWithMarkerAndReloadsIdentically()
+    {
+        var path = WriteProfileFile("""
+            {
+              "Name": "legacy",
+              "Actors": [ { "Id": "a", "Definition": "X", "Owner": "civilian", "X": 470, "Y": 700 } ],
+              "Commands": [],
+              "Expectations": []
+            }
+            """);
+
+        try
+        {
+            var legacy = CaptureProfileLoader.LoadCaptureFromFile(path);
+            var roundTripped = RoundTrip(legacy);
+
+            Assert.Equal(legacy.Actors[0].X, roundTripped.Actors[0].X);
+            Assert.Equal(CaptureProfile.MetricSchemaMarker, roundTripped.UnitSchema);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Loader_UnknownUnitSchema_ThrowsTyped()
+    {
+        var path = WriteProfileFile("""
+            {
+              "UnitSchema": "furlongs-v1",
+              "Name": "unknown",
+              "Actors": [],
+              "Commands": [],
+              "Expectations": []
+            }
+            """);
+
+        try
+        {
+            var exception = Assert.Throws<CaptureProfileLoader.UnsupportedUnitSchemaException>(
+                () => CaptureProfileLoader.LoadCaptureFromFile(path));
+
+            Assert.Contains("furlongs-v1", exception.Message);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    private static string WriteProfileFile(string json)
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"capture-profile-test-{System.Guid.NewGuid():N}.json");
+        File.WriteAllText(path, json);
+        return path;
     }
 
     [Fact]

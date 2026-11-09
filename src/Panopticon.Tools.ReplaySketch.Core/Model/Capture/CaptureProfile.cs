@@ -8,10 +8,23 @@ namespace Panopticon.Tools.ReplaySketch.Model.Capture;
 /// and success expectations. Loaded from JSON by
 /// <see cref="Services.CaptureProfileLoader"/>; validated by <see cref="CaptureProfileValidator"/>.
 /// The TestHarness <c>ScenarioCaptureRunner</c> executes it.
+///
+/// Length fields are meters. JSON profiles declare their unit schema through
+/// <see cref="UnitSchema"/>; the loader upgrades markerless historical profiles (legacy game
+/// units) at load, so the in-memory model is always metric.
 /// </summary>
 public class CaptureProfile
 {
+    /// <summary>The only known unit schema marker. Absent markers mean the historical legacy-unit schema.</summary>
+    public const string MetricSchemaMarker = "metric-v1";
+
     public List<CaptureTerrainScorch> Scorches { get; set; } = [];
+    /// <summary>
+    /// Unit schema marker of the source JSON, always <see cref="MetricSchemaMarker"/> after a
+    /// load; serialization writes it so every saved profile carries the marker explicitly.
+    /// </summary>
+    public string UnitSchema { get; set; } = MetricSchemaMarker;
+
     /// <summary>Scenario name; used in the manifest and in the default output directory name.</summary>
     public string Name { get; set; } = "capture";
 
