@@ -17,10 +17,10 @@ internal static class TerrainDecalMesher
         {
             var decal = decals[decalIndex];
             var radius = decal.Radius;
-            var minX = Math.Max(0, (int)MathF.Floor((decal.Position.X - radius - origin.X) / HeightMap.HorizontalScale));
-            var minY = Math.Max(0, (int)MathF.Floor((decal.Position.Y - radius - origin.Y) / HeightMap.HorizontalScale));
-            var maxX = Math.Min(heightMap.Width - 1, (int)MathF.Ceiling((decal.Position.X + radius - origin.X) / HeightMap.HorizontalScale));
-            var maxY = Math.Min(heightMap.Height - 1, (int)MathF.Ceiling((decal.Position.Y + radius - origin.Y) / HeightMap.HorizontalScale));
+            var minX = Math.Max(0, (int)MathF.Floor(SnapToTile((decal.Position.X - radius - origin.X) / HeightMap.HorizontalScale)));
+            var minY = Math.Max(0, (int)MathF.Floor(SnapToTile((decal.Position.Y - radius - origin.Y) / HeightMap.HorizontalScale)));
+            var maxX = Math.Min(heightMap.Width - 1, (int)MathF.Ceiling(SnapToTile((decal.Position.X + radius - origin.X) / HeightMap.HorizontalScale)));
+            var maxY = Math.Min(heightMap.Height - 1, (int)MathF.Ceiling(SnapToTile((decal.Position.Y + radius - origin.Y) / HeightMap.HorizontalScale)));
             if (minX >= maxX || minY >= maxY)
             {
                 continue;
@@ -66,6 +66,13 @@ internal static class TerrainDecalMesher
         }
 
         return new TerrainDecalMesh(vertices.ToArray(), indices.ToArray());
+    }
+
+    // float32 conversion of exact tile multiples lands an ulp low; snapping preserves legacy tile alignment.
+    private static float SnapToTile(float tile)
+    {
+        var nearest = MathF.Round(tile);
+        return MathF.Abs(tile - nearest) <= MathF.Abs(tile) * 1e-6f ? nearest : tile;
     }
 }
 
