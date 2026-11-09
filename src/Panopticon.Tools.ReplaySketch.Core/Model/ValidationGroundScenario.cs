@@ -12,6 +12,14 @@ namespace Panopticon.Tools.ReplaySketch.Model;
 /// </summary>
 public sealed class ValidationGroundScenario
 {
+    public const string MetricUnitSchema = "metric-v1";
+
+    /// <summary>
+    /// Unit schema of the in-memory scenario and of every written file. Files without this marker are
+    /// legacy game units, converted to meters once by <see cref="Services.ValidationGroundScenarioStore"/>.
+    /// </summary>
+    public string UnitSchema => MetricUnitSchema;
+
     public string MapPath { get; set; } = "";
 
     /// <summary>

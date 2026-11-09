@@ -9,7 +9,7 @@ public class ValidationGroundEditorModelTests
 {
     // Extent large enough that the default layout (cluster at 600,600) sits inside it.
     private static readonly Vector3 Min = new(0f, 0f, 0f);
-    private static readonly Vector3 Max = new(2000f, 2000f, 0f);
+    private static readonly Vector3 Max = new(609.6f, 609.6f, 0f);
 
     private static ValidationGroundEditorModel NewModelWithSingleFaction()
     {
@@ -37,9 +37,10 @@ public class ValidationGroundEditorModelTests
     public void HitTest_AtUnitMarker_ReturnsUnit()
     {
         var model = NewModelWithSingleFaction();
-        // Single-faction unit 0 is at world (240, 560) with the default layout; with extent 0..2000
-        // into a 400px preview that projects to (48, 288).
-        Assert.Equal(new Vector3(240f, 560f, 0f), model.Plan!.UnitPlacements[0].Position);
+        // Single-faction unit 0 is at world (73.152, 170.688) with the default layout; with extent
+        // 0..609.6 into a 400px preview that projects to (48, 288).
+        Assert.Equal(73.152f, model.Plan!.UnitPlacements[0].Position.X, precision: 3);
+        Assert.Equal(170.688f, model.Plan!.UnitPlacements[0].Position.Y, precision: 3);
 
         var hit = model.HitTest(canvasX: 48f, canvasY: 288f, offsetX: 0, offsetY: 0, previewSize: 400f);
 

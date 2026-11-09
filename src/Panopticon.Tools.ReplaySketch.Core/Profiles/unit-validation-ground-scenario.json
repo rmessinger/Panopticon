@@ -1,12 +1,13 @@
 {
+  "UnitSchema": "metric-v1",
   "MapPath": "maps/Dark Mountain/Dark Mountain.map",
   "FactionIndices": [2, 3, 4],
   "Layout": {
-    "TargetClusterCenter": { "x": 600, "y": 600, "z": 0 },
-    "TargetClusterRadius": 40,
-    "UnitSpacing": 80,
-    "FactionRowOffset": 150,
-    "TargetApproachDistance": 80,
+    "TargetClusterCenter": { "x": 182.88, "y": 182.88, "z": 0 },
+    "TargetClusterRadius": 12.192,
+    "UnitSpacing": 24.384,
+    "FactionRowOffset": 45.72,
+    "TargetApproachDistance": 24.384,
     "Mode": "Clusters"
   },
   "TargetDefinitions": ["CarAsian1"],
@@ -19,7 +20,7 @@
       "FactionIndex": 4,
       "RosterIndex": 3,
       "IsTarget": false,
-      "TargetDistance": 8.0
+      "TargetDistance": 2.4384
     }
   ]
 }

@@ -18,14 +18,14 @@ namespace Panopticon.Tools.ReplaySketch.Services;
 public static class ValidationGroundBuilder
 {
     // Cluster search resolution: candidate centres are probed on a grid of this step over the map.
-    private const float ClusterSearchStep = 100f;
+    private const float ClusterSearchStep = 30.48f;
     // Margin kept between a cluster's outermost placement and the playable extent border.
-    private const float ClusterBorderMargin = 30f;
+    private const float ClusterBorderMargin = 9.144f;
     // Height spreads within this many units count as equally flat when scoring candidates, so the
     // tie breaks by proximity to the layout centre. Without it, a strictly-flatter first cluster
     // can sit next to the only other flat disc on the map and box later factions into the hills
     // (observed on Alpine Assault: spread 0 vs 2 chose the 0 and left none flat for faction 3).
-    private const float FlatnessBucket = 5f;
+    private const float FlatnessBucket = 1.524f;
 
     public static SpawnPlan Build(ValidationGroundScenario scenario, MapMetadataService? map = null)
     {
@@ -409,7 +409,7 @@ public static class ValidationGroundBuilder
     private static bool WaterInsideDisc(MapMetadataService map, Vector2 center, float radius)
     {
         // Terrain-cell sampling avoids mistaking a flat lakebed for usable ground.
-        const float step = 10f;
+        const float step = 3.048f;
         for (var dy = -radius; dy <= radius; dy += step)
         {
             for (var dx = -radius; dx <= radius; dx += step)
@@ -442,7 +442,7 @@ public static class ValidationGroundBuilder
     /// <summary>Max-minus-min of height samples over a coarse disc grid of the given radius.</summary>
     private static float HeightSpread(MapMetadataService map, Vector2 center, float radius)
     {
-        var step = Math.Max(40f, radius / 3f);
+        var step = Math.Max(12.192f, radius / 3f);
         var min = float.MaxValue;
         var max = float.MinValue;
         for (var dy = -radius; dy <= radius; dy += step)
@@ -491,15 +491,16 @@ public static class ValidationGroundBuilder
         // spawning a supply building on top of the roster. Deterministic search for the nearest
         // grid point to the layout centre that clears every disc (plus a margin) and every
         // already-placed source.
-        const float sourceStep = 50f;
-        const float sourceMargin = 60f;
+        const float sourceStep = 15.24f;
+        const float sourceMargin = 18.288f;
+        const float sourceSearchRadius = 304.8f;
         var placed = new List<Vector2>();
         for (var i = 0; i < scenario.SupplySourceDefinitions.Count; i++)
         {
             (float Dist, Vector2 Pos)? best = null;
-            for (var y = center.Y - 1000f; y <= center.Y + 1000f; y += sourceStep)
+            for (var y = center.Y - sourceSearchRadius; y <= center.Y + sourceSearchRadius; y += sourceStep)
             {
-                for (var x = center.X - 1000f; x <= center.X + 1000f; x += sourceStep)
+                for (var x = center.X - sourceSearchRadius; x <= center.X + sourceSearchRadius; x += sourceStep)
                 {
                     var candidate = new Vector2(x, y);
                     if (map != null && (candidate.X < map.ExtentMin.X || candidate.Y < map.ExtentMin.Y

@@ -148,7 +148,7 @@ public sealed class MapMetadataService
 
         // ------------------------------------------------------------------
         // Compute world-space extents from HeightMap
-        // HeightMap.HorizontalScale = 10; border cells are outside the playable area.
+        // Border cells are outside the playable area.
         // ------------------------------------------------------------------
         var border = (int)heightMapData.BorderWidth;
         var playableW = (int)heightMapData.Width - 2 * border;

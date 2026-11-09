@@ -1,5 +1,6 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic.Map;
 using Panopticon.Tools.ReplaySketch.Model;
 using Panopticon.Tools.ReplaySketch.Services;
@@ -13,11 +14,11 @@ public class ValidationGroundBuilderTests
     {
         var scenario = SingleFactionScenario();
         scenario.Layout.Mode = LayoutMode.Clusters;
-        scenario.Layout.TargetClusterCenter = new Vector3(100f, 100f, 0f);
-        var map = MapMetadataService.CreateForTesting(Vector3.Zero, new Vector3(2000f, 2000f, 0f),
+        scenario.Layout.TargetClusterCenter = new Vector3(30.48f, 30.48f, 0f);
+        var map = MapMetadataService.CreateForTesting(Vector3.Zero, new Vector3(609.6f, 609.6f, 0f),
             new[] { PolygonTrigger.CreateDefaultWaterArea(1) });
 
-        Assert.True(map.IsUnderwater(100f, 100f));
+        Assert.True(map.IsUnderwater(30.48f, 30.48f));
         var plan = ValidationGroundBuilder.Build(scenario, map);
         var positions = plan.UnitPlacements.Select(u => u.Position)
             .Concat(plan.TargetPlacements.Select(t => t.Position))
@@ -30,7 +31,7 @@ public class ValidationGroundBuilderTests
     {
         var scenario = SingleFactionScenario();
         scenario.Layout.Mode = LayoutMode.Clusters;
-        var map = MapMetadataService.CreateForTesting(new Vector3(-250f, -250f, 0f), new Vector3(250f, 250f, 0f),
+        var map = MapMetadataService.CreateForTesting(new Vector3(-76.2f, -76.2f, 0f), new Vector3(76.2f, 76.2f, 0f),
             new[] { PolygonTrigger.CreateDefaultWaterArea(1) });
 
         Assert.Throws<InvalidOperationException>(() => ValidationGroundBuilder.Build(scenario, map));
@@ -73,12 +74,13 @@ public class ValidationGroundBuilderTests
         scenario.Layout.Mode = LayoutMode.Rows;
         var plan = ValidationGroundBuilder.Build(scenario);
 
-        // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 600 - 270 = 330 (totalSpan =
-        // 3*TargetApproach + 2*FactionRowOffset = 240 + 300). Row origin X centres the 10-unit
-        // roster on centre.X: 600 - 9*80/2 = 240. Unit 0 is at the row origin; its target is on the
-        // target row (unitRowY + TargetApproach = 410) at the same X.
-        Assert.Equal(new Vector3(240f, 330f, 0f), plan.UnitPlacements[0].Position);
-        Assert.Equal(new Vector3(240f, 410f, 0f), plan.TargetPlacements[0].Position);
+        // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 (totalSpan = 3*TargetApproach +
+        // 2*FactionRowOffset = 3*24.384 + 2*45.72 = 164.592) = 182.88 - 82.296 = 100.584. Row origin
+        // X centres the 10-unit roster on centre.X: 182.88 - 9*24.384/2 = 73.152. Unit 0 is at the
+        // row origin; its target is on the target row (unitRowY + TargetApproach = 124.968) at the
+        // same X.
+        AssertNear(new Vector3(73.152f, 100.584f, 0f), plan.UnitPlacements[0].Position);
+        AssertNear(new Vector3(73.152f, 124.968f, 0f), plan.TargetPlacements[0].Position);
     }
 
     [Fact]
@@ -90,7 +92,7 @@ public class ValidationGroundBuilderTests
         var scenario = SingleFactionScenario();
         scenario.Layout.Mode = LayoutMode.Clusters;
         var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
-            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+            new Vector3(0f, 0f, 0f), new Vector3(728.472f, 789.432f, 0f)));
 
         Assert.Equal(plan.UnitPlacements.Count, plan.TargetPlacements.Count);
         foreach (var unit in plan.UnitPlacements)
@@ -112,7 +114,7 @@ public class ValidationGroundBuilderTests
         var scenario = ValidationGroundScenarioStore.Standard();
         scenario.Layout.Mode = LayoutMode.Clusters;
         var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
-            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+            new Vector3(0f, 0f, 0f), new Vector3(728.472f, 789.432f, 0f)));
 
         var unitPositions = plan.UnitPlacements
             .Select(p => new Vector2(p.Position.X, p.Position.Y)).ToList();
@@ -127,14 +129,14 @@ public class ValidationGroundBuilderTests
             foreach (var unit in unitPositions)
             {
                 if (unit == ownUnit) continue;
-                Assert.True(Vector2.Distance(targetPositions[i], unit) >= 30f,
+                Assert.True(Vector2.Distance(targetPositions[i], unit) >= 9.144f,
                     $"target {targetPositions[i]} overlaps a unit ({Vector2.Distance(targetPositions[i], unit):F0} away)");
             }
 
             for (var j = 0; j < targetPositions.Count; j++)
             {
                 if (i == j) continue;
-                Assert.True(Vector2.Distance(targetPositions[i], targetPositions[j]) >= 30f,
+                Assert.True(Vector2.Distance(targetPositions[i], targetPositions[j]) >= 9.144f,
                     $"target {targetPositions[i]} overlaps another target");
             }
         }
@@ -146,7 +148,7 @@ public class ValidationGroundBuilderTests
         var scenario = ValidationGroundScenarioStore.Standard();
         scenario.Layout.Mode = LayoutMode.Clusters;
         var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
-            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+            new Vector3(0f, 0f, 0f), new Vector3(728.472f, 789.432f, 0f)));
 
         // Cluster centres (faction unit centroids) must respect the separation knob.
         foreach (var factionA in scenario.FactionIndices)
@@ -160,6 +162,13 @@ public class ValidationGroundBuilderTests
                     $"clusters {factionA}/{factionB} overlap: {Vector2.Distance(centroidA, centroidB)}");
             }
         }
+    }
+
+    private static void AssertNear(Vector3 expected, Vector3 actual)
+    {
+        Assert.Equal(expected.X, actual.X, precision: 3);
+        Assert.Equal(expected.Y, actual.Y, precision: 3);
+        Assert.Equal(expected.Z, actual.Z, precision: 3);
     }
 
     private static Vector2 Centroid(SpawnPlan plan, int factionIndex)
@@ -186,7 +195,7 @@ public class ValidationGroundBuilderTests
         });
 
         var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
-            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+            new Vector3(0f, 0f, 0f), new Vector3(728.472f, 789.432f, 0f)));
 
         var unit = plan.UnitPlacements[0];
         var target = plan.TargetPlacements[unit.TargetIndex];
@@ -225,14 +234,14 @@ public class ValidationGroundBuilderTests
             FactionIndex = 2,
             RosterIndex = 0,
             IsTarget = false,
-            X = 500f,
-            Y = 1000f,
+            X = 152.4f,
+            Y = 304.8f,
         });
 
         var plan = ValidationGroundBuilder.Build(scenario);
 
-        // Single faction: unit row Y = 600 - 80/2 = 560, target row Y = 560 + 80 = 640.
-        Assert.Equal(new Vector3(500f, 640f, 0f), plan.TargetPlacements[0].Position);
+        // Single faction: unit row Y = 182.88 - 24.384/2 = 170.688, target row Y = 170.688 + 24.384 = 195.072.
+        AssertNear(new Vector3(152.4f, 195.072f, 0f), plan.TargetPlacements[0].Position);
     }
 
     [Fact]
@@ -285,9 +294,9 @@ public class ValidationGroundBuilderTests
 
         var unitY = plan.UnitPlacements[0].Position.Y;
         var targetY = plan.TargetPlacements[0].Position.Y;
-        Assert.Equal(560f, unitY);
-        Assert.Equal(640f, targetY);
-        Assert.Equal(600f, (unitY + targetY) / 2f);
+        Assert.Equal(170.688f, unitY, precision: 3);
+        Assert.Equal(195.072f, targetY, precision: 3);
+        Assert.Equal(182.88f, (unitY + targetY) / 2f, precision: 3);
     }
 
     [Fact]
@@ -353,10 +362,10 @@ public class ValidationGroundBuilderTests
         // silent change to the file (or an accidental re-introduction of source defaults) is caught.
         var standard = ValidationGroundScenarioStore.Standard();
 
-        Assert.Equal(new Vector3(600f, 600f, 0f), standard.Layout.TargetClusterCenter);
-        Assert.Equal(80f, standard.Layout.UnitSpacing);
-        Assert.Equal(150f, standard.Layout.FactionRowOffset);
-        Assert.Equal(80f, standard.Layout.TargetApproachDistance);
+        AssertNear(new Vector3(182.88f, 182.88f, 0f), standard.Layout.TargetClusterCenter);
+        Assert.Equal(24.384f, standard.Layout.UnitSpacing, precision: 3);
+        Assert.Equal(45.72f, standard.Layout.FactionRowOffset, precision: 3);
+        Assert.Equal(24.384f, standard.Layout.TargetApproachDistance, precision: 3);
         Assert.Equal([2, 3, 4], standard.FactionIndices);
         Assert.Equal(["CarAsian1"], standard.TargetDefinitions);
         // The terrorist's close-quarters override (WI-VG-04): its suicide weapon has range 1, so
@@ -423,5 +432,128 @@ public class ValidationGroundBuilderTests
                 File.Delete(path);
             }
         }
+    }
+
+    [Fact]
+    public void FromJson_UnversionedLegacyUnits_ConvertsAbsoluteLengthsToMeters()
+    {
+        const string legacyJson = """
+            {
+              "MapPath": "maps/test/test.map",
+              "FactionIndices": [2],
+              "Layout": {
+                "TargetClusterCenter": { "x": 600, "y": 600, "z": 0 },
+                "TargetClusterRadius": 40,
+                "UnitSpacing": 80,
+                "FactionRowOffset": 150,
+                "TargetApproachDistance": 80,
+                "Mode": "Clusters"
+              },
+              "TargetDefinitions": ["AmericaBarracks"],
+              "TargetHp": 30,
+              "PlacementOverrides": [
+                { "FactionIndex": 2, "RosterIndex": 0, "IsTarget": false, "X": 500, "Y": 1000, "TargetDistance": 8.0 }
+              ]
+            }
+            """;
+
+        var scenario = ValidationGroundScenarioStore.FromJson(legacyJson);
+
+        AssertMeters(600f, scenario.Layout.TargetClusterCenter.X);
+        AssertMeters(600f, scenario.Layout.TargetClusterCenter.Y);
+        AssertMeters(40f, scenario.Layout.TargetClusterRadius);
+        AssertMeters(80f, scenario.Layout.UnitSpacing);
+        AssertMeters(150f, scenario.Layout.FactionRowOffset);
+        AssertMeters(80f, scenario.Layout.TargetApproachDistance);
+        AssertMeters(500f, scenario.PlacementOverrides[0].X ?? float.NaN);
+        AssertMeters(1000f, scenario.PlacementOverrides[0].Y ?? float.NaN);
+        AssertMeters(8f, scenario.PlacementOverrides[0].TargetDistance ?? float.NaN);
+        Assert.Equal(30f, scenario.TargetHp);
+    }
+
+    [Fact]
+    public void FromJson_MetricMarker_LoadsValuesUnchanged()
+    {
+        const string metricJson = """
+            {
+              "UnitSchema": "metric-v1",
+              "MapPath": "maps/test/test.map",
+              "FactionIndices": [2],
+              "Layout": {
+                "TargetClusterCenter": { "x": 182.88, "y": 182.88, "z": 0 },
+                "TargetClusterRadius": 12.192,
+                "UnitSpacing": 24.384,
+                "FactionRowOffset": 45.72,
+                "TargetApproachDistance": 24.384,
+                "Mode": "Clusters"
+              },
+              "PlacementOverrides": [
+                { "FactionIndex": 2, "RosterIndex": 0, "IsTarget": false, "TargetDistance": 2.4384 }
+              ]
+            }
+            """;
+
+        var scenario = ValidationGroundScenarioStore.FromJson(metricJson);
+
+        Assert.Equal(182.88f, scenario.Layout.TargetClusterCenter.X);
+        Assert.Equal(12.192f, scenario.Layout.TargetClusterRadius);
+        Assert.Equal(24.384f, scenario.Layout.UnitSpacing);
+        Assert.Equal(45.72f, scenario.Layout.FactionRowOffset);
+        Assert.Equal(24.384f, scenario.Layout.TargetApproachDistance);
+        Assert.Equal(2.4384f, scenario.PlacementOverrides[0].TargetDistance);
+    }
+
+    [Theory]
+    [InlineData("metric-v2")]
+    [InlineData("metrc-v1")]
+    [InlineData("")]
+    public void FromJson_UnknownUnitSchema_ThrowsTypedException(string schema)
+    {
+        var json = $$"""{ "UnitSchema": "{{schema}}", "MapPath": "maps/test/test.map" }""";
+
+        var ex = Assert.Throws<ValidationGroundScenarioStore.UnsupportedUnitSchemaException>(() => ValidationGroundScenarioStore.FromJson(json));
+
+        Assert.Equal(schema, ex.UnitSchema);
+    }
+
+    [Fact]
+    public void SaveLoad_WritesMetricMarkerAndDoesNotRescaleOnReload()
+    {
+        var scenario = new ValidationGroundScenario
+        {
+            MapPath = "maps/alpine assault/alpine assault.map",
+            FactionIndices = [2],
+            TargetDefinitions = ["AmericaBarracks"],
+            Layout =
+            {
+                TargetClusterCenter = new Vector3(182.88f, 182.88f, 0f),
+                UnitSpacing = 24.384f,
+            },
+        };
+        var path = Path.Combine(Path.GetTempPath(), $"vg_schema_{System.Guid.NewGuid():N}.json");
+
+        try
+        {
+            ValidationGroundScenarioStore.Save(scenario, path);
+            Assert.Contains("\"UnitSchema\": \"metric-v1\"", File.ReadAllText(path));
+
+            var loaded = ValidationGroundScenarioStore.Load(path);
+
+            Assert.Equal(182.88f, loaded.Layout.TargetClusterCenter.X);
+            Assert.Equal(24.384f, loaded.Layout.UnitSpacing);
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
+    private static void AssertMeters(float legacyUnits, float actual)
+    {
+        var expected = legacyUnits * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        Assert.InRange(actual, expected - 1e-4f, expected + 1e-4f);
     }
 }
