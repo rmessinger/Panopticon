@@ -1625,7 +1625,7 @@ complete H2a group merges. Each item corresponds to one card.
 - [x] H7-2 Unit round-trip regression suite (`WI-H7-02`).
   - AC: each materialized template field equals its counterpart on the converted path; valued
     unclassified fields match; diagnostic sets match; numeric enum rejection asserted.
-- [ ] H7-3 ReplaySketch new-format scenario proof (`WI-H7-03`).
+- [x] H7-3 ReplaySketch new-format scenario proof (`WI-H7-03`).
   - AC: legacy and converted-format variants pass the same assertion set; end states match under
     the same seed; both panels captured headlessly.
 - [ ] H7-4 Fault-injection catch proof (`WI-H7-04`).
