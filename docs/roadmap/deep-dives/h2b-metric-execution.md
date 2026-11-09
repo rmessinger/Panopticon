@@ -74,6 +74,21 @@ Command: `dotnet test src --filter Category!=Interactive`, both installs. Result
 
 Fixed by H2b relative to the base run: `ValidationGroundCameraTests.FrameFormation`, two GeospatialPreview PlayerStarts tests, and the `ScenarioCaptureRunner` ConstructionProfile test.
 
+## MCP test run
+
+Pre-PR check at sha `0420abbf59d4a15c876a8c2f8979f925d804ad3c`, run id `20261109T142121Z-0420abbf`, filter `Category!=Interactive`. Total 5314, passed 5277, failed 28, skipped 9.
+
+| Class | Count | Basis |
+|---|---|---|
+| Known failures | 9 | TF-01 to TF-09, all present |
+| New relative to manifest | 19 | Pre-existing at base, see below |
+| Suspected deviations | 0 | none |
+| Manifest entries not executed | 0 | none |
+
+TF-10 passed and is resolved. No host crash.
+
+The 19 manifest-new failures were re-run at clean base `c6dadf9c7` with the same filter families. All 19 fail identically at base (19 failed of 52 in the family filter), so the cutover does not introduce them. The two AsyncPathRequestTests failures seen in the local full-suite run passed in this MCP run (nondeterministic navigation flake).
+
 ## Local gates
 
 | Gate | Result at tip `10dc7e7da` |
@@ -90,12 +105,18 @@ Shared viewer directory: `/mnt/pit2/Network Storage/temp/`
 |---|---|
 | `h2b-metric-post-mixed-ee2.gif` | Run 1 capture, post-cutover |
 | `h2b-metric-post-rebel-attack.gif` | Run 2 capture, post-cutover |
-| `h2b-metric-post-replaysketch-map.png` | ReplaySketch map screenshot |
-| `h2b-metric-post-replaysketch-model.png` | ReplaySketch model screenshot |
+| `h2b-metric-post-replaysketch-map-v2.png` | ReplaySketch map tab, post-cutover tip `0420abbf5`. Alpine Assault terrain with player markers. Captured with `CNC_GENERALS_PATH` set, `DISPLAY=:99`, `LIBGL_ALWAYS_SOFTWARE=1`, `REPLAYSKETCH_SCREENSHOT_TAB=map`. |
+| `h2b-metric-post-replaysketch-model-v2.png` | ReplaySketch model tab, post-cutover tip `0420abbf5`. Deterministic screenshot fixture, "Inspecting tank.gltf" with stub preview. |
+| `h2b-baseline-c6dadf9c7-replaysketch-map.png` | ReplaySketch map tab at base `c6dadf9c7`, captured identically to the v2 map |
+| `h2b-baseline-c6dadf9c7-replaysketch-model.png` | ReplaySketch model tab at base `c6dadf9c7`, captured identically to the v2 model |
+| `h2b-metric-post-replaysketch-map.png` | Superseded. First attempt without `CNC_GENERALS_PATH`, shows the installation-error state. Retained, not overwritten. |
+| `h2b-metric-post-replaysketch-model.png` | Superseded. First attempt without `CNC_GENERALS_PATH`. Retained, not overwritten. |
 | `frames/h2b-metric-post-mixed-ee2/` | Run 1 per-frame PNGs and manifest |
 | `frames/h2b-metric-post-rebel-attack/` | Run 2 per-frame PNGs and manifest |
 | `h2b-baseline-v2-mixed-ee2-reconstructed-from-7341141c4.gif` | Baseline Run 1 GIF, not rewritten (timestamp predates post-cutover runs) |
 | `h2b-baseline-v2-rebel-attack-reconstructed-from-7341141c4.gif` | Baseline Run 2 GIF, not rewritten (timestamp predates post-cutover runs) |
+
+Screenshot equivalence: the v2 pair and the base `c6dadf9c7` pair were compared by independent image comparison. Map tab framing, terrain, and player markers are identical pre and post. Model tab layout, text, and blank stub preview are identical pre and post. Only surrounding UI state differs (map selector label, action-button enablement).
 
 ## Known limitations
 
