@@ -21,7 +21,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
             { "ProjectileTemplateName", (parser, x) => x.ProjectileTemplate = parser.ParseObjectReference() },
             { "WarheadTemplateName", (parser, x) => x.WarheadTemplate = parser.ParseWeaponTemplateReference() },
 
-            { "AlwaysAttackHereOffset", (parser, x) => x.AlwaysAttackHereOffset = parser.ParseVector3() },
+            { "AlwaysAttackHereOffset", (parser, x) => x.AlwaysAttackHereOffset = parser.ParseDistanceVector3() },
             { "UseAlwaysAttackOffset", (parser, x) => x.UseAlwaysAttackOffset = parser.ParseBoolean() },
             { "WeaponLaunchBoneSlotOverride", (parser, x) => x.WeaponLaunchBoneSlotOverride = parser.ParseEnum<WeaponSlot>() }
         });

@@ -11,7 +11,7 @@ public sealed class StoreObjectsSpecialPowerModuleData : SpecialPowerModuleData
     private static new readonly IniParseTable<StoreObjectsSpecialPowerModuleData> FieldParseTable = SpecialPowerModuleData.FieldParseTable
         .Concat(new IniParseTable<StoreObjectsSpecialPowerModuleData>
         {
-            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
             { "ApproachRequiresLOS", (parser, x) => x.ApproachRequiresLOS = parser.ParseBoolean() },
             { "Radius", (parser, x) => x.Radius = parser.ParseInteger() },
             { "UnpackTime", (parser, x) => x.UnpackTime = parser.ParseInteger() },

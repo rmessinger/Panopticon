@@ -77,7 +77,7 @@ public sealed class CleanupAreaPowerModuleData : SpecialPowerModuleData
     private static new readonly IniParseTable<CleanupAreaPowerModuleData> FieldParseTable = SpecialPowerModuleData.FieldParseTable
         .Concat(new IniParseTable<CleanupAreaPowerModuleData>
         {
-            { "MaxMoveDistanceFromLocation", (parser, x) => x.MaxMoveDistanceFromLocation = parser.ParseFloat() }
+            { "MaxMoveDistanceFromLocation", (parser, x) => x.MaxMoveDistanceFromLocation = parser.ParseDistanceFloat() }
         });
 
     public float MaxMoveDistanceFromLocation { get; private set; }

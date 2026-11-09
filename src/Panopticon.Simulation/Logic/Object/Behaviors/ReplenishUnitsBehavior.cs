@@ -10,8 +10,8 @@ public sealed class ReplenishUnitsBehaviorModuleData : BehaviorModuleData
     internal static readonly IniParseTable<ReplenishUnitsBehaviorModuleData> BaseFieldParseTable = new IniParseTable<ReplenishUnitsBehaviorModuleData>
     {
         { "ReplenishDelay", (parser, x) => x.ReplenishDelay = parser.ParseInteger() },
-        { "ReplenishRadius", (parser, x) => x.ReplenishRadius = parser.ParseFloat() },
-        { "NoReplenishIfEnemyWithinRadius", (parser, x) => x.NoReplenishIfEnemyWithinRadius = parser.ParseFloat() },
+        { "ReplenishRadius", (parser, x) => x.ReplenishRadius = parser.ParseDistanceFloat() },
+        { "NoReplenishIfEnemyWithinRadius", (parser, x) => x.NoReplenishIfEnemyWithinRadius = parser.ParseDistanceFloat() },
         { "ReplenishStatii", (parser, x) => x.ReplenishStatii = parser.ParseEnum<ObjectStatus>() },
         { "ReplenishFXList", (parser, x) => x.ReplenishFXList = parser.ParseAssetReference() },
         { "ReplenishHordeMembersOnly", (parser, x) => x.ReplenishHordeMembersOnly = parser.ParseBoolean() },

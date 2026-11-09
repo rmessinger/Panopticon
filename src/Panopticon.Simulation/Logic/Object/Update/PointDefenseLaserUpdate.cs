@@ -13,7 +13,7 @@ public sealed class PointDefenseLaserUpdateModuleData : UpdateModuleData
         { "PrimaryTargetTypes", (parser, x) => x.PrimaryTargetTypes = parser.ParseEnumBitArray<ObjectKinds>() },
         { "SecondaryTargetTypes", (parser, x) => x.SecondaryTargetTypes = parser.ParseEnumBitArray<ObjectKinds>() },
         { "ScanRate", (parser, x) => x.ScanRate = parser.ParseInteger() },
-        { "ScanRange", (parser, x) => x.ScanRange = parser.ParseFloat() },
+        { "ScanRange", (parser, x) => x.ScanRange = parser.ParseDistanceFloat() },
         { "PredictTargetVelocityFactor", (parser, x) => x.PredictTargetVelocityFactor = parser.ParseFloat() },
     };
 

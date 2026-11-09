@@ -64,7 +64,7 @@ public sealed class DynamicShroudClearingRangeUpdateModuleData : UpdateModuleDat
 
     private static readonly IniParseTable<DynamicShroudClearingRangeUpdateModuleData> FieldParseTable = new IniParseTable<DynamicShroudClearingRangeUpdateModuleData>
     {
-        { "FinalVision", (parser, x) => x.FinalVision = parser.ParseFloat() },
+        { "FinalVision", (parser, x) => x.FinalVision = parser.ParseDistanceFloat() },
         { "ChangeInterval", (parser, x) => x.ChangeInterval = parser.ParseInteger() },
         { "ShrinkDelay", (parser, x) => x.ShrinkDelay = parser.ParseInteger() },
         { "ShrinkTime", (parser, x) => x.ShrinkTime = parser.ParseInteger() },

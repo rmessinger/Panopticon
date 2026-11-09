@@ -17,7 +17,7 @@ public sealed class ActivateModuleSpecialPowerModuleData : SpecialPowerModuleDat
             { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseInteger() },
             { "MustFinishAbility", (parser, x) => x.MustFinishAbility = parser.ParseBoolean() },
             { "UnpackingVariation", (parser, x) => x.UnpackingVariation = parser.ParseInteger() },
-            { "EffectRange", (parser, x) => x.EffectRange = parser.ParseFloat() }
+            { "EffectRange", (parser, x) => x.EffectRange = parser.ParseDistanceFloat() }
         });
 
     public string TriggerSpecialPower { get; private set; }

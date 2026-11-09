@@ -85,8 +85,8 @@ public class SpecialAbilityUpdateModuleData : UpdateModuleData
     internal static readonly IniParseTable<SpecialAbilityUpdateModuleData> FieldParseTable = new IniParseTable<SpecialAbilityUpdateModuleData>
     {
         { "SpecialPowerTemplate", (parser, x) => x.SpecialPowerTemplate = parser.ParseAssetReference() },
-        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
-        { "AbilityAbortRange", (parser, x) => x.AbilityAbortRange = parser.ParseFloat() },
+        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
+        { "AbilityAbortRange", (parser, x) => x.AbilityAbortRange = parser.ParseDistanceFloat() },
         { "PreparationTime", (parser, x) => x.PreparationTime = parser.ParseInteger() },
         { "PersistentPrepTime", (parser, x) => x.PersistentPrepTime = parser.ParseInteger() },
         { "EffectDuration", (parser, x) => x.EffectDuration = parser.ParseInteger() },
@@ -105,7 +105,7 @@ public class SpecialAbilityUpdateModuleData : UpdateModuleData
         { "AwardXPForTriggering", (parser, x) => x.AwardXPForTriggering = parser.ParseInteger() },
         { "SkipPackingWithNoTarget", (parser, x) => x.SkipPackingWithNoTarget = parser.ParseBoolean() },
         { "FlipOwnerAfterUnpacking", (parser, x) => x.FlipOwnerAfterUnpacking = parser.ParseBoolean() },
-        { "FleeRangeAfterCompletion", (parser, x) => x.FleeRangeAfterCompletion = parser.ParseFloat() },
+        { "FleeRangeAfterCompletion", (parser, x) => x.FleeRangeAfterCompletion = parser.ParseDistanceFloat() },
         { "PackSound", (parser, x) => x.PackSound = parser.ParseAssetReference() },
         { "UnpackSound", (parser, x) => x.UnpackSound = parser.ParseAssetReference() },
         { "TriggerSound", (parser, x) => x.TriggerSound = parser.ParseAssetReference() },

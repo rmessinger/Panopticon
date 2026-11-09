@@ -8,9 +8,9 @@ public sealed class HeightDieUpdateModuleData : UpdateModuleData
 
     private static readonly IniParseTable<HeightDieUpdateModuleData> FieldParseTable = new IniParseTable<HeightDieUpdateModuleData>
     {
-        { "TargetHeight", (parser, x) => x.TargetHeight = parser.ParseFloat() },
+        { "TargetHeight", (parser, x) => x.TargetHeight = parser.ParseDistanceFloat() },
         { "TargetHeightIncludesStructures", (parser, x) => x.TargetHeightIncludesStructures = parser.ParseBoolean() },
-        { "DestroyAttachedParticlesAtHeight", (parser, x) => x.DestroyAttachedParticlesAtHeight = parser.ParseFloat() },
+        { "DestroyAttachedParticlesAtHeight", (parser, x) => x.DestroyAttachedParticlesAtHeight = parser.ParseDistanceFloat() },
         { "OnlyWhenMovingDown", (parser, x) => x.OnlyWhenMovingDown = parser.ParseBoolean() },
         { "SnapToGroundOnDeath", (parser, x) => x.SnapToGroundOnDeath = parser.ParseBoolean() },
         { "InitialDelay", (parser, x) => x.InitialDelay = parser.ParseInteger() }

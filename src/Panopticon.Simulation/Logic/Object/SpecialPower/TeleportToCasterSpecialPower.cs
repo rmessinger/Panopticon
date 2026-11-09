@@ -11,7 +11,7 @@ public sealed class TeleportToCasterSpecialPowerModuleData : SpecialPowerModuleD
         .Concat(new IniParseTable<TeleportToCasterSpecialPowerModuleData>
         {
             { "UnpackingVariation", (parser, x) => x.UnpackingVariation = parser.ParseInteger() },
-            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
             { "ApproachRequiresLOS", (parser, x) => x.ApproachRequiresLOS = parser.ParseBoolean() },
             { "Radius", (parser, x) => x.Radius = parser.ParseInteger() },
             { "TargetFX", (parser, x) => x.TargetFX = parser.ParseAssetReference() },

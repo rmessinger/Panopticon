@@ -14,7 +14,7 @@ public sealed class RadiateFearUpdateModuleData : UpdateModuleData
         { "WhichSpecialPower", (parser, x) => x.WhichSpecialPower = parser.ParseInteger() },
         { "GenerateTerror", (parser, x) => x.GenerateTerror = parser.ParseBoolean() },
         { "GenerateFear", (parser, x) => x.GenerateFear = parser.ParseBoolean() },
-        { "EmotionPulseRadius", (parser, x) => x.EmotionPulseRadius = parser.ParseFloat() },
+        { "EmotionPulseRadius", (parser, x) => x.EmotionPulseRadius = parser.ParseDistanceFloat() },
         { "EmotionPulseInterval", (parser, x) => x.EmotionPulseInterval = parser.ParseInteger() },
         { "VictimFilter", (parser, x) => x.VictimFilter = ObjectFilter.Parse(parser) },
         { "GenerateUncontrollableFear", (parser, x) => x.GenerateUncontrollableFear = parser.ParseBoolean() },

@@ -66,8 +66,8 @@ public sealed class QueueProductionExitUpdateModuleData : UpdateModuleData
 
     private static readonly IniParseTable<QueueProductionExitUpdateModuleData> FieldParseTable = new IniParseTable<QueueProductionExitUpdateModuleData>
     {
-        { "UnitCreatePoint", (parser, x) => x.UnitCreatePoint = parser.ParseVector3() },
-        { "NaturalRallyPoint", (parser, x) => x.NaturalRallyPoint = parser.ParseVector3() },
+        { "UnitCreatePoint", (parser, x) => x.UnitCreatePoint = parser.ParseDistanceVector3() },
+        { "NaturalRallyPoint", (parser, x) => x.NaturalRallyPoint = parser.ParseDistanceVector3() },
         { "ExitDelay", (parser, x) => x.ExitDelay = parser.ParseTimeMillisecondsToLogicFrames() },
         { "InitialBurst", (parser, x) => x.InitialBurst = parser.ParseInteger() },
         { "PlacementViewAngle", (parser, x) => x.PlacementViewAngle = parser.ParseInteger() },

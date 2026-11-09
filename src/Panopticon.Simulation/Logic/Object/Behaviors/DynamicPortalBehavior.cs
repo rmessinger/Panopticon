@@ -25,7 +25,7 @@ public class DynamicPortalBehaviorModuleData : BehaviorModuleData
         { "CustomAnimAndDuration", (parser, x) => x.CustomAnimAndDuration = AnimAndDuration.Parse(parser) },
         { "ActivationDelaySeconds", (parser, x) => x.ActivationDelaySeconds = parser.ParseFloat() },
         { "AboveWall", (parser, x) => x.AboveWall = parser.ParseInteger() },
-        { "TopAttackPos", (parser, x) => x.TopAttackPos = parser.ParseVector3() },
+        { "TopAttackPos", (parser, x) => x.TopAttackPos = parser.ParseDistanceVector3() },
         { "TopAttackRadius", (parser, x) => x.TopAttackRadius = parser.ParseInteger() },
         { "ObjectFilter", (parser, x) => x.ObjectFilter = ObjectFilter.Parse(parser) }
     };

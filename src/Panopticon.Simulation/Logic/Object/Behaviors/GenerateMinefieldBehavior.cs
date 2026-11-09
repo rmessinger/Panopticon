@@ -205,7 +205,7 @@ public sealed class GenerateMinefieldBehaviorModuleData : UpdateModuleData
         .Concat(new IniParseTable<GenerateMinefieldBehaviorModuleData>
         {
             { "MineName", (parser, x) => x.MineName = parser.ParseObjectReference() },
-            { "DistanceAroundObject", (parser, x) => x.DistanceAroundObject = parser.ParseFloat() },
+            { "DistanceAroundObject", (parser, x) => x.DistanceAroundObject = parser.ParseDistanceFloat() },
             { "GenerateOnlyOnDeath", (parser, x) => x.GenerateOnlyOnDeath = parser.ParseBoolean() },
             { "SmartBorder", (parser, x) => x.SmartBorder = parser.ParseBoolean() },
             { "SmartBorderSkipInterior", (parser, x) => x.SmartBorderSkipInterior = parser.ParseBoolean() },

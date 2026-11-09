@@ -166,7 +166,7 @@ public class CastleBehaviorModuleData : FoundationAIUpdateModuleData
             { "FilterValidOwnedEntries", (parser, x) => x.FilterValidOwnedEntries = ObjectFilter.Parse(parser) },
             { "UseSecondaryBuildList", (parser, x) => x.UseSecondaryBuildList = parser.ParseBoolean() },
             { "CastleToUnpackForFaction", (parser, x) => x.CastleToUnpackForFactions.Add(CastleEntry.Parse(parser)) },
-            { "MaxCastleRadius", (parser, x) => x.MaxCastleRadius = parser.ParseFloat() },
+            { "MaxCastleRadius", (parser, x) => x.MaxCastleRadius = parser.ParseDistanceFloat() },
             { "FadeTime", (parser, x) => x.FadeTime = parser.ParseFloat() },
             { "ScanDistance", (parser, x) => x.ScanDistance = parser.ParseInteger() },
             { "PreBuiltList", (parser, x) => x.PreBuiltList = PreBuildObject.Parse(parser) },

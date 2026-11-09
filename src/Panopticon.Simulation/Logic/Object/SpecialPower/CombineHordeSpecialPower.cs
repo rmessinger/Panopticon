@@ -10,7 +10,7 @@ public sealed class CombineHordeSpecialPowerModuleData : SpecialPowerModuleData
     private static new readonly IniParseTable<CombineHordeSpecialPowerModuleData> FieldParseTable = SpecialPowerModuleData.FieldParseTable
         .Concat(new IniParseTable<CombineHordeSpecialPowerModuleData>
         {
-            { "ScanRange", (parser, x) => x.ScanRange = parser.ParseFloat() }
+            { "ScanRange", (parser, x) => x.ScanRange = parser.ParseDistanceFloat() }
         });
 
     public float ScanRange { get; private set; }

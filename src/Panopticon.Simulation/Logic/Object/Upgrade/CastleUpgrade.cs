@@ -11,7 +11,7 @@ public sealed class CastleUpgradeModuleData : UpgradeModuleData
         .Concat(new IniParseTable<CastleUpgradeModuleData>
         {
             { "Upgrade", (parser, x) => x.Upgrade = parser.ParseAssetReference() },
-            { "WallUpgradeRadius", (parser, x) => x.WallUpgradeRadius = parser.ParseFloat() },
+            { "WallUpgradeRadius", (parser, x) => x.WallUpgradeRadius = parser.ParseDistanceFloat() },
         });
 
     public string Upgrade { get; private set; }

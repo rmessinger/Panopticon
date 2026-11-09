@@ -142,7 +142,7 @@ public sealed class PropagandaTowerBehaviorModuleData : BehaviorModuleData
 
     private static readonly IniParseTable<PropagandaTowerBehaviorModuleData> FieldParseTable = new IniParseTable<PropagandaTowerBehaviorModuleData>
     {
-        { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
+        { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
         { "DelayBetweenUpdates", (parser, x) => x.DelayBetweenUpdates = parser.ParseTimeMillisecondsToLogicFrames() },
         { "HealPercentEachSecond", (parser, x) => x.HealPercentEachSecond = parser.ParsePercentage() },
         { "PulseFX", (parser, x) => x.PulseFX = parser.ParseFXListReference() },

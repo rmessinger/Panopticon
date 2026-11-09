@@ -14,7 +14,7 @@ public sealed class GiantBirdAIUpdateModuleData : AIUpdateModuleData
             { "FollowThroughCheckStep", (parser, x) => x.FollowThroughCheckStep = parser.ParseInteger() },
             { "FollowThroughGradient", (parser, x) => x.FollowThroughGradient = parser.ParseFloat() },
             { "GrabTossTimeTrigger", (parser, x) => x.GrabTossTimeTrigger = parser.ParseFloat() },
-            { "GrabTossHeightTrigger", (parser, x) => x.GrabTossHeightTrigger = parser.ParseFloat() },
+            { "GrabTossHeightTrigger", (parser, x) => x.GrabTossHeightTrigger = parser.ParseDistanceFloat() },
             { "TossFX", (parser, x) => x.TossFX = parser.ParseAssetReference() },
         });
 

@@ -12,7 +12,7 @@ public sealed class AimWeaponBehaviorModuleData : UpgradeModuleData
         {
             { "AimHighThreshold", (parser, x) => x.AimHighThreshold = parser.ParseFloat() },
             { "AimLowThreshold", (parser, x) => x.AimLowThreshold = parser.ParseFloat() },
-            { "AimNearDistance", (parser, x) => x.AimNearDistance = parser.ParseFloat() }
+            { "AimNearDistance", (parser, x) => x.AimNearDistance = parser.ParseDistanceFloat() }
         });
 
     public float AimHighThreshold { get; private set; }

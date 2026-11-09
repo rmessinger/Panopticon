@@ -69,7 +69,7 @@ public sealed class GameData : BaseSingletonAsset
         { "DefaultStructureRepairBuffFxList", (parser, x) => x.DefaultStructureRepairBuffFxList = parser.ParseAssetReference() },
 
         { "TimeAfterDamageUntilRepairAllowed", (parser, x) => x.TimeAfterDamageUntilRepairAllowed = parser.ParseInteger() },
-        { "DefaultStructureRubbleHeight", (parser, x) => x.DefaultStructureRubbleHeight = parser.ParseFloat() },
+        { "DefaultStructureRubbleHeight", (parser, x) => x.DefaultStructureRubbleHeight = parser.ParseDistanceFloat() },
 
         { "VertexWaterAvailableMaps1", (parser, x) => x.VertexWaterAvailableMaps1 = parser.ParseString() },
         { "VertexWaterHeightClampLow1", (parser, x) => x.VertexWaterHeightClampLow1 = parser.ParseFloat() },
@@ -153,15 +153,15 @@ public sealed class GameData : BaseSingletonAsset
         { "CameraAdjustSpeed", (parser, x) => x.CameraAdjustSpeed = parser.ParseFloat() },
         { "ScrollAmountCutoff", (parser, x) => x.ScrollAmountCutoff = parser.ParseFloat() },
         { "EnforceMaxCameraHeight", (parser, x) => x.EnforceMaxCameraHeight = parser.ParseBoolean() },
-        { "TerrainHeightAtEdgeOfMap", (parser, x) => x.TerrainHeightAtEdgeOfMap = parser.ParseFloat() },
+        { "TerrainHeightAtEdgeOfMap", (parser, x) => x.TerrainHeightAtEdgeOfMap = parser.ParseDistanceFloat() },
         { "UnitDamagedThreshold", (parser, x) => x.UnitDamagedThreshold = parser.ParseFloat() },
         { "UnitReallyDamagedThreshold", (parser, x) => x.UnitReallyDamagedThreshold = parser.ParseFloat() },
         { "GroundStiffness", (parser, x) => x.GroundStiffness = parser.ParseFloat() },
         { "StructureStiffness", (parser, x) => x.StructureStiffness = parser.ParseFloat() },
         { "Gravity", (parser, x) => x.Gravity = parser.ParseAccelerationToLogicFrames() },
 
-        { "PartitionCellSize", (parser, x) => x.PartitionCellSize = parser.ParseFloat() },
-        { "TerrainResourceCellSize", (parser, x) => x.TerrainResourceCellSize = parser.ParseFloat() },
+        { "PartitionCellSize", (parser, x) => x.PartitionCellSize = parser.ParseDistanceFloat() },
+        { "TerrainResourceCellSize", (parser, x) => x.TerrainResourceCellSize = parser.ParseDistanceFloat() },
 
         { "ParticleScale", (parser, x) => x.ParticleScale = parser.ParseFloat() },
 
@@ -199,16 +199,16 @@ public sealed class GameData : BaseSingletonAsset
         { "ContainerPipScaleFactor", (parser, x) => x.ContainerPipScaleFactor = parser.ParseFloat() },
         { "AmmoPipScreenOffset", (parser, x) => x.AmmoPipScreenOffset = parser.ParseVector2() },
         { "ContainerPipScreenOffset", (parser, x) => x.ContainerPipScreenOffset = parser.ParseVector2() },
-        { "AmmoPipWorldOffset", (parser, x) => x.AmmoPipWorldOffset = parser.ParseVector3() },
-        { "ContainerPipWorldOffset", (parser, x) => x.ContainerPipWorldOffset = parser.ParseVector3() },
+        { "AmmoPipWorldOffset", (parser, x) => x.AmmoPipWorldOffset = parser.ParseDistanceVector3() },
+        { "ContainerPipWorldOffset", (parser, x) => x.ContainerPipWorldOffset = parser.ParseDistanceVector3() },
 
         { "LevelGainAnimationName", (parser, x) => x.LevelGainAnimationName = parser.ParseAssetReference() },
         { "LevelGainAnimationTime", (parser, x) => x.LevelGainAnimationTime = parser.ParseFloat() },
-        { "LevelGainAnimationZRise", (parser, x) => x.LevelGainAnimationZRise = parser.ParseFloat() },
+        { "LevelGainAnimationZRise", (parser, x) => x.LevelGainAnimationZRise = parser.ParseDistanceFloat() },
 
         { "GetHealedAnimationName", (parser, x) => x.GetHealedAnimationName = parser.ParseAssetReference() },
         { "GetHealedAnimationTime", (parser, x) => x.GetHealedAnimationTime = parser.ParseFloat() },
-        { "GetHealedAnimationZRise", (parser, x) => x.GetHealedAnimationZRise = parser.ParseFloat() },
+        { "GetHealedAnimationZRise", (parser, x) => x.GetHealedAnimationZRise = parser.ParseDistanceFloat() },
 
         { "GenericDamageFieldName", (parser, x) => x.GenericDamageFieldName = parser.ParseAssetReference() },
         { "GenericDamageWarningName", (parser, x) => x.GenericDamageWarningName = parser.ParseAssetReference() },
@@ -349,10 +349,10 @@ public sealed class GameData : BaseSingletonAsset
         { "SupplyBoxesPerTree", (parser, x) => x.SupplyBoxesPerTree = parser.ParseInteger() },
 
         { "BuildSpeed", (parser, x) => x.BuildSpeed = parser.ParseFloat() },
-        { "MinDistFromEdgeOfMapForBuild", (parser, x) => x.MinDistFromEdgeOfMapForBuild = parser.ParseFloat() },
-        { "SupplyBuildBorder", (parser, x) => x.SupplyBuildBorder = parser.ParseFloat() },
+        { "MinDistFromEdgeOfMapForBuild", (parser, x) => x.MinDistFromEdgeOfMapForBuild = parser.ParseDistanceFloat() },
+        { "SupplyBuildBorder", (parser, x) => x.SupplyBuildBorder = parser.ParseDistanceFloat() },
 
-        { "AllowedHeightVariationForBuilding", (parser, x) => x.AllowedHeightVariationForBuilding = parser.ParseFloat() },
+        { "AllowedHeightVariationForBuilding", (parser, x) => x.AllowedHeightVariationForBuilding = parser.ParseDistanceFloat() },
 
         { "MinLowEnergyProductionSpeed", (parser, x) => x.MinLowEnergyProductionSpeed = parser.ParseFloat() },
         { "MaxLowEnergyProductionSpeed", (parser, x) => x.MaxLowEnergyProductionSpeed = parser.ParseFloat() },
@@ -361,13 +361,13 @@ public sealed class GameData : BaseSingletonAsset
         { "RefundPercent", (parser, x) => x.RefundPercent = parser.ParsePercentage() },
         { "StealthFriendlyOpacity", (parser, x) => x.StealthFriendlyOpacity = parser.ParsePercentage() },
 
-        { "CommandCenterHealRange", (parser, x) => x.CommandCenterHealRange = parser.ParseFloat() },
+        { "CommandCenterHealRange", (parser, x) => x.CommandCenterHealRange = parser.ParseDistanceFloat() },
         { "CommandCenterHealAmount", (parser, x) => x.CommandCenterHealAmount = parser.ParseFloat() },
         { "MaxLineBuildObjects", (parser, x) => x.MaxLineBuildObjects = parser.ParseInteger() },
         { "MaxTunnelCapacity", (parser, x) => x.MaxTunnelCapacity = parser.ParseInteger() },
 
         { "StandardMinefieldDensity", (parser, x) => x.StandardMinefieldDensity = parser.ParseFloat() },
-        { "StandardMinefieldDistance", (parser, x) => x.StandardMinefieldDistance = parser.ParseFloat() },
+        { "StandardMinefieldDistance", (parser, x) => x.StandardMinefieldDistance = parser.ParseDistanceFloat() },
 
         { "HorizontalScrollSpeedFactor", (parser, x) => x.HorizontalScrollSpeedFactor = parser.ParseFloat() },
         { "VerticalScrollSpeedFactor", (parser, x) => x.VerticalScrollSpeedFactor = parser.ParseFloat() },
@@ -398,7 +398,7 @@ public sealed class GameData : BaseSingletonAsset
         { "GroupSelectVolumeIncrement", (parser, x) => x.GroupSelectVolumeIncrement = parser.ParseFloat() },
         { "MaxUnitSelectSounds", (parser, x) => x.MaxUnitSelectSounds = parser.ParseInteger() },
 
-        { "DamageRadiusMinimumForSplash", (parser, x) => x.DamageRadiusMinimumForSplash = parser.ParseFloat() },
+        { "DamageRadiusMinimumForSplash", (parser, x) => x.DamageRadiusMinimumForSplash = parser.ParseDistanceFloat() },
 
         { "SelectionFlashSaturationFactor", (parser, x) => x.SelectionFlashSaturationFactor = parser.ParseFloat() },
         { "SelectionFlashHouseColor", (parser, x) => x.SelectionFlashHouseColor = parser.ParseBoolean() },
@@ -414,7 +414,7 @@ public sealed class GameData : BaseSingletonAsset
         { "ShakeCineInsaneIntensity", (parser, x) => x.ShakeCineInsaneIntensity = parser.ParseFloat() },
 
         { "MaxShakeIntensity", (parser, x) => x.MaxShakeIntensity = parser.ParseFloat() },
-        { "MaxShakeRange", (parser, x) => x.MaxShakeRange = parser.ParseFloat() },
+        { "MaxShakeRange", (parser, x) => x.MaxShakeRange = parser.ParseDistanceFloat() },
 
         { "SellPercentage", (parser, x) => x.SellPercentage = parser.ParsePercentage() },
 
@@ -574,7 +574,7 @@ public sealed class GameData : BaseSingletonAsset
         { "DebugProjectileTileColor", (parser, x) => x.DebugProjectileTileColor = parser.ParseColorRgb() },
 
         { "DebugVisibilityTileCount", (parser, x) => x.DebugVisibilityTileCount = parser.ParseInteger() },
-        { "DebugVisibilityTileWidth", (parser, x) => x.DebugVisibilityTileWidth = parser.ParseFloat() },
+        { "DebugVisibilityTileWidth", (parser, x) => x.DebugVisibilityTileWidth = parser.ParseDistanceFloat() },
         { "DebugVisibilityTileDuration", (parser, x) => x.DebugVisibilityTileDuration = parser.ParseInteger() },
 
         { "DebugVisibilityTileTargettableColor", (parser, x) => x.DebugVisibilityTileTargettableColor = parser.ParseColorRgb() },

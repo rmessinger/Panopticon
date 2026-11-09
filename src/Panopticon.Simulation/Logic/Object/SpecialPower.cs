@@ -26,7 +26,7 @@ public sealed class SpecialPower : BaseAsset
         { "InitiateAtLocationSound", (parser, x) => x.InitiateAtLocationSound = parser.ParseAudioEventReference() },
         { "ViewObjectDuration", (parser, x) => x.ViewObjectDuration = parser.ParseInteger() },
         { "ViewObjectRange", (parser, x) => x.ViewObjectRange = parser.ParseInteger() },
-        { "RadiusCursorRadius", (parser, x) => x.RadiusCursorRadius = parser.ParseFloat() },
+        { "RadiusCursorRadius", (parser, x) => x.RadiusCursorRadius = parser.ParseDistanceFloat() },
         { "ShortcutPower", (parser, x) => x.ShortcutPower = parser.ParseBoolean() },
         { "AcademyClassify", (parser, x) => x.AcademyClassify = parser.ParseEnum<AcademyType>() },
         { "ObjectFilter", (parser, x) => x.ObjectFilter = ObjectFilter.Parse(parser) },

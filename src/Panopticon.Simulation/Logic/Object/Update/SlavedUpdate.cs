@@ -222,15 +222,15 @@ public sealed class SlavedUpdateModuleData : UpdateModuleData
 
     private static readonly IniParseTable<SlavedUpdateModuleData> FieldParseTable = new IniParseTable<SlavedUpdateModuleData>
     {
-        { "GuardMaxRange", (parser, x) => x.GuardMaxRange = parser.ParseFloat() },
-        { "GuardWanderRange", (parser, x) => x.GuardWanderRange = parser.ParseFloat() },
+        { "GuardMaxRange", (parser, x) => x.GuardMaxRange = parser.ParseDistanceFloat() },
+        { "GuardWanderRange", (parser, x) => x.GuardWanderRange = parser.ParseDistanceFloat() },
         { "AttackRange", (parser, x) => x.AttackRange = parser.ParseInteger() },
         { "AttackWanderRange", (parser, x) => x.AttackWanderRange = parser.ParseInteger() },
         { "ScoutRange", (parser, x) => x.ScoutRange = parser.ParseInteger() },
         { "ScoutWanderRange", (parser, x) => x.ScoutWanderRange = parser.ParseInteger() },
         { "RepairRange", (parser, x) => x.RepairRange = parser.ParseInteger() },
-        { "RepairMinAltitude", (parser, x) => x.RepairMinAltitude = parser.ParseFloat() },
-        { "RepairMaxAltitude", (parser, x) => x.RepairMaxAltitude = parser.ParseFloat() },
+        { "RepairMinAltitude", (parser, x) => x.RepairMinAltitude = parser.ParseDistanceFloat() },
+        { "RepairMaxAltitude", (parser, x) => x.RepairMaxAltitude = parser.ParseDistanceFloat() },
         { "RepairRatePerSecond", (parser, x) => x.RepairRatePerSecond = parser.ParseFloat() },
         { "RepairWhenBelowHealth%", (parser, x) => x.RepairWhenBelowHealthPercent = parser.ParseInteger() },
         { "RepairMinReadyTime", (parser, x) => x.RepairMinReadyTime = parser.ParseTimeMillisecondsToLogicFrames() },
@@ -245,7 +245,7 @@ public sealed class SlavedUpdateModuleData : UpdateModuleData
         { "UseSlaverAsControlForEvaObjectSightedEvents", (parser, x) => x.UseSlaverAsControlForEvaObjectSightedEvents = parser.ParseBoolean() },
         { "DieOnMastersDeath", (parser, x) => x.DieOnMastersDeath = parser.ParseBoolean() },
         { "MarkUnselectable", (parser, x) => x.MarkUnselectable = parser.ParseBoolean() },
-        { "GuardPositionOffset", (parser, x) => x.GuardPositionOffset = parser.ParseVector3() },
+        { "GuardPositionOffset", (parser, x) => x.GuardPositionOffset = parser.ParseDistanceVector3() },
         { "FadeOutRange", (parser, x) => x.FadeOutRange = parser.ParseInteger() },
         { "FadeTime", (parser, x) => x.FadeTime = parser.ParseInteger() }
     };

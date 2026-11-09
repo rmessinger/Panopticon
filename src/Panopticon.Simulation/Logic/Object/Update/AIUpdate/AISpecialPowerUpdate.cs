@@ -12,7 +12,7 @@ public sealed class AISpecialPowerUpdateModuleData : AIUpdateModuleData
         {
             { "CommandButtonName", (parser, x) => x.CommandButtonName = parser.ParseIdentifier() },
             { "SpecialPowerAIType", (parser, x) => x.SpecialPowerAIType = parser.ParseEnum<SpecialPowerAIType>() },
-            { "SpecialPowerRadius", (parser, x) => x.SpecialPowerRadius = parser.ParseFloat() },
+            { "SpecialPowerRadius", (parser, x) => x.SpecialPowerRadius = parser.ParseDistanceFloat() },
             { "SpecialPowerRange", (parser, x) => x.SpecialPowerRange = parser.ParseInteger() },
             { "SpellMakesAStructure", (parser, x) => x.SpellMakesAStructure = parser.ParseBoolean() },
             { "RandomizeTargetLocation", (parser, x) => x.RandomizeTargetLocation = parser.ParseBoolean() }

@@ -15,9 +15,9 @@ public sealed class HordeGarrisonContainModuleData : HordeTransportContainModule
         {
             { "ContainMax", (parser, x) => x.ContainMax = parser.ParseInteger() },
             { "MaxHordeCapacity", (parser, x) => x.MaxHordeCapacity = parser.ParseInteger() },
-            { "EntryPosition", (parser, x) => x.EntryPosition = parser.ParseVector3() },
-            { "EntryOffset", (parser, x) => x.EntryOffset = parser.ParseVector3() },
-            { "ExitOffset", (parser, x) => x.ExitOffset = parser.ParseVector3() }
+            { "EntryPosition", (parser, x) => x.EntryPosition = parser.ParseDistanceVector3() },
+            { "EntryOffset", (parser, x) => x.EntryOffset = parser.ParseDistanceVector3() },
+            { "ExitOffset", (parser, x) => x.ExitOffset = parser.ParseDistanceVector3() }
         });
 
     public int ContainMax { get; private set; }

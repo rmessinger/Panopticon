@@ -10,7 +10,7 @@ public sealed class HordeNotifyTargetsOfImminentProbableCrushingUpdateModuleData
     private static readonly IniParseTable<HordeNotifyTargetsOfImminentProbableCrushingUpdateModuleData> FieldParseTable =
         new IniParseTable<HordeNotifyTargetsOfImminentProbableCrushingUpdateModuleData>
     {
-        { "ScanWidth", (parser, x) => x.ScanWidth = parser.ParseFloat() },
+        { "ScanWidth", (parser, x) => x.ScanWidth = parser.ParseDistanceFloat() },
     };
 
     public float ScanWidth { get; private set; }

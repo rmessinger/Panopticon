@@ -14,7 +14,7 @@ public sealed class AttributeModifierAuraUpdateModuleData : UpdateModuleData
         { "BonusName", (parser, x) => x.BonusName = parser.ParseString() },
         { "TriggeredBy", (parser, x) => x.TriggeredBy = parser.ParseAssetReference() },
         { "RefreshDelay", (parser, x) => x.RefreshDelay = parser.ParseLong() },
-        { "Range", (parser, x) => x.Range = parser.ParseFloat() },
+        { "Range", (parser, x) => x.Range = parser.ParseDistanceFloat() },
         { "TargetEnemy", (parser, x) => x.TargetEnemy = parser.ParseBoolean() },
         { "ObjectFilter", (parser, x) => x.ObjectFilter = parser.ParseIdentifier() },
         { "ConflictsWith", (parser, x) => x.ConflictsWith = parser.ParseAssetReferenceArray() },

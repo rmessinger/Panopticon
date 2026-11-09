@@ -18,7 +18,7 @@ public sealed class TeleportSpecialAbilityUpdateModuleData : UpdateModuleData
         { "DestinationWeaponName", (parser, x) => x.DestinationWeaponName = parser.ParseString() },
         { "PreparationTime", (parser, x) => x.PreparationTime = parser.ParseInteger() },
         { "SourceWeaponName", (parser, x) => x.SourceWeaponName = parser.ParseAssetReference() },
-        { "MaxDistance", (parser, x) => x.MaxDistance = parser.ParseFloat() },
+        { "MaxDistance", (parser, x) => x.MaxDistance = parser.ParseDistanceFloat() },
     };
 
     public string SpecialPowerTemplate { get; private set; }

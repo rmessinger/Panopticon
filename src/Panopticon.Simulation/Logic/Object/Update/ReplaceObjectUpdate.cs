@@ -17,10 +17,10 @@ public sealed class ReplaceObjectUpdateModuleData : UpdateModuleData
         { "PersistentPrepTime", (parser, x) => x.PersistentPrepTime = parser.ParseInteger() },
         { "PackTime", (parser, x) => x.PackTime = parser.ParseInteger() },
         { "AwardXPForTriggering", (parser, x) => x.AwardXPForTriggering = parser.ParseInteger() },
-        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
         { "MustFinishAbility", (parser, x) => x.MustFinishAbility = parser.ParseBoolean() },
         { "ReplaceObject", (parser, x) => x.ReplaceObject = ReplaceObject.Parse(parser) },
-        { "ReplaceRadius", (parser, x) => x.ReplaceRadius = parser.ParseFloat() },
+        { "ReplaceRadius", (parser, x) => x.ReplaceRadius = parser.ParseDistanceFloat() },
         { "ReplaceFX", (parser, x) => x.ReplaceFX = parser.ParseAssetReference() },
         { "Scatter", (parser, x) => x.Scatter = parser.ParseBoolean() },
     };

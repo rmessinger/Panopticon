@@ -13,7 +13,7 @@ public sealed class LevelGrantSpecialPowerModuleData : SpecialPowerModuleData
         .Concat(new IniParseTable<LevelGrantSpecialPowerModuleData>
         {
             { "UnpackingVariation", (parser, x) => x.UnpackingVariation = parser.ParseInteger() },
-            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
             { "UnpackTime", (parser, x) => x.UnpackTime = parser.ParseInteger() },
             { "PreparationTime", (parser, x) => x.PreparationTime = parser.ParseInteger() },
             { "FreezeAfterTriggerDuration", (parser, x) => x.FreezeAfterTriggerDuration = parser.ParseInteger() },

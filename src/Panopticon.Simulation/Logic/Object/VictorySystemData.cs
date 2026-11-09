@@ -17,7 +17,7 @@ public sealed class VictorySystemData : BaseAsset
         { "CellSize", (parser, x) => x.CellSize = parser.ParseInteger() },
         { "ScalePerLogicFrame", (parser, x) => x.ScalePerLogicFrame = parser.ParseFloat() },
         { "SubtractPerLogicFrame", (parser, x) => x.SubtractPerLogicFrame = parser.ParseFloat() },
-        { "CellBonusRadius", (parser, x) => x.CellBonusRadius = parser.ParseFloat() },
+        { "CellBonusRadius", (parser, x) => x.CellBonusRadius = parser.ParseDistanceFloat() },
     };
 
     public int CellSize { get; private set; }

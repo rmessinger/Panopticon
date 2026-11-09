@@ -77,7 +77,7 @@ public sealed class FireWeaponWhenDeadBehaviorModuleData : UpgradeModuleData
         {
             { "DeathWeapon", (parser, x) => x.DeathWeapon = parser.ParseWeaponTemplateReference() },
             { "DelayTime", (parser, x) => x.DelayTime = parser.ParseInteger() },
-            { "WeaponOffset", (parser, x) => x.WeaponOffset = parser.ParseVector3() },
+            { "WeaponOffset", (parser, x) => x.WeaponOffset = parser.ParseDistanceVector3() },
         });
 
     public DieLogicData DieData { get; } = new();

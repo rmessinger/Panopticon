@@ -12,7 +12,7 @@ public sealed class RousingSpeechUpdateModuleData : UpdateModuleData
     {
         { "SpecialPowerTemplate", (parser, x) => x.SpecialPowerTemplate = parser.ParseAssetReference() },
         { "RequiredConditions", (parser, x) => x.RequiredConditions = parser.ParseEnumBitArray<ModelConditionFlag>() },
-        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
         { "UpdateInterval", (parser, x) => x.UpdateInterval = parser.ParseInteger() },
         { "ApproachRequiresLOS", (parser, x) => x.ApproachRequiresLos = parser.ParseBoolean() },
         { "BonusRadius", (parser, x) => x.BonusRadius = parser.ParseInteger() },

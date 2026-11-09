@@ -35,7 +35,7 @@ public sealed class SalvageCrateCollideModuleData : CrateCollideModuleData
             { "PorterChance", (parser, x) => x.PorterChance = parser.ParsePercentage() },
             { "BannerChance", (parser, x) => x.BannerChance = parser.ParsePercentage() },
             { "LevelUpChance", (parser, x) => x.LevelUpChance = parser.ParsePercentage() },
-            { "LevelUpRadius", (parser, x) => x.LevelUpRadius = parser.ParseFloat() },
+            { "LevelUpRadius", (parser, x) => x.LevelUpRadius = parser.ParseDistanceFloat() },
             { "ResourceChance", (parser, x) => x.ResourceChance = parser.ParsePercentage() },
             { "MinResource", (parser, x) => x.MinResource = parser.ParseInteger() },
             { "MaxResource", (parser, x) => x.MaxResource = parser.ParseInteger() },

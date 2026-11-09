@@ -15,11 +15,11 @@ public sealed class MetaImpactNugget : WeaponEffectNugget
         {
             { "HeroResist", (parser, x) => x.HeroResist = parser.ParseFloat() },
             { "ShockWaveAmount", (parser, x) => x.ShockWaveAmount = parser.ParseFloat() },
-            { "ShockWaveRadius", (parser, x) => x.ShockWaveRadius = parser.ParseFloat() },
+            { "ShockWaveRadius", (parser, x) => x.ShockWaveRadius = parser.ParseDistanceFloat() },
             { "ShockWaveTaperOff", (parser, x) => x.ShockWaveTaperOff = parser.ParseFloat() },
             { "ShockWaveArc", (parser, x) => x.ShockWaveArc = parser.ParseFloat() },
             { "ShockWaveZMult", (parser, x) => x.ShockWaveZMult = parser.ParseFloat() },
-            { "ShockWaveSpeed", (parser, x) => x.ShockWaveSpeed = parser.ParseFloat() },
+            { "ShockWaveSpeed", (parser, x) => x.ShockWaveSpeed = parser.ParseDistanceFloat() },
             { "InvertShockWave", (parser, x) => x.InvertShockWave = parser.ParseBoolean() },
             { "DelayTime", (parser, x) => x.DelayTime = parser.ParseInteger() },
             { "FlipDirection", (parser, x) => x.FlipDirection = parser.ParseBoolean() },

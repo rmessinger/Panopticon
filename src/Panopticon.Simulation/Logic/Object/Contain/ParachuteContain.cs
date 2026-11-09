@@ -15,7 +15,7 @@ public sealed class ParachuteContainModuleData : ContainModuleData
         { "PitchRateMax", (parser, x) => x.PitchRateMax = parser.ParseInteger() },
         { "RollRateMax", (parser, x) => x.RollRateMax = parser.ParseInteger() },
         { "LowAltitudeDamping", (parser, x) => x.LowAltitudeDamping = parser.ParseFloat() },
-        { "ParachuteOpenDist", (parser, x) => x.ParachuteOpenDist = parser.ParseFloat() },
+        { "ParachuteOpenDist", (parser, x) => x.ParachuteOpenDist = parser.ParseDistanceFloat() },
         { "AllowInsideKindOf", (parser, x) => x.AllowInsideKindOf = parser.ParseEnumBitArray<ObjectKinds>() },
         { "ParachuteOpenSound", (parser, x) => x.ParachuteOpenSound = parser.ParseAssetReference() }
     };

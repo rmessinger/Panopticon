@@ -13,7 +13,7 @@ public class GrabNugget : WeaponEffectNugget
             { "ContainTargetOnEffect", (parser, x) => x.ContainTargetOnEffect = parser.ParseBoolean() },
             { "ImpactTargetOnEffect", (parser, x) => x.ImpactTargetOnEffect = parser.ParseBoolean() },
             { "ShockWaveAmount", (parser, x) => x.ShockWaveAmount = parser.ParseFloat() },
-            { "ShockWaveRadius", (parser, x) => x.ShockWaveRadius = parser.ParseFloat() },
+            { "ShockWaveRadius", (parser, x) => x.ShockWaveRadius = parser.ParseDistanceFloat() },
             { "ShockWaveTaperOff", (parser, x) => x.ShockWaveTaperOff = parser.ParseFloat() },
             { "ShockWaveZMult", (parser, x) => x.ShockWaveZMult = parser.ParseFloat() },
             { "RemoveTargetFromOtherContain", (parser, x) => x.RemoveTargetFromOtherContain = parser.ParseBoolean() }

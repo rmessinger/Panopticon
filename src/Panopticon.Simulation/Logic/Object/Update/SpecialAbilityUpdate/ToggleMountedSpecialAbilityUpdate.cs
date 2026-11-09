@@ -18,7 +18,7 @@ public sealed class ToggleMountedSpecialAbilityUpdateModuleData : UpdateModuleDa
         { "OpacityTarget", (parser, x) => x.OpacityTarget = parser.ParseFloat() },
         { "TriggerInstantlyOnCreate", (parser, x) => x.TriggerInstantlyOnCreate = parser.ParseBoolean() },
         { "CancelDisguiseWhenDismounting", (parser, x) => x.CancelDisguiseWhenDismounting = parser.ParseBoolean() },
-        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
         { "MountedTemplate", (parser, x) => x.MountedTemplate = parser.ParseAssetReference() },
         { "SynchronizeTimerOnSpecialPower", (parser, x) => x.SynchronizeTimerOnSpecialPower = parser.ParseAssetReferenceArray() },
         { "IgnoreFacingCheck", (parser, x) => x.IgnoreFacingCheck = parser.ParseBoolean() },

@@ -19,7 +19,7 @@ public sealed class NeutronMissileUpdateModuleData : UpdateModuleData
         { "SpecialAccelFactor", (parser, x) => x.SpecialAccelFactor = parser.ParseInteger() },
         { "SpecialSpeedTime", (parser, x) => x.SpecialSpeedTime = parser.ParseInteger() },
         { "SpecialSpeedHeight", (parser, x) => x.SpecialSpeedHeight = parser.ParseInteger() },
-        { "SpecialJitterDistance", (parser, x) => x.SpecialJitterDistance = parser.ParseFloat() },
+        { "SpecialJitterDistance", (parser, x) => x.SpecialJitterDistance = parser.ParseDistanceFloat() },
         { "DeliveryDecalRadius", (parser, x) => x.DeliveryDecalRadius = parser.ParseInteger() },
         { "DeliveryDecal", (parser, x) => x.DeliveryDecal = RadiusDecalTemplate.Parse(parser) },
     };

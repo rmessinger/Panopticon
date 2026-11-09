@@ -10,8 +10,8 @@ public sealed class AIGateUpdateModuleData : AIUpdateModuleData
     private new static readonly IniParseTable<AIGateUpdateModuleData> FieldParseTable = AIUpdateModuleData.FieldParseTable
         .Concat(new IniParseTable<AIGateUpdateModuleData>
         {
-            { "TriggerWidthX", (parser, x) => x.TriggerWidthX = parser.ParseFloat() },
-            { "TriggerWidthY", (parser, x) => x.TriggerWidthY = parser.ParseFloat() },
+            { "TriggerWidthX", (parser, x) => x.TriggerWidthX = parser.ParseDistanceFloat() },
+            { "TriggerWidthY", (parser, x) => x.TriggerWidthY = parser.ParseDistanceFloat() },
         });
 
     public float TriggerWidthX { get; private set; }

@@ -490,7 +490,7 @@ public sealed class JetAIUpdateModuleData : AIUpdateModuleData
             { "MinHeight", (parser, x) => x.MinHeight = parser.ParseInteger() },
             { "NeedsRunway", (parser, x) => x.NeedsRunway = parser.ParseBoolean() },
             { "KeepsParkingSpaceWhenAirborne", (parser, x) => x.KeepsParkingSpaceWhenAirborne = parser.ParseBoolean() },
-            { "SneakyOffsetWhenAttacking", (parser, x) => x.SneakyOffsetWhenAttacking = parser.ParseFloat() },
+            { "SneakyOffsetWhenAttacking", (parser, x) => x.SneakyOffsetWhenAttacking = parser.ParseDistanceFloat() },
             { "AttackLocomotorType", (parser, x) => x.AttackLocomotorType = parser.ParseEnum<LocomotorSetType>() },
             { "AttackLocomotorPersistTime", (parser, x) => x.AttackLocomotorPersistTime = parser.ParseInteger() },
             { "AttackersMissPersistTime", (parser, x) => x.AttackersMissPersistTime = parser.ParseInteger() },

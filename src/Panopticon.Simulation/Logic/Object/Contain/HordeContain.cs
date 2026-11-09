@@ -361,7 +361,7 @@ public sealed class RankInfo
     {
         { "RankNumber", (parser, x) => x.RankNumber = parser.ParseInteger() },
         { "UnitType", (parser, x) => x.UnitType = parser.ParseObjectReference() },
-        { "Position", (parser, x) => x.Positions.Add(parser.ParseVector2()) },
+        { "Position", (parser, x) => x.Positions.Add(parser.ParseDistanceVector2()) },
         { "RevokedWeaponCondition", (parser, x) => x.RevokedWeaponCondition = parser.ParseEnum<WeaponSetConditions>() },
         { "GrantedWeaponCondition", (parser, x) => x.GrantedWeaponCondition = parser.ParseEnum<WeaponSetConditions>() },
         { "Leader", (parser, x) => x.Leaders.Add(Leader.Parse(parser)) },

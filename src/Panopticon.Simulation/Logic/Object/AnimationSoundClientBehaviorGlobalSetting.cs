@@ -9,7 +9,7 @@ public sealed class AnimationSoundClientBehaviorGlobalSetting : BaseSingletonAss
 
     private static readonly IniParseTable<AnimationSoundClientBehaviorGlobalSetting> FieldParseTable = new IniParseTable<AnimationSoundClientBehaviorGlobalSetting>
     {
-        { "MinMicrophoneDistanceToDirty", (parser, x) => x.MinMicrophoneDistanceToDirty = parser.ParseFloat() },
+        { "MinMicrophoneDistanceToDirty", (parser, x) => x.MinMicrophoneDistanceToDirty = parser.ParseDistanceFloat() },
     };
 
     public float MinMicrophoneDistanceToDirty { get; private set; }

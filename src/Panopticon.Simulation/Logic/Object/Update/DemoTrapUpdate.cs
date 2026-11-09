@@ -13,7 +13,7 @@ public sealed class DemoTrapUpdateModuleData : UpdateModuleData
         { "DetonationWeaponSlot", (parser, x) => x.DetonationWeaponSlot = parser.ParseEnum<WeaponSlot>() },
         { "ProximityModeWeaponSlot", (parser, x) => x.ProximityModeWeaponSlot = parser.ParseEnum<WeaponSlot>() },
         { "ManualModeWeaponSlot", (parser, x) => x.ManualModeWeaponSlot = parser.ParseEnum<WeaponSlot>() },
-        { "TriggerDetonationRange", (parser, x) => x.TriggerDetonationRange = parser.ParseFloat() },
+        { "TriggerDetonationRange", (parser, x) => x.TriggerDetonationRange = parser.ParseDistanceFloat() },
         { "IgnoreTargetTypes", (parser, x) => x.IgnoreTargetTypes = parser.ParseEnumBitArray<ObjectKinds>() },
         { "AutoDetonationWithFriendsInvolved", (parser, x) => x.AutoDetonationWithFriendsInvolved = parser.ParseBoolean() },
         { "DetonateWhenKilled", (parser, x) => x.DetonateWhenKilled = parser.ParseBoolean() }

@@ -15,8 +15,8 @@ public sealed class SiegeDeploySpecialPowerModuleData : SpecialPowerModuleData
             { "RaiseDelay", (parser, x) => x.RaiseDelay = parser.ParseInteger() },
             { "EvacuatePassengersOnDeploy", (parser, x) => x.EvacuatePassengersOnDeploy = parser.ParseBoolean() },
             { "SkipAdjustPosition", (parser, x) => x.SkipAdjustPosition = parser.ParseBoolean() },
-            { "WallSearchDistance", (parser, x) => x.WallSearchDistance = parser.ParseFloat() },
-            { "ExtraWallDistance", (parser, x) => x.ExtraWallDistance = parser.ParseFloat() }
+            { "WallSearchDistance", (parser, x) => x.WallSearchDistance = parser.ParseDistanceFloat() },
+            { "ExtraWallDistance", (parser, x) => x.ExtraWallDistance = parser.ParseDistanceFloat() }
         });
 
     public int LowerDelay { get; private set; }

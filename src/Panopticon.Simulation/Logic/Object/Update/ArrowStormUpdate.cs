@@ -11,7 +11,7 @@ public sealed class ArrowStormUpdateModuleData : UpdateModuleData
     private static readonly IniParseTable<ArrowStormUpdateModuleData> FieldParseTable = new IniParseTable<ArrowStormUpdateModuleData>
     {
         { "SpecialPowerTemplate", (parser, x) => x.SpecialPowerTemplate = parser.ParseIdentifier() },
-        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
         { "UnpackingVariation", (parser, x) => x.UnpackingVariation = parser.ParseInteger() },
         { "UnpackTime", (parser, x) => x.UnpackTime = parser.ParseInteger() },
         { "PreparationTime", (parser, x) => x.PreparationTime = parser.ParseInteger() },

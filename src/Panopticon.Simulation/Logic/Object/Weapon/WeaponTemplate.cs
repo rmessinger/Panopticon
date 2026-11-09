@@ -23,9 +23,9 @@ public sealed class WeaponTemplate : BaseAsset
     {
         // Legacy
         { "PrimaryDamage", (parser, x) => x.SetDamageNuggetDamage(0, parser.ParseFloat()) },
-        { "PrimaryDamageRadius", (parser, x) => x.SetDamageNuggetRadius(0, parser.ParseFloat()) },
+        { "PrimaryDamageRadius", (parser, x) => x.SetDamageNuggetRadius(0, parser.ParseDistanceFloat()) },
         { "SecondaryDamage", (parser, x) => x.SetDamageNuggetDamage(1, parser.ParseFloat()) },
-        { "SecondaryDamageRadius", (parser, x) => x.SetDamageNuggetRadius(1, parser.ParseFloat()) },
+        { "SecondaryDamageRadius", (parser, x) => x.SetDamageNuggetRadius(1, parser.ParseDistanceFloat()) },
         {
             "DamageType",
             (parser, x) =>
@@ -76,16 +76,16 @@ public sealed class WeaponTemplate : BaseAsset
             }
         },
         { "ShockWaveAmount", (parser, x) => x.EnsureMetaImpactNugget().ShockWaveAmount = parser.ParseFloat() },
-        { "ShockWaveRadius", (parser, x) => x.EnsureMetaImpactNugget().ShockWaveRadius = parser.ParseFloat() },
+        { "ShockWaveRadius", (parser, x) => x.EnsureMetaImpactNugget().ShockWaveRadius = parser.ParseDistanceFloat() },
         { "ShockWaveTaperOff", (parser, x) => x.EnsureMetaImpactNugget().ShockWaveTaperOff = parser.ParseFloat() },
 
-        { "ScatterRadius", (parser, x) => x.ScatterRadius = parser.ParseFloat() },
-        { "ScatterRadiusVsInfantry", (parser, x) => x.ScatterRadiusVsInfantry = parser.ParseFloat() },
+        { "ScatterRadius", (parser, x) => x.ScatterRadius = parser.ParseDistanceFloat() },
+        { "ScatterRadiusVsInfantry", (parser, x) => x.ScatterRadiusVsInfantry = parser.ParseDistanceFloat() },
         { "ScatterTargetScalar", (parser, x) => x.ScatterTargetScalar = parser.ParseFloat() },
-        { "ScatterTarget", (parser, x) => x.ScatterTargets.Add(parser.ParseVector2()) },
+        { "ScatterTarget", (parser, x) => x.ScatterTargets.Add(parser.ParseDistanceVector2()) },
         { "LeechRangeWeapon", (parser, x) => x.LeechRangeWeapon = parser.ParseBoolean() },
-        { "AttackRange", (parser, x) => x.AttackRange = parser.ParseFloat() },
-        { "MinimumAttackRange", (parser, x) => x.MinimumAttackRange = parser.ParseFloat() },
+        { "AttackRange", (parser, x) => x.AttackRange = parser.ParseDistanceFloat() },
+        { "MinimumAttackRange", (parser, x) => x.MinimumAttackRange = parser.ParseDistanceFloat() },
         { "MinTargetPitch", (parser, x) => x.MinTargetPitch = parser.ParseInteger() },
         { "MaxTargetPitch", (parser, x) => x.MaxTargetPitch = parser.ParseInteger() },
         { "WeaponSpeed", (parser, x) => x.WeaponSpeed = parser.ParseVelocityToLogicFrames() },

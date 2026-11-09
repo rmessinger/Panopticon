@@ -10,7 +10,7 @@ public class ParalyzeNugget : WeaponEffectNugget
     private static new readonly IniParseTable<ParalyzeNugget> FieldParseTable = WeaponEffectNugget.FieldParseTable
         .Concat(new IniParseTable<ParalyzeNugget>
         {
-            { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
+            { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
             { "Duration", (parser, x) => x.Duration = parser.ParseInteger() },
             { "ParalyzeFX", (parser, x) => x.ParalyzeFX = parser.ParseAssetReference() },
             { "FreezeAnimation", (parser, x) => x.FreezeAnimation = parser.ParseAssetReference() },

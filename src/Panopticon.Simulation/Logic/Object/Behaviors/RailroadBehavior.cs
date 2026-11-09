@@ -125,10 +125,10 @@ public sealed class RailroadBehaviorModuleData : PhysicsBehaviorModuleData
         { "WhistleSound", (parser, x) => x.WhistleSound = parser.ParseAssetReference() },
 
         { "IsLocomotive", (parser, x) => x.IsLocomotive = parser.ParseBoolean() },
-        { "SpeedMax", (parser, x) => x.SpeedMax = parser.ParseFloat() },
-        { "Acceleration", (parser, x) => x.Acceleration = parser.ParseFloat() },
+        { "SpeedMax", (parser, x) => x.SpeedMax = parser.ParseVelocityToLogicFrames() },
+        { "Acceleration", (parser, x) => x.Acceleration = parser.ParseAccelerationToLogicFrames() },
         { "WaitAtStationTime", (parser, x) => x.WaitAtStationTime = parser.ParseInteger() },
-        { "Braking", (parser, x) => x.Braking = parser.ParseFloat() },
+        { "Braking", (parser, x) => x.Braking = parser.ParseAccelerationToLogicFrames() },
         { "RunningSound", (parser, x) => x.RunningSound = parser.ParseAssetReference() },
         { "CrashFXTemplateName", (parser, x) => x.CrashFXTemplateName = parser.ParseAssetReference() },
 

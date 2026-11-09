@@ -15,7 +15,7 @@ public sealed class DeliverPayloadAIUpdateModuleData : AIUpdateModuleData
         {
             { "DoorDelay", (parser, x) => x.DoorDelay = parser.ParseInteger() },
             { "MaxAttempts", (parser, x) => x.MaxAttempts = parser.ParseInteger() },
-            { "DropOffset", (parser, x) => x.DropOffset = parser.ParseVector3() },
+            { "DropOffset", (parser, x) => x.DropOffset = parser.ParseDistanceVector3() },
             { "DropDelay", (parser, x) => x.DropDelay = parser.ParseInteger() },
             { "PutInContainer", (parser, x) => x.PutInContainer = parser.ParseAssetReference() },
             { "DeliveryDistance", (parser, x) => x.DeliveryDistance = parser.ParseInteger() }

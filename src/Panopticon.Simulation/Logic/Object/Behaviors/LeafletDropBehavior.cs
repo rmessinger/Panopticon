@@ -11,7 +11,7 @@ public sealed class LeafletDropBehaviorModuleData : BehaviorModuleData
     {
         { "DisabledDuration", (parser, x) => x.DisabledDuration = parser.ParseInteger() },
         { "Delay", (parser, x) => x.Delay = parser.ParseInteger() },
-        { "AffectRadius", (parser, x) => x.AffectRadius = parser.ParseFloat() },
+        { "AffectRadius", (parser, x) => x.AffectRadius = parser.ParseDistanceFloat() },
         { "LeafletFXParticleSystem", (parser, x) => x.LeafletFXParticleSystem = parser.ParseAssetReference() },
     };
 

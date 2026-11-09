@@ -161,7 +161,7 @@ public sealed class ParticleUplinkCannonUpdateModuleData : UpdateModuleData
         { "BeamTravelTime", (parser, x) => x.BeamTravelTime = parser.ParseTimeMillisecondsToLogicFrames() },
         { "DamageType", (parser, x) => x.DamageType = parser.ParseEnum<DamageType>() },
         { "DamageRadiusScalar", (parser, x) => x.DamageRadiusScalar = parser.ParseFloat() },
-        { "RevealRange", (parser, x) => x.RevealRange = parser.ParseFloat() },
+        { "RevealRange", (parser, x) => x.RevealRange = parser.ParseDistanceFloat() },
 
         { "OuterEffectBoneName", (parser, x) => x.OuterEffectBoneName = parser.ParseAssetReference() },
         { "OuterEffectNumBones", (parser, x) => x.OuterEffectNumBones = parser.ParseInteger() },
@@ -185,8 +185,8 @@ public sealed class ParticleUplinkCannonUpdateModuleData : UpdateModuleData
         { "TotalScorchMarks", (parser, x) => x.TotalScorchMarks = parser.ParseInteger() },
         { "ScorchMarkScalar", (parser, x) => x.ScorchMarkScalar = parser.ParseFloat() },
 
-        { "SwathOfDeathDistance", (parser, x) => x.SwathOfDeathDistance = parser.ParseFloat() },
-        { "SwathOfDeathAmplitude", (parser, x) => x.SwathOfDeathAmplitude = parser.ParseFloat() },
+        { "SwathOfDeathDistance", (parser, x) => x.SwathOfDeathDistance = parser.ParseDistanceFloat() },
+        { "SwathOfDeathAmplitude", (parser, x) => x.SwathOfDeathAmplitude = parser.ParseDistanceFloat() },
 
         { "ManualDrivingSpeed", (parser, x) => x.ManualDrivingSpeed = parser.ParseInteger() },
         { "ManualFastDrivingSpeed", (parser, x) => x.ManualFastDrivingSpeed = parser.ParseInteger() },

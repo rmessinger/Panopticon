@@ -10,7 +10,7 @@ public sealed class InvisibilitySpecialPowerModuleData : SpecialPowerModuleData
     private static new readonly IniParseTable<InvisibilitySpecialPowerModuleData> FieldParseTable = SpecialPowerModuleData.FieldParseTable
         .Concat(new IniParseTable<InvisibilitySpecialPowerModuleData>
         {
-            { "BroadcastRadius", (parser, x) => x.BroadcastRadius = parser.ParseFloat() },
+            { "BroadcastRadius", (parser, x) => x.BroadcastRadius = parser.ParseDistanceFloat() },
             { "InvisibilityNugget", (parser, x) => x.InvisibilityNugget = InvisibilityNugget.Parse(parser) },
             { "ObjectFilter", (parser, x) => x.ObjectFilter = ObjectFilter.Parse(parser) },
             { "Duration", (parser, x) => x.Duration = parser.ParseInteger() }

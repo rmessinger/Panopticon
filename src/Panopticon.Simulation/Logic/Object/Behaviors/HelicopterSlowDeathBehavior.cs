@@ -37,7 +37,7 @@ public sealed class HelicopterSlowDeathBehaviorModuleData : SlowDeathBehaviorMod
         .Concat(new IniParseTable<HelicopterSlowDeathBehaviorModuleData>
         {
             { "SpiralOrbitTurnRate", (parser, x) => x.SpiralOrbitTurnRate = parser.ParseFloat() },
-            { "SpiralOrbitForwardSpeed", (parser, x) => x.SpiralOrbitForwardSpeed = parser.ParseFloat() },
+            { "SpiralOrbitForwardSpeed", (parser, x) => x.SpiralOrbitForwardSpeed = parser.ParseDistanceFloat() },
             { "SpiralOrbitForwardSpeedDamping", (parser, x) => x.SpiralOrbitForwardSpeedDamping = parser.ParseFloat() },
             { "MaxBraking", (parser, x) => x.MaxBraking = parser.ParseInteger() },
             { "SoundDeathLoop", (parser, x) => x.SoundDeathLoop = parser.ParseAssetReference() },

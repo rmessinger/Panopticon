@@ -18,12 +18,12 @@ public class DamageNugget : WeaponEffectNugget
         .Concat(new IniParseTable<DamageNugget>
         {
             { "Damage", (parser, x) => x.Damage = parser.ParseFloat() },
-            { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
+            { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
             { "DelayTime", (parser, x) => x.DelayTime = parser.ParseInteger() },
             { "DamageType", (parser, x) => x.DamageType = parser.ParseEnum<DamageType>() },
             { "DamageFXType", (parser, x) => x.DamageFXType = parser.ParseEnum<DamageFXType>() },
             { "DeathType", (parser, x) => x.DeathType = parser.ParseEnum<DeathType>() },
-            { "DamageSpeed", (parser, x) => x.DamageSpeed = parser.ParseFloat() },
+            { "DamageSpeed", (parser, x) => x.DamageSpeed = parser.ParseDistanceFloat() },
             { "DamageArc", (parser, x) => x.DamageArc = parser.ParseInteger() },
             { "DamageScalar", (parser, x) => x.DamageScalar = DamageScalar.Parse(parser) },
             { "DamageMaxHeight", (parser, x) => x.DamageMaxHeight = parser.ParseInteger() },

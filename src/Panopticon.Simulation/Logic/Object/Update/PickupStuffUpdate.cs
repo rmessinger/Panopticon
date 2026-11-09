@@ -11,7 +11,7 @@ public sealed class PickupStuffUpdateModuleData : UpdateModuleData
     {
         { "SkirmishAIOnly", (parser, x) => x.SkirmishAIOnly = parser.ParseBoolean() },
         { "StuffToPickUp", (parser, x) => x.StuffToPickUp = ObjectFilter.Parse(parser) },
-        { "ScanRange", (parser, x) => x.ScanRange = parser.ParseFloat() },
+        { "ScanRange", (parser, x) => x.ScanRange = parser.ParseDistanceFloat() },
         { "ScanIntervalSeconds", (parser, x) => x.ScanIntervalSeconds = parser.ParseFloat() }
     };
 

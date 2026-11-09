@@ -198,7 +198,7 @@ public class SpecialPowerModuleData : BehaviorModuleData
         { "AttributeModifierAffectsSelf", (parser, x) => x.AttributeModifierAffectsSelf = parser.ParseBoolean() },
         { "InitiateFX", (parser, x) => x.InitiateFX = parser.ParseAssetReference() },
         { "AntiCategory", (parser, x) => x.AntiCategory = parser.ParseEnum<ModifierCategory>() },
-        { "AttributeModifierRange", (parser, x) => x.AttributeModifierRange = parser.ParseFloat() },
+        { "AttributeModifierRange", (parser, x) => x.AttributeModifierRange = parser.ParseDistanceFloat() },
         { "AttributeModifierFX", (parser, x) => x.AttributeModifierFX = parser.ParseAssetReference() },
         { "TriggerFX", (parser, x) => x.TriggerFX = parser.ParseAssetReference() },
         { "SetModelCondition", (parser, x) => x.SetModelCondition = parser.ParseAttributeEnum<ModelConditionFlag>("ModelConditionState") },

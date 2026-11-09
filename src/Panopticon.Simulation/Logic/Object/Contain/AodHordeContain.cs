@@ -26,8 +26,8 @@ public class AodHordeContainModuleData : HordeContainModuleData
             { "StillAmplitudeZ", (parser, x) => x.StillAmplitudeZ = parser.ParseFloat() },
 
             { "LargeUnitHeightFactor", (parser, x) => x.LargeUnitHeightFactor = parser.ParseFloat() },
-            { "LargeUnitMinHeight", (parser, x) => x.LargeUnitMinHeight = parser.ParseFloat() },
-            { "LargeUnitMaxHeight", (parser, x) => x.LargeUnitMaxHeight = parser.ParseFloat() },
+            { "LargeUnitMinHeight", (parser, x) => x.LargeUnitMinHeight = parser.ParseDistanceFloat() },
+            { "LargeUnitMaxHeight", (parser, x) => x.LargeUnitMaxHeight = parser.ParseDistanceFloat() },
             { "LargeUnitTimeout", (parser, x) => x.LargeUnitTimeout = parser.ParseInteger() },
             { "LargeUnitTailOff", (parser, x) => x.LargeUnitTailOff = parser.ParseFloat() },
 

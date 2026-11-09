@@ -165,6 +165,11 @@ partial class IniParser
         return ParseAttribute(label, ScanFloat);
     }
 
+    public float ParseAttributeDistanceFloat(string label)
+    {
+        return ParseAttribute(label, ScanDistanceFloat);
+    }
+
     public Point2D ParseAttributePoint2D(string label)
     {
         return ParseAttribute(label, ParsePoint);
@@ -175,8 +180,18 @@ partial class IniParser
         return ParseAttribute(label, ParseVector2);
     }
 
+    public Vector2 ParseAttributeDistanceVector2(string label)
+    {
+        return ParseAttribute(label, ParseDistanceVector2);
+    }
+
     public Vector3 ParseAttributeVector3(string label)
     {
         return ParseAttribute(label, ParseVector3);
+    }
+
+    public Vector3 ParseAttributeDistanceVector3(string label)
+    {
+        return ParseAttribute(label, ParseDistanceVector3);
     }
 }

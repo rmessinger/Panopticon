@@ -21,7 +21,7 @@ public sealed class WallHubBehaviorModuleData : BehaviorModuleData
         { "ShoreCapTemplateName", (parser, x) => x.ShoreCapTemplateName = parser.ParseAssetReference() },
         { "BorderCapTemplateName", (parser, x) => x.BorderCapTemplateName = parser.ParseAssetReference() },
         { "ElevatedSegmentTemplateName", (parser, x) => x.ElevatedSegmentTemplateName = parser.ParseAssetReference() },
-        { "BuilderRadius", (parser, x) => x.BuilderRadius = parser.ParseFloat() },
+        { "BuilderRadius", (parser, x) => x.BuilderRadius = parser.ParseDistanceFloat() },
     };
 
     public CommandButtonOption Options { get; private set; }

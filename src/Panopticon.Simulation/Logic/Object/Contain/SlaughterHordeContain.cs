@@ -21,9 +21,9 @@ public class SlaughterHordeContainModuleData : UpgradeModuleData
             { "AllowEnemiesInside", (parser, x) => x.AllowEnemiesInside = parser.ParseBoolean() },
             { "AllowNeutralInside", (parser, x) => x.AllowNeutralInside = parser.ParseBoolean() },
             { "EnterSound", (parser, x) => x.EnterSound = parser.ParseAssetReference() },
-            { "EntryOffset", (parser, x) => x.EntryOffset = parser.ParseVector3() },
-            { "ExitOffset", (parser, x) => x.ExitOffset = parser.ParseVector3() },
-            { "EntryPosition", (parser, x) => x.EntryPosition = parser.ParseVector3() },
+            { "EntryOffset", (parser, x) => x.EntryOffset = parser.ParseDistanceVector3() },
+            { "ExitOffset", (parser, x) => x.ExitOffset = parser.ParseDistanceVector3() },
+            { "EntryPosition", (parser, x) => x.EntryPosition = parser.ParseDistanceVector3() },
         });
 
     public ObjectFilter PassengerFilter { get; private set; }

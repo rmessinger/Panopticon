@@ -12,7 +12,7 @@ public sealed class FellBeastSwoopPowerModuleData : SpecialPowerModuleData
         {
             { "UnpackTime", (parser, x) => x.UnpackTime = parser.ParseInteger() },
             { "AwardXPForTriggering", (parser, x) => x.AwardXPForTriggering = parser.ParseInteger() },
-            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() }
+            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() }
         });
 
     public int UnpackTime { get; private set; }

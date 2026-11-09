@@ -1964,7 +1964,7 @@ public class PhysicsBehaviorModuleData : UpdateModuleData
         FieldParseTable,
         new PhysicsBehaviorModuleData
         {
-            MinFallSpeedForDamage = HeightToSpeed(parser, 40.0f),
+            MinFallSpeedForDamage = HeightToSpeed(parser, (float)(40.0f * parser.SourceUnitPolicy.MetersPerSourceUnit)),
         });
 
     internal static readonly IniParseTable<PhysicsBehaviorModuleData> FieldParseTable = new IniParseTable<PhysicsBehaviorModuleData>
@@ -1978,7 +1978,7 @@ public class PhysicsBehaviorModuleData : UpdateModuleData
         { "LateralFriction", (parser, x) => x.LateralFriction = parser.ParseFrictionPerSec() },
         { "ZFriction", (parser, x) => x.ZFriction = parser.ParseFrictionPerSec() },
         { "AerodynamicFriction", (parser, x) => x.AerodynamicFriction = parser.ParseFrictionPerSec() },
-        { "CenterOfMassOffset", (parser, x) => x.CenterOfMassOffset = parser.ParseFloat() },
+        { "CenterOfMassOffset", (parser, x) => x.CenterOfMassOffset = parser.ParseDistanceFloat() },
         { "AllowBouncing", (parser, x) => x.AllowBouncing = parser.ParseBoolean() },
         { "KillWhenRestingOnGround", (parser, x) => x.KillWhenRestingOnGround = parser.ParseBoolean() },
         { "AllowCollideForce", (parser, x) => x.AllowCollideForce = parser.ParseBoolean() },
@@ -2062,6 +2062,6 @@ public class PhysicsBehaviorModuleData : UpdateModuleData
 
     private static float ParseHeightToSpeed(IniParser parser)
     {
-        return HeightToSpeed(parser, parser.ParseFloat());
+        return HeightToSpeed(parser, parser.ParseDistanceFloat());
     }
 }

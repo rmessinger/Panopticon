@@ -193,7 +193,7 @@ public sealed class WeaponNugget
         { "WeaponName", (parser, x) => x.WeaponName = parser.ParseAssetReference() },
         { "FireDelay", (parser, x) => x.FireDelay = parser.ParseInteger() },
         { "OneShot", (parser, x) => x.OneShot = parser.ParseBoolean() },
-        { "Offset", (parser, x) => x.Offset = parser.ParseVector3() }
+        { "Offset", (parser, x) => x.Offset = parser.ParseDistanceVector3() }
     };
     public string WeaponName { get; private set; }
     public int FireDelay { get; private set; }

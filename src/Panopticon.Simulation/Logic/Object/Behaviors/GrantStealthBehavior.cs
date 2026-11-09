@@ -10,9 +10,9 @@ public sealed class GrantStealthBehaviorModuleData : BehaviorModuleData
 
     private static readonly IniParseTable<GrantStealthBehaviorModuleData> FieldParseTable = new IniParseTable<GrantStealthBehaviorModuleData>
     {
-        { "StartRadius", (parser, x) => x.StartRadius = parser.ParseFloat() },
-        { "FinalRadius", (parser, x) => x.FinalRadius = parser.ParseFloat() },
-        { "RadiusGrowRate", (parser, x) => x.RadiusGrowRate = parser.ParseFloat() },
+        { "StartRadius", (parser, x) => x.StartRadius = parser.ParseDistanceFloat() },
+        { "FinalRadius", (parser, x) => x.FinalRadius = parser.ParseDistanceFloat() },
+        { "RadiusGrowRate", (parser, x) => x.RadiusGrowRate = parser.ParseDistanceFloat() },
         { "RadiusParticleSystemName", (parser, x) => x.RadiusParticleSystemName = parser.ParseAssetReference() },
         { "KindOf", (parser, x) => x.KindOf = parser.ParseEnumBitArray<ObjectKinds>() },
     };

@@ -31,7 +31,7 @@ public abstract class CrateCollideModuleData : CollideModuleData
         { "FXList", (parser, x) => x.FXList = parser.ParseAssetReference() },
         { "ExecuteAnimation", (parser, x) => x.ExecuteAnimation = parser.ParseAssetReference() },
         { "ExecuteAnimationTime", (parser, x) => x.ExecuteAnimationTime = parser.ParseFloat() },
-        { "ExecuteAnimationZRise", (parser, x) => x.ExecuteAnimationZRise = parser.ParseFloat() },
+        { "ExecuteAnimationZRise", (parser, x) => x.ExecuteAnimationZRise = parser.ParseDistanceFloat() },
         { "ExecuteAnimationFades", (parser, x) => x.ExecuteAnimationFades = parser.ParseBoolean() },
     };
 

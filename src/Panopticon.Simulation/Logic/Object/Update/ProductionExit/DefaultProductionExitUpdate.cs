@@ -43,8 +43,8 @@ public sealed class DefaultProductionExitUpdateModuleData : UpdateModuleData
 
     private static readonly IniParseTable<DefaultProductionExitUpdateModuleData> FieldParseTable = new IniParseTable<DefaultProductionExitUpdateModuleData>
     {
-        { "UnitCreatePoint", (parser, x) => x.UnitCreatePoint = parser.ParseVector3() },
-        { "NaturalRallyPoint", (parser, x) => x.NaturalRallyPoint = parser.ParseVector3() },
+        { "UnitCreatePoint", (parser, x) => x.UnitCreatePoint = parser.ParseDistanceVector3() },
+        { "NaturalRallyPoint", (parser, x) => x.NaturalRallyPoint = parser.ParseDistanceVector3() },
         { "UseSpawnRallyPoint", (parser, x) => x.UseSpawnRallyPoint = parser.ParseBoolean() },
     };
 

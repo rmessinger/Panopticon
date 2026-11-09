@@ -43,7 +43,7 @@ public sealed class InvisibilityNugget
     private static readonly IniParseTable<InvisibilityNugget> FieldParseTable = new IniParseTable<InvisibilityNugget>
     {
         { "InvisibilityType", (parser, x) => x.Type = parser.ParseEnum<InvisibilityType>() },
-        { "DetectionRange", (parser, x) => x.DetectionRange  = parser.ParseFloat() },
+        { "DetectionRange", (parser, x) => x.DetectionRange  = parser.ParseDistanceFloat() },
         { "Options", (parser, x) => x.Options = parser.ParseEnum<InvisibilityOptions>() },
         { "ForbiddenConditions", (parser, x) => x.ForbiddenConditions = parser.ParseEnumBitArray<ModelConditionFlag>() },
         { "BecomeStealthedFX", (parser, x) => x.BecomeStealthedFX = parser.ParseAssetReference() },

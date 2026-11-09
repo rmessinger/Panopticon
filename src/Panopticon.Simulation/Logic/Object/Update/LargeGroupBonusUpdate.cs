@@ -13,8 +13,8 @@ public sealed class LargeGroupBonusUpdateModuleData : UpdateModuleData
        { "UpdateRate", (parser, x) => x.UpdateRate = parser.ParseInteger() },
        { "HordeMemberFilter", (parser, x) => x.HordeMemberFilter = ObjectFilter.Parse(parser) },
        { "Count", (parser, x) => x.Count = parser.ParseInteger() },
-       { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
-       { "RubOffRadius", (parser, x) => x.RubOffRadius = parser.ParseFloat() },
+       { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
+       { "RubOffRadius", (parser, x) => x.RubOffRadius = parser.ParseDistanceFloat() },
        { "AlliesOnly", (parser, x) => x.AlliesOnly = parser.ParseBoolean() },
        { "AttributeModifier", (parser, x) => x.AttributeModifier = parser.ParseAssetReference() }
     };

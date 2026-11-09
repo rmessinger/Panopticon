@@ -12,7 +12,7 @@ public sealed class PlayerHealSpecialPowerModuleData : SpecialPowerModuleData
         {
             { "HealAffects", (parser, x) => x.HealAffects = parser.ParseEnumFlags<ObjectKinds>() },
             { "HealAmount", (parser, x) => x.HealAmount = parser.ParseFloat() },
-            { "HealRadius", (parser, x) => x.HealRadius = parser.ParseFloat() },
+            { "HealRadius", (parser, x) => x.HealRadius = parser.ParseDistanceFloat() },
             { "HealFX", (parser, x) => x.HealFX = parser.ParseAssetReference() },
             { "HealOCL", (parser, x) => x.HealOCL = parser.ParseAssetReference() },
             { "HealAsPercent", (parser, x) => x.HealAsPercent = parser.ParseBoolean() }

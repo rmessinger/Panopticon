@@ -33,7 +33,7 @@ public sealed class FlightDeckBehaviorModuleData : BehaviorModuleData
         { "HealAmountPerSecond", (parser, x) => x.HealAmountPerSecond = parser.ParseInteger() },
 
         { "ApproachHeight", (parser, x) => x.ApproachHeight = parser.ParseInteger() },
-        { "LandingDeckHeightOffset", (parser, x) => x.LandingDeckHeightOffset = parser.ParseFloat() },
+        { "LandingDeckHeightOffset", (parser, x) => x.LandingDeckHeightOffset = parser.ParseDistanceFloat() },
         { "ParkingCleanupPeriod", (parser, x) => x.ParkingCleanupPeriod = parser.ParseInteger() },
         { "HumanFollowPeriod", (parser, x) => x.HumanFollowPeriod = parser.ParseInteger() },
 

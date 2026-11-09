@@ -11,7 +11,7 @@ public sealed class DominateEnemySpecialPowerModuleData : SpecialPowerModuleData
         .Concat(new IniParseTable<DominateEnemySpecialPowerModuleData>
         {
             { "UnpackingVariation", (parser, x) => x.UnpackingVariation = parser.ParseInteger() },
-            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+            { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
             { "DominateRadius", (parser, x) => x.DominateRadius = parser.ParseInteger() },
             { "DominatedFX", (parser, x) => x.DominatedFX = parser.ParseAssetReference() },
             { "UnpackTime", (parser, x) => x.UnpackTime = parser.ParseInteger() },

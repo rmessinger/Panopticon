@@ -62,7 +62,7 @@ public sealed class MinefieldBehaviorModuleData : BehaviorModuleData
         { "DetonationWeapon", (parser, x) => x.DetonationWeapon = parser.ParseAssetReference() },
         { "DetonatedBy", (parser, x) => x.DetonatedBy = parser.ParseEnumBitArray<ObjectFilterRelationship>() },
         { "ScootFromStartingPointTime", (parser, x) => x.ScootFromStartingPointTime = parser.ParseInteger() },
-        { "RepeatDetonateMoveThresh", (parser, x) => x.RepeatDetonateMoveThresh = parser.ParseFloat() },
+        { "RepeatDetonateMoveThresh", (parser, x) => x.RepeatDetonateMoveThresh = parser.ParseDistanceFloat() },
         { "NumVirtualMines", (parser, x) => x.NumVirtualMines = parser.ParseInteger() },
         { "Regenerates", (parser, x) => x.Regenerates = parser.ParseBoolean() },
         { "StopsRegenAfterCreatorDies", (parser, x) => x.StopsRegenAfterCreatorDies = parser.ParseBoolean() },

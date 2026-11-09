@@ -53,8 +53,8 @@ public sealed class BridgeBehaviorModuleData : BehaviorModuleData
 
     private static readonly IniParseTable<BridgeBehaviorModuleData> FieldParseTable = new IniParseTable<BridgeBehaviorModuleData>
     {
-        { "LateralScaffoldSpeed", (parser, x) => x.LateralScaffoldSpeed = parser.ParseFloat() },
-        { "VerticalScaffoldSpeed", (parser, x) => x.VerticalScaffoldSpeed = parser.ParseFloat() },
+        { "LateralScaffoldSpeed", (parser, x) => x.LateralScaffoldSpeed = parser.ParseDistanceFloat() },
+        { "VerticalScaffoldSpeed", (parser, x) => x.VerticalScaffoldSpeed = parser.ParseDistanceFloat() },
 
         { "BridgeDieOCL", (parser, x) => x.BridgeDieOCLs.Add(BridgeDieObjectCreationList.Parse(parser)) },
         { "BridgeDieFX", (parser, x) => x.BridgeDieFXs.Add(BridgeDieFX.Parse(parser)) }

@@ -38,13 +38,13 @@ public sealed class WaveGuideUpdateModuleData : UpdateModuleData
     private static readonly IniParseTable<WaveGuideUpdateModuleData> FieldParseTable = new IniParseTable<WaveGuideUpdateModuleData>
     {
         { "WaveDelay", (parser, x) => x.WaveDelay = parser.ParseInteger() },
-        { "YSize", (parser, x) => x.YSize = parser.ParseFloat() },
-        { "LinearWaveSpacing", (parser, x) => x.LinearWaveSpacing = parser.ParseFloat() },
+        { "YSize", (parser, x) => x.YSize = parser.ParseDistanceFloat() },
+        { "LinearWaveSpacing", (parser, x) => x.LinearWaveSpacing = parser.ParseDistanceFloat() },
         { "WaveBendMagnitude", (parser, x) => x.WaveBendMagnitude = parser.ParseFloat() },
         { "WaterVelocity", (parser, x) => x.WaterVelocity = parser.ParseFloat() },
-        { "PreferredHeight", (parser, x) => x.PreferredHeight = parser.ParseFloat() },
-        { "ShorelineEffectDistance", (parser, x) => x.ShorelineEffectDistance = parser.ParseFloat() },
-        { "DamageRadius", (parser, x) => x.DamageRadius = parser.ParseFloat() },
+        { "PreferredHeight", (parser, x) => x.PreferredHeight = parser.ParseDistanceFloat() },
+        { "ShorelineEffectDistance", (parser, x) => x.ShorelineEffectDistance = parser.ParseDistanceFloat() },
+        { "DamageRadius", (parser, x) => x.DamageRadius = parser.ParseDistanceFloat() },
         { "DamageAmount", (parser, x) => x.DamageAmount = parser.ParseInteger() },
         { "ToppleForce", (parser, x) => x.ToppleForce = parser.ParseFloat() },
         { "RandomSplashSound", (parser, x) => x.RandomSplashSound = parser.ParseAssetReference() },

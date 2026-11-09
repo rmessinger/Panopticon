@@ -12,7 +12,7 @@ public sealed class OilSpillUpdateModuleData : UpdateModuleData
     {
         { "FireWeaponNugget", (parser, x) => x.FireWeaponNugget = WeaponNugget.Parse(parser) },
         { "BreadcrumbName", (parser, x) => x.BreadcrumbName = parser.ParseString() },
-        { "IgnitionWeaponSpacing", (parser, x) => x.IgnitionWeaponSpacing = parser.ParseFloat() },
+        { "IgnitionWeaponSpacing", (parser, x) => x.IgnitionWeaponSpacing = parser.ParseDistanceFloat() },
         { "AliveOnly", (parser, x) => x.AliveOnly = parser.ParseBoolean() },
         { "OilSpillFX", (parser, x) => x.OilSpillFX = parser.ParseAssetReference() }
     };

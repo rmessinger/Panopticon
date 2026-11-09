@@ -28,10 +28,10 @@ public sealed class FloodMember
     private static readonly IniParseTable<FloodMember> FieldParseTable = new IniParseTable<FloodMember>
     {
         { "MemberTemplateName", (parser, x) => x.MemberTemplateName = parser.ParseAssetReference() },
-        { "ControlPointOffsetOne", (parser, x) => x.ControlPointOffsetOne = parser.ParseVector3() },
-        { "ControlPointOffsetTwo", (parser, x) => x.ControlPointOffsetTwo = parser.ParseVector3() },
-        { "ControlPointOffsetThree", (parser, x) => x.ControlPointOffsetThree = parser.ParseVector3() },
-        { "ControlPointOffsetFour", (parser, x) => x.ControlPointOffsetFour = parser.ParseVector3() },
+        { "ControlPointOffsetOne", (parser, x) => x.ControlPointOffsetOne = parser.ParseDistanceVector3() },
+        { "ControlPointOffsetTwo", (parser, x) => x.ControlPointOffsetTwo = parser.ParseDistanceVector3() },
+        { "ControlPointOffsetThree", (parser, x) => x.ControlPointOffsetThree = parser.ParseDistanceVector3() },
+        { "ControlPointOffsetFour", (parser, x) => x.ControlPointOffsetFour = parser.ParseDistanceVector3() },
         { "MemberSpeed", (parser, x) => x.MemberSpeed = parser.ParseInteger() }
     };
 

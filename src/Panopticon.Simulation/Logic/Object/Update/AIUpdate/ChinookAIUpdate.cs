@@ -120,7 +120,7 @@ public sealed class ChinookAIUpdateModuleData : SupplyTruckAIUpdateModuleData
             { "NumRopes", (parser, x) => x.NumRopes = parser.ParseInteger() },
             { "PerRopeDelayMin", (parser, x) => x.PerRopeDelayMin = parser.ParseInteger() },
             { "PerRopeDelayMax", (parser, x) => x.PerRopeDelayMax = parser.ParseInteger() },
-            { "RopeWidth", (parser, x) => x.RopeWidth = parser.ParseFloat() },
+            { "RopeWidth", (parser, x) => x.RopeWidth = parser.ParseDistanceFloat() },
             { "RopeColor", (parser, x) => x.RopeColor = parser.ParseColorRgb() },
             { "RopeWobbleLen", (parser, x) => x.RopeWobbleLen = parser.ParseInteger() },
             { "RopeWobbleAmplitude", (parser, x) => x.RopeWobbleAmplitude = parser.ParseFloat() },

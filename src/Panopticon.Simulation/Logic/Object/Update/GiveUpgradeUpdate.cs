@@ -10,7 +10,7 @@ public sealed class GiveUpgradeUpdateModuleData : UpdateModuleData
     private static readonly IniParseTable<GiveUpgradeUpdateModuleData> FieldParseTable = new IniParseTable<GiveUpgradeUpdateModuleData>
     {
         { "SpecialPowerTemplate", (parser, x) => x.SpecialPowerTemplate = parser.ParseAssetReference() },
-        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseFloat() },
+        { "StartAbilityRange", (parser, x) => x.StartAbilityRange = parser.ParseDistanceFloat() },
         { "UnpackTime", (parser, x) => x.UnpackTime = parser.ParseInteger() },
         { "PreparationTime", (parser, x) => x.PreparationTime = parser.ParseInteger() },
         { "PersistentPrepTime", (parser, x) => x.PersistentPrepTime = parser.ParseInteger() },

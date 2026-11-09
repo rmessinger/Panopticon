@@ -166,7 +166,7 @@ public sealed class AutoHealBehaviorModuleData : UpdateModuleData
             { "KindOf", (parser, x) => x.KindOf = parser.ParseEnumBitArray<ObjectKinds>() },
             { "ForbiddenKindOf", (parser, x) => x.ForbiddenKindOf = parser.ParseEnumBitArray<ObjectKinds>() },
             { "StartHealingDelay", (parser, x) => x.StartHealingDelay = parser.ParseTimeMillisecondsToLogicFrames() },
-            { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
+            { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
             { "SingleBurst", (parser, x) => x.SingleBurst = parser.ParseBoolean() },
             { "SkipSelfForHealing", (parser, x) => x.SkipSelfForHealing = parser.ParseBoolean() },
             { "HealOnlyIfNotInCombat", (parser, x) => x.HealOnlyIfNotInCombat = parser.ParseBoolean() },

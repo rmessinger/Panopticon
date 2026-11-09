@@ -82,9 +82,9 @@ public sealed class TunnelContainModuleData : GarrisonContainModuleData
         {
             { "TimeForFullHeal", (parser, x) => x.TimeForFullHeal = parser.ParseInteger() },
             { "PassengerBonePrefix", (parser, x) => x.PassengerBonePrefix = PassengerBonePrefix.Parse(parser) },
-            { "EntryPosition", (parser, x) => x.EntryPosition = parser.ParseVector3() },
-            { "EntryOffset", (parser, x) => x.EntryOffset = parser.ParseVector3() },
-            { "ExitOffset", (parser, x) => x.ExitOffset = parser.ParseVector3() },
+            { "EntryPosition", (parser, x) => x.EntryPosition = parser.ParseDistanceVector3() },
+            { "EntryOffset", (parser, x) => x.EntryOffset = parser.ParseDistanceVector3() },
+            { "ExitOffset", (parser, x) => x.ExitOffset = parser.ParseDistanceVector3() },
             { "KillPassengersOnDeath", (parser, x) => x.KillPassengersOnDeath = parser.ParseBoolean() },
             { "ShowPips", (parser, x) => x.ShowPips = parser.ParseBoolean() },
             { "ExitDelay", (parser, x) => x.ExitDelay = parser.ParseInteger() },

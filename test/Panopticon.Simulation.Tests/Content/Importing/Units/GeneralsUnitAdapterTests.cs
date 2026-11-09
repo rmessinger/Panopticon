@@ -132,25 +132,25 @@ public class GeneralsUnitAdapterTests
         Assert.Equal(225, ranger.BuildCost.Value.Value);
         Assert.Equal(150, ranger.BuildTime.Value.Value);
         Assert.Equal(QuantityUnit.LogicFrames, ranger.BuildTime.Value.Unit);
-        Assert.Equal(10.0, ranger.GeometryMajorRadius.Value.Value);
+        Assert.Equal(3.048, ranger.GeometryMajorRadius.Value.Value, 3);
         Assert.Equal(QuantityUnit.Meters, ranger.GeometryMajorRadius.Value.Unit);
-        Assert.Equal(12.0, ranger.GeometryHeight.Value.Value);
+        Assert.Equal(3.6576, ranger.GeometryHeight.Value.Value, 3);
         Assert.Equal(QuantityUnit.Meters, ranger.GeometryHeight.Value.Unit);
-        Assert.Equal(150.0, ranger.VisionRange.Value.Value);
+        Assert.Equal(45.72, ranger.VisionRange.Value.Value, 3);
         Assert.Equal(QuantityUnit.Meters, ranger.VisionRange.Value.Unit);
         Assert.Equal(["INFANTRY", "SELECTABLE"], ranger.KindOf.Resolved.Order());
         Assert.Equal(["RangerRifle"], ranger.Weapons.Resolved.Select(id => id.Name));
         Assert.Equal("InfantryArmor", ranger.Armor.Value.Name);
 
         var locomotor = report.Set.Records.OfType<LocomotorRecord>().Single();
-        Assert.Equal(30, locomotor.Speed.Value.Value, 3);
+        Assert.Equal(9.144, locomotor.Speed.Value.Value, 3);
         Assert.Equal(QuantityUnit.MetersPerSecond, locomotor.Speed.Value.Unit);
         Assert.Equal(180, locomotor.TurnRate.Value.Value, 3);
         Assert.Equal(QuantityUnit.DegreesPerSecond, locomotor.TurnRate.Value.Unit);
         Assert.Equal(["GROUND", "RUBBLE"], locomotor.Surfaces.Resolved);
 
         var weapon = report.Set.Records.OfType<WeaponRecord>().Single();
-        Assert.Equal(100.0, weapon.AttackRange.Value.Value);
+        Assert.Equal(30.48, weapon.AttackRange.Value.Value, 3);
         Assert.Equal(QuantityUnit.Meters, weapon.AttackRange.Value.Unit);
         Assert.Equal(0.0, weapon.MinimumAttackRange.Value.Value);
         Assert.Equal(QuantityUnit.Meters, weapon.MinimumAttackRange.Value.Unit);

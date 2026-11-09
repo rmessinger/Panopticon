@@ -13,7 +13,7 @@ public sealed class RubbleRiseUpdateModuleData : UpdateModuleData
         { "MinRubbleRiseDelay", (parser, x) => x.MinRubbleRiseDelay = parser.ParseInteger() },
         { "MaxRubbleRiseDelay", (parser, x) => x.MaxRubbleRiseDelay = parser.ParseInteger() },
         { "RubbleRiseDamping", (parser, x) => x.RubbleRiseDamping = parser.ParseFloat() },
-        { "RubbleHeight", (parser, x) => x.RubbleHeight = parser.ParseFloat() },
+        { "RubbleHeight", (parser, x) => x.RubbleHeight = parser.ParseDistanceFloat() },
         { "MaxShudder", (parser, x) => x.MaxShudder = parser.ParseFloat() },
         { "MinBurstDelay", (parser, x) => x.MinBurstDelay = parser.ParseInteger() },
         { "MaxBurstDelay", (parser, x) => x.MaxBurstDelay = parser.ParseInteger() },

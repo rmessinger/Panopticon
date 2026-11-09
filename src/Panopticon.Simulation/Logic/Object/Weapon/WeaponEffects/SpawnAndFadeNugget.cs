@@ -13,7 +13,7 @@ public class SpawnAndFadeNugget : WeaponEffectNugget
         {
             { "ObjectTargetFilter", (parser, x) => x.ObjectTargetFilter = ObjectFilter.Parse(parser) },
             { "SpawnedObjectName", (parser, x) => x.SpawnedObjectName = parser.ParseAssetReference() },
-            { "SpawnOffset", (parser, x) => x.SpawnOffset = parser.ParseVector3() }
+            { "SpawnOffset", (parser, x) => x.SpawnOffset = parser.ParseDistanceVector3() }
         });
 
     public ObjectFilter ObjectTargetFilter { get; private set; }

@@ -55,7 +55,7 @@ public sealed class ObjectCreationUpgradeModuleData : UpgradeModuleData
             { "GrantUpgrade", (parser, x) => x.GrantUpgrade = parser.ParseAssetReference() },
             { "DestroyWhenSold", (parser, x) => x.DestroyWhenSold = parser.ParseBoolean() },
             { "DeathAnimAndDuration", (parser, x) => x.DeathAnimAndDuration = AnimAndDuration.Parse(parser) },
-            { "Offset", (parser, x) => x.Offset = parser.ParseVector3() },
+            { "Offset", (parser, x) => x.Offset = parser.ParseDistanceVector3() },
             { "ThingToSpawn", (parser, x) => x.ThingToSpawn = parser.ParseAssetReference() },
             { "FadeInTime", (parser, x) => x.FadeInTime = parser.ParseInteger() },
             { "UseBuildingProduction", (parser, x) => x.UseBuildingProduction = parser.ParseBoolean() }

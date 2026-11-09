@@ -11,7 +11,7 @@ public sealed class RailedTransportDockUpdateModuleData : DockUpdateModuleData
         {
             { "PullInsideDuration", (parser, x) => x.PullInsideDuration = parser.ParseInteger() },
             { "PushOutsideDuration", (parser, x) => x.PushOutsideDuration = parser.ParseInteger() },
-            { "ToleranceDistance", (parser, x) => x.ToleranceDistance = parser.ParseFloat() }
+            { "ToleranceDistance", (parser, x) => x.ToleranceDistance = parser.ParseDistanceFloat() }
         });
 
     public int PullInsideDuration { get; private set; }

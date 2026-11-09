@@ -46,8 +46,8 @@ public sealed class SupplyCenterProductionExitUpdateModuleData : UpdateModuleDat
 
     private static readonly IniParseTable<SupplyCenterProductionExitUpdateModuleData> FieldParseTable = new IniParseTable<SupplyCenterProductionExitUpdateModuleData>
     {
-        { "UnitCreatePoint", (parser, x) => x.UnitCreatePoint = parser.ParseVector3() },
-        { "NaturalRallyPoint", (parser, x) => x.NaturalRallyPoint = parser.ParseVector3() },
+        { "UnitCreatePoint", (parser, x) => x.UnitCreatePoint = parser.ParseDistanceVector3() },
+        { "NaturalRallyPoint", (parser, x) => x.NaturalRallyPoint = parser.ParseDistanceVector3() },
         { "GrantTemporaryStealth", (parser, x) => x.GrantTemporaryStealth = parser.ParseInteger() },
     };
 

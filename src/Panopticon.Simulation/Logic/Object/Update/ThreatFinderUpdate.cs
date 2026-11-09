@@ -9,7 +9,7 @@ public sealed class ThreatFinderUpdateModuleData : UpdateModuleData
 
     private static readonly IniParseTable<ThreatFinderUpdateModuleData> FieldParseTable = new IniParseTable<ThreatFinderUpdateModuleData>
     {
-        { "DefaultRadius", (parser, x) => x.DefaultRadius = parser.ParseFloat() },
+        { "DefaultRadius", (parser, x) => x.DefaultRadius = parser.ParseDistanceFloat() },
     };
 
     public float DefaultRadius { get; private set; }

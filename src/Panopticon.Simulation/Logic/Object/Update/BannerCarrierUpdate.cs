@@ -40,7 +40,7 @@ public sealed class BannerCarrierUpdateModuleData : UpdateModuleData
        { "UnitSpawnFX", (parser, x) => x.UnitSpawnFX = parser.ParseAssetReference() },
        { "MorphCondition", (parser, x) => x.MorphCondition = MorphCondition.Parse(parser) },
        { "ReplenishNearbyHorde", (parser, x) => x.ReplenishNearbyHorde = parser.ParseBoolean() },
-       { "ScanHordeDistance", (parser, x) => x.ScanHordeDistance = parser.ParseFloat() },
+       { "ScanHordeDistance", (parser, x) => x.ScanHordeDistance = parser.ParseDistanceFloat() },
        { "ReplenishAllNearbyHordes", (parser, x) => x.ReplenishAllNearbyHordes = parser.ParseBoolean() },
        { "UpgradeRequired", (parser, x) => x.UpgradeRequired = parser.ParseAssetReference() }
     };

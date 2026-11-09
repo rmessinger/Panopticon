@@ -9,17 +9,17 @@ public sealed class FirestormDynamicGeometryInfoUpdateModuleData : UpdateModuleD
     private static readonly IniParseTable<FirestormDynamicGeometryInfoUpdateModuleData> FieldParseTable = new IniParseTable<FirestormDynamicGeometryInfoUpdateModuleData>
     {
         { "InitialDelay", (parser, x) => x.InitialDelay = parser.ParseInteger() },
-        { "InitialHeight", (parser, x) => x.InitialHeight = parser.ParseFloat() },
-        { "InitialMajorRadius", (parser, x) => x.InitialMajorRadius = parser.ParseFloat() },
+        { "InitialHeight", (parser, x) => x.InitialHeight = parser.ParseDistanceFloat() },
+        { "InitialMajorRadius", (parser, x) => x.InitialMajorRadius = parser.ParseDistanceFloat() },
 
-        { "FinalHeight", (parser, x) => x.FinalHeight = parser.ParseFloat() },
-        { "FinalMajorRadius", (parser, x) => x.FinalMajorRadius = parser.ParseFloat() },
+        { "FinalHeight", (parser, x) => x.FinalHeight = parser.ParseDistanceFloat() },
+        { "FinalMajorRadius", (parser, x) => x.FinalMajorRadius = parser.ParseDistanceFloat() },
 
         { "TransitionTime", (parser, x) => x.TransitionTime = parser.ParseInteger() },
         { "ReverseAtTransitionTime", (parser, x) => x.ReverseAtTransitionTime = parser.ParseBoolean() },
 
-        { "ScorchSize", (parser, x) => x.ScorchSize = parser.ParseFloat() },
-        { "ParticleOffsetZ", (parser, x) => x.ParticleOffsetZ = parser.ParseFloat() },
+        { "ScorchSize", (parser, x) => x.ScorchSize = parser.ParseDistanceFloat() },
+        { "ParticleOffsetZ", (parser, x) => x.ParticleOffsetZ = parser.ParseDistanceFloat() },
         { "ParticleSystem1", (parser, x) => x.ParticleSystem1 = parser.ParseAssetReference() },
         { "ParticleSystem2", (parser, x) => x.ParticleSystem2 = parser.ParseAssetReference() },
         { "FXList", (parser, x) => x.FXList = parser.ParseAssetReference() },

@@ -105,7 +105,7 @@ public sealed class AnimationStateAnimation
         { "UseWeaponTiming", (parser, x) => x.UseWeaponTiming = parser.ParseBoolean() },
         { "AnimationBlendTime", (parser, x) => x.AnimationBlendTime = parser.ParseInteger() },
         { "AnimationSpeedFactorRange", (parser, x) => x.AnimationSpeedFactorRange = parser.ParseFloatRange() },
-        { "Distance", (parser, x) => x.Distance = parser.ParseFloat() },
+        { "Distance", (parser, x) => x.Distance = parser.ParseDistanceFloat() },
         { "AnimationMustCompleteBlend", (parser, x) => x.AnimationMustCompleteBlend = parser.ParseBoolean() },
         { "FadeBeginFrame", (parser, x) => x.FadeBeginFrame = parser.ParseFloat() },
         { "FadeEndFrame", (parser, x) => x.FadeEndFrame = parser.ParseFloat() },

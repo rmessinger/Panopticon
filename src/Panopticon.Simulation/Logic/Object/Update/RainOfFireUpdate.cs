@@ -11,9 +11,9 @@ public sealed class RainOfFireUpdateModuleData : UpdateModuleData
         {
             { "StartRainTime", (parser, x) => x.StartRainTime = parser.ParseInteger() },
             { "DarknessFadeTime", (parser, x) => x.DarknessFadeTime = parser.ParseInteger() },
-            { "RainEmitterHeight", (parser, x) => x.RainEmitterHeight = parser.ParseFloat() },
+            { "RainEmitterHeight", (parser, x) => x.RainEmitterHeight = parser.ParseDistanceFloat() },
             { "DarknessLevel", (parser, x) => x.DarknessLevel = parser.ParseFloat() },
-            { "JitterRadius", (parser, x) => x.JitterRadius = parser.ParseFloat() },
+            { "JitterRadius", (parser, x) => x.JitterRadius = parser.ParseDistanceFloat() },
             { "DPSMin", (parser, x) => x.DpsMin = parser.ParseFloat() },
             { "DPSMax", (parser, x) => x.DpsMax = parser.ParseFloat() },
             { "DPSRampupTime", (parser, x) => x.DpsRampupTime = parser.ParseInteger() },

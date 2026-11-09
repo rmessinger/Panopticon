@@ -10,7 +10,7 @@ public sealed class ShareExperienceBehaviorModuleData : UpdateModuleData
     private static readonly IniParseTable<ShareExperienceBehaviorModuleData> FieldParseTable = new IniParseTable<ShareExperienceBehaviorModuleData>
     {
         { "ObjectFilter", (parser, x) => x.ObjectFilter = ObjectFilter.Parse(parser) },
-        { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
+        { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
         { "DropOff", (parser, x) => x.DropOff = parser.ParseFloat() }
     };
 

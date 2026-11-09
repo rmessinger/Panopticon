@@ -9,6 +9,7 @@ using System.Text;
 using Panopticon.Audio;
 using Panopticon.Content;
 using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 using Panopticon.FX;
 using Panopticon.Graphics;
@@ -391,6 +392,12 @@ internal sealed partial class IniParser
 
     public float ParseFloat() => ScanFloat(GetNextToken());
 
+    public SourceUnitPolicy SourceUnitPolicy => SourceUnitPolicy.ForGame(SageGame);
+
+    public float ScanDistanceFloat(in IniToken token) => (float)(ScanFloat(token) * SourceUnitPolicy.MetersPerSourceUnit);
+
+    public float ParseDistanceFloat() => ScanDistanceFloat(GetNextToken());
+
     /// <summary>
     /// Parse a degree value (0 to 360) and store the radian value of that degree in a float.
     /// </summary>
@@ -482,9 +489,9 @@ internal sealed partial class IniParser
 
     public float ParseAngularVelocityToLogicFrames() => ParseFloat() * MathUtility.DegreesToRadiansRatio / SageGame.LogicFramesPerSecond();
 
-    public float ParseVelocityToLogicFrames() => ParseFloat() / SageGame.LogicFramesPerSecond();
+    public float ParseVelocityToLogicFrames() => ParseDistanceFloat() / SageGame.LogicFramesPerSecond();
 
-    public float ParseAccelerationToLogicFrames() => ParseFloat() / (SageGame.LogicFramesPerSecond() * SageGame.LogicFramesPerSecond());
+    public float ParseAccelerationToLogicFrames() => ParseDistanceFloat() / (SageGame.LogicFramesPerSecond() * SageGame.LogicFramesPerSecond());
 
     public float ParseAngle() => ParseFloat() * MathUtility.DegreesToRadiansRatio;
 
@@ -860,6 +867,15 @@ internal sealed partial class IniParser
         };
     }
 
+    public Vector2 ParseDistanceVector2()
+    {
+        return new Vector2
+        {
+            X = ParseAttributeDistanceFloat("X"),
+            Y = ParseAttributeDistanceFloat("Y")
+        };
+    }
+
     public Vector3 ParseVector3()
     {
         return new Vector3
@@ -867,6 +883,16 @@ internal sealed partial class IniParser
             X = ParseAttributeFloat("X"),
             Y = ParseAttributeFloat("Y"),
             Z = ParseAttributeFloat("Z")
+        };
+    }
+
+    public Vector3 ParseDistanceVector3()
+    {
+        return new Vector3
+        {
+            X = ParseAttributeDistanceFloat("X"),
+            Y = ParseAttributeDistanceFloat("Y"),
+            Z = ParseAttributeDistanceFloat("Z")
         };
     }
 
@@ -887,10 +913,30 @@ internal sealed partial class IniParser
         return new FloatRange(ParseFloat(), ParseFloat());
     }
 
+    public FloatRange ParseDistanceFloatRange()
+    {
+        var scale = (float)SourceUnitPolicy.MetersPerSourceUnit;
+        return new FloatRange(ParseFloat() * scale, ParseFloat() * scale);
+    }
+
     public RandomVariable ParseRandomVariable()
     {
         var low = ParseFloat();
         var high = ParseFloat();
+
+        var distributionTypeToken = GetNextTokenOptional();
+        var distributionType = (distributionTypeToken != null)
+            ? IniParser.ScanEnum<DistributionType>(distributionTypeToken.Value)
+            : DistributionType.Uniform;
+
+        return new RandomVariable(low, high, distributionType);
+    }
+
+    public RandomVariable ParseDistanceRandomVariable()
+    {
+        var scale = (float)SourceUnitPolicy.MetersPerSourceUnit;
+        var low = ParseFloat() * scale;
+        var high = ParseFloat() * scale;
 
         var distributionTypeToken = GetNextTokenOptional();
         var distributionType = (distributionTypeToken != null)

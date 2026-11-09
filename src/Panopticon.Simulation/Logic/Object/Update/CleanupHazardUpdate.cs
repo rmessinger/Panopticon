@@ -37,7 +37,7 @@ public sealed class CleanupHazardUpdateModuleData : UpdateModuleData
     {
         { "WeaponSlot", (parser, x) => x.WeaponSlot = parser.ParseEnum<WeaponSlot>() },
         { "ScanRate", (parser, x) => x.ScanRate = parser.ParseInteger() },
-        { "ScanRange", (parser, x) => x.ScanRange = parser.ParseFloat() }
+        { "ScanRange", (parser, x) => x.ScanRange = parser.ParseDistanceFloat() }
     };
 
     public WeaponSlot WeaponSlot { get; private set; }

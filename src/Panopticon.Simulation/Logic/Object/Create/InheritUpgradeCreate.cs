@@ -9,7 +9,7 @@ public sealed class InheritUpgradeCreateModuleData : CreateModuleData
 
     private static readonly IniParseTable<InheritUpgradeCreateModuleData> FieldParseTable = new IniParseTable<InheritUpgradeCreateModuleData>
     {
-        { "Radius", (parser, x) => x.Radius = parser.ParseFloat() },
+        { "Radius", (parser, x) => x.Radius = parser.ParseDistanceFloat() },
         { "Upgrade", (parser, x) => x.Upgrade = parser.ParseAssetReference() },
         { "ObjectFilter", (parser, x) => x.ObjectFilter = ObjectFilter.Parse(parser) }
     };
