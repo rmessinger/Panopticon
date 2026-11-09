@@ -1617,6 +1617,20 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a
     ReplaySketch scenario using new-format content passes the same headless assertions as its
     legacy-format equivalent.
+- [x] H7-1 Map round-trip regression suite (`WI-H7-01`).
+  - AC: typed sections compare semantically equal; every retained section matches by SHA-256;
+    the manifest accounts for every source section; deformation re-export after a HeightMapData edit
+    verified through package reload; converter failure on unsupported retained section versions
+    verified.
+- [ ] H7-2 Unit round-trip regression suite (`WI-H7-02`).
+  - AC: each materialized template field equals its counterpart on the converted path; valued
+    unclassified fields match; diagnostic sets match; numeric enum rejection asserted.
+- [ ] H7-3 ReplaySketch new-format scenario proof (`WI-H7-03`).
+  - AC: legacy and converted-format variants pass the same assertion set; end states match under
+    the same seed; both panels captured headlessly.
+- [ ] H7-4 Fault-injection catch proof (`WI-H7-04`).
+  - AC: deliberate semantic injections pass integrity checks but fail the shared comparer with
+    named diagnostics; unmodified suite passes in the same run.
 
 ## Track R: Real-World Terrain
 
