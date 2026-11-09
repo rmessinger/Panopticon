@@ -71,7 +71,7 @@ public sealed class W3dProjectileStreamDrawModuleData : DrawModuleData
     private static readonly IniParseTable<W3dProjectileStreamDrawModuleData> FieldParseTable = new IniParseTable<W3dProjectileStreamDrawModuleData>
     {
         { "Texture", (parser, x) => x.Texture = parser.ParseFileName() },
-        { "Width", (parser, x) => x.Width = parser.ParseFloat() },
+        { "Width", (parser, x) => x.Width = parser.ParseDistanceFloat() },
         { "TileFactor", (parser, x) => x.TileFactor = parser.ParseFloat() },
         { "ScrollRate", (parser, x) => x.ScrollRate = parser.ParseFloat() },
         { "MaxSegments", (parser, x) => x.MaxSegments = parser.ParseInteger() },

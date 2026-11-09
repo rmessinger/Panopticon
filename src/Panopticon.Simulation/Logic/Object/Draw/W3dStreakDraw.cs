@@ -11,7 +11,7 @@ public sealed class W3dStreakDrawModuleData : DrawModuleData
     private static readonly IniParseTable<W3dStreakDrawModuleData> FieldParseTable = new IniParseTable<W3dStreakDrawModuleData>
     {
         { "Length", (parser, x) => x.Length =  parser.ParseInteger() },
-        { "Width", (parser, x) => x.Width = parser.ParseFloat() },
+        { "Width", (parser, x) => x.Width = parser.ParseDistanceFloat() },
         { "NumSegments", (parser, x) => x.NumSegments = parser.ParseInteger() },
         { "Color", (parser, x) => x.Color = parser.ParseColorRgba() },
         { "Texture", (parser, x) => x.Texture = parser.ParseAssetReference() },

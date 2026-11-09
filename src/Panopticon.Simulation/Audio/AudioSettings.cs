@@ -61,21 +61,21 @@ public sealed class AudioSettings : BaseSingletonAsset
         { "Preferred3DHW2", (parser, x) => x.Preferred3DHW2 = parser.ParseString() },
         { "Preferred3DSW", (parser, x) => x.Preferred3DSW = parser.ParseString() },
 
-        { "MicrophoneDesiredHeightAboveTerrain", (parser, x) => x.MicrophoneDesiredHeightAboveTerrain = parser.ParseFloat() },
+        { "MicrophoneDesiredHeightAboveTerrain", (parser, x) => x.MicrophoneDesiredHeightAboveTerrain = parser.ParseDistanceFloat() },
         { "MicrophoneMaxPercentageBetweenGroundAndCamera", (parser, x) => x.MicrophoneMaxPercentageBetweenGroundAndCamera = parser.ParsePercentage() },
         { "MicrophonePreferredFractionCameraToGround", (parser, x) => x.MicrophonePreferredFractionCameraToGround = parser.ParsePercentage() },
-        { "MicrophoneMinDistanceToCamera", (parser, x) => x.MicrophoneMinDistanceToCamera = parser.ParseFloat() },
-        { "MicrophoneMaxDistanceToCamera", (parser, x) => x.MicrophoneMaxDistanceToCamera = parser.ParseFloat() },
+        { "MicrophoneMinDistanceToCamera", (parser, x) => x.MicrophoneMinDistanceToCamera = parser.ParseDistanceFloat() },
+        { "MicrophoneMaxDistanceToCamera", (parser, x) => x.MicrophoneMaxDistanceToCamera = parser.ParseDistanceFloat() },
         { "MicrophonePullTowardsTerrainLookAtPointPercent", (parser, x) => x.MicrophonePullTowardsTerrainLookAtPointPercent = parser.ParsePercentage() },
 
-        { "ZoomMinDistance", (parser, x) => x.ZoomMinDistance = parser.ParseFloat() },
-        { "ZoomMaxDistance", (parser, x) => x.ZoomMaxDistance = parser.ParseFloat() },
+        { "ZoomMinDistance", (parser, x) => x.ZoomMinDistance = parser.ParseDistanceFloat() },
+        { "ZoomMaxDistance", (parser, x) => x.ZoomMaxDistance = parser.ParseDistanceFloat() },
 
         { "ZoomSoundVolumePercentageAmount", (parser, x) => x.ZoomSoundVolumePercentageAmount = parser.ParsePercentage() },
 
         { "LivingWorldMicrophonePreferredFractionCameraToGround", (parser, x) => x.LivingWorldMicrophonePreferredFractionCameraToGround = parser.ParsePercentage() },
-        { "LivingWorldMicrophoneMaxDistanceToCamera", (parser, x) => x.LivingWorldMicrophoneMaxDistanceToCamera = parser.ParseFloat() },
-        { "LivingWorldZoomMaxDistance", (parser, x) => x.LivingWorldZoomMaxDistance = parser.ParseFloat() },
+        { "LivingWorldMicrophoneMaxDistanceToCamera", (parser, x) => x.LivingWorldMicrophoneMaxDistanceToCamera = parser.ParseDistanceFloat() },
+        { "LivingWorldZoomMaxDistance", (parser, x) => x.LivingWorldZoomMaxDistance = parser.ParseDistanceFloat() },
 
         { "LoopBufferLengthMS", (parser, x) => x.LoopBufferLengthMS = parser.ParseInteger() },
         { "LoopBufferCallbackCallsPerBufferLength", (parser, x) => x.LoopBufferCallbackCallsPerBufferLength = parser.ParseInteger() },

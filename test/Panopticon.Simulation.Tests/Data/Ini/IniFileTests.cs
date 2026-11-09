@@ -331,4 +331,108 @@ public class IniFileTests
         Assert.Equal(500, def.BuildCost);
         Assert.Equal(300u, def.BuildTime.Value);
     }
+
+    [Fact]
+    public void GameData_CameraHeights_ConvertAtParseBoundary()
+    {
+        const string ini =
+            """
+            GameData
+              CameraHeight = 250.0
+              MaxCameraHeight = 500.0
+              MinCameraHeight = 50.0
+              DefaultCameraMinHeight = 60.0
+              DefaultCameraMaxHeight = 600.0
+              CameraLockHeightDelta = 10.0
+              CameraTerrainSampleRadiusForHeight = 5.0
+            End
+            """;
+
+        var (store, parser) = CreateParser(ini, SageGame.CncGenerals, advanceLine: false);
+        parser.ParseFile();
+        var gameData = store.GameData.Current;
+
+        // 250 * 0.3048 = 76.2 m
+        Assert.Equal(76.2f, gameData.CameraHeight, precision: 4);
+        // 500 * 0.3048 = 152.4 m
+        Assert.Equal(152.4f, gameData.MaxCameraHeight, precision: 4);
+        // 50 * 0.3048 = 15.24 m
+        Assert.Equal(15.24f, gameData.MinCameraHeight, precision: 4);
+        // 60 * 0.3048 = 18.288 m
+        Assert.Equal(18.288f, gameData.DefaultCameraMinHeight, precision: 4);
+        // 600 * 0.3048 = 182.88 m
+        Assert.Equal(182.88f, gameData.DefaultCameraMaxHeight, precision: 4);
+        // 10 * 0.3048 = 3.048 m
+        Assert.Equal(3.048f, gameData.CameraLockHeightDelta, precision: 4);
+        // 5 * 0.3048 = 1.524 m
+        Assert.Equal(1.524f, gameData.CameraTerrainSampleRadiusForHeight, precision: 4);
+    }
+
+    [Fact]
+    public void AudioSettings_PresentationDistances_ConvertAtParseBoundary()
+    {
+        const string ini =
+            """
+            AudioSettings
+              MicrophoneDesiredHeightAboveTerrain = 100.0
+              MicrophoneMinDistanceToCamera = 50.0
+              MicrophoneMaxDistanceToCamera = 500.0
+              ZoomMinDistance = 10.0
+              ZoomMaxDistance = 100.0
+              LivingWorldMicrophoneMaxDistanceToCamera = 200.0
+              LivingWorldZoomMaxDistance = 300.0
+            End
+            """;
+
+        var (store, parser) = CreateParser(ini, SageGame.CncGenerals, advanceLine: false);
+        parser.ParseFile();
+        var audio = store.AudioSettings.Current;
+
+        Assert.Equal(30.48f, audio.MicrophoneDesiredHeightAboveTerrain, precision: 4);
+        Assert.Equal(15.24f, audio.MicrophoneMinDistanceToCamera, precision: 4);
+        Assert.Equal(152.4f, audio.MicrophoneMaxDistanceToCamera, precision: 4);
+        Assert.Equal(3.048f, audio.ZoomMinDistance, precision: 4);
+        Assert.Equal(30.48f, audio.ZoomMaxDistance, precision: 4);
+        Assert.Equal(60.96f, audio.LivingWorldMicrophoneMaxDistanceToCamera, precision: 4);
+        Assert.Equal(91.44f, audio.LivingWorldZoomMaxDistance, precision: 4);
+    }
+
+    [Fact]
+    public void Draw_PresentationLengths_ConvertAtParseBoundary()
+    {
+        const string ini =
+            """
+            Object TestDrawObject
+              Draw = W3DLaserDraw ModuleTag_Laser
+                InnerBeamWidth = 10.0
+                OuterBeamWidth = 20.0
+                ArcHeight = 30.0
+                FanWidth = 40.0
+              End
+              Draw = W3DStreakDraw ModuleTag_Streak
+                Width = 5.0
+              End
+              Draw = W3DProjectileStreamDraw ModuleTag_Stream
+                Width = 2.0
+              End
+            End
+            """;
+
+        var (store, parser) = CreateParser(ini, SageGame.CncGenerals, advanceLine: false);
+        parser.ParseFile();
+        var def = store.ObjectDefinitions.GetByName("TestDrawObject");
+        Assert.NotNull(def);
+
+        var laser = Assert.IsType<W3dLaserDrawModuleData>(def.Draws["ModuleTag_Laser"].Data);
+        Assert.Equal(3.048f, laser.InnerBeamWidth, precision: 4);
+        Assert.Equal(6.096f, laser.OuterBeamWidth, precision: 4);
+        Assert.Equal(9.144f, laser.ArcHeight, precision: 4);
+        Assert.Equal(12.192f, laser.FanWidth, precision: 4);
+
+        var streak = Assert.IsType<W3dStreakDrawModuleData>(def.Draws["ModuleTag_Streak"].Data);
+        Assert.Equal(1.524f, streak.Width, precision: 4);
+
+        var stream = Assert.IsType<W3dProjectileStreamDrawModuleData>(def.Draws["ModuleTag_Stream"].Data);
+        Assert.Equal(0.6096f, stream.Width, precision: 4);
+    }
 }

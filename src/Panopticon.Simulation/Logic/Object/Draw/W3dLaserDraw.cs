@@ -67,17 +67,17 @@ public sealed class W3dLaserDrawModuleData : DrawModuleData
     {
         { "Texture", (parser, x) => x.Textures.Add(parser.ParseFileName()) },
         { "NumBeams", (parser, x) => x.NumBeams = parser.ParseInteger() },
-        { "InnerBeamWidth", (parser, x) => x.InnerBeamWidth = parser.ParseFloat() },
+        { "InnerBeamWidth", (parser, x) => x.InnerBeamWidth = parser.ParseDistanceFloat() },
         { "InnerColor", (parser, x) => x.InnerColor = parser.ParseColorRgba() },
-        { "OuterBeamWidth", (parser, x) => x.OuterBeamWidth = parser.ParseFloat() },
+        { "OuterBeamWidth", (parser, x) => x.OuterBeamWidth = parser.ParseDistanceFloat() },
         { "OuterColor", (parser, x) => x.OuterColor = parser.ParseColorRgba() },
         { "Tile", (parser, x) => x.Tile = parser.ParseBoolean() },
         { "ScrollRate", (parser, x) => x.ScrollRate = parser.ParseFloat() },
         { "Segments", (parser, x) => x.Segments = parser.ParseInteger() },
-        { "ArcHeight", (parser, x) => x.ArcHeight = parser.ParseFloat() },
+        { "ArcHeight", (parser, x) => x.ArcHeight = parser.ParseDistanceFloat() },
         { "SegmentOverlapRatio", (parser, x) => x.SegmentOverlapRatio = parser.ParseFloat() },
         { "TilingScalar", (parser, x) => x.TilingScalar = parser.ParseFloat() },
-        { "FanWidth", (parser, x) => x.FanWidth = parser.ParseFloat() },
+        { "FanWidth", (parser, x) => x.FanWidth = parser.ParseDistanceFloat() },
         { "Envelope", (parser, x) => x.Envelope = Envelope.Parse(parser) }
     };
 

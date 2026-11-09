@@ -731,9 +731,9 @@ public class W3dModelDrawModuleData : DrawModuleData, IParseCallbacks
         { "TrackMarks", (parser, x) => x.TrackMarks = parser.ParseTextureReference() },
         { "TrackMarksLeftBone", (parser, x) => x.TrackMarksLeftBone = parser.ParseAssetReference() },
         { "TrackMarksRightBone", (parser, x) => x.TrackMarksRightBone = parser.ParseAssetReference() },
-        { "InitialRecoilSpeed", (parser, x) => x.InitialRecoilSpeed = parser.ParseFloat() },
-        { "MaxRecoilDistance", (parser, x) => x.MaxRecoilDistance = parser.ParseFloat() },
-        { "RecoilSettleSpeed", (parser, x) => x.RecoilSettleSpeed = parser.ParseFloat() },
+        { "InitialRecoilSpeed", (parser, x) => x.InitialRecoilSpeed = parser.ParseDistanceFloat() },
+        { "MaxRecoilDistance", (parser, x) => x.MaxRecoilDistance = parser.ParseDistanceFloat() },
+        { "RecoilSettleSpeed", (parser, x) => x.RecoilSettleSpeed = parser.ParseDistanceFloat() },
 
         { "IdleAnimationState", (parser, x) => { var animationState = AnimationState.Parse(parser, ParseConditionStateType.Normal); animationState.IsIdleAnimation = true; x.AnimationStates.Add(animationState); } },
         { "AnimationState", (parser, x) => x.AnimationStates.Add(AnimationState.Parse(parser, ParseConditionStateType.Normal)) },

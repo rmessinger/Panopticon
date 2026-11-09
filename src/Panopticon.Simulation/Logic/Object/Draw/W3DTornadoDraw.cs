@@ -13,7 +13,7 @@ public class W3dTornadoDrawModuleData : W3dModelDrawModuleData
         {
             { "DecalTemplate", (parser, x) => x.DecalTemplate = RadiusDecalTemplate.Parse(parser) },
             { "DecalCount", (parser, x) => x.DecalCount = parser.ParseInteger() },
-            { "DecalMaxRadius", (parser, x) => x.DecalMaxRadius = parser.ParseFloat() }
+            { "DecalMaxRadius", (parser, x) => x.DecalMaxRadius = parser.ParseDistanceFloat() }
         });
 
     public RadiusDecalTemplate DecalTemplate { get; private set; }
