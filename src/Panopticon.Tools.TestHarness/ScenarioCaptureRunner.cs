@@ -1159,7 +1159,7 @@ public static class ScenarioCaptureRunner
                         results.Add(new ExpectationResultRecord(
                             Name(expectation),
                             moved >= displacement.MinDisplacement,
-                            FormattableString.Invariant($"moved {moved:0.#} of the required {displacement.MinDisplacement:0.#} world units")));
+                            FormattableString.Invariant($"moved {moved:0.#} of the required {displacement.MinDisplacement:0.#} m")));
                         break;
                     }
 
