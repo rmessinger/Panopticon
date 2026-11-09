@@ -97,6 +97,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.Geospatial.Tests
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.Tools.GeoImport", "Panopticon.Tools.GeoImport\Panopticon.Tools.GeoImport.csproj", "{224BF158-DE32-4BBC-84AC-50B2F9CA11B0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.Tools.H5Migrate", "Panopticon.Tools.H5Migrate\Panopticon.Tools.H5Migrate.csproj", "{5A31974D-91D8-4285-B253-D730DC9FB361}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.Geospatial.Preview", "Panopticon.Geospatial.Preview\Panopticon.Geospatial.Preview.csproj", "{D3F6250A-4ABC-49CE-ABF1-8AC50C888E47}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Panopticon.Geospatial.Preview.Tests", "..\test\Panopticon.Geospatial.Preview.Tests\Panopticon.Geospatial.Preview.Tests.csproj", "{73BD8ACE-C3F4-4349-B93E-FB8120C3F518}"
@@ -591,6 +593,18 @@ Global
 		{224BF158-DE32-4BBC-84AC-50B2F9CA11B0}.Release|x64.Build.0 = Release|Any CPU
 		{224BF158-DE32-4BBC-84AC-50B2F9CA11B0}.Release|x86.ActiveCfg = Release|Any CPU
 		{224BF158-DE32-4BBC-84AC-50B2F9CA11B0}.Release|x86.Build.0 = Release|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Debug|x64.Build.0 = Debug|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Debug|x86.Build.0 = Debug|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Release|x64.ActiveCfg = Release|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Release|x64.Build.0 = Release|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Release|x86.ActiveCfg = Release|Any CPU
+		{5A31974D-91D8-4285-B253-D730DC9FB361}.Release|x86.Build.0 = Release|Any CPU
 		{D3F6250A-4ABC-49CE-ABF1-8AC50C888E47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D3F6250A-4ABC-49CE-ABF1-8AC50C888E47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3F6250A-4ABC-49CE-ABF1-8AC50C888E47}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -635,6 +649,7 @@ Global
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{28A2BEB4-4177-4BBB-8B9F-FA58D7162D19} = {FFC49638-8FFE-4C6E-B2B2-AC7D942498D6}
 		{224BF158-DE32-4BBC-84AC-50B2F9CA11B0} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
+		{5A31974D-91D8-4285-B253-D730DC9FB361} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DBD83F1E-3F41-45D9-AACC-62E00826AD5C}

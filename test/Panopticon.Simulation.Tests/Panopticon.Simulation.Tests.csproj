@@ -67,6 +67,7 @@
     <ProjectReference Include="..\..\src\Panopticon.Geospatial\Panopticon.Geospatial.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Geospatial.Preview\Panopticon.Geospatial.Preview.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Tools.GeoImport\Panopticon.Tools.GeoImport.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Tools.H5Migrate\Panopticon.Tools.H5Migrate.csproj" />
   </ItemGroup>
   
   <ItemGroup>
