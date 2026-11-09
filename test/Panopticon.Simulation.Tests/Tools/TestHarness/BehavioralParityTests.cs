@@ -16,15 +16,9 @@ namespace Panopticon.Tests.Tools.TestHarness;
 /// Card WI-H5-05: behavioral equivalence harness fixtures. Filter fragment: BehavioralParity.
 ///
 /// Claim discipline: play-identically is proven by a green parity run only (this scenario, this
-/// seed, this runtime; same-runtime comparison only). The parity run is NOT green today: the
-/// converted-content side cannot spawn any P6b roster unit because the H5-02/H5-04 retained-legacy
-/// re-issue layer stages definitions parsed against an isolated rebuild store whose global
-/// references (LocomotorSet, SpecialPowerTemplate, and every other store-bound INI reference)
-/// resolve null at object creation. That is a storage-layer gap owned outside this ticket; the
-/// parity test below encodes the failure verbatim and flips to the equality assertion once the
-/// retained re-issue path binds against the publication store. The stability probe test proves
-/// the harness comparison machinery end to end today (same content, same seed, identical
-/// assertions through the P0 assertion layer).
+/// seed, this runtime; same-runtime comparison only). The parity run proves converted map plus
+/// converted unit packages run identically to original content: outcomes, survivors, engagement
+/// assertions, spawn, kill, and loss tables match across both runs.
 /// </summary>
 [Collection("SerialGameTests")]
 public sealed class BehavioralParityTests
@@ -37,7 +31,7 @@ public sealed class BehavioralParityTests
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void ParityHarness_ConvertedContent_FailsWithNamedReport_KnownRetainedReferenceGap()
+    public void ParityHarness_ConvertedContent_RunsEqualEndStateAcrossBothRuns()
     {
         var installation = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals);
         Assert.NotNull(installation);
@@ -56,23 +50,34 @@ public sealed class BehavioralParityTests
             using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
             var root = document.RootElement;
 
-            // Original content runs cleanly end to end at the fixed seed.
-            var runs = root.GetProperty("runs");
-            var originalRun = runs[0];
-            Assert.Equal("original", originalRun.GetProperty("side").GetString());
-            Assert.True(originalRun.GetProperty("error").ValueKind == JsonValueKind.Null, "original run 1 errored");
-            Assert.True(originalRun.GetProperty("finalFrame").GetUInt32() > 0, "original run 1 did not step");
+            Assert.Equal(0, exitCode);
+            Assert.True(root.GetProperty("allPassed").GetBoolean(), "parity report did not pass");
 
-            // Converted content fails at object creation with the retained-reference gap.
-            Assert.Equal(5, exitCode);
-            var convertedRun = runs[1];
-            Assert.Equal("converted", convertedRun.GetProperty("side").GetString());
-            var error = convertedRun.GetProperty("error").GetString();
-            Assert.NotNull(error);
-            Assert.Contains("NullReferenceException", error);
-            Assert.Matches(
-                ".*(LocomotorSet.Initialize|SpecialPowerModule\\.\\.ctor|Locomotor\\.\\.ctor).*",
-                error.ReplaceLineEndings(" "));
+            // All four runs completed without error.
+            var runs = root.GetProperty("runs");
+            Assert.Equal(4, runs.GetArrayLength());
+            foreach (var run in runs.EnumerateArray())
+            {
+                Assert.True(run.GetProperty("error").ValueKind == JsonValueKind.Null, $"run {run.GetProperty("side").GetString()}#{run.GetProperty("runIndex").GetInt32()} errored");
+                Assert.True(run.GetProperty("finalFrame").GetUInt32() > 0, "run did not step");
+            }
+
+            // Parity verdict: original vs converted matches across all comparisons.
+            var parity = root.GetProperty("parity");
+            Assert.True(parity.GetProperty("allPassed").GetBoolean(), "parity comparisons failed");
+            var parityComparisons = parity.GetProperty("comparisons");
+            Assert.True(parityComparisons.GetArrayLength() >= 10, $"expected at least 10 parity comparisons, got {parityComparisons.GetArrayLength()}");
+            foreach (var comparison in parityComparisons.EnumerateArray())
+            {
+                Assert.True(comparison.GetProperty("passed").GetBoolean(),
+                    $"parity comparison {comparison.GetProperty("name").GetString()} differed: expected={comparison.GetProperty("expected").GetString()} actual={comparison.GetProperty("actual").GetString()}");
+            }
+
+            // Original and converted repeats are stable (same-content determinism).
+            var originalStability = root.GetProperty("originalStability");
+            Assert.True(originalStability.GetProperty("allPassed").GetBoolean(), "original stability differed");
+            var convertedStability = root.GetProperty("convertedStability");
+            Assert.True(convertedStability.GetProperty("allPassed").GetBoolean(), "converted stability differed");
 
             // The conversion itself succeeded: the package exists with the full P6b closure.
             var manifestPath = Path.Combine(scratch, "artifacts", "converted-units", "manifest.json");

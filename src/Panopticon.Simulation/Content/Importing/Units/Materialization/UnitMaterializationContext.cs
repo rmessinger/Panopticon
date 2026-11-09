@@ -15,6 +15,7 @@ namespace Panopticon.Content.Importing.Units.Materialization;
 public sealed class UnitMaterializationContext
 {
     private readonly Dictionary<ContentId, BaseAsset> _staged = new();
+    private readonly HashSet<ContentId> _legacyAssets = new();
     private Func<ContentId, BaseAsset?> _published;
     private bool _boundToStore;
     private readonly AssetStore? _visualStore;
@@ -36,6 +37,8 @@ public sealed class UnitMaterializationContext
     public List<VisualAssetRequest> VisualAssets { get; } = [];
 
     public IReadOnlyDictionary<ContentId, BaseAsset> Staged => _staged;
+
+    public AssetStore? Store => _visualStore;
 
     /// <param name="published">Lookup for content outside this import; returns null when absent.</param>
     /// <param name="visualStore">Store whose model and animation collections receive installed visual assets.</param>
@@ -143,6 +146,10 @@ public sealed class UnitMaterializationContext
     }
 
     internal void Stage(ContentId id, BaseAsset asset) => _staged[id] = asset;
+
+    internal void MarkLegacy(ContentId id) => _legacyAssets.Add(id);
+
+    internal bool IsLegacy(ContentId id) => _legacyAssets.Contains(id);
 
     internal T? Find<T>(ContentId id)
         where T : BaseAsset

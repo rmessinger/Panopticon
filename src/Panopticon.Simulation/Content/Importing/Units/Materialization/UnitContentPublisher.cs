@@ -84,6 +84,14 @@ public sealed class UnitContentPublisher
             return new PublicationResult(null, diagnostics);
         }
 
+        foreach (var (id, asset) in content.Assets)
+        {
+            if (content.Context.IsLegacy(id))
+            {
+                RetainedReferenceRebinder.Rebind(asset, _store);
+            }
+        }
+
         content.Context.BindToStore(id => Lookup(id));
 
         return new PublicationResult(new PublishedUnitContent(content.Source, content.Assets.Keys.ToArray(), depth), diagnostics);
