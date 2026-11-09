@@ -18,10 +18,10 @@ namespace Panopticon.Physics.Bepu;
 /// </summary>
 public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
 {
-    private const float SpeculativeMargin = 2.0f;
-    private const float SleepThreshold = 0.3f;
+    private const float SpeculativeMargin = 2.0f * PhysicsUnitConversion.MetersPerLegacyUnit;
+    private const float SleepThreshold = 0.3f * PhysicsUnitConversion.MetersPerLegacyUnit;
     private const float FrictionCoefficient = 0.3f;
-    private const float MaximumRecoveryVelocity = 30.0f;
+    private const float MaximumRecoveryVelocity = 30.0f * PhysicsUnitConversion.MetersPerLegacyUnit;
     private const float SpringFrequency = 30.0f;
     private const float SpringDampingRatio = 1.0f;
 

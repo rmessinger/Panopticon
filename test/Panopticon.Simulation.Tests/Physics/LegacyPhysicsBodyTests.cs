@@ -11,8 +11,8 @@ public class PhysicsUnitConversionTests
 {
     [Theory]
     [InlineData(0.0f, 30f, 0.0f)]
-    [InlineData(-0.0711f, 30f, -63.99f)]
-    [InlineData(-0.0711f, 5f, -1.7775f)]
+    [InlineData(-0.02167128f, 30f, -19.504152f)]
+    [InlineData(-0.02167128f, 5f, -0.541782f)]
     public void GravityPerFrameSquaredConvertsToPerSecondSquared(float perFrameSquared, float framesPerSecond, float expected)
     {
         var perSecondSquared = PhysicsUnitConversion.PerFrameSquaredToPerSecondSquared(perFrameSquared, framesPerSecond);
@@ -22,12 +22,11 @@ public class PhysicsUnitConversionTests
     [Fact]
     public void FallDamageSpeedIsComputableFromRealGravityMagnitude()
     {
-        // v = sqrt(2*g*h): the legacy per-frame gravity (-0.0711) times 900 gives the
-        // real -64 dist/sec^2 magnitude, so a 40-unit fall yields a sane impact speed
-        // instead of the NaN the per-frame constant produces on its own.
-        var gravity = PhysicsUnitConversion.PerFrameSquaredToPerSecondSquared(-0.0711f, 30f);
-        var speed = MathF.Sqrt(2.0f * MathF.Abs(gravity) * 40.0f);
-        Assert.InRange(speed, 50.0f, 80.0f);
+        // v = sqrt(2*g*h): metric gravity (-0.02167128 m per frame squared) times 900 gives
+        // -19.5 m/s^2, so a 40-unit fall (12.192 m) yields a sane impact speed.
+        var gravity = PhysicsUnitConversion.PerFrameSquaredToPerSecondSquared(-0.02167128f, 30f);
+        var speed = MathF.Sqrt(2.0f * MathF.Abs(gravity) * 40.0f * PhysicsUnitConversion.MetersPerLegacyUnit);
+        Assert.InRange(speed, 21.0f, 23.0f);
     }
 }
 
@@ -54,7 +53,7 @@ public class LegacyPhysicsBodyTests
 
         Assert.Equal(new Vector3(1, 2, 3), body.Velocity);
 
-        body.Acceleration = new Vector3(0.0005f, 0, 0);
+        body.Acceleration = new Vector3(0.0001f, 0, 0);
         body.Velocity = Vector3.Zero;
 
         body.IntegrateVelocity();

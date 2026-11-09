@@ -8,6 +8,9 @@ namespace Panopticon.Physics;
 /// </summary>
 public static class PhysicsUnitConversion
 {
+    // Mirrors UnitConversionPolicy.GeneralsFeetToMeters; Panopticon.Physics cannot reference Simulation.
+    public const float MetersPerLegacyUnit = 0.3048f;
+
     public static float PerFrameSquaredToPerSecondSquared(float valuePerFrameSquared, float logicFramesPerSecond)
     {
         return valuePerFrameSquared * logicFramesPerSecond * logicFramesPerSecond;

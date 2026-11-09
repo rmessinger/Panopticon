@@ -71,7 +71,7 @@ public sealed class LegacyPhysicsBody : IPhysicsBody
         Velocity += Acceleration;
 
         // When velocity gets tiny, just clamp to zero.
-        const float threshold = 0.001f;
+        const float threshold = 0.001f * PhysicsUnitConversion.MetersPerLegacyUnit;
         if (MathF.Abs(Velocity.X) < threshold)
         {
             Velocity.X = 0.0f;
@@ -189,7 +189,7 @@ public sealed class LegacyPhysicsBody : IPhysicsBody
 
     public void ScrubVelocityZ(float desiredVelocity)
     {
-        if (MathF.Abs(desiredVelocity) < 0.001f)
+        if (MathF.Abs(desiredVelocity) < 0.001f * PhysicsUnitConversion.MetersPerLegacyUnit)
         {
             Velocity.Z = 0;
         }
@@ -206,7 +206,7 @@ public sealed class LegacyPhysicsBody : IPhysicsBody
 
     public void ScrubVelocity2D(float desiredVelocity)
     {
-        if (desiredVelocity < 0.001f)
+        if (desiredVelocity < 0.001f * PhysicsUnitConversion.MetersPerLegacyUnit)
         {
             Velocity.X = 0;
             Velocity.Y = 0;
