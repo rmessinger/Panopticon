@@ -5,15 +5,17 @@ using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.Nif;
 using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Ee2;
+using Panopticon.Content.Importing.Units.Generals;
 using Panopticon.Content.Importing.Units.Materialization;
+using Panopticon.Content.Importing.Units.Packages;
 using Panopticon.IO;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
 
 namespace Panopticon.Tools.TestHarness;
 
 /// <summary>
-/// Card WI-H2a-17 (extended by WI-M2-03): publishes a capture profile's content imports into a
-/// running game through the shared H2a layer (adapter, resolution, validation, materialization,
+/// Card WI-H2a-17 (extended by WI-M2-03, WI-H6-03): publishes a capture profile's content imports into a
+/// running game through the shared H2a/H4 layer (adapter, resolution, validation, materialization,
 /// scoped publication), so imported units spawn beside native ones. Every diagnostic is reported;
 /// any error leaves the game without partial content and fails the run.
 /// </summary>
@@ -23,6 +25,25 @@ public static class UnitContentImportRunner
 
     public static bool Import(Game game, CaptureContentImport import, ITestHarnessReporter reporter)
     {
+        return Import(game, import, reporter, null);
+    }
+
+    public static bool Import(
+        Game game,
+        CaptureContentImport import,
+        ITestHarnessReporter reporter,
+        HarnessPackageImportDescriptor? packageDescriptor)
+    {
+        if (packageDescriptor is not null)
+        {
+            return ImportPackage(game, packageDescriptor, reporter);
+        }
+
+        if (TryExtractPackageDescriptor(import, out var extracted) && extracted is not null)
+        {
+            return ImportPackage(game, extracted, reporter);
+        }
+
         var root = Environment.GetEnvironmentVariable(Ee2PathVariable);
         if (string.IsNullOrEmpty(root))
         {
@@ -100,6 +121,103 @@ public static class UnitContentImportRunner
         }
 
         reporter.Info($"Published {publication.Published!.Ids.Count} {import.Source} assets: {string.Join(", ", publication.Published.Ids.Where(id => id.Kind == ContentKind.Unit).Select(id => id.Name))}");
+        return true;
+    }
+
+    public static bool TryExtractPackageDescriptor(CaptureContentImport import, out HarnessPackageImportDescriptor? descriptor)
+    {
+        descriptor = null;
+
+        if (import.DdfPaths.Count > 0)
+        {
+            var first = import.DdfPaths[0];
+            if (File.Exists(Path.Combine(first, UnitPackageFormat.ManifestFileName)) || Directory.Exists(first))
+            {
+                descriptor = new HarnessPackageImportDescriptor(
+                    first,
+                    "H4UnitPackage",
+                    import.UnitTypes.Count > 0 ? import.UnitTypes : (import.RowKeys.Count > 0 ? import.RowKeys : null));
+                return true;
+            }
+        }
+
+        if (string.Equals(import.Source, "h4", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(import.Source, "package", StringComparison.OrdinalIgnoreCase))
+        {
+            var path = import.DdfPaths.FirstOrDefault() ?? import.RowKeys.FirstOrDefault() ?? string.Empty;
+            descriptor = new HarnessPackageImportDescriptor(path, "H4UnitPackage", import.UnitTypes);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool ImportPackage(
+        Game game,
+        HarnessPackageImportDescriptor descriptor,
+        ITestHarnessReporter reporter)
+    {
+        var packagePath = descriptor.PackagePath;
+        if (!Directory.Exists(packagePath))
+        {
+            reporter.Error($"Package directory '{packagePath}' does not exist.");
+            return false;
+        }
+
+        var manifestPath = Path.Combine(packagePath, UnitPackageFormat.ManifestFileName);
+        if (!File.Exists(manifestPath))
+        {
+            reporter.Error($"Package manifest '{manifestPath}' does not exist.");
+            return false;
+        }
+
+        if (!string.Equals(descriptor.Adapter, "H4UnitPackage", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(descriptor.Adapter, "H4Package", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(descriptor.Adapter, "Package", StringComparison.OrdinalIgnoreCase))
+        {
+            reporter.Error($"Unsupported package adapter '{descriptor.Adapter}'; expected 'H4UnitPackage'.");
+            return false;
+        }
+
+        var reader = new H4UnitPackageReader(packagePath);
+        var roots = descriptor.Roots ?? [];
+        var set = reader.Read(roots);
+        Report(set.Diagnostics, reporter);
+        if (set.Diagnostics.Any(d => d.IsError))
+        {
+            return false;
+        }
+
+        var resolution = UnitImportResolution.Resolve(set, GeneralsUnitAdapter.CreateRegistry());
+        Report(resolution.Diagnostics, reporter);
+        if (!resolution.Succeeded)
+        {
+            return false;
+        }
+
+        var publisher = new UnitContentPublisher(game.AssetStore);
+        var context = new UnitMaterializationContext(
+            new UnitConversionPolicy(game.SageGame),
+            publisher.Lookup,
+            reader.Natives,
+            game.AssetStore);
+
+        var materialized = UnitRuntimeMaterializer.Materialize(resolution, context);
+        Report(materialized.Diagnostics, reporter);
+        if (!materialized.Succeeded)
+        {
+            return false;
+        }
+
+        var overrides = materialized.Assets.Keys.ToList();
+        var publication = publisher.Publish(materialized, null, overrides);
+        Report(publication.Diagnostics, reporter);
+        if (!publication.Succeeded)
+        {
+            return false;
+        }
+
+        reporter.Info($"Published {publication.Published!.Ids.Count} {set.Source.Id} assets from H4 package '{packagePath}': {string.Join(", ", publication.Published.Ids.Where(id => id.Kind == ContentKind.Unit).Select(id => id.Name))}");
         return true;
     }
 
