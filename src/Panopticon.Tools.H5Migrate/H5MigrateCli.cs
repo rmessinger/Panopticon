@@ -7,25 +7,26 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using CommandLine;
+using Panopticon.Content;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
 using Panopticon.Content.Importing.MapSources.Package;
+using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Generals;
+using Panopticon.Content.Importing.Units.Packages;
+using Panopticon.Data.Ini;
 using Panopticon.Data.Map;
+using Panopticon.IO;
 
 namespace Panopticon.Tools.H5Migrate;
 
 /// <summary>
-/// In-process entry of the H5Migrate CLI (WI-H5-01):
-/// `convert-map --input &lt;legacy .map path&gt; --out &lt;package dir&gt;`.
+/// In-process entry of the H5Migrate CLI (WI-H5-01, WI-H5-02):
+/// `convert-map --input &lt;legacy .map path&gt; --out &lt;package dir&gt;`,
+/// `convert-ini --out &lt;package dir&gt; [--game-path &lt;path&gt;] [--p6b] [&lt;unit name&gt; ...]`.
 /// Exit codes: 0 success, 1 operational or input failure, 2 usage error. The pipeline parses
-/// the legacy map exactly like the corpus tests (MapFile.Decompress, then MapFile.FromStream),
-/// reads it through the legacy reader, writes the H3 package through the staged atomic writer,
-/// and verifies the package before reporting success: the manifest accounts for every source
-/// section, typed sections compare semantically equal, and every retained section matches by
-/// SHA-256. A failed conversion reports named diagnostics, exits non-zero, and leaves no
-/// package at the output. Every diagnostic prints as one line `severity code convert-map
-/// message` with whitespace normalized. Cancellation is observed before the package is
-/// written, so a cancelled run never leaves a package behind.
+/// legacy content, writes staged packages atomically, verifies the result before reporting success,
+/// and deletes the output on failure so no partial packages remain.
 /// </summary>
 public static class H5MigrateCli
 {
@@ -34,6 +35,16 @@ public static class H5MigrateCli
     private const int OperationalFailureExit = 1;
 
     private const int UsageExit = 2;
+
+    private static readonly IReadOnlyList<string> P6bArchetypeUnits =
+    [
+        "AmericaInfantryRanger",
+        "AmericaTankCrusader",
+        "AmericaVehicleComanche",
+        "AmericaVehicleDozer",
+        "AmericaVehicleMedic",
+        "AmericaParticleCannonUplink",
+    ];
 
     public static int Run(string[] arguments, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
     {
@@ -46,10 +57,11 @@ public static class H5MigrateCli
         var parser = new Parser(with => with.HelpWriter = null);
 
         return parser
-            .ParseArguments<ConvertMapOptions>(arguments)
+            .ParseArguments<ConvertMapOptions, ConvertIniOptions>(arguments)
             .MapResult(
                 (ConvertMapOptions convertMapOptions) => RunConvertMap(convertMapOptions, standardOut, errorOut, cancellationToken),
-                _ => UsageFailure(errorOut));
+                (ConvertIniOptions convertIniOptions) => RunConvertIni(convertIniOptions, standardOut, errorOut, cancellationToken),
+                _ => UsageFailure(arguments, errorOut));
     }
 
     private static int RunConvertMap(ConvertMapOptions options, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
@@ -143,6 +155,239 @@ public static class H5MigrateCli
         }
     }
 
+    private static int RunConvertIni(ConvertIniOptions options, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(options.OutputDirectory) || !Path.IsPathRooted(options.OutputDirectory))
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "usage: h5migrate convert-ini --out <package dir> [--game-path <path>] [--p6b] [<unit name> ...] (the output path must be absolute)"));
+            return UsageExit;
+        }
+
+        if (!HasRosterSpecification(options))
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "usage: h5migrate convert-ini --out <package dir> [--game-path <path>] [--p6b] [<unit name> ...] (specify --p6b or at least one unit object name)"));
+            return UsageExit;
+        }
+
+        var rosterUnits = ResolveRosterUnits(options);
+
+        var gamePath = options.GamePath ?? options.InstallPath ?? Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
+        if (string.IsNullOrWhiteSpace(gamePath) || !Directory.Exists(gamePath))
+        {
+            errorOut.WriteLine(
+                FormatDiagnostic("error", H5MigrateCliDiagnostics.InstallMissing, "convert-ini",
+                    $"Generals installation not found: '{gamePath ?? "(not set)"}'. Set CNC_GENERALS_PATH or pass --game-path."));
+            errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+            return OperationalFailureExit;
+        }
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var fileSystem = new CompositeFileSystem(
+                new DiskFileSystem(gamePath),
+                new BigFileSystem(gamePath));
+
+            if (fileSystem.GetFile(@"Data\INI\Armor.ini") is null)
+            {
+                errorOut.WriteLine(
+                    FormatDiagnostic("error", H5MigrateCliDiagnostics.InstallMissing, "convert-ini",
+                        $"Generals installation at '{gamePath}' does not contain expected data files."));
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            var staging = GeneralsIniLoader.Load(fileSystem);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var adapter = new GeneralsUnitAdapter(staging, SageGame.CncGenerals);
+            var set = adapter.Read(rosterUnits);
+            var resolution = UnitImportResolution.Resolve(set, GeneralsUnitAdapter.CreateRegistry());
+
+            if (!resolution.Succeeded)
+            {
+                var report = IniConversionRecordReport.Create(resolution);
+                foreach (var line in report.FormatLines("convert-ini"))
+                {
+                    errorOut.WriteLine(line);
+                }
+
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            var provider = new IniRetainedPayloadProvider(fileSystem);
+
+            // Pre-write gate: verify every legacy-bound record needing retention has a block from the provider
+            var missingRetained = false;
+            foreach (var record in resolution.Closure)
+            {
+                if (UnitPackageConversionVerifier.RecordNeedsRetention(record))
+                {
+                    var block = provider.GetBlock(new UnitRetainedBlockRequest(record.Id));
+                    if (block is null || block.Bytes is null || block.Bytes.Length == 0)
+                    {
+                        missingRetained = true;
+                        errorOut.WriteLine(FormatDiagnostic("error", H5MigrateCliDiagnostics.RetainedBlockMissing, "convert-ini",
+                            $"Retained INI block could not be sourced for record '{record.Id}'."));
+                    }
+                }
+            }
+
+            if (missingRetained)
+            {
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var writeResult = H4UnitPackageWriter.Write(options.OutputDirectory, resolution, provider);
+            if (!writeResult.Success)
+            {
+                foreach (var diag in writeResult.Diagnostics)
+                {
+                    errorOut.WriteLine(FormatDiagnostic("error", diag.Code, "convert-ini", diag.Message));
+                }
+
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            // Post-write verification
+            H4UnitPackageReader reader;
+            UnitContentSet reloadedSet;
+            try
+            {
+                reader = new H4UnitPackageReader(options.OutputDirectory);
+                reloadedSet = reader.Read(resolution.Roots.Select(r => r.Name).ToList());
+            }
+            catch (Exception ex)
+            {
+                errorOut.WriteLine(FormatDiagnostic("error", H5MigrateCliDiagnostics.PackageReadFailed, "convert-ini",
+                    $"The written package failed to re-read: {ex.Message}"));
+                CleanupDirectory(options.OutputDirectory, errorOut);
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            if (reloadedSet.Diagnostics.Any(d => d.IsError))
+            {
+                foreach (var err in reloadedSet.Diagnostics.Where(d => d.IsError))
+                {
+                    errorOut.WriteLine(FormatDiagnostic("error", err.Code, "convert-ini", err.Message));
+                }
+
+                CleanupDirectory(options.OutputDirectory, errorOut);
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            var reloadedResolution = UnitImportResolution.Resolve(reloadedSet, GeneralsUnitAdapter.CreateRegistry());
+            if (!reloadedResolution.Succeeded)
+            {
+                foreach (var err in reloadedResolution.Diagnostics.Where(d => d.IsError))
+                {
+                    errorOut.WriteLine(FormatDiagnostic("error", err.Code, "convert-ini", err.Message));
+                }
+
+                CleanupDirectory(options.OutputDirectory, errorOut);
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            var verification = UnitPackageConversionVerifier.Verify(
+                resolution,
+                reloadedSet,
+                reloadedResolution,
+                reader.Natives,
+                provider,
+                options.OutputDirectory);
+
+            if (!verification.Success)
+            {
+                foreach (var diag in verification.Diagnostics)
+                {
+                    errorOut.WriteLine(FormatDiagnostic("error", diag.Code, "convert-ini", diag.Message));
+                }
+
+                CleanupDirectory(options.OutputDirectory, errorOut);
+                errorOut.WriteLine(NormalizeWhitespace($"convert-ini failed: no package was left at {options.OutputDirectory}"));
+                return OperationalFailureExit;
+            }
+
+            var retainedCount = resolution.Closure.Count(UnitPackageConversionVerifier.RecordNeedsRetention);
+            standardOut.WriteLine(NormalizeWhitespace($"converted: {options.OutputDirectory}"));
+            standardOut.WriteLine(NormalizeWhitespace($"records: {resolution.Closure.Count}, retained: {retainedCount}"));
+            return SuccessExit;
+        }
+        catch (OperationCanceledException)
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    $"cancelled: the conversion was cancelled before the package was written; {options.OutputDirectory} is unchanged"));
+            return OperationalFailureExit;
+        }
+    }
+
+    private static bool HasRosterSpecification(ConvertIniOptions options)
+    {
+        return options.P6b
+            || (options.Units is not null && options.Units.Any(u => !string.IsNullOrWhiteSpace(u)))
+            || (options.PositionalUnits is not null && options.PositionalUnits.Any(u => !string.IsNullOrWhiteSpace(u)));
+    }
+
+    private static IReadOnlyList<string> ResolveRosterUnits(ConvertIniOptions options)
+    {
+        var units = new List<string>
+        {
+            // Generals objects inherit default modules from DefaultThingTemplate.
+            "DefaultThingTemplate",
+        };
+
+        if (options.P6b)
+        {
+            units.AddRange(P6bArchetypeUnits);
+        }
+
+        if (options.Units is not null)
+        {
+            units.AddRange(options.Units.Where(u => !string.IsNullOrWhiteSpace(u)));
+        }
+
+        if (options.PositionalUnits is not null)
+        {
+            units.AddRange(options.PositionalUnits.Where(u => !string.IsNullOrWhiteSpace(u)));
+        }
+
+        return units.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static void CleanupDirectory(string directory, TextWriter errorOut)
+    {
+        if (Directory.Exists(directory))
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                errorOut.WriteLine(FormatDiagnostic(
+                    "error",
+                    H5MigrateCliDiagnostics.OutputCleanupFailed,
+                    "convert-ini",
+                    $"Removing the failed package at '{directory}' failed: {ex.Message}"));
+            }
+        }
+    }
+
     private static MapFile? TryParseSourceMap(string inputPath, List<MapPackageDiagnostic> diagnostics)
     {
         try
@@ -202,9 +447,13 @@ public static class H5MigrateCli
     private static string Summarize(MapImportException exception) =>
         NormalizeWhitespace(string.Join("; ", exception.Diagnostics.Select(d => $"{d.Code}: {d.Message}")));
 
+    /// <summary>One-line diagnostic: `severity code subcommand message` with whitespace normalized.</summary>
+    internal static string FormatDiagnostic(string severity, string code, string subcommand, string message) =>
+        $"{severity} {code} {subcommand} {NormalizeWhitespace(message)}";
+
     /// <summary>One-line diagnostic: `error code convert-map message` with whitespace normalized.</summary>
     internal static string FormatDiagnostic(MapPackageDiagnostic diagnostic) =>
-        $"error {diagnostic.Code} convert-map {NormalizeWhitespace(diagnostic.Message)}";
+        FormatDiagnostic("error", diagnostic.Code, "convert-map", diagnostic.Message);
 
     /// <summary>Collapses every whitespace run, newlines included, into single spaces.</summary>
     internal static string NormalizeWhitespace(string? text)
@@ -237,11 +486,21 @@ public static class H5MigrateCli
         return builder.ToString();
     }
 
-    private static int UsageFailure(TextWriter errorOut)
+    private static int UsageFailure(string[] arguments, TextWriter errorOut)
     {
-        errorOut.WriteLine(
-            NormalizeWhitespace(
-                "usage: h5migrate convert-map --input <absolute legacy .map path> --out <package dir>"));
+        if (arguments.Length > 0 && string.Equals(arguments[0], "convert-ini", StringComparison.OrdinalIgnoreCase))
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "usage: h5migrate convert-ini --out <package dir> [--game-path <path>] [--p6b] [<unit name> ...]"));
+        }
+        else
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "usage: h5migrate convert-map --input <absolute legacy .map path> --out <package dir>"));
+        }
+
         return UsageExit;
     }
 
