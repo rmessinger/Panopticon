@@ -23,7 +23,9 @@ public static class MapPackageManifestValidator
         RequireComponent(manifest.Layers, nameof(MapPackageManifest.Layers), diagnostics);
         RequireComponent(manifest.RetainedSections, nameof(MapPackageManifest.RetainedSections), diagnostics);
 
+        ValidateIdentity(manifest.Identity, diagnostics);
         ValidateLatticeDimensions(manifest.Layout, diagnostics);
+        ValidateNodataPolicy(manifest.Layout, diagnostics);
 
         var sized = manifest.Layout is { } layout && layout.LatticeWidth > 0 && layout.LatticeHeight > 0
             ? layout
@@ -38,6 +40,15 @@ public static class MapPackageManifestValidator
         ValidateWaypoints(manifest, stableIds, diagnostics);
         ValidateProvenance(manifest, stableIds, diagnostics);
         ValidateRetainedSections(manifest, diagnostics);
+
+        if (diagnostics.Count > 100)
+        {
+            var suppressed = diagnostics.Count - 100;
+            diagnostics.RemoveRange(100, suppressed);
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.DiagnosticCapExceeded,
+                $"Diagnostic count exceeded limit of 100; {suppressed} additional diagnostics were suppressed."));
+        }
 
         return diagnostics;
     }
@@ -78,6 +89,55 @@ public static class MapPackageManifestValidator
             $"Required component '{name}' is null; its dependent checks are skipped."));
     }
 
+    private static readonly HashSet<string> ValidSourceKinds = new(StringComparer.Ordinal)
+    {
+        nameof(MapSourceKind.LegacyMap),
+        nameof(MapSourceKind.H3Package),
+        nameof(MapSourceKind.Generated),
+    };
+
+    private static readonly HashSet<string> ValidNodataPolicies = new(StringComparer.Ordinal)
+    {
+        nameof(MapNodataPolicy.Fail),
+        nameof(MapNodataPolicy.NearestValid),
+        nameof(MapNodataPolicy.Constant),
+    };
+
+    /// <summary>
+    /// Validates that Identity.SourceKind names an exact MapSourceKind enum value.
+    /// The field represents authored provenance: the manifest records the source the package content was authored from,
+    /// while a reader returns MapSourceKind.H3Package for its own read.
+    /// </summary>
+    private static void ValidateIdentity(MapPackageIdentity? identity, List<MapPackageDiagnostic> diagnostics)
+    {
+        if (identity is null)
+        {
+            return;
+        }
+
+        if (identity.SourceKind is null || !ValidSourceKinds.Contains(identity.SourceKind))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.IdentitySourceKind,
+                $"Identity.SourceKind '{identity.SourceKind}' is not a valid MapSourceKind name; expected one of: {string.Join(", ", ValidSourceKinds)}."));
+        }
+    }
+
+    private static void ValidateNodataPolicy(MapPackageTerrainLayout? layout, List<MapPackageDiagnostic> diagnostics)
+    {
+        if (layout is null)
+        {
+            return;
+        }
+
+        if (layout.NodataPolicy is null || !ValidNodataPolicies.Contains(layout.NodataPolicy))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.NodataPolicy,
+                $"TerrainLayout.NodataPolicy '{layout.NodataPolicy}' is not a valid MapNodataPolicy name; expected Fail, NearestValid, or Constant."));
+        }
+    }
+
     private static void ValidateLatticeDimensions(MapPackageTerrainLayout? layout, List<MapPackageDiagnostic> diagnostics)
     {
         if (layout is null)
@@ -91,6 +151,29 @@ public static class MapPackageManifestValidator
                 MapPackageDiagnostic.LatticeDimensions,
                 $"TerrainLayout lattice is {layout.LatticeWidth} x {layout.LatticeHeight} points; both must be positive."));
             return;
+        }
+
+        if (layout.LatticeWidth > MapPackageFormat.MaxLatticePointsPerAxis)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.ResourceLimitExceeded,
+                $"TerrainLayout LatticeWidth {layout.LatticeWidth} exceeds the limit of {MapPackageFormat.MaxLatticePointsPerAxis} points per axis."));
+        }
+
+        if (layout.LatticeHeight > MapPackageFormat.MaxLatticePointsPerAxis)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.ResourceLimitExceeded,
+                $"TerrainLayout LatticeHeight {layout.LatticeHeight} exceeds the limit of {MapPackageFormat.MaxLatticePointsPerAxis} points per axis."));
+        }
+
+        var totalLatticePoints = (long)layout.LatticeWidth * layout.LatticeHeight;
+
+        if (totalLatticePoints > MapPackageFormat.MaxLatticePointsTotal)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.ResourceLimitExceeded,
+                $"TerrainLayout total lattice points {totalLatticePoints} exceeds the limit of {MapPackageFormat.MaxLatticePointsTotal} points."));
         }
 
         var expectedChunksX = (layout.LatticeWidth - 1L + MapChunkGeometry.IntervalsPerChunkAxis - 1) / MapChunkGeometry.IntervalsPerChunkAxis;
@@ -117,10 +200,22 @@ public static class MapPackageManifestValidator
         }
 
         var gridValid = layout.ChunksX > 0 && layout.ChunksY > 0 && layout.LatticeWidth > 0 && layout.LatticeHeight > 0;
-        var seenHeights = new HashSet<(int Cx, int Cy)>();
-        var seenMaterials = new HashSet<(int Cx, int Cy)>();
-        var seenMasks = new HashSet<(int Cx, int Cy)>();
-        var seenImagery = new HashSet<(int Cx, int Cy)>();
+        long expectedChunkCount;
+
+        try
+        {
+            expectedChunkCount = checked((long)layout.ChunksX * layout.ChunksY);
+        }
+        catch (OverflowException)
+        {
+            expectedChunkCount = long.MaxValue;
+        }
+
+        var heightsCount = 0L;
+        var materialsCount = 0L;
+        var masksCount = 0L;
+        var imageryCount = 0L;
+        var heightsCoords = new HashSet<(int Cx, int Cy)>();
         int? imageryWidth = null;
         int? imageryHeight = null;
 
@@ -153,6 +248,12 @@ public static class MapPackageManifestValidator
             switch (entry.LayerKind)
             {
                 case MapPackageFormat.LayerKindHeights:
+                    heightsCount++;
+                    if (gridValid && entry.ChunkX >= 0 && entry.ChunkX < layout.ChunksX && entry.ChunkY >= 0 && entry.ChunkY < layout.ChunksY)
+                    {
+                        heightsCoords.Add((entry.ChunkX, entry.ChunkY));
+                    }
+
                     if (entry.Encoding != MapPackageFormat.EncodingFloat32Le)
                     {
                         diagnostics.Add(new MapPackageDiagnostic(
@@ -164,6 +265,7 @@ public static class MapPackageManifestValidator
                     break;
 
                 case MapPackageFormat.LayerKindMaterials:
+                    materialsCount++;
                     if (entry.Encoding != MapPackageFormat.EncodingUint8)
                     {
                         diagnostics.Add(new MapPackageDiagnostic(
@@ -175,6 +277,7 @@ public static class MapPackageManifestValidator
                     break;
 
                 case MapPackageFormat.LayerKindMasks:
+                    masksCount++;
                     if (entry.Encoding != MapPackageFormat.EncodingUint8)
                     {
                         diagnostics.Add(new MapPackageDiagnostic(
@@ -186,6 +289,7 @@ public static class MapPackageManifestValidator
                     break;
 
                 case MapPackageFormat.LayerKindImagery:
+                    imageryCount++;
                     if (entry.Encoding != MapPackageFormat.EncodingRgba8)
                     {
                         diagnostics.Add(new MapPackageDiagnostic(
@@ -231,100 +335,19 @@ public static class MapPackageManifestValidator
                 }
             }
 
-            if (!gridValid)
+            if (entry.LayerKind == MapPackageFormat.LayerKindImagery)
             {
-                continue;
-            }
-
-            if (entry.ChunkX < 0 || entry.ChunkX >= layout.ChunksX || entry.ChunkY < 0 || entry.ChunkY >= layout.ChunksY)
-            {
-                diagnostics.Add(new MapPackageDiagnostic(
-                    MapPackageDiagnostic.ChunkInventory,
-                    $"Layer entry ({entry.ChunkX}, {entry.ChunkY}, {entry.LayerKind}) lies outside the {layout.ChunksX} x {layout.ChunksY} chunk grid."));
-                continue;
-            }
-
-            var chunkKey = (entry.ChunkX, entry.ChunkY);
-            var coreW = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeWidth - entry.ChunkX * MapChunkGeometry.IntervalsPerChunkAxis);
-            var coreH = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeHeight - entry.ChunkY * MapChunkGeometry.IntervalsPerChunkAxis);
-
-            switch (entry.LayerKind)
-            {
-                case MapPackageFormat.LayerKindHeights:
-                    if (!seenHeights.Add(chunkKey))
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.ChunkInventory,
-                            $"Duplicate heights layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
-                    }
-
-                    var expectedHeightW = coreW + 2 * MapChunkGeometry.ApronSamplesPerSide;
-                    var expectedHeightH = coreH + 2 * MapChunkGeometry.ApronSamplesPerSide;
-
-                    if (entry.Width != expectedHeightW || entry.Height != expectedHeightH)
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.LayerLength,
-                            $"Chunk ({entry.ChunkX}, {entry.ChunkY}) heights declares {entry.Width} x {entry.Height}; expected {expectedHeightW} x {expectedHeightH}."));
-                    }
-
-                    break;
-
-                case MapPackageFormat.LayerKindMaterials:
-                    if (!seenMaterials.Add(chunkKey))
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.ChunkInventory,
-                            $"Duplicate materials layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
-                    }
-
-                    if (entry.Width != coreW || entry.Height != coreH)
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.LayerLength,
-                            $"Chunk ({entry.ChunkX}, {entry.ChunkY}) materials declares {entry.Width} x {entry.Height}; expected {coreW} x {coreH}."));
-                    }
-
-                    break;
-
-                case MapPackageFormat.LayerKindMasks:
-                    if (!seenMasks.Add(chunkKey))
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.ChunkInventory,
-                            $"Duplicate masks layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
-                    }
-
-                    if (entry.Width != coreW || entry.Height != coreH)
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.LayerLength,
-                            $"Chunk ({entry.ChunkX}, {entry.ChunkY}) masks declares {entry.Width} x {entry.Height}; expected {coreW} x {coreH}."));
-                    }
-
-                    break;
-
-                case MapPackageFormat.LayerKindImagery:
-                    if (!seenImagery.Add(chunkKey))
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.ChunkInventory,
-                            $"Duplicate imagery layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
-                    }
-
-                    if (!imageryWidth.HasValue)
-                    {
-                        imageryWidth = entry.Width;
-                        imageryHeight = entry.Height;
-                    }
-                    else if (entry.Width != imageryWidth || entry.Height != imageryHeight)
-                    {
-                        diagnostics.Add(new MapPackageDiagnostic(
-                            MapPackageDiagnostic.LayerLength,
-                            $"Chunk ({entry.ChunkX}, {entry.ChunkY}) imagery is {entry.Width} x {entry.Height}; expected consistent dimensions {imageryWidth} x {imageryHeight}."));
-                    }
-
-                    break;
+                if (!imageryWidth.HasValue)
+                {
+                    imageryWidth = entry.Width;
+                    imageryHeight = entry.Height;
+                }
+                else if (entry.Width != imageryWidth || entry.Height != imageryHeight)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.LayerLength,
+                        $"Chunk ({entry.ChunkX}, {entry.ChunkY}) imagery is {entry.Width} x {entry.Height}; expected consistent dimensions {imageryWidth} x {imageryHeight}."));
+                }
             }
         }
 
@@ -333,33 +356,234 @@ public static class MapPackageManifestValidator
             return;
         }
 
-        for (var cx = 0; cx < layout.ChunksX; cx++)
+        if (heightsCount != expectedChunkCount)
         {
-            for (var cy = 0; cy < layout.ChunksY; cy++)
+            var missingSample = new List<string>(8);
+            for (var cy = 0; cy < layout.ChunksY && missingSample.Count < 8; cy++)
             {
-                if (!seenHeights.Contains((cx, cy)))
+                for (var cx = 0; cx < layout.ChunksX && missingSample.Count < 8; cx++)
+                {
+                    if (!heightsCoords.Contains((cx, cy)))
+                    {
+                        missingSample.Add($"({cx}, {cy})");
+                    }
+                }
+            }
+
+            var totalMissing = expectedChunkCount > heightsCoords.Count
+                ? expectedChunkCount - heightsCoords.Count
+                : 0L;
+            var remaining = totalMissing > missingSample.Count
+                ? totalMissing - missingSample.Count
+                : 0L;
+            var moreSuffix = remaining > 0 ? $" and {remaining} more" : string.Empty;
+
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.ChunkInventory,
+                $"Heights layer entry count {heightsCount} does not match expected chunk count {expectedChunkCount} ({layout.ChunksX} x {layout.ChunksY}); missing coordinates: {string.Join(", ", missingSample)}{moreSuffix}."));
+        }
+        else
+        {
+            var seenHeights = new HashSet<(int Cx, int Cy)>();
+            var duplicateHeights = 0;
+            var outOfGridHeights = 0;
+
+            for (var i = 0; i < layers.Count; i++)
+            {
+                var entry = layers[i];
+                if (entry is null || entry.LayerKind != MapPackageFormat.LayerKindHeights)
+                {
+                    continue;
+                }
+
+                if (entry.ChunkX < 0 || entry.ChunkX >= layout.ChunksX || entry.ChunkY < 0 || entry.ChunkY >= layout.ChunksY)
+                {
+                    if (outOfGridHeights < 8)
+                    {
+                        diagnostics.Add(new MapPackageDiagnostic(
+                            MapPackageDiagnostic.ChunkInventory,
+                            $"Layer entry ({entry.ChunkX}, {entry.ChunkY}, heights) lies outside the {layout.ChunksX} x {layout.ChunksY} chunk grid."));
+                    }
+
+                    outOfGridHeights++;
+                    continue;
+                }
+
+                if (!seenHeights.Add((entry.ChunkX, entry.ChunkY)))
+                {
+                    if (duplicateHeights < 8)
+                    {
+                        diagnostics.Add(new MapPackageDiagnostic(
+                            MapPackageDiagnostic.ChunkInventory,
+                            $"Duplicate heights layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
+                    }
+
+                    duplicateHeights++;
+                }
+
+                var coreW = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeWidth - (entry.ChunkX * MapChunkGeometry.IntervalsPerChunkAxis));
+                var coreH = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeHeight - (entry.ChunkY * MapChunkGeometry.IntervalsPerChunkAxis));
+                var expectedHeightW = coreW + (2 * MapChunkGeometry.ApronSamplesPerSide);
+                var expectedHeightH = coreH + (2 * MapChunkGeometry.ApronSamplesPerSide);
+
+                if (entry.Width != expectedHeightW || entry.Height != expectedHeightH)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.LayerLength,
+                        $"Chunk ({entry.ChunkX}, {entry.ChunkY}) heights declares {entry.Width} x {entry.Height}; expected {expectedHeightW} x {expectedHeightH}."));
+                }
+            }
+
+            if (duplicateHeights > 8)
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.ChunkInventory,
+                    $"{duplicateHeights - 8} additional duplicate heights entries were suppressed."));
+            }
+
+            if (outOfGridHeights > 8)
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.ChunkInventory,
+                    $"{outOfGridHeights - 8} additional out-of-grid heights entries were suppressed."));
+            }
+
+            if (seenHeights.Count < expectedChunkCount)
+            {
+                var missingSample = new List<string>(8);
+                for (var cy = 0; cy < layout.ChunksY && missingSample.Count < 8; cy++)
+                {
+                    for (var cx = 0; cx < layout.ChunksX && missingSample.Count < 8; cx++)
+                    {
+                        if (!seenHeights.Contains((cx, cy)))
+                        {
+                            missingSample.Add($"({cx}, {cy})");
+                        }
+                    }
+                }
+
+                var remaining = (expectedChunkCount - seenHeights.Count) - missingSample.Count;
+                var moreSuffix = remaining > 0 ? $" and {remaining} more" : string.Empty;
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.ChunkInventory,
+                    $"Chunk grid is missing required heights layer entries; missing coordinates: {string.Join(", ", missingSample)}{moreSuffix}."));
+            }
+        }
+
+        if (materialsCount > 0 && materialsCount != expectedChunkCount)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.LayersConsistency,
+                $"{materialsCount} of {expectedChunkCount} chunks carry materials; every chunk must carry materials or none may."));
+        }
+        else if (materialsCount == expectedChunkCount)
+        {
+            var seenMaterials = new HashSet<(int Cx, int Cy)>();
+            for (var i = 0; i < layers.Count; i++)
+            {
+                var entry = layers[i];
+                if (entry is null || entry.LayerKind != MapPackageFormat.LayerKindMaterials)
+                {
+                    continue;
+                }
+
+                if (entry.ChunkX < 0 || entry.ChunkX >= layout.ChunksX || entry.ChunkY < 0 || entry.ChunkY >= layout.ChunksY)
                 {
                     diagnostics.Add(new MapPackageDiagnostic(
                         MapPackageDiagnostic.ChunkInventory,
-                        $"Chunk ({cx}, {cy}) of the {layout.ChunksX} x {layout.ChunksY} grid is missing required heights layer entry."));
+                        $"Layer entry ({entry.ChunkX}, {entry.ChunkY}, materials) lies outside the {layout.ChunksX} x {layout.ChunksY} chunk grid."));
+                    continue;
+                }
+
+                if (!seenMaterials.Add((entry.ChunkX, entry.ChunkY)))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.ChunkInventory,
+                        $"Duplicate materials layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
+                }
+
+                var coreW = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeWidth - (entry.ChunkX * MapChunkGeometry.IntervalsPerChunkAxis));
+                var coreH = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeHeight - (entry.ChunkY * MapChunkGeometry.IntervalsPerChunkAxis));
+
+                if (entry.Width != coreW || entry.Height != coreH)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.LayerLength,
+                        $"Chunk ({entry.ChunkX}, {entry.ChunkY}) materials declares {entry.Width} x {entry.Height}; expected {coreW} x {coreH}."));
                 }
             }
         }
 
-        var totalChunks = layout.ChunksX * layout.ChunksY;
-
-        if (seenMaterials.Count > 0 && seenMaterials.Count != totalChunks)
+        if (masksCount > 0 && masksCount != expectedChunkCount)
         {
             diagnostics.Add(new MapPackageDiagnostic(
                 MapPackageDiagnostic.LayersConsistency,
-                $"{seenMaterials.Count} of {totalChunks} chunks carry materials; every chunk must carry materials or none may."));
+                $"{masksCount} of {expectedChunkCount} chunks carry masks; every chunk must carry masks or none may."));
+        }
+        else if (masksCount == expectedChunkCount)
+        {
+            var seenMasks = new HashSet<(int Cx, int Cy)>();
+            for (var i = 0; i < layers.Count; i++)
+            {
+                var entry = layers[i];
+                if (entry is null || entry.LayerKind != MapPackageFormat.LayerKindMasks)
+                {
+                    continue;
+                }
+
+                if (entry.ChunkX < 0 || entry.ChunkX >= layout.ChunksX || entry.ChunkY < 0 || entry.ChunkY >= layout.ChunksY)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.ChunkInventory,
+                        $"Layer entry ({entry.ChunkX}, {entry.ChunkY}, masks) lies outside the {layout.ChunksX} x {layout.ChunksY} chunk grid."));
+                    continue;
+                }
+
+                if (!seenMasks.Add((entry.ChunkX, entry.ChunkY)))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.ChunkInventory,
+                        $"Duplicate masks layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
+                }
+
+                var coreW = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeWidth - (entry.ChunkX * MapChunkGeometry.IntervalsPerChunkAxis));
+                var coreH = Math.Min(MapChunkGeometry.CorePointsPerAxis, layout.LatticeHeight - (entry.ChunkY * MapChunkGeometry.IntervalsPerChunkAxis));
+
+                if (entry.Width != coreW || entry.Height != coreH)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.LayerLength,
+                        $"Chunk ({entry.ChunkX}, {entry.ChunkY}) masks declares {entry.Width} x {entry.Height}; expected {coreW} x {coreH}."));
+                }
+            }
         }
 
-        if (seenMasks.Count > 0 && seenMasks.Count != totalChunks)
+        if (imageryCount > 0 && gridValid)
         {
-            diagnostics.Add(new MapPackageDiagnostic(
-                MapPackageDiagnostic.LayersConsistency,
-                $"{seenMasks.Count} of {totalChunks} chunks carry masks; every chunk must carry masks or none may."));
+            var seenImagery = new HashSet<(int Cx, int Cy)>();
+            for (var i = 0; i < layers.Count; i++)
+            {
+                var entry = layers[i];
+                if (entry is null || entry.LayerKind != MapPackageFormat.LayerKindImagery)
+                {
+                    continue;
+                }
+
+                if (entry.ChunkX < 0 || entry.ChunkX >= layout.ChunksX || entry.ChunkY < 0 || entry.ChunkY >= layout.ChunksY)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.ChunkInventory,
+                        $"Layer entry ({entry.ChunkX}, {entry.ChunkY}, imagery) lies outside the {layout.ChunksX} x {layout.ChunksY} chunk grid."));
+                    continue;
+                }
+
+                if (!seenImagery.Add((entry.ChunkX, entry.ChunkY)))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.ChunkInventory,
+                        $"Duplicate imagery layer entry for chunk ({entry.ChunkX}, {entry.ChunkY})."));
+                }
+            }
         }
     }
 
@@ -573,12 +797,21 @@ public static class MapPackageManifestValidator
             return;
         }
 
+        var seenSectionNames = new HashSet<string>(StringComparer.Ordinal);
+
         foreach (var section in manifest.RetainedSections)
         {
             if (section is null)
             {
                 RequireComponent(section, "RetainedSection", diagnostics);
                 continue;
+            }
+
+            if (!seenSectionNames.Add(section.SectionName))
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.RetainedNameDuplicate,
+                    $"Duplicate retained section name '{section.SectionName}'."));
             }
 
             if (!MapSectionNames.IsKnownSection(section.SectionName))

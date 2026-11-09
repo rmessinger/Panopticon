@@ -26,6 +26,10 @@ public static class MapPackageDirectoryWriter
         ? StringComparison.OrdinalIgnoreCase
         : StringComparison.Ordinal;
 
+    private static readonly StringComparer PathComparer = OperatingSystem.IsWindows()
+        ? StringComparer.OrdinalIgnoreCase
+        : StringComparer.Ordinal;
+
     public static MapPackageWriteResult Write(string targetPackageRoot, MapPackageManifest manifest, IMapPackagePayloadProvider payloads)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(targetPackageRoot);
@@ -33,6 +37,11 @@ public static class MapPackageDirectoryWriter
         ArgumentNullException.ThrowIfNull(payloads);
 
         var diagnostics = new List<MapPackageDiagnostic>();
+
+        if (!TryPrevalidateManifestEntries(manifest, diagnostics))
+        {
+            return new MapPackageWriteResult(false, diagnostics);
+        }
 
         if (!TryCanonicalizeTarget(targetPackageRoot, diagnostics, out var target))
         {
@@ -361,6 +370,13 @@ public static class MapPackageDirectoryWriter
 
     private static MapPackageDiagnostic? VerifyStagedFile(string stage, string entryPath, long expectedByteLength, string expectedSha256)
     {
+        if (expectedByteLength > MapPackageFormat.MaxPackageFileBytes)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageDiagnostic.ResourceLimitExceeded,
+                $"Staged file '{entryPath}' declared byte length {expectedByteLength} exceeds the maximum allowed {MapPackageFormat.MaxPackageFileBytes} bytes.");
+        }
+
         if (!MapPackageFileGuard.TryResolve(stage, entryPath, out var fullPath, out var guardError))
         {
             return guardError;
@@ -409,11 +425,28 @@ public static class MapPackageDirectoryWriter
 
     private static MapPackageDiagnostic? VerifyStagedManifest(string stage)
     {
+        var manifestPath = Path.Combine(stage, MapPackageFormat.ManifestFileName);
+        var fileInfo = new FileInfo(manifestPath);
+
+        if (!fileInfo.Exists)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageChunkDiagnostic.StagedVerificationFailed,
+                $"Staged manifest '{MapPackageFormat.ManifestFileName}' does not exist.");
+        }
+
+        if (fileInfo.Length > MapPackageFormat.MaxManifestBytes)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageDiagnostic.ResourceLimitExceeded,
+                $"Staged manifest '{MapPackageFormat.ManifestFileName}' length {fileInfo.Length} bytes exceeds the limit of {MapPackageFormat.MaxManifestBytes} bytes.");
+        }
+
         string json;
 
         try
         {
-            json = File.ReadAllText(Path.Combine(stage, MapPackageFormat.ManifestFileName));
+            json = File.ReadAllText(manifestPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -433,6 +466,83 @@ public static class MapPackageDirectoryWriter
         }
 
         return null;
+    }
+
+    private static bool TryPrevalidateManifestEntries(MapPackageManifest manifest, List<MapPackageDiagnostic> diagnostics)
+    {
+        var seenRetainedNames = new HashSet<string>(StringComparer.Ordinal);
+
+        if (manifest.RetainedSections is not null)
+        {
+            foreach (var entry in manifest.RetainedSections)
+            {
+                if (entry is null)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.NullComponent,
+                        "A retained section entry is null; the package cannot be written."));
+                    return false;
+                }
+
+                if (!seenRetainedNames.Add(entry.SectionName))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.RetainedNameDuplicate,
+                        $"Duplicate retained section name '{entry.SectionName}'."));
+                    return false;
+                }
+            }
+        }
+
+        var seenRelativePaths = new HashSet<string>(PathComparer);
+        seenRelativePaths.Add(MapPackageFormat.ManifestFileName);
+
+        if (manifest.Layers is not null)
+        {
+            foreach (var entry in manifest.Layers)
+            {
+                if (entry is null)
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.NullComponent,
+                        "A layer entry is null; the package cannot be written."));
+                    return false;
+                }
+
+                var normalized = NormalizeRelativePath(entry.Path);
+
+                if (!seenRelativePaths.Add(normalized))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.PathInvalid,
+                        $"Multiple package entries resolve to the same relative path '{entry.Path}'."));
+                    return false;
+                }
+            }
+        }
+
+        if (manifest.RetainedSections is not null)
+        {
+            foreach (var entry in manifest.RetainedSections)
+            {
+                var normalized = NormalizeRelativePath(entry.Path);
+
+                if (!seenRelativePaths.Add(normalized))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.PathInvalid,
+                        $"Multiple package entries resolve to the same relative path '{entry.Path}'."));
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static string NormalizeRelativePath(string path)
+    {
+        return path.Replace('\\', '/').TrimStart('/');
     }
 
     private static void RestoreBackupIfTargetMissing(string target, string? backup, List<MapPackageDiagnostic> diagnostics)
