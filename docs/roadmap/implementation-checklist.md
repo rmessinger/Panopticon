@@ -1406,6 +1406,12 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
         investigation first).
     - AC: the investigation recommends an approach with captures and writes the implementation
       cards.
+  - [ ] G12-5 Sky packs
+        ([`WI-G12-08`](https://projects.reid-corp.com/work_packages/1004),
+        [`WI-G12-09`](https://projects.reid-corp.com/work_packages/1005)).
+    - AC: CC0 sky HDRIs fetch and bake into cube-face packs with licences recorded; selecting sky
+      packs draws the mapped sky through the G13 renderer with fallback; defaults and `Legacy`
+      unchanged.
 - [ ] G13 First-person ground view (hotkey avatar drop, then walk in first person; design in the
       [deep dive](deep-dives/g13-first-person-ground-view.md)).
   - [ ] G13-1 View mode seam and relative mouse
@@ -1418,9 +1424,11 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
     - AC: walking respects slope, impassable, structure, and border blocking at G10-derived scale.
   - [ ] G13-4 Ground-level rendering
         ([`WI-G13-04`](https://projects.reid-corp.com/work_packages/594),
-        [`WI-G13-05`](https://projects.reid-corp.com/work_packages/595)).
-    - AC: no near-plane clipping, sky and fog at the horizon, HUD hidden; tactical rendering and
-      goldens unchanged.
+        [`WI-G13-05`](https://projects.reid-corp.com/work_packages/595),
+        [`WI-G13-07`](https://projects.reid-corp.com/work_packages/1003)).
+    - AC: no near-plane clipping, skybox and horizon-tinted fog at the horizon, HUD hidden; BFME
+      map skyboxes and Generals face sets draw; `faithful` goldens unchanged and `enhanced`
+      goldens change only where `TacticalSky` shows the horizon.
   - [ ] G13-5 Transitions, goldens, and cost
         ([`WI-G13-06`](https://projects.reid-corp.com/work_packages/596)).
     - AC: `first-person` goldens recorded with injected regressions failing; frame time recorded.

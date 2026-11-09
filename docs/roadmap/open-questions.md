@@ -798,6 +798,11 @@
   goal field, is gated on measurement after request sharing. Behavior-changing options default off
   until N5 evidence and an operator decision. The no-hierarchy clause is superseded by the layered
   navigation decision (2026-10-28).
+- Skyboxes. Decision (2026-11-09): the skybox renderer is part of G13 (`WI-G13-05`), since only
+  first person reliably shows the horizon and fog must match the sky; original BFME and Generals
+  sky data feed it (`WI-G13-07`), and CC0 sky content is a G12 pack (G12-5) selected per map.
+  `Legacy` keeps the grey clear colour; `Enhanced` draws the sky in the tactical view when the
+  horizon is visible. See [G13 §3.4.1](deep-dives/g13-first-person-ground-view.md#341-skybox-and-distance-fog-g13-4).
 - First-person ground view. Decision (2026-11-02): an avatar drop and walk mode is Track G phase
   G13, presentation only: the avatar is client state, not a `GameObject`, issues no orders, and
   never changes simulation results; selection and orders are unavailable while in first person.

@@ -8,7 +8,9 @@
 The original terrain and model textures are low-resolution diffuse images: grass, rock, sand,
 asphalt, concrete, snow, and painted metal. G7 re-filters their mips but keeps their content.
 G12 lets an operator replace them with higher-resolution, openly licensed materials, starting with
-terrain, then adding normal and roughness detail to terrain lighting, then model textures.
+terrain, then adding normal and roughness detail to terrain lighting, then model textures. Sky
+packs (G12-5) supply openly licensed skies to the [G13](g13-first-person-ground-view.md#341-skybox-and-distance-fog-g13-4)
+sky renderer.
 
 | Source | Finding |
 |---|---|
@@ -98,6 +100,21 @@ Model replacements need a different key (W3D texture name rather than terrain en
 place and converting matched meshes to the C3 PBR family. `WI-G12-07` decides; implementation
 cards follow its recommendation.
 
+### 3.6 Sky packs (G12-5)
+
+- Sources: CC0 equirectangular HDRIs from Poly Haven, listed in a `skies` section of the mapping
+  table with a `timeOfDay` tag (morning, afternoon, evening, night) and licence record.
+  `fetch_materials.py --skies` downloads them under the same licence filter.
+- `SkyPackBuilder` converts each HDRI to six cube faces (N, E, S, W, top, bottom) at a target
+  face size (default 1024), tone-maps to sRGB 8-bit with a fixed exposure recorded in the
+  manifest, and records `SkyHorizonColour` from the horizon band.
+- `SkyPack` stores faces like `TerrainMaterialPack`: `<root>/sky/<builder version>/<source
+  SHA-256>/<face size>/` with `manifest.json`, staged then published by rename.
+- Selection: `sky-map.json` maps a map name to a sky id; unmapped maps take the sky whose
+  `timeOfDay` matches the map's lighting. `GraphicsSettings.SkySource` (`Original`, `Pack`)
+  defaults to `Original` in both presets; `Legacy` forces `Original`. A missing or invalid pack
+  falls back to G13's source order with one warning.
+
 ## 4. Validation
 
 - Unit tests: mapping parse and validation, colour match, seam check, normal mip
@@ -109,6 +126,9 @@ cards follow its recommendation.
   regression fails.
 - Operator evidence: real-pack captures of Alpine Assault and a desert map beside the original,
   TerrainZoomProof grazing views, and B1 terrain pass cost with PBR on and off.
+- Sky packs: equirectangular-to-cube face orientation and seam tests on a synthetic HDRI, a
+  committed synthetic 64x64 sky pack, and first-person captures with the original and a real sky
+  pack.
 
 ## 5. Architecture Diagrams
 
@@ -169,6 +189,15 @@ classDiagram
     +NormalArray
     +RoughnessOcclusionArray
   }
+  class SkyPackBuilder {
+    +Bake(skies, workDir, faceSize) BakeReport
+  }
+  class SkyPack {
+    +TryLoad(skyId, faceSize) SkyboxFaces
+  }
+  class SkyMap {
+    +Resolve(mapName, timeOfDay) skyId
+  }
   TerrainMaterialInventory ..> TerrainMaterialMap : informs
   TerrainMaterialMap --> MaterialSourceRef
   TerrainMaterialPackBuilder --> TerrainMaterialMap
@@ -180,6 +209,9 @@ classDiagram
   Terrain --> TerrainMaterialPack
   Terrain --> TerrainTexturePack
   Terrain --> TerrainShaderResources
+  SkyPackBuilder --> SkyPack
+  SkyPackBuilder --> TerrainMaterialMap
+  SkyMap ..> SkyPack : selects
 ```
 
 ### Sequence: fetch and bake

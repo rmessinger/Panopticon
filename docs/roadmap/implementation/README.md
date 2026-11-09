@@ -445,7 +445,7 @@ Source of truth: [deep-dives/g12-open-material-packs.md](../deep-dives/g12-open-
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-g-g12-open-material-packs.md](track-g-g12-open-material-packs.md) | G12-1…G12-4 | Open material packs (WI-G12-01..07) |
+| [track-g-g12-open-material-packs.md](track-g-g12-open-material-packs.md) | G12-1…G12-5 | Open material packs (WI-G12-01..09) |
 
 ## Track G · G13 : First-person ground view
 
@@ -454,7 +454,7 @@ Source of truth: [deep-dives/g13-first-person-ground-view.md](../deep-dives/g13-
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-g-g13-first-person-ground-view.md](track-g-g13-first-person-ground-view.md) | G13-1…G13-5 | First-person ground view (WI-G13-01..06) |
+| [track-g-g13-first-person-ground-view.md](track-g-g13-first-person-ground-view.md) | G13-1…G13-5 | First-person ground view (WI-G13-01..07) |
 
 ## Track H · H1-H3 : Map storage
 

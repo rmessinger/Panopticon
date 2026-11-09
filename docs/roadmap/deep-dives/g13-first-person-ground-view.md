@@ -21,6 +21,7 @@ the view is presentation only.
 | Placement | `OrderGeneratorSystem.ActiveGenerator` with `IOrderGenerator` (`UpdatePosition`, `TryActivate`, `GetCursor`, `BuildRenderList`); building placement renders an unregistered preview `GameObject` at 0.7 opacity. |
 | Ground queries | `HeightMap.GetHeight`/`GetNormal`, `Terrain.ImpassableAt`, `Navigation.IsPassable`, `PartitionCellManager.QueryObjects`, `RoughCollider` ray and shape tests. Bridge layers are stubbed (ground only). |
 | Ground-level rendering | No skybox (clear colour grey 105), no distance fog (`Weather` fog fields parsed only), object frustum culling off by default, one shadow cascade at distance 1200, terrain drawn in full 17x17 patches with patch culling. |
+| Skybox data | Generals `WaterTransparency` parses five-face skybox names (`SkyboxTextureN/E/S/W/T`, commented out in shipped `Water.ini`; the original drew them only in water reflections). `Textures.big` ships `TSDusky_*` and `TSNightSky_*` face sets. BFME parses `SkyboxTextureSet` (11 in `Environment.ini`: `DefaultSky`, `Morning`, `MountDoom`, `DesertSun`, ...) and the map's `SkyboxSettings` (position, scale, rotation, texture scheme) and ships skybox W3D models (`skyboxnoon.w3d`, `mrdrskybox.w3d`). Nothing draws any of them. |
 | HUD | No hide flag; captures pop every WND window. `Scene3D` has `ShowTerrain`/`ShowObjects`/`ShowWater`/`ShowRoads`. |
 
 ## 2. Constraints
@@ -85,14 +86,32 @@ the view is presentation only.
   with far plane reduced to `FirstPersonFarPlane` and fog hiding the cut; vertical FOV computed
   from a horizontal FOV correctly (`2·atan(tan(h/2)/aspect)`); object frustum culling on; four
   shadow cascades with a shorter `ShadowDistance`.
-- `SkyRenderer`: a procedural gradient sky dome drawn before terrain, coloured from the map's
-  lighting time of day, replacing the grey clear colour in first person.
-- Distance fog: `Weather.HardwareFogStart/End` when set, else defaults scaled to the far plane,
-  applied in terrain, road, object, and water shaders through a shared fog include gated by a
-  `FogEnabled` constant that is false in `Tactical`.
+- Sky and fog: see 3.4.1.
 - HUD: a `HudVisibility` flag on the game client hides WND/APT layers, selection UI, and the
   debug overlay without popping windows, restoring them on exit; a minimal crosshair and compass
   draw in the 2D layer.
+
+### 3.4.1 Skybox and distance fog (G13-4)
+
+- `SkyRenderer` draws before terrain at depth far, camera-centred, from a `SkySource`:
+  - `SkyboxFaces`: five or six face textures (N, E, S, W, top, optional bottom) on a cube; a
+    missing bottom face repeats the horizon row.
+  - `SkyboxModel`: a W3D sky model placed by `SkyboxSettings` (BFME), drawn camera-relative with
+    depth write off.
+  - `GradientSky`: zenith, horizon, and ground colours from the map's time-of-day lighting; the
+    fallback when no other source resolves.
+- Source resolution, first match wins: a sky pack chosen for the map ([G12-5](g12-open-material-packs.md#36-sky-packs-g12-5)),
+  the map's BFME `SkyboxSettings`, the Generals `WaterTransparency` faces, a built-in default
+  face set per time of day (`TSDusky_*` for evening, `TSNightSky_*` for night), then the gradient.
+- `SkyHorizonColour` is the mean colour of the sky's horizon band, computed once per source.
+- Distance fog: `Weather.HardwareFogStart/End` when set, else defaults scaled to the far plane,
+  coloured by `SkyHorizonColour`, applied in terrain, road, object, particle, and water shaders
+  through a shared fog include gated by `FogEnabled`.
+- Where the sky draws:
+  - `FirstPerson`: always, with fog.
+  - `Tactical`: only when `GraphicsSettings.TacticalSky` is on (`Enhanced` true, `Legacy` false)
+    and the view frustum reaches above the horizon; no fog. `Legacy` keeps the grey clear colour,
+    so `faithful` goldens are unchanged.
 
 ### 3.5 Transitions and evidence (G13-5)
 
@@ -108,9 +127,10 @@ the view is presentation only.
   cylinder, border clamp), drop validity, snapshot save/restore, projection maths.
 - Headless test: entering and leaving the mode leaves `TacticalView` state bit-identical and
   simulation assertions unchanged.
-- G3: existing goldens unchanged; `first-person` goldens for two eye positions on Alpine Assault
-  (open ground facing a structure, and toward the horizon); injected near-plane and fog
-  regressions fail.
+- G3: `faithful` goldens unchanged; `enhanced` goldens change only where `TacticalSky` reaches a
+  visible horizon, re-recorded with the change listed; `first-person` goldens for two eye positions
+  on Alpine Assault (open ground facing a structure, and toward the horizon) plus one BFME map with
+  `SkyboxSettings`; injected near-plane, fog, and sky-face orientation regressions fail.
 - B1: frame time at the first-person view against the default tactical view.
 
 ## 5. Architecture Diagrams
@@ -159,7 +179,19 @@ classDiagram
   class GameWindow {
     +SetRelativeMouseMode(bool)
   }
-  class SkyRenderer
+  class SkyRenderer {
+    +Source SkySource
+    +HorizonColour
+  }
+  class SkySource {
+    <<interface>>
+  }
+  class SkyboxFaces
+  class SkyboxModel
+  class GradientSky
+  class SkySourceResolver {
+    +Resolve(map, lighting, packs) SkySource
+  }
   class HudVisibility
   Scene3D --> ViewModeController
   Scene3D --> TacticalView
@@ -172,6 +204,11 @@ classDiagram
   FirstPersonInputHandler --> FirstPersonCameraController
   FirstPersonInputHandler --> GameWindow
   ViewModeController --> SkyRenderer
+  SkyRenderer --> SkySource
+  SkySource <|.. SkyboxFaces
+  SkySource <|.. SkyboxModel
+  SkySource <|.. GradientSky
+  SkySourceResolver ..> SkySource : creates
   ViewModeController --> HudVisibility
 ```
 
@@ -230,3 +267,7 @@ sequenceDiagram
   culling; `Scene3D.cs:71-95, 90, 421-465`; `Graphics/Rendering/Shadows/ShadowSettings.cs`;
   `Terrain/Weather.cs:49-50`.
 - `src/Panopticon.Tools.TestHarness/ScenarioCaptureRunner.cs:148-155` HUD hiding by popping windows.
+- `src/Panopticon.Simulation/Terrain/WaterTransparency.cs:16-39` Generals skybox face fields;
+  `Terrain/SkyboxTextureSet.cs` BFME face sets; `Data/Map/SkyboxSettings.cs` map placement;
+  `Data/Ini/IniParser.BlockParsers.cs:151`, `Content/AssetStore.cs:158` registration. Face sets
+  and sky models from direct reads of the Generals and BFME `.big` archives.

@@ -388,12 +388,15 @@ workflow](README.md#ticket-workflow) and the [template](task-card-template.md).
 | `WI-G12-05` |  | `WI-G12-05-terrain-normal-roughness-shading.md` | Terrain normal and roughness shading | https://projects.reid-corp.com/work_packages/588 |
 | `WI-G12-06` |  | `WI-G12-06-terrain-pbr-goldens-and-cost.md` | Terrain PBR goldens and cost | https://projects.reid-corp.com/work_packages/589 |
 | `WI-G12-07` |  | `WI-G12-07-model-texture-replacement-investigation.md` | Model texture replacement (investigation) | https://projects.reid-corp.com/work_packages/590 |
+| `WI-G12-08` |  | `WI-G12-08-fetch-and-bake-sky-packs.md` | Fetch and bake sky packs | https://projects.reid-corp.com/work_packages/1004 |
+| `WI-G12-09` |  | `WI-G12-09-sky-pack-runtime-selection.md` | Sky pack runtime selection | https://projects.reid-corp.com/work_packages/1005 |
 | `WI-G13-01` |  | `WI-G13-01-view-mode-seam-and-relative-mouse.md` | View mode seam and relative mouse | https://projects.reid-corp.com/work_packages/591 |
 | `WI-G13-02` |  | `WI-G13-02-avatar-drop-mode.md` | Avatar drop mode | https://projects.reid-corp.com/work_packages/592 |
 | `WI-G13-03` |  | `WI-G13-03-avatar-ground-locomotion.md` | Avatar ground locomotion | https://projects.reid-corp.com/work_packages/593 |
 | `WI-G13-04` |  | `WI-G13-04-ground-level-projection-and-hud.md` | Ground-level projection, culling, and HUD | https://projects.reid-corp.com/work_packages/594 |
-| `WI-G13-05` |  | `WI-G13-05-sky-and-distance-fog.md` | Sky and distance fog | https://projects.reid-corp.com/work_packages/595 |
+| `WI-G13-05` |  | `WI-G13-05-sky-and-distance-fog.md` | Skybox renderer and distance fog | https://projects.reid-corp.com/work_packages/595 |
 | `WI-G13-06` |  | `WI-G13-06-transitions-goldens-and-cost.md` | Transitions, goldens, and cost | https://projects.reid-corp.com/work_packages/596 |
+| `WI-G13-07` |  | `WI-G13-07-original-skybox-sources.md` | Original skybox sources | https://projects.reid-corp.com/work_packages/1003 |
 | `WI-G2-01` |  | `WI-G2-01-audit-render-state-knobs.md` | Audit fixed render-state knobs and the unused LOD asset data | https://projects.reid-corp.com/work_packages/597 |
 | `WI-G2-02` |  | `WI-G2-02-graphics-settings-type-and-presets.md` | Introduce the graphics settings type and the two presets | https://projects.reid-corp.com/work_packages/598 |
 | `WI-G2-03` |  | `WI-G2-03-wire-settings-into-render-construction.md` | Wire the graphics settings into render resource construction | https://projects.reid-corp.com/work_packages/599 |

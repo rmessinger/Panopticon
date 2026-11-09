@@ -321,11 +321,12 @@ mindmap
         G12-2 Terrain material packs
         G12-3 Terrain PBR shading
         G12-4 Model texture replacement
+        G12-5 Sky packs
       G13 First-person ground view ⮕
         G13-1 View mode seam
         G13-2 Avatar drop
         G13-3 Ground locomotion
-        G13-4 Ground-level rendering
+        G13-4 Ground-level rendering and skybox
         G13-5 Transitions and goldens
     H. Map and unit storage formats
       H1 Format requirements and current-state audit

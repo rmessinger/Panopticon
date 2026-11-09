@@ -20,10 +20,12 @@ Source of truth: [design and diagrams](../deep-dives/g12-open-material-packs.md#
 | [WI-G12-05](https://projects.reid-corp.com/work_packages/588) | G12-3 | Surface map arrays, terrain GGX shading, shared lighting include | WI-G12-04 |
 | [WI-G12-06](https://projects.reid-corp.com/work_packages/589) | G12-3 | PBR goldens and terrain pass cost | WI-G12-05 |
 | [WI-G12-07](https://projects.reid-corp.com/work_packages/590) | G12-4 | Model texture investigation and G12-4 cards | WI-G12-04 |
+| [WI-G12-08](https://projects.reid-corp.com/work_packages/1004) | G12-5 | Sky HDRI fetch, `SkyPackBuilder`, `SkyPack`, synthetic sky pack | WI-G12-03 |
+| [WI-G12-09](https://projects.reid-corp.com/work_packages/1005) | G12-5 | `SkySource` setting, `SkyMap`, sky-pack resolver | WI-G12-08, WI-G13-05 |
 
-`WI-G12-05` and `WI-G12-07` may run in parallel after `WI-G12-04`. Groups on
-`staging/track-g-g12`: group 1 `WI-G12-01`..`03`, group 2 `WI-G12-04`, group 3 `WI-G12-05`..`06`,
-group 4 `WI-G12-07`.
+`WI-G12-05` and `WI-G12-07` may run in parallel after `WI-G12-04`. Stack groups: group 1
+`WI-G12-01`..`03`, group 2 `WI-G12-04`, group 3 `WI-G12-05`..`06`, group 4 `WI-G12-07`, group 5
+`WI-G12-08`..`09` (after the G13 group holding `WI-G13-05` merges).
 
 ## Results
 

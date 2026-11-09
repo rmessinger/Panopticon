@@ -234,8 +234,8 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/g9-resolution-independent-2d.md`](deep-dives/g9-resolution-independent-2d.md) | Track G phase G9 - Resolution-independent 2D and UI, and the dynamically drawn HUD. |
 | [`deep-dives/g10-realistic-proportions.md`](deep-dives/g10-realistic-proportions.md) | Track G phase G10 - Realistic proportions: reference scale audit and presentation-only aircraft scale overrides. |
 | [`deep-dives/g11-terrain-impact-decals.md`](deep-dives/g11-terrain-impact-decals.md) | Track G phase G11 - Terrain impact decals: scorch FX execution, capped decal store, terrain overlay pass, original producers, `Enhanced` lighting. |
-| [`deep-dives/g12-open-material-packs.md`](deep-dives/g12-open-material-packs.md) | Track G phase G12 - Open material packs: CC0 terrain texture replacements from a class mapping, terrain normal and roughness shading, model texture investigation. |
-| [`deep-dives/g13-first-person-ground-view.md`](deep-dives/g13-first-person-ground-view.md) | Track G phase G13 - First-person ground view: hotkey avatar drop, walk mode, view-mode seam, eye-height projection, sky and fog. |
+| [`deep-dives/g12-open-material-packs.md`](deep-dives/g12-open-material-packs.md) | Track G phase G12 - Open material packs: CC0 terrain texture replacements from a class mapping, terrain normal and roughness shading, model texture investigation, CC0 sky packs. |
+| [`deep-dives/g13-first-person-ground-view.md`](deep-dives/g13-first-person-ground-view.md) | Track G phase G13 - First-person ground view: hotkey avatar drop, walk mode, view-mode seam, eye-height projection, skybox and fog. |
 
 ---
 
@@ -468,9 +468,9 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
 | G11 - Terrain impact decals | `█████░░░░░` | 2 / 4 |
-| G12 - Open material packs | `░░░░░░░░░░` | 0 / 4 |
+| G12 - Open material packs | `░░░░░░░░░░` | 0 / 5 |
 | G13 - First-person ground view | `░░░░░░░░░░` | 0 / 5 |
-| Track G total | `██░░░░░░░░` | 7 / 29 |
+| Track G total | `██▌░░░░░░░` | 7 / 30 |
 
 ### Track H - Map & Unit Storage Formats (H2a gated on P9 and C4d)
 
