@@ -182,6 +182,10 @@ public class MapFile
         return Parse(stream, reader => ParseMapData(reader));
     }
 
+    // FromInterchange is authored with nullable annotations; scope them to this member
+    // so the legacy file's disabled annotations context stays unchanged.
+#nullable enable
+
     /// <summary>
     /// Constructs a resident MapFile from a validated MapInterchange, receiving materialized
     /// heights, objects, typed-home sections, and backend-parsed retained sections.
@@ -324,6 +328,8 @@ public class MapFile
             CastleTemplates = castleTemplates,
         };
     }
+
+#nullable restore
 
     /// <summary>
     /// Creates a new empty map with flat terrain suitable for the WorldBuilder editor.

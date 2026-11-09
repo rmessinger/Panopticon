@@ -52,7 +52,8 @@ internal static class HarnessScenarioCatalog
             or BuiltInScenario.Ee2PropertyProof or BuiltInScenario.Ee2ScaleProof or BuiltInScenario.Ee2MorphProof
             or BuiltInScenario.Ee2ParticleProof or BuiltInScenario.Ee2LegacyKfProof or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake
             or BuiltInScenario.PathfindingLoad
-            or BuiltInScenario.NavigationDeadlock;
+            or BuiltInScenario.NavigationDeadlock
+            or BuiltInScenario.BehavioralParity;
         var profiles = scenario == BuiltInScenario.ScenarioCapture ? CaptureProfileLoader.EmbeddedCaptureProfileNames().ToArray()
             : scenario is BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake ? new[] { "vr-terrain-grazing.json", "vr-terrain-default.json" } : [];
         var input = scenario is BuiltInScenario.ScenarioCapture or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake ? HarnessProfileInput.FileOrEmbedded

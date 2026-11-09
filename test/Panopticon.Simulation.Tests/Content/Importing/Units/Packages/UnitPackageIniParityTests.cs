@@ -209,23 +209,6 @@ public sealed class UnitPackageIniParityTests : IDisposable
     {
         var game = new MockedGameTest.TestGame(SageGame.CncGenerals);
 
-        // Bind locomotor references on definitions to the store so the simulation engine can initialize locomotors
-        foreach (var def in store.ObjectDefinitions)
-        {
-            foreach (var set in def.LocomotorSets.Values)
-            {
-                for (var i = 0; i < set.Locomotors.Length; i++)
-                {
-                    var locoName = set.Locomotors[i].Name;
-                    var loco = store.LocomotorTemplates.GetByName(locoName);
-                    if (loco is not null)
-                    {
-                        set.Locomotors[i] = new LazyAssetReference<LocomotorTemplate>(locoName, () => loco);
-                    }
-                }
-            }
-        }
-
         var human = game.PlayerManager.GetPlayerByIndex(1);
         var ai = game.PlayerManager.GetPlayerByIndex(0);
 

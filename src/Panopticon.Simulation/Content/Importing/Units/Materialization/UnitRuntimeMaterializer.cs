@@ -31,12 +31,22 @@ public static class UnitRuntimeMaterializer
         {
             try
             {
-                var asset = record.Legacy is not null
-                    ? context.GetLegacy<BaseAsset>(record.Id, record.Legacy)
+                var isLegacy = record.Legacy is not null;
+                var asset = isLegacy
+                    ? context.GetLegacy<BaseAsset>(record.Id, record.Legacy!)
                     : MaterializeTyped(record, resolution, context);
 
                 if (asset is not null)
                 {
+                    if (isLegacy)
+                    {
+                        context.MarkLegacy(record.Id);
+                        if (context.Store is not null)
+                        {
+                            RetainedReferenceRebinder.Rebind(asset, context.Store);
+                        }
+                    }
+
                     context.Stage(record.Id, asset);
                 }
             }

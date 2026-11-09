@@ -1,0 +1,20 @@
+{
+  // WI-H5-05 behavioral-parity scenario: one representative legacy map from the real install plus
+  // the P6b reference roster, run headlessly at one fixed seed, original versus converted.
+  "name": "h5-alpine-assault-p6b",
+  "sourceMapPath": "maps/alpine assault/alpine assault.map",
+  "seed": 20261108,
+  "settleFrames": 60,
+  "engagementFrames": 900,
+  "orderRefreshInterval": 120,
+  "assertionSet": "default",
+  "roster": [
+    { "definition": "AmericaParticleCannonUplink", "count": 1 },
+    { "definition": "AmericaInfantryRanger", "count": 2 },
+    { "definition": "AmericaTankCrusader", "count": 2 },
+    { "definition": "AmericaVehicleComanche", "count": 1 },
+    { "definition": "AmericaVehicleDozer", "count": 1 },
+    { "definition": "AmericaVehicleMedic", "count": 1 }
+  ]
+}
+
