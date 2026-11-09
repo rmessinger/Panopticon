@@ -1,13 +1,14 @@
 #nullable enable
 
 using System.Text.Json;
+using Panopticon.Content.Importing.Units;
 
 namespace Panopticon.Content.Importing.Units.Packages;
 
-/// <summary>Helper for parsing Authored properties from JSON elements in unit packages.</summary>
+/// <summary>Helper for parsing Authored properties, including per-field origins, from JSON elements in unit packages.</summary>
 public static class UnitPackageAuthoredHelper
 {
-    public static Authored<Quantity> ParseQuantity(JsonElement element)
+    public static Authored<Quantity> ParseQuantity(JsonElement element, ContentSource defaultSource)
     {
         if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
         {
@@ -20,7 +21,7 @@ public static class UnitPackageAuthoredHelper
             {
                 if (UnitPackageQuantityDto.TryParse(vProp, out var qInner, out _))
                 {
-                    return Authored.Of(qInner.Value);
+                    return WithOrigin(element, defaultSource, Authored.Of(qInner.Value));
                 }
             }
 
@@ -33,7 +34,7 @@ public static class UnitPackageAuthoredHelper
         return Authored<Quantity>.Omitted;
     }
 
-    public static Authored<string> ParseString(JsonElement element)
+    public static Authored<string> ParseString(JsonElement element, ContentSource defaultSource)
     {
         if (element.ValueKind == JsonValueKind.String)
         {
@@ -42,13 +43,13 @@ public static class UnitPackageAuthoredHelper
 
         if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("value", out var vProp) && vProp.ValueKind == JsonValueKind.String)
         {
-            return Authored.Of(vProp.GetString() ?? string.Empty);
+            return WithOrigin(element, defaultSource, Authored.Of(vProp.GetString() ?? string.Empty));
         }
 
         return Authored<string>.Omitted;
     }
 
-    public static Authored<int> ParseInt(JsonElement element)
+    public static Authored<int> ParseInt(JsonElement element, ContentSource defaultSource)
     {
         if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var iVal))
         {
@@ -57,13 +58,13 @@ public static class UnitPackageAuthoredHelper
 
         if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("value", out var vProp) && vProp.TryGetInt32(out var innerVal))
         {
-            return Authored.Of(innerVal);
+            return WithOrigin(element, defaultSource, Authored.Of(innerVal));
         }
 
         return Authored<int>.Omitted;
     }
 
-    public static Authored<double> ParseDouble(JsonElement element)
+    public static Authored<double> ParseDouble(JsonElement element, ContentSource defaultSource)
     {
         if (element.ValueKind == JsonValueKind.Number && element.TryGetDouble(out var dVal) && double.IsFinite(dVal))
         {
@@ -72,13 +73,13 @@ public static class UnitPackageAuthoredHelper
 
         if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("value", out var vProp) && vProp.TryGetDouble(out var innerVal) && double.IsFinite(innerVal))
         {
-            return Authored.Of(innerVal);
+            return WithOrigin(element, defaultSource, Authored.Of(innerVal));
         }
 
         return Authored<double>.Omitted;
     }
 
-    public static Authored<bool> ParseBool(JsonElement element)
+    public static Authored<bool> ParseBool(JsonElement element, ContentSource defaultSource)
     {
         if (element.ValueKind is JsonValueKind.True or JsonValueKind.False)
         {
@@ -87,7 +88,7 @@ public static class UnitPackageAuthoredHelper
 
         if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("value", out var vProp) && vProp.ValueKind is JsonValueKind.True or JsonValueKind.False)
         {
-            return Authored.Of(vProp.GetBoolean());
+            return WithOrigin(element, defaultSource, Authored.Of(vProp.GetBoolean()));
         }
 
         return Authored<bool>.Omitted;
@@ -104,7 +105,7 @@ public static class UnitPackageAuthoredHelper
         {
             if (UnitPackageListOverrideDto.TryParseContentId(vProp, defaultSource, defaultKind, out var innerId) && innerId is not null)
             {
-                return Authored.Of(innerId.Value);
+                return WithOrigin(element, defaultSource, Authored.Of(innerId.Value));
             }
         }
 
@@ -114,5 +115,21 @@ public static class UnitPackageAuthoredHelper
         }
 
         return Authored<ContentId>.Omitted;
+    }
+
+    private static Authored<T> WithOrigin<T>(JsonElement element, ContentSource defaultSource, Authored<T> authored)
+        where T : notnull
+    {
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty("origin", out var originProp))
+        {
+            return authored;
+        }
+
+        if (!UnitPackageListOverrideDto.TryParseContentId(originProp, defaultSource, ContentKind.Unit, out var origin) || origin is null)
+        {
+            return authored;
+        }
+
+        return authored.WithOrigin(origin.Value);
     }
 }
