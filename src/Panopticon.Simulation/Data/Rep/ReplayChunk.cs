@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FileFormats;
 using Panopticon.Logic.Object;
@@ -14,6 +16,9 @@ namespace Panopticon.Data.Rep;
 public sealed class ReplayChunk
 {
     private const float MetersPerLegacyUnit = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+
+    // Rescaling a legacy float to meters and back is not bit-exact, so parsed positions keep their source bits.
+    private static readonly ConditionalWeakTable<Order, Dictionary<int, (Vector3 Source, Vector3 Converted)>> RetainedPositions = new();
 
     public ReplayChunkHeader Header { get; private set; }
     public Order Order { get; private set; }
@@ -63,7 +68,7 @@ public sealed class ReplayChunk
                         break;
 
                     case OrderArgumentType.Position:
-                        order.AddPositionArgument(reader.ReadVector3() * MetersPerLegacyUnit);
+                        ReadPosition(reader, order);
                         break;
 
                     case OrderArgumentType.ScreenPosition:
@@ -97,6 +102,28 @@ public sealed class ReplayChunk
         return result;
     }
 
+    private static void ReadPosition(BinaryReader reader, Order order)
+    {
+        var source = reader.ReadVector3();
+        var converted = source * MetersPerLegacyUnit;
+        order.AddPositionArgument(converted);
+
+        RetainedPositions.GetOrCreateValue(order)[order.Arguments.Count - 1] = (source, converted);
+    }
+
+    private static void WritePosition(BinaryWriter writer, Order order, int argumentIndex, Vector3 position)
+    {
+        if (RetainedPositions.TryGetValue(order, out var retained)
+            && retained.TryGetValue(argumentIndex, out var source)
+            && position == source.Converted)
+        {
+            writer.Write(source.Source);
+            return;
+        }
+
+        writer.Write(position / MetersPerLegacyUnit);
+    }
+
     /// <summary>
     /// Writes a single replay chunk for <paramref name="order"/> at <paramref name="timecode"/>.
     /// <paramref name="playerSlot"/> is 1-based (matching the <c>Number</c> field in the chunk header).
@@ -110,7 +137,8 @@ public sealed class ReplayChunk
 
         // Group arguments by type (preserving order within each group)
         var groups = order.Arguments
-            .GroupBy(a => a.ArgumentType)
+            .Select((arg, index) => (arg, index))
+            .GroupBy(a => a.arg.ArgumentType)
             .Select(g => (type: g.Key, args: g.ToList()))
             .ToList();
 
@@ -127,7 +155,7 @@ public sealed class ReplayChunk
         // argument values, grouped by type
         foreach (var (type, args) in groups)
         {
-            foreach (var arg in args)
+            foreach (var (arg, index) in args)
             {
                 switch (type)
                 {
@@ -148,7 +176,7 @@ public sealed class ReplayChunk
                         break;
 
                     case OrderArgumentType.Position:
-                        writer.Write(arg.Value.Position / MetersPerLegacyUnit);
+                        WritePosition(writer, order, index, arg.Value.Position);
                         break;
 
                     case OrderArgumentType.ScreenPosition:
