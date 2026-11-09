@@ -1,9 +1,12 @@
 #nullable enable
 
+using System;
 using System.Linq;
+using System.Text.Json.Nodes;
 using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Packages;
 using Panopticon.Logic.Object;
+using Panopticon.Tests.Content.Tools.H5Migrate;
 using Xunit;
 
 namespace Panopticon.Tests.Content.Importing.Units.Packages;
@@ -440,5 +443,47 @@ public sealed class UnitPackageReaderTests
         Assert.Equal("Citizen", unit.Id.Name);
         Assert.Null(unit.Legacy);
         Assert.Equal(50.0, unit.MaxHealth.Value.Value);
+    }
+
+    [Fact]
+    public void ReadWithMalformedQuantityObjectValue_RecomputesDigests_FailsWithDiagnosticAndReturnsNoPartialSet()
+    {
+        using var builder = new UnitPackageTestBuilder();
+        builder.WithSource("ee2", caseSensitive: true);
+
+        builder.AddRecord("Citizen", ContentKind.Unit, "records/citizen.json",
+            """
+            {
+              "name": "Citizen",
+              "kind": "Unit",
+              "displayName": "Citizen",
+              "maxHealth": { "value": 50.0, "unit": "HitPoints" },
+              "buildCost": { "value": 100.0, "unit": "Currency" }
+            }
+            """);
+
+        var packageDir = builder.Build();
+
+        UnitPackageTamper.EditRecordPayload(packageDir, "Citizen", payload =>
+        {
+            payload["maxHealth"] = new JsonObject
+            {
+                ["value"] = new JsonObject
+                {
+                    ["value"] = 1,
+                    ["unit"] = "1",
+                },
+                ["unit"] = "HitPoints",
+            };
+        });
+
+        var reader = new H4UnitPackageReader(packageDir);
+        var set = reader.Read([]);
+
+        var diagnostic = Assert.Single(set.Diagnostics, d => d.IsError);
+        Assert.Equal(UnitPackageDiagnosticCodes.PayloadInvalid, diagnostic.Code);
+        Assert.Contains("Quantity 'value' must be a finite number or numeric string, got Object.", diagnostic.Message);
+        Assert.Empty(set.Records);
+        Assert.Empty(set.Roots);
     }
 }
