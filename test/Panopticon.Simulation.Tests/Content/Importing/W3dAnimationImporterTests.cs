@@ -12,6 +12,9 @@ namespace Panopticon.Tests.Content.Importing;
 
 public sealed class W3dAnimationImporterTests
 {
+    // Generals compatibility scale: legacy game units to meters (AQ-5).
+    private const float MetersPerLegacyUnit = 0.3048f;
+
     private static W3dFile CreateFile(params W3dChunk[] chunks)
     {
         return new W3dFile(
@@ -79,8 +82,8 @@ public sealed class W3dAnimationImporterTests
         Assert.Equal(ImportedAnimationChannelType.TranslationX, clip.ChannelType);
         Assert.Equal(TimeSpan.FromSeconds(0.4), clip.Keyframes[0].Time);
         Assert.Equal(TimeSpan.FromSeconds(0.6), clip.Keyframes[1].Time);
-        Assert.Equal(1.0f, clip.Keyframes[0].FloatValue);
-        Assert.Equal(2.0f, clip.Keyframes[1].FloatValue);
+        Assert.Equal(1.0f * MetersPerLegacyUnit, clip.Keyframes[0].FloatValue);
+        Assert.Equal(2.0f * MetersPerLegacyUnit, clip.Keyframes[1].FloatValue);
     }
 
     [Fact]
@@ -137,7 +140,7 @@ public sealed class W3dAnimationImporterTests
         Assert.Equal(2, clip.Keyframes.Count);
         Assert.Equal(TimeSpan.Zero, clip.Keyframes[0].Time);
         Assert.Equal(TimeSpan.FromSeconds(2.0), clip.Keyframes[1].Time);
-        Assert.Equal(2.0f, clip.Keyframes[1].FloatValue);
+        Assert.Equal(2.0f * MetersPerLegacyUnit, clip.Keyframes[1].FloatValue);
     }
 
     [Fact]
@@ -176,7 +179,7 @@ public sealed class W3dAnimationImporterTests
         for (var i = 0; i < expected.Length; i++)
         {
             Assert.Equal(TimeSpan.FromSeconds(i / 5.0), clip.Keyframes[i].Time);
-            Assert.Equal(expected[i].FloatValue, clip.Keyframes[i].FloatValue);
+            Assert.Equal(expected[i].FloatValue * MetersPerLegacyUnit, clip.Keyframes[i].FloatValue);
         }
     }
 

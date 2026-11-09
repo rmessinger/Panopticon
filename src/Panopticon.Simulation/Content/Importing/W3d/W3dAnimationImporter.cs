@@ -285,7 +285,7 @@ internal sealed class W3dAnimationImporter : IAnimationImporter
 
             W3dAnimationChannelType.TranslationX
             or W3dAnimationChannelType.TranslationY
-            or W3dAnimationChannelType.TranslationZ => ImportedKeyframe.FromFloat(time, datum.FloatValue),
+            or W3dAnimationChannelType.TranslationZ => ImportedKeyframe.FromFloat(time, W3dLengths.ToMeters(datum.FloatValue)),
 
             _ => throw new NotSupportedException(
                 $"Animation '{animationName}' uses unsupported channel type '{channelType}'."),

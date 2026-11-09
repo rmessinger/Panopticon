@@ -25,8 +25,8 @@ internal static class W3dMeshConverter
         return new ImportedMesh(
             vertices,
             indices,
-            new AxisAlignedBoundingBox(w3dMesh.Header.Min, w3dMesh.Header.Max),
-            new BoundingSphere(w3dMesh.Header.SphCenter, w3dMesh.Header.SphRadius),
+            new AxisAlignedBoundingBox(W3dLengths.ToMeters(w3dMesh.Header.Min), W3dLengths.ToMeters(w3dMesh.Header.Max)),
+            new BoundingSphere(W3dLengths.ToMeters(w3dMesh.Header.SphCenter), W3dLengths.ToMeters(w3dMesh.Header.SphRadius)),
             hidden: w3dMesh.Header.Attributes.HasFlag(W3dMeshFlags.Hidden),
             cameraOriented: (w3dMesh.Header.Attributes & W3dMeshFlags.GeometryTypeMask) == W3dMeshFlags.GeometryTypeCameraOriented,
             hasHouseColor: w3dMesh.Header.MeshName.StartsWith("HOUSECOLOR", StringComparison.Ordinal),
@@ -89,9 +89,9 @@ internal static class W3dMeshConverter
                 : default;
 
             result[i] = new ImportedVertex(
-                w3dMesh.Vertices.Items[i],
+                W3dLengths.ToMeters(w3dMesh.Vertices.Items[i]),
                 w3dMesh.Normals.Items[i],
-                secondaryPosition: GetValueOrNull(w3dMesh.Vertices2, i),
+                secondaryPosition: GetPositionOrNull(w3dMesh.Vertices2, i),
                 secondaryNormal: GetValueOrNull(w3dMesh.Normals2, i),
                 tangent: GetValueOrNull(w3dMesh.Tangents, i),
                 binormal: GetValueOrNull(w3dMesh.Bitangents, i),
@@ -126,6 +126,13 @@ internal static class W3dMeshConverter
     {
         return list != null
             ? list.Items[index]
+            : null;
+    }
+
+    private static Vector3? GetPositionOrNull(W3dVector3List? list, int index)
+    {
+        return list != null
+            ? W3dLengths.ToMeters(list.Items[index])
             : null;
     }
 }

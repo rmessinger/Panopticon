@@ -13,6 +13,9 @@ namespace Panopticon.Tests.Content.Importing;
 
 public sealed class W3dModelImporterTests
 {
+    // Generals compatibility scale: legacy game units to meters (AQ-5).
+    private const float MetersPerLegacyUnit = 0.3048f;
+
     private static W3dMeshHeader3 CreateMeshHeader(string meshName = "MeshA", string containerName = "TestContainer")
     {
         return new W3dMeshHeader3(
@@ -263,7 +266,7 @@ public sealed class W3dModelImporterTests
         Assert.Equal(2, imported.Skeleton.Bones.Count);
         Assert.Equal("root", imported.Skeleton.Bones[0].Name);
         Assert.Equal(-1, imported.Skeleton.Bones[0].ParentIndex);
-        Assert.Equal(new Vector3(1, 2, 3), imported.Skeleton.Bones[0].BindTranslation);
+        Assert.Equal(new Vector3(1, 2, 3) * MetersPerLegacyUnit, imported.Skeleton.Bones[0].BindTranslation);
         Assert.Equal("child", imported.Skeleton.Bones[1].Name);
         Assert.Equal(0, imported.Skeleton.Bones[1].ParentIndex);
         Assert.Equal(rotation, imported.Skeleton.Bones[1].BindRotation);
@@ -395,8 +398,8 @@ public sealed class W3dModelImporterTests
         Assert.False(mesh.IsSkinned);
         Assert.Equal(3, mesh.Vertices.Count);
         Assert.Equal(new ushort[] { 0, 1, 2 }, mesh.Indices);
-        Assert.Equal(new Vector3(-1, -2, -3), mesh.BoundingBox.Min);
-        Assert.Equal(new Vector3(4, 5, 6), mesh.BoundingBox.Max);
+        Assert.Equal(new Vector3(-1, -2, -3) * MetersPerLegacyUnit, mesh.BoundingBox.Min);
+        Assert.Equal(new Vector3(4, 5, 6) * MetersPerLegacyUnit, mesh.BoundingBox.Max);
     }
 
     [Fact]
@@ -543,11 +546,13 @@ public sealed class W3dModelImporterTests
         Assert.Equal("BoxA", subObject.DisplayName);
 
         var box = Assert.IsType<ImportedBox>(subObject.RenderObject);
-        Assert.Equal(new Vector3(1, 2, 3), box.Center);
-        Assert.Equal(new Vector3(4, 5, 6), box.Extent);
-        Assert.Equal(new Vector3(-3, -3, -3), box.BoundingBox.Min);
-        Assert.Equal(new Vector3(5, 7, 9), box.BoundingBox.Max);
-        Assert.Equal(new Vector3(4, 5, 6).Length(), box.BoundingSphere.Radius);
+        var center = new Vector3(1, 2, 3) * MetersPerLegacyUnit;
+        var extent = new Vector3(4, 5, 6) * MetersPerLegacyUnit;
+        Assert.Equal(center, box.Center);
+        Assert.Equal(extent, box.Extent);
+        Assert.Equal(center - extent, box.BoundingBox.Min);
+        Assert.Equal(center + extent, box.BoundingBox.Max);
+        Assert.Equal(extent.Length(), box.BoundingSphere.Radius);
     }
 
     [Fact]

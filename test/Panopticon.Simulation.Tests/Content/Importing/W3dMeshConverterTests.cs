@@ -12,6 +12,9 @@ namespace Panopticon.Tests.Content.Importing;
 
 public sealed class W3dMeshConverterTests
 {
+    // Generals compatibility scale: legacy game units to meters (AQ-5).
+    private const float MetersPerLegacyUnit = 0.3048f;
+
     private static W3dMeshHeader3 CreateHeader(uint numTris, uint numVertices, W3dMeshFlags attributes = 0, string meshName = "TestMesh")
     {
         return new W3dMeshHeader3(
@@ -142,7 +145,7 @@ public sealed class W3dMeshConverterTests
         Assert.False(imported.HasHouseColor);
 
         Assert.Equal(3, imported.Vertices.Count);
-        Assert.Equal(new Vector3(1, 0, 0), imported.Vertices[1].Position);
+        Assert.Equal(new Vector3(1, 0, 0) * MetersPerLegacyUnit, imported.Vertices[1].Position);
         Assert.Equal(Vector3.UnitZ, imported.Vertices[1].Normal);
         Assert.Null(imported.Vertices[0].SecondaryPosition);
         Assert.Equal(0u, imported.Vertices[0].BoneIndex0);
@@ -150,10 +153,10 @@ public sealed class W3dMeshConverterTests
 
         Assert.Equal(new ushort[] { 0, 1, 2 }, imported.Indices);
 
-        Assert.Equal(new Vector3(-1, -2, -3), imported.BoundingBox.Min);
-        Assert.Equal(new Vector3(4, 5, 6), imported.BoundingBox.Max);
-        Assert.Equal(new Vector3(1, 2, 3), imported.BoundingSphere.Center);
-        Assert.Equal(2.5f, imported.BoundingSphere.Radius);
+        Assert.Equal(new Vector3(-1, -2, -3) * MetersPerLegacyUnit, imported.BoundingBox.Min);
+        Assert.Equal(new Vector3(4, 5, 6) * MetersPerLegacyUnit, imported.BoundingBox.Max);
+        Assert.Equal(new Vector3(1, 2, 3) * MetersPerLegacyUnit, imported.BoundingSphere.Center);
+        Assert.Equal(2.5f * MetersPerLegacyUnit, imported.BoundingSphere.Radius);
 
         var material = Assert.Single(imported.Materials);
         Assert.Equal(ImportedMaterial.FixedFunctionFamily, material.ShaderFamily);
@@ -204,7 +207,7 @@ public sealed class W3dMeshConverterTests
 
         var imported = W3dMeshConverter.Convert(mesh);
 
-        Assert.Equal(new Vector3(1, 2, 3), imported.Vertices[0].SecondaryPosition);
+        Assert.Equal(new Vector3(1, 2, 3) * MetersPerLegacyUnit, imported.Vertices[0].SecondaryPosition);
         Assert.Equal(new Vector3(4, 5, 6), imported.Vertices[0].SecondaryNormal);
         Assert.Equal(new Vector3(7, 8, 9), imported.Vertices[0].Tangent);
         Assert.Equal(new Vector3(10, 11, 12), imported.Vertices[0].Binormal);

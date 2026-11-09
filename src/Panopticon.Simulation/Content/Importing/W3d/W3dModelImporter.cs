@@ -179,7 +179,7 @@ internal sealed class W3dModelImporter : IModelImporter
                     $"parent index {pivot.ParentIdx}; parents must appear before children.");
             }
 
-            bones[i] = new ImportedBone(pivot.Name, pivot.ParentIdx, pivot.Translation, pivot.Rotation);
+            bones[i] = new ImportedBone(pivot.Name, pivot.ParentIdx, W3dLengths.ToMeters(pivot.Translation), pivot.Rotation);
         }
 
         return new ImportedSkeleton(hierarchyName, bones);
@@ -211,7 +211,7 @@ internal sealed class W3dModelImporter : IModelImporter
                 fullName,
                 GetDisplayNameAfterDot(fullName),
                 parentBoneIndex,
-                new ImportedBox(w3dBox.Center, w3dBox.Extent)),
+                new ImportedBox(W3dLengths.ToMeters(w3dBox.Center), W3dLengths.ToMeters(w3dBox.Extent))),
 
             _ => throw new NotSupportedException(
                 $"Model '{modelName}' contains unsupported render object chunk " +
