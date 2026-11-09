@@ -1,3 +1,4 @@
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic.Object;
 
 namespace Panopticon.Navigation;
@@ -26,7 +27,7 @@ public enum NavigationStallReason
 public sealed class MovementProgress
 {
     /// <summary>Minimum shrink of the distance to the current waypoint that counts as progress.</summary>
-    public const float ProgressEpsilon = 0.05f;
+    public const float ProgressEpsilon = 0.05f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     private float _lastWaypointDistance = -1.0f;
 

@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -22,7 +23,7 @@ public class GiveWayTests : MockedGameTest
         return new NavigationClass(blendTileData, heightMap);
     }
 
-    private static Vector3 World(int x, int y) => new(x * 10, y * 10, 0);
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0);
 
     [Fact]
     public void MutualBlock_HigherObjectIdYieldsAndLowerWaits()
@@ -61,8 +62,8 @@ public class GiveWayTests : MockedGameTest
         var sidestep = higherAi.TargetPoints[0];
         Assert.NotEqual(World(8, 2), sidestep);
         Assert.True(navigation.IsPassable(sidestep));
-        // Off the lower unit's row-2 segment (clearance 6.5, a full cell is 10).
-        Assert.True(MathF.Abs(sidestep.Y - 20f) >= 6.5f, $"sidestep {sidestep}");
+        // Off the lower unit's row-2 segment (clearance 6.5 legacy units, a full cell is HorizontalScale).
+        Assert.True(MathF.Abs(sidestep.Y - 2 * HeightMap.HorizontalScale) >= 6.5f * (float)UnitConversionPolicy.GeneralsFeetToMeters, $"sidestep {sidestep}");
         Assert.Equal(World(5, 2), higherAi.TargetPoints[^1]);
         Assert.True(higherAi.RecentlyGaveWay(navigation.Options.BlockedWaitFrames));
         Assert.Equal(0, navigation.Statistics.BlockedRepathRequests);
@@ -101,7 +102,7 @@ public class GiveWayTests : MockedGameTest
         Assert.Single(blockerAi.TargetPoints);
         var sidestep = blockerAi.TargetPoints[0];
         Assert.True(navigation.IsPassable(sidestep));
-        Assert.True(MathF.Abs(sidestep.Y - 20f) >= 6.5f, $"sidestep {sidestep}");
+        Assert.True(MathF.Abs(sidestep.Y - 2 * HeightMap.HorizontalScale) >= 6.5f * (float)UnitConversionPolicy.GeneralsFeetToMeters, $"sidestep {sidestep}");
     }
 
     [Fact]
@@ -239,10 +240,12 @@ public class GiveWayTests : MockedGameTest
 
     private static void BlockCell(NavigationClass navigation, int x, int y)
     {
-        const float inset = 0.02f;
+        const float inset = 0.02f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        const float cell = HeightMap.HorizontalScale;
+        const float half = cell / 2;
         navigation.UpdateAreaPassability(
             new BoxCollider(
-                new RectangleF(x * 10f - 5f + inset, y * 10f - 5f + inset, 10f - 2 * inset, 10f - 2 * inset),
+                new RectangleF(x * cell - half + inset, y * cell - half + inset, cell - 2 * inset, cell - 2 * inset),
                 1000f),
             passable: false);
     }
@@ -257,8 +260,8 @@ public class GiveWayTests : MockedGameTest
 
     private static void SetRadii(GameObject gameObject)
     {
-        gameObject.Geometry.Shapes[0].MajorRadius = 2;
-        gameObject.Geometry.Shapes[0].MinorRadius = 2;
+        gameObject.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        gameObject.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
     }
 
     private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry, TestGame? game = null, Player? player = null)

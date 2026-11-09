@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 
 namespace Panopticon.Logic;
 
@@ -9,7 +10,7 @@ internal static class GroundFootprint
     {
         var step = end - start;
         var lengthSquared = step.LengthSquared();
-        if (lengthSquared < 0.000001f)
+        if (lengthSquared < 0.000001f * (float)UnitConversionPolicy.GeneralsFeetToMeters * (float)UnitConversionPolicy.GeneralsFeetToMeters)
         {
             return false;
         }

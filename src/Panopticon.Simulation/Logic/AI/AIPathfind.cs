@@ -1,6 +1,8 @@
+using Panopticon.Terrain;
+
 namespace Panopticon.Logic.AI;
 
 public class AIPathfind
 {
-    public const float PathfindCellSizeF = 10.0f;
+    public const float PathfindCellSizeF = HeightMap.HorizontalScale;
 }

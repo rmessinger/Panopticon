@@ -20,8 +20,8 @@ public class PassageFinderTests
 {
     private const int Size = 16;
 
-    // Tile scale of the synthetic height map: tile (x, y) sits at world (x * 10, y * 10).
-    private static Vector3 World(int x, int y) => new(x * 10f, y * 10f, 0f);
+    // Tile scale of the synthetic height map: tile (x, y) sits at world (x * HorizontalScale, y * HorizontalScale).
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0f);
 
     private static NavigationClass CreateNavigation(Action<BlendTileData>? markImpassable = null)
     {
@@ -71,7 +71,7 @@ public class PassageFinderTests
         var cache = new Panopticon.Navigation.CrossSectionCache(0);
 
         var spans = Panopticon.Navigation.PassageFinder.FindSpans(
-            navigation, RowRoute(7, 1, 14), pitch: 20f, cache);
+            navigation, RowRoute(7, 1, 14), pitch: 2 * HeightMap.HorizontalScale, cache);
 
         var span = Assert.Single(spans);
         // Every sample is walled in on both sides: the first sample holds the throat.
@@ -113,7 +113,7 @@ public class PassageFinderTests
         }
 
         var spans = Panopticon.Navigation.PassageFinder.FindSpans(
-            navigation, route, pitch: 20f, cache);
+            navigation, route, pitch: 2 * HeightMap.HorizontalScale, cache);
 
         var span = Assert.Single(spans);
         Assert.Equal(3, span.WidthCells);
@@ -147,7 +147,7 @@ public class PassageFinderTests
         }
 
         var spans = Panopticon.Navigation.PassageFinder.FindSpans(
-            navigation, route, pitch: 20f, cache);
+            navigation, route, pitch: 2 * HeightMap.HorizontalScale, cache);
 
         Assert.NotEmpty(spans);
         Assert.All(spans, span => Assert.True(span.Lanes >= 1));
@@ -163,7 +163,7 @@ public class PassageFinderTests
         var cache = new Panopticon.Navigation.CrossSectionCache(0);
 
         var spans = Panopticon.Navigation.PassageFinder.FindSpans(
-            navigation, RowRoute(7, 1, 13), pitch: 20f, cache);
+            navigation, RowRoute(7, 1, 13), pitch: 2 * HeightMap.HorizontalScale, cache);
 
         Assert.Empty(spans);
     }
@@ -181,9 +181,9 @@ public class PassageFinderTests
         var cache = new Panopticon.Navigation.CrossSectionCache(0);
 
         var first = Panopticon.Navigation.PassageFinder.FindSpans(
-            navigation, RowRoute(6, 1, 13), pitch: 20f, cache).Single();
+            navigation, RowRoute(6, 1, 13), pitch: 2 * HeightMap.HorizontalScale, cache).Single();
         var second = Panopticon.Navigation.PassageFinder.FindSpans(
-            navigation, RowRoute(8, 1, 13), pitch: 20f, cache).Single();
+            navigation, RowRoute(8, 1, 13), pitch: 2 * HeightMap.HorizontalScale, cache).Single();
 
         Assert.Contains(first.ThroatCell, second.Corridor);
         Assert.Contains(second.ThroatCell, first.Corridor);
@@ -203,13 +203,13 @@ public class PassageFinderTests
         var route = RowRoute(7, 1, 13);
 
         Panopticon.Navigation.PassageFinder.ResetCounters();
-        var first = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 20f, cache);
+        var first = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 2 * HeightMap.HorizontalScale, cache);
         var castsAfterFirst = Panopticon.Navigation.PassageFinder.Casts;
         var hitsAfterFirst = Panopticon.Navigation.PassageFinder.CacheHits;
         Assert.True(castsAfterFirst > 0);
         Assert.True(first.Count > 0);
 
-        var second = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 20f, cache);
+        var second = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 2 * HeightMap.HorizontalScale, cache);
 
         Assert.Equal(castsAfterFirst, Panopticon.Navigation.PassageFinder.Casts);
         Assert.True(Panopticon.Navigation.PassageFinder.CacheHits > hitsAfterFirst);
@@ -230,13 +230,13 @@ public class PassageFinderTests
         var route = RowRoute(7, 1, 13);
 
         Panopticon.Navigation.PassageFinder.ResetCounters();
-        _ = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 20f, cache);
+        _ = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 2 * HeightMap.HorizontalScale, cache);
         var castsAfterFirst = Panopticon.Navigation.PassageFinder.Casts;
 
         // A passability change bumps the version: the stale widths are discarded and the
         // rays are cast again.
         cache.Reset(1);
-        _ = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 20f, cache);
+        _ = Panopticon.Navigation.PassageFinder.FindSpans(navigation, route, 2 * HeightMap.HorizontalScale, cache);
 
         Assert.True(Panopticon.Navigation.PassageFinder.Casts > castsAfterFirst);
     }

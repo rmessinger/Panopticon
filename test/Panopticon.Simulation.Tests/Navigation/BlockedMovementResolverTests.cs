@@ -1,4 +1,5 @@
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
 using Panopticon.Navigation;
@@ -19,7 +20,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         return new NavigationClass(blendTileData, heightMap);
     }
 
-    private static Vector3 World(int x, int y) => new(x * 10, y * 10, 0);
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0);
 
     [Fact]
     public void Resolve_DetoursAroundAStationaryBlocker()
@@ -32,8 +33,8 @@ public class BlockedMovementResolverTests : MockedGameTest
 
         var unit = NewUnit(World(8, 2), game: game);
         var blocker = NewRegisteredUnit(World(5, 2), ObjectKinds.Vehicle, game);
-        blocker.Geometry.Shapes[0].MajorRadius = 2;
-        blocker.Geometry.Shapes[0].MinorRadius = 2;
+        blocker.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        blocker.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
         var ai = unit.AIUpdate!;
         var goal = World(1, 2);
@@ -70,8 +71,8 @@ public class BlockedMovementResolverTests : MockedGameTest
 
         var statsBefore = navigation.Statistics;
         var detour = navigation.CalculateLocalPath(
-            World(8, 2), World(8, 2) + new Vector3(60, 0, 0), window,
-            LocalOccupancyWindow.Collect(unit, 0, 0, 160, 160));
+            World(8, 2), World(8, 2) + new Vector3(60 * (float)UnitConversionPolicy.GeneralsFeetToMeters, 0, 0), window,
+            LocalOccupancyWindow.Collect(unit, 0, 0, 160 * (float)UnitConversionPolicy.GeneralsFeetToMeters, 160 * (float)UnitConversionPolicy.GeneralsFeetToMeters));
         var stats = navigation.Statistics;
 
         Assert.True(detour.Count > 0);
@@ -96,8 +97,8 @@ public class BlockedMovementResolverTests : MockedGameTest
 
         var unit = NewUnit(World(8, 2), game: game);
         var blocker = NewRegisteredUnit(World(5, 2), ObjectKinds.Vehicle, game);
-        blocker.Geometry.Shapes[0].MajorRadius = 2;
-        blocker.Geometry.Shapes[0].MinorRadius = 2;
+        blocker.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        blocker.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
         var ai = unit.AIUpdate!;
         ai.TargetPoints.Add(World(1, 2));
@@ -129,13 +130,13 @@ public class BlockedMovementResolverTests : MockedGameTest
         navigation.Options.BlockedWaitFrames = 2;
         navigation.Options.LocalRepathWindowCells = 4;
         navigation.Options.MaxResolutionAttempts = 1;
-        navigation.Options.CrowdArrivalRadius = 60.0f;
+        navigation.Options.CrowdArrivalRadius = 60.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var game = new TestGame(SageGame.CncGenerals, navigation);
 
         var unit = NewUnit(World(8, 2), game: game);
         var blocker = NewRegisteredUnit(World(7, 2), ObjectKinds.Vehicle, game);
-        blocker.Geometry.Shapes[0].MajorRadius = 2;
-        blocker.Geometry.Shapes[0].MinorRadius = 2;
+        blocker.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        blocker.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
         var ai = unit.AIUpdate!;
         // Goal three cells away, inside the default 60-unit crowd arrival radius.
@@ -162,13 +163,13 @@ public class BlockedMovementResolverTests : MockedGameTest
         navigation.Options.BlockedWaitFrames = 2;
         navigation.Options.LocalRepathWindowCells = 4;
         navigation.Options.MaxResolutionAttempts = 1;
-        navigation.Options.CrowdArrivalRadius = 60.0f;
+        navigation.Options.CrowdArrivalRadius = 60.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var game = new TestGame(SageGame.CncGenerals, navigation);
 
         var unit = NewUnit(World(8, 2), game: game);
         var blocker = NewRegisteredUnit(World(7, 2), ObjectKinds.Vehicle, game);
-        blocker.Geometry.Shapes[0].MajorRadius = 2;
-        blocker.Geometry.Shapes[0].MinorRadius = 2;
+        blocker.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        blocker.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
         var ai = unit.AIUpdate!;
         var goal = World(1, 12);
@@ -196,7 +197,7 @@ public class BlockedMovementResolverTests : MockedGameTest
         Assert.Equal(15, options.BlockedWaitFrames);
         Assert.Equal(12, options.LocalRepathWindowCells);
         Assert.Equal(3, options.MaxResolutionAttempts);
-        Assert.Equal(250.0f, options.CrowdArrivalRadius);
+        Assert.Equal(250.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters, options.CrowdArrivalRadius);
     }
 
     private GameObject NewUnit(Vector3 position, ObjectKinds kind = ObjectKinds.Infantry, TestGame? game = null)

@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Navigation;
@@ -153,8 +154,8 @@ public class MovementProgressTests : MockedGameTest
         {
             Id = new ObjectId(id),
         };
-        gameObject.Geometry.Shapes[0].MajorRadius = 2;
-        gameObject.Geometry.Shapes[0].MinorRadius = 2;
+        gameObject.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        gameObject.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         gameObject.UpdateTransform(position);
         return gameObject;
     }

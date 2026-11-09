@@ -6,6 +6,7 @@
 // Run with: dotnet test src --filter "FullyQualifiedName~CrowdArrivalTests"
 
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
 using Panopticon.Navigation;
@@ -27,7 +28,7 @@ public class CrowdArrivalTests : MockedGameTest
         return new NavigationClass(blendTileData, heightMap);
     }
 
-    private static Vector3 World(int x, int y) => new(x * 10, y * 10, 0);
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0);
 
     [Fact]
     public void SettlesCrowdArrivedBehindAnArrivedFriendlyNearTheGoal()
@@ -35,7 +36,7 @@ public class CrowdArrivalTests : MockedGameTest
         var navigation = CreateNavigation();
         navigation.Options.DestinationSlots = true;
         navigation.Options.BlockedWaitFrames = 2;
-        navigation.Options.CrowdArrivalRadius = 60.0f;
+        navigation.Options.CrowdArrivalRadius = 60.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var game = new TestGame(SageGame.CncGenerals, navigation);
         var owner = NewPlayer();
 
@@ -59,7 +60,7 @@ public class CrowdArrivalTests : MockedGameTest
         var navigation = CreateNavigation();
         navigation.Options.DestinationSlots = true;
         navigation.Options.BlockedWaitFrames = 2;
-        navigation.Options.CrowdArrivalRadius = 60.0f;
+        navigation.Options.CrowdArrivalRadius = 60.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var game = new TestGame(SageGame.CncGenerals, navigation);
         var owner = NewPlayer();
 
@@ -82,7 +83,7 @@ public class CrowdArrivalTests : MockedGameTest
         var navigation = CreateNavigation();
         navigation.Options.DestinationSlots = true;
         navigation.Options.BlockedWaitFrames = 2;
-        navigation.Options.CrowdArrivalRadius = 60.0f;
+        navigation.Options.CrowdArrivalRadius = 60.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var game = new TestGame(SageGame.CncGenerals, navigation);
         var owner = NewPlayer();
 
@@ -119,7 +120,7 @@ public class CrowdArrivalTests : MockedGameTest
     {
         var navigation = CreateNavigation();
         navigation.Options.BlockedWaitFrames = 2;
-        navigation.Options.CrowdArrivalRadius = 60.0f;
+        navigation.Options.CrowdArrivalRadius = 60.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         var game = new TestGame(SageGame.CncGenerals, navigation);
         var owner = NewPlayer();
 

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
 using Panopticon.Navigation;
@@ -24,8 +25,8 @@ public class OffsetRouteValidatorTests : MockedGameTest
 {
     private const int Size = 16;
 
-    // Tile scale of the synthetic height map: tile (x, y) sits at world (x*10, y*10).
-    private static Vector3 World(int x, int y) => new(x * 10f, y * 10f, 0f);
+    // Tile scale of the synthetic height map: tile (x, y) sits at world (x*HorizontalScale, y*HorizontalScale).
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0f);
 
     // Wall column x=5 over rows 4..12 splits the lower half into left and right regions while
     // rows 0..3 and 13..15 stay open, so around-the-wall routes exist.
@@ -53,7 +54,7 @@ public class OffsetRouteValidatorTests : MockedGameTest
         var navigation = CreateNavigation();
 
         Assert.False(OffsetRouteValidator.Crosses(navigation, ClearRoute, Vector2.Zero));
-        Assert.False(OffsetRouteValidator.Crosses(navigation, ClearRoute, new Vector2(0, -10)));
+        Assert.False(OffsetRouteValidator.Crosses(navigation, ClearRoute, new Vector2(0, -10 * (float)UnitConversionPolicy.GeneralsFeetToMeters)));
     }
 
     [Fact, Trait("Category", "Roadmap")]
@@ -65,7 +66,7 @@ public class OffsetRouteValidatorTests : MockedGameTest
         // column at (5, 6), even though both endpoints stay passable.
         Assert.True(navigation.IsPassable(World(8, 6)));
         Assert.True(navigation.IsPassable(World(1, 6)));
-        Assert.True(OffsetRouteValidator.Crosses(navigation, ClearRoute, new Vector2(0, 40)));
+        Assert.True(OffsetRouteValidator.Crosses(navigation, ClearRoute, new Vector2(0, 40 * (float)UnitConversionPolicy.GeneralsFeetToMeters)));
     }
 
     [Fact, Trait("Category", "Roadmap")]
@@ -73,7 +74,7 @@ public class OffsetRouteValidatorTests : MockedGameTest
     {
         var navigation = CreateNavigation();
 
-        Assert.True(OffsetRouteValidator.Crosses(navigation, ClearRoute, new Vector2(0, 200)));
+        Assert.True(OffsetRouteValidator.Crosses(navigation, ClearRoute, new Vector2(0, 200 * (float)UnitConversionPolicy.GeneralsFeetToMeters)));
     }
 
     [Fact, Trait("Category", "Roadmap")]

@@ -1,3 +1,5 @@
+using Panopticon.Content.Importing.Units.Materialization;
+
 namespace Panopticon.Navigation;
 
 /// <summary>
@@ -100,8 +102,8 @@ public sealed class NavigationOptions
 
     /// <summary>Default for <see cref="CrowdArrivalRadius"/> (WI-N9-02): the WI-N6-02
     /// crowd-goal-100 distribution packs 100 Crusader footprints into a ~225-unit disk, so
-    /// 250 covers the settled crowd.</summary>
-    public const float DefaultCrowdArrivalRadius = 250.0f;
+    /// 76.2 m (250 legacy units) covers the settled crowd.</summary>
+    public const float DefaultCrowdArrivalRadius = 250.0f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     /// <summary>
     /// WI-N8-01 give-up and WI-N9 crowd-arrival radius in world units: how close to the goal a

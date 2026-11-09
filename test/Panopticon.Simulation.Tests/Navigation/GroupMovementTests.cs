@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
@@ -33,13 +34,13 @@ public class GroupMovementTests : MockedGameTest
     {
         var (navigation, _, start, end) = CreateOpenNavigation();
         // Nearest member to the destination becomes the leader; placed so that choice is unique.
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var leader = NewUnit(start + Offset(1, 1));
         var followers = new[]
         {
             NewUnit(start),
-            NewUnit(start + new Vector3(-1, 1, 0)),
-            NewUnit(start + new Vector3(0, -1, 0)),
-            NewUnit(start + new Vector3(-1, -1, 0)),
+            NewUnit(start + Offset(-1, 1)),
+            NewUnit(start + Offset(0, -1)),
+            NewUnit(start + Offset(-1, -1)),
         };
         var members = new List<GameObject> { leader };
         members.AddRange(followers);
@@ -86,7 +87,7 @@ public class GroupMovementTests : MockedGameTest
         navigation.Options.MaxLandingRadiusCells = 0;
         // Cluster the squad so the leader (nearer the map middle) is unambiguous once a
         // destination is found below.
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var leader = NewUnit(start + Offset(1, 1));
         var follower = NewUnit(start);
 
         // Find a passable destination whose offset landing (the follower's formation slot),
@@ -149,9 +150,9 @@ public class GroupMovementTests : MockedGameTest
         // stays farther from matching destinations than the leader, keeping the leader
         // unambiguous. The scan finds a destination whose slot is impassable while the
         // destination itself stays passable.
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
-        var follower = NewUnit(leader.Translation + new Vector3(-10, -10, 0));
-        var offset2D = new Vector3(-10, -10, 0);
+        var leader = NewUnit(start + Offset(1, 1));
+        var follower = NewUnit(leader.Translation + Offset(-10, -10));
+        var offset2D = Offset(-10, -10);
 
         Vector3? blockedLanding = null;
         var destination = Vector3.Zero;
@@ -225,7 +226,7 @@ public class GroupMovementTests : MockedGameTest
     {
         var (navigation, _, start, end) = CreateNavigation();
         var leader = NewUnit(start);
-        var jet = NewUnit(start + new Vector3(5, 5, 0), ObjectKinds.Aircraft);
+        var jet = NewUnit(start + Offset(5, 5), ObjectKinds.Aircraft);
 
         var before = NavigationClass.PathRequestCount;
 
@@ -245,8 +246,8 @@ public class GroupMovementTests : MockedGameTest
         var units = new List<GameObject>
         {
             NewUnit(start, game: game),
-            NewUnit(start + new Vector3(3, 0, 0), game: game),
-            NewUnit(start + new Vector3(0, 3, 0), game: game),
+            NewUnit(start + Offset(3, 0), game: game),
+            NewUnit(start + Offset(0, 3), game: game),
         };
 
         var before = NavigationClass.PathRequestCount;
@@ -270,22 +271,22 @@ public class GroupMovementTests : MockedGameTest
     {
         var (navigation, heightMap, start, end) = CreateOpenNavigation();
         navigation.Options.GroupSelectionMoves = true;
-        navigation.Options.SelectionClusterCells = 20;
+        // Bucket size is applied to world meters, so 3 m keeps each 3.048 m cell in its own bucket.
+        navigation.Options.SelectionClusterCells = 3;
 
-        // Cell size 20 splits the fixture into distinct buckets; leader placed nearer the
-        // destination so each cluster's leader choice is unique.
+        // Leader placed nearer the destination so each cluster's leader choice is unique.
         var nearCluster = start;
         var farCluster = heightMap.GetPosition(5, 5);
         var loner = heightMap.GetPosition(9, 9);
 
         var player = NewPlayer();
         var game = new TestGame(SageGame.CncGenerals, navigation);
-        var nearLeader = NewUnit(nearCluster + new Vector3(1, 1, 0), game: game);
+        var nearLeader = NewUnit(nearCluster + Offset(1, 1), game: game);
         var nearFollower = NewUnit(nearCluster, game: game);
-        var farLeader = NewUnit(farCluster + new Vector3(1, 1, 0), game: game);
+        var farLeader = NewUnit(farCluster + Offset(1, 1), game: game);
         var farFollower = NewUnit(farCluster, game: game);
         var singleton = NewUnit(loner, game: game);
-        var jet = NewUnit(nearCluster + new Vector3(2, 2, 0), ObjectKinds.Aircraft, game: game);
+        var jet = NewUnit(nearCluster + Offset(2, 2), ObjectKinds.Aircraft, game: game);
         var units = new List<GameObject> { nearLeader, nearFollower, farLeader, farFollower, singleton, jet };
 
         var before = NavigationClass.PathRequestCount;
@@ -312,11 +313,11 @@ public class GroupMovementTests : MockedGameTest
     {
         var (navigation, _, start, end) = CreateNavigation();
         navigation.Options.AsyncOrderPaths = true;
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var leader = NewUnit(start + Offset(1, 1));
         var followers = new List<GameObject>
         {
             NewUnit(start),
-            NewUnit(start + new Vector3(0, -1, 0)),
+            NewUnit(start + Offset(0, -1)),
         };
 
         var before = NavigationClass.PathRequestCount;
@@ -355,7 +356,7 @@ public class GroupMovementTests : MockedGameTest
         navigation.Options.AsyncOrderPaths = true;
         // The ring landing is disabled so the fallback search is exercised in isolation.
         navigation.Options.MaxLandingRadiusCells = 0;
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var leader = NewUnit(start + Offset(1, 1));
         var follower = NewUnit(start);
 
         // Same scan as the synchronous blocked-follower test: a passable destination whose
@@ -409,11 +410,11 @@ public class GroupMovementTests : MockedGameTest
     {
         var (navigation, _, start, end) = CreateNavigation();
         navigation.Options.AsyncOrderPaths = true;
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var leader = NewUnit(start + Offset(1, 1));
         var followers = new List<GameObject>
         {
             NewUnit(start),
-            NewUnit(start + new Vector3(0, -1, 0)),
+            NewUnit(start + Offset(0, -1)),
         };
         var squad = new List<GameObject>(followers) { leader };
 
@@ -441,7 +442,7 @@ public class GroupMovementTests : MockedGameTest
     {
         var (navigation, _, start, _) = CreateNavigation();
         var offMap = start + new Vector3(1_000_000, 0, 0);
-        var leader = NewUnit(start + new Vector3(1, 1, 0));
+        var leader = NewUnit(start + Offset(1, 1));
         var follower = NewUnit(start);
         var squad = new List<GameObject> { leader, follower };
 
@@ -485,6 +486,9 @@ public class GroupMovementTests : MockedGameTest
             }
         }
     }
+
+    private static Vector3 Offset(float x, float y) =>
+        new(x * (float)UnitConversionPolicy.GeneralsFeetToMeters, y * (float)UnitConversionPolicy.GeneralsFeetToMeters, 0);
 
     private static (NavigationClass Navigation, HeightMap HeightMap, Vector3 Start, Vector3 End) CreateOpenNavigation()
     {

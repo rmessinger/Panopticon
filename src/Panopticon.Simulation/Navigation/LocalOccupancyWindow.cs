@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 
@@ -13,7 +14,7 @@ namespace Panopticon.Navigation;
 /// </summary>
 internal sealed class LocalOccupancyWindow
 {
-    internal const float FootprintPadding = 2.5f;
+    internal const float FootprintPadding = 2.5f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
 
     private readonly List<(Vector3 Position, float Radius)> _stationary = new();
 

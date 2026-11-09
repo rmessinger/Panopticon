@@ -557,7 +557,7 @@ public class AsyncPathRequestTests : MockedGameTest
         var corner = heightMap.GetPosition(x, y);
         const float inset = 0.02f;
         var collider = new BoxCollider(
-            new RectangleF(corner.X - 5f + inset, corner.Y - 5f + inset, 10f - 2 * inset, 10f - 2 * inset),
+            new RectangleF(corner.X - HeightMap.HorizontalScale / 2 + inset, corner.Y - HeightMap.HorizontalScale / 2 + inset, HeightMap.HorizontalScale - 2 * inset, HeightMap.HorizontalScale - 2 * inset),
             1000f);
         navigation.UpdateAreaPassability(collider, false);
     }
@@ -584,7 +584,7 @@ public class AsyncPathRequestTests : MockedGameTest
         return new NavigationClass(tileData, heightMap);
     }
 
-    internal static Vector3 NodeWorld(int x, int y) => new(x * 10f, y * 10f, 0f);
+    internal static Vector3 NodeWorld(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0f);
 
     private static void WaitForCompletion(IReadOnlyList<PathRequestHandle> handles)
     {

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using ImGuiNET;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
+using Panopticon.Terrain;
 
 namespace Panopticon.Logic;
 
@@ -97,8 +99,8 @@ public sealed class PartitionCellManager : IPersistableObject
 
         var extra = _game.SageGame >= SageGame.CncGeneralsZeroHour ? 1.0f : 0.0f;
 
-        _numCellsX = (int)MathF.Ceiling((_terrainBoundary.Width * 10.0f) / _partitionCellSize + extra);
-        _numCellsY = (int)MathF.Ceiling((_terrainBoundary.Height * 10.0f) / _partitionCellSize + extra);
+        _numCellsX = (int)MathF.Ceiling((_terrainBoundary.Width * HeightMap.HorizontalScale) / _partitionCellSize + extra);
+        _numCellsY = (int)MathF.Ceiling((_terrainBoundary.Height * HeightMap.HorizontalScale) / _partitionCellSize + extra);
 
         _cells = new PartitionCell[_numCellsX * _numCellsY];
 
@@ -251,13 +253,13 @@ public sealed class PartitionCellManager : IPersistableObject
         _groundFootprintCandidates.Clear();
         blocker = default;
         var start = obj.Translation.Vector2XY();
-        if (Vector2.DistanceSquared(start, destination) < 0.000001f)
+        if (Vector2.DistanceSquared(start, destination) < 0.000001f * (float)(UnitConversionPolicy.GeneralsFeetToMeters * UnitConversionPolicy.GeneralsFeetToMeters))
         {
             return true;
         }
 
         var radius = obj.Geometry.BoundingCircleRadius;
-        _groundFootprints.Collect(start, destination, radius + 2.5f, _groundFootprintCandidates);
+        _groundFootprints.Collect(start, destination, radius + 2.5f * (float)UnitConversionPolicy.GeneralsFeetToMeters, _groundFootprintCandidates);
         foreach (var candidate in _groundFootprintCandidates)
         {
             if (BlocksGroundAdvance(candidate.GameObject))
@@ -280,12 +282,12 @@ public sealed class PartitionCellManager : IPersistableObject
 
             var position = other.Translation;
             if (!GroundFootprint.BlocksAdvance(start, destination, position.Vector2XY(),
-                radius + other.Geometry.BoundingCircleRadius + 2.5f))
+                radius + other.Geometry.BoundingCircleRadius + 2.5f * (float)UnitConversionPolicy.GeneralsFeetToMeters))
             {
                 return false;
             }
 
-            return position.Z - other.GameEngine.Game.TerrainLogic.GetLayerHeight(position.X, position.Y, other.Layer) <= 0.1f;
+            return position.Z - other.GameEngine.Game.TerrainLogic.GetLayerHeight(position.X, position.Y, other.Layer) <= 0.1f * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         }
     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Logic.Object;
+using Panopticon.Terrain;
 
 namespace Panopticon.Navigation;
 
@@ -34,7 +35,7 @@ internal static class DestinationSlots
         var cellSize = CellSize(navigation);
         var maxRadius = units.Count > 0 ? units.Max(unit => unit.Geometry.BoundingCircleRadius) : 0.0f;
         // Units pack roughly at diameter spacing; one padding cell absorbs radius noise.
-        var ringStep = Math.Max(1, (int)MathF.Ceiling((2.0f * maxRadius + 10.0f) / cellSize));
+        var ringStep = Math.Max(1, (int)MathF.Ceiling((2.0f * maxRadius + HeightMap.HorizontalScale) / cellSize));
 
         var candidates = new List<(float DistanceSq, int X, int Y, Vector3 World)>();
         for (var ring = 0; ring <= maxCells; ring += ringStep)
@@ -96,6 +97,6 @@ internal static class DestinationSlots
             }
         }
 
-        return 10.0f;
+        return HeightMap.HorizontalScale;
     }
 }

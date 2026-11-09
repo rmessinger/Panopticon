@@ -1,7 +1,9 @@
 using System;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
+using Panopticon.Terrain;
 
 namespace Panopticon.Navigation;
 
@@ -39,16 +41,16 @@ internal static class GiveWayPlanner
 
         var occupancy = LocalOccupancyWindow.Collect(
             blocker,
-            blocker.Translation.X - windowCells * 10,
-            blocker.Translation.Y - windowCells * 10,
-            blocker.Translation.X + windowCells * 10,
-            blocker.Translation.Y + windowCells * 10);
+            blocker.Translation.X - windowCells * HeightMap.HorizontalScale,
+            blocker.Translation.Y - windowCells * HeightMap.HorizontalScale,
+            blocker.Translation.X + windowCells * HeightMap.HorizontalScale,
+            blocker.Translation.Y + windowCells * HeightMap.HorizontalScale);
 
         var clearance = requester.Geometry.BoundingCircleRadius + blocker.Geometry.BoundingCircleRadius
             + LocalOccupancyWindow.FootprintPadding;
         // One extra cell beyond the strict contact clearance: a yield that only just clears
         // lets the requester re-block on arrival, so the pair dances without separating.
-        clearance += 10.0f;
+        clearance += HeightMap.HorizontalScale;
 
         for (var ring = 1; ring <= windowCells; ring++)
         {
@@ -112,7 +114,7 @@ internal static class GiveWayPlanner
     private static bool ClearsRequester(Vector3 position, GameObject requester, GameObject blocker)
     {
         var clearance = requester.Geometry.BoundingCircleRadius + blocker.Geometry.BoundingCircleRadius
-            + LocalOccupancyWindow.FootprintPadding + 10.0f;
+            + LocalOccupancyWindow.FootprintPadding + HeightMap.HorizontalScale;
         return Vector3.DistanceSquared(position, requester.Translation) > clearance * clearance;
     }
 
@@ -120,7 +122,7 @@ internal static class GiveWayPlanner
     {
         var segment = end - start;
         var lengthSquared = segment.LengthSquared();
-        if (lengthSquared < 0.0001f)
+        if (lengthSquared < 0.0001f * (float)(UnitConversionPolicy.GeneralsFeetToMeters * UnitConversionPolicy.GeneralsFeetToMeters))
         {
             return Vector2.Distance(point, start);
         }

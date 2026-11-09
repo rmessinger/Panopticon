@@ -18,8 +18,8 @@ public class FollowerLandingTests
 {
     private const int Size = 16;
 
-    // Tile scale of the synthetic height map: tile (x, y) sits at world (x*10, y*10).
-    private static Vector3 World(int x, int y) => new(x * 10f, y * 10f, 0f);
+    // Tile scale of the synthetic height map: tile (x, y) sits at world (x*HorizontalScale, y*HorizontalScale).
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0f);
 
     private static NavigationClass CreateNavigation(Action<BlendTileData>? markImpassable = null)
     {
@@ -67,12 +67,12 @@ public class FollowerLandingTests
         var landedRight = FollowerLanding.TryLand(
             navigation, World(8, 8), navigation.GetNodeAt(World(10, 10)), 4, out var rightLanding, out _);
         Assert.True(landedRight);
-        Assert.Equal(90f, rightLanding.X);
+        Assert.Equal(9 * HeightMap.HorizontalScale, rightLanding.X);
 
         var landedLeft = FollowerLanding.TryLand(
             navigation, World(8, 8), navigation.GetNodeAt(World(0, 0)), 4, out var leftLanding, out _);
         Assert.True(landedLeft);
-        Assert.Equal(70f, leftLanding.X);
+        Assert.Equal(7 * HeightMap.HorizontalScale, leftLanding.X);
     }
 
     [Fact, Trait("Category", "Roadmap")]

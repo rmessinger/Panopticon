@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
@@ -32,7 +33,7 @@ public class DestinationSlotsTests : MockedGameTest
         return new NavigationClass(blendTileData, heightMap);
     }
 
-    private static Vector3 World(int x, int y) => new(x * 10f, y * 10f, 0f);
+    private static Vector3 World(int x, int y) => new(x * HeightMap.HorizontalScale, y * HeightMap.HorizontalScale, 0f);
 
     [Fact]
     public void Assign_PacksUniquePassableSlotsOutward()
@@ -153,8 +154,8 @@ public class DestinationSlotsTests : MockedGameTest
             // Manual ids start high so they never collide with the game's counter.
             Id = new ObjectId(_nextObjectId++),
         };
-        gameObject.Geometry.Shapes[0].MajorRadius = 2;
-        gameObject.Geometry.Shapes[0].MinorRadius = 2;
+        gameObject.Geometry.Shapes[0].MajorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
+        gameObject.Geometry.Shapes[0].MinorRadius = 2 * (float)UnitConversionPolicy.GeneralsFeetToMeters;
         gameObject.UpdateTransform(position);
         return gameObject;
     }
