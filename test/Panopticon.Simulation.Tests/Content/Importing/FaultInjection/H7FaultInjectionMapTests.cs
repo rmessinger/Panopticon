@@ -128,6 +128,19 @@ public sealed class H7FaultInjectionMapTests
     }
 
     [Fact]
+    public void OrientationChangeWithRecomputedDigests_IsCaughtAsTypedFieldMismatch()
+    {
+        Inject(
+            dir => H7FaultInjector.EditMapManifest(dir, manifest => WithObject(
+                manifest,
+                H7FaultInjectionFixtures.PrimaryObjectType,
+                o => o with { OrientationRadians = 1.5 })),
+            TypedMismatchCode,
+            RoundTripFailureClass.TypedFieldMismatch,
+            "orientationRadians 0.75 differs from re-read 1.5");
+    }
+
+    [Fact]
     public void CliValidate_QuantityFrameChange_ReportsTypedFieldMismatchInJson()
     {
         H7FaultInjectionFixtures.WithTempRoot(tempRoot =>

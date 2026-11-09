@@ -251,7 +251,7 @@ public sealed class H7UnitRoundTripRegressionTests
         try
         {
             var packageDir = Path.Combine(tempRoot, "unclassified-package");
-            var (resolution, unitName) = ResolveUnclassifiedScout(policyExcluded: true);
+            var (resolution, unitName) = H7UnclassifiedScout.Resolve(policyExcluded: true);
 
             var excludedWarning = Assert.Single(
                 resolution.Diagnostics,
@@ -276,18 +276,11 @@ public sealed class H7UnitRoundTripRegressionTests
 
             // The shared validator's field-by-field record comparison runs over the reloaded package:
             // no unclassified, record, closure, or retained finding may appear.
-            var report = RoundTripValidator.ValidateUnits(resolution, null, new EmptyRetainedPayloadProvider(), packageDir);
+            var report = RoundTripValidator.ValidateUnits(resolution, null, new H7UnclassifiedScout.EmptyRetainedPayloadProvider(), packageDir);
             Assert.DoesNotContain(AllFindings(report), f => f.Section == "unclassified");
             Assert.DoesNotContain(AllFindings(report), f => f.Section is "records" or "closure" or "retained");
 
-            // The validator's diagnostic-set gate compares resolution-stage diagnostics against
-            // package read-stage diagnostics, so source-side warnings (the policy exclusion and the
-            // visual-binding info) surface as count differences. Pinned verbatim: the value round
-            // trip itself is verified above and by the section guards; a validator change that
-            // closes this gap must turn this assertion into a fully passed report.
-            var diagnosticFindings = AllFindings(report).Where(f => f.Section == "diagnostics").ToList();
-            Assert.Contains(diagnosticFindings, f => f.Code == TypedMismatchCode && f.Message.Contains("H2A-EXCLUDED-BY-POLICY", StringComparison.Ordinal));
-            Assert.Contains(diagnosticFindings, f => f.Code == TypedMismatchCode && f.Message.Contains("H2A-NO-VISUAL", StringComparison.Ordinal));
+            Assert.True(report.Passed, string.Join("; ", AllFindings(report).Select(f => $"{f.Section} {f.Code} {f.Message}")));
         }
         finally
         {
@@ -303,7 +296,7 @@ public sealed class H7UnitRoundTripRegressionTests
         try
         {
             var packageDir = Path.Combine(tempRoot, "blocked-package");
-            var (resolution, _) = ResolveUnclassifiedScout(policyExcluded: false);
+            var (resolution, _) = H7UnclassifiedScout.Resolve(policyExcluded: false);
 
             Assert.False(resolution.Succeeded);
             var mechanic = Assert.Single(
@@ -330,7 +323,7 @@ public sealed class H7UnitRoundTripRegressionTests
         try
         {
             var packageDir = Path.Combine(tempRoot, "unclassified-package");
-            var (resolution, unitName) = ResolveUnclassifiedScout(policyExcluded: true);
+            var (resolution, unitName) = H7UnclassifiedScout.Resolve(policyExcluded: true);
             Assert.True(H4UnitPackageWriter.Write(packageDir, resolution).Success);
 
             UnitPackageTamper.EditRecordPayload(packageDir, unitName, payload =>
@@ -340,7 +333,7 @@ public sealed class H7UnitRoundTripRegressionTests
                 field["rawValue"] = "99.0";
             });
 
-            var report = RoundTripValidator.ValidateUnits(resolution, null, new EmptyRetainedPayloadProvider(), packageDir);
+            var report = RoundTripValidator.ValidateUnits(resolution, null, new H7UnclassifiedScout.EmptyRetainedPayloadProvider(), packageDir);
 
             Assert.False(report.Passed);
             var finding = Assert.Single(AllFindings(report), f => f.Section == "unclassified");
@@ -436,62 +429,6 @@ public sealed class H7UnitRoundTripRegressionTests
         return new LoadedRoster(adapter, resolution);
     }
 
-    /// <summary>
-    /// Drives a synthetic valued-unclassified scout through the converter's resolve and write
-    /// stages. The Generals INI adapter itself never produces unclassified fields (exotic INI
-    /// fields are carried by the native template and the retained block bytes), so the source set
-    /// is synthetic; resolver, writer, reader, and validator are the production pipeline stages.
-    /// </summary>
-    private static (UnitImportResolution Resolution, string UnitName) ResolveUnclassifiedScout(bool policyExcluded)
-    {
-        var source = new ContentSource("h7-unclassified", caseSensitiveNames: false);
-        var provenance = new Provenance(source.Id, "synthetic/scout.ini", 12);
-        var unitId = new ContentId(source, ContentKind.Unit, "SyntheticScout");
-
-        var unit = new UnitRecord(unitId, provenance)
-        {
-            DisplayName = Authored.Of("Synthetic Scout"),
-            MaxHealth = Authored.Of(new Quantity(120, QuantityUnit.HitPoints)),
-            InitialHealth = Authored.Of(new Quantity(120, QuantityUnit.HitPoints)),
-            Weapons = ListOverride<ContentId>.Replace([new ContentId(source, ContentKind.Weapon, "ScoutRifle")]),
-            Armor = Authored.Of(new ContentId(source, ContentKind.Armor, "ScoutArmor")),
-            Locomotors = ListOverride<ContentId>.Replace([new ContentId(source, ContentKind.Locomotor, "ScoutFeet")]),
-            Modules = [ModuleEdit.Add(new UnitModule("ModuleTag_Body", "ActiveBody", ModuleKinds.Body))],
-            Unclassified =
-            [
-                new UnclassifiedField(
-                    "FutureArmorPenetration",
-                    AffectsGameplay: true,
-                    provenance,
-                    ExcludedByPolicy: policyExcluded,
-                    RawValue: "42.5"),
-            ],
-        };
-
-        var weapon = new WeaponRecord(new ContentId(source, ContentKind.Weapon, "ScoutRifle"), provenance)
-        {
-            PrimaryDamage = Authored.Of(new Quantity(10, QuantityUnit.HitPoints)),
-            AttackRange = Authored.Of(new Quantity(120, QuantityUnit.GameDistance)),
-            ReloadTime = Authored.Of(new Quantity(30, QuantityUnit.LogicFrames)),
-        };
-
-        var armor = new ArmorRecord(new ContentId(source, ContentKind.Armor, "ScoutArmor"), provenance)
-        {
-            Multipliers = new Dictionary<string, Authored<double>>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["SMALL_ARMS"] = Authored.Of(0.5),
-            },
-        };
-
-        var locomotor = new LocomotorRecord(new ContentId(source, ContentKind.Locomotor, "ScoutFeet"), provenance)
-        {
-            Speed = Authored.Of(new Quantity(30, QuantityUnit.DistancePerSecond)),
-        };
-
-        var set = new UnitContentSet(source, [unit, weapon, armor, locomotor], [unitId]);
-        return (UnitImportResolution.Resolve(set, GeneralsUnitAdapter.CreateRegistry()), unitId.Name);
-    }
-
     private static IReadOnlyList<RoundTripFinding> AllFindings(RoundTripReport report)
     {
         return report.Sections.SelectMany(section => section.Findings).ToList();
@@ -505,13 +442,4 @@ public sealed class H7UnitRoundTripRegressionTests
     }
 
     private sealed record LoadedRoster(GeneralsUnitAdapter Adapter, UnitImportResolution Resolution);
-
-    /// <summary>Retained provider for legacy-free closures; any request is a suite bug.</summary>
-    private sealed class EmptyRetainedPayloadProvider : IUnitPackageRetainedPayloadProvider
-    {
-        public UnitPackageRetainedBlock? GetBlock(UnitRetainedBlockRequest request)
-        {
-            throw new InvalidOperationException($"No synthetic record needs retention, but '{request.RecordId}' requested a block.");
-        }
-    }
 }
