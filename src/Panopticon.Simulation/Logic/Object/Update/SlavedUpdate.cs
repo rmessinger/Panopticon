@@ -199,7 +199,7 @@ public class SlavedUpdateModule : UpdateModule
         reader.EndObject();
 
         reader.PersistObjectId(ref _parentObjectId);
-        reader.PersistVector3(ref _nextRelativePosition);
+        reader.PersistLengthVector3(ref _nextRelativePosition);
 
         reader.PersistInt32(ref _unknownInt);
         reader.PersistInt32(ref _unknownInt2);

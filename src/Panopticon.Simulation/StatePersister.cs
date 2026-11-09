@@ -979,6 +979,36 @@ public static class StatePersisterExtensions
         }
     }
 
+    public static void PersistLengthMatrix4x3(this StatePersister persister, ref Matrix4x3 value, bool readVersion = true, [CallerArgumentExpression("value")] string name = "")
+    {
+        persister.PersistMatrix4x3(ref value, readVersion, name);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            var scale = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+            value = new Matrix4x3(
+                value.M11, value.M12, value.M13,
+                value.M21, value.M22, value.M23,
+                value.M31, value.M32, value.M33,
+                value.M41 * scale, value.M42 * scale, value.M43 * scale);
+        }
+    }
+
+    public static void PersistLengthMatrix4x3Value(this StatePersister persister, ref Matrix4x3 value, bool readVersion = true)
+    {
+        persister.PersistMatrix4x3Value(ref value, readVersion);
+
+        if (persister.Mode == StatePersistMode.Read && persister.UnitContext == StreamUnitContext.LegacyFeet)
+        {
+            var scale = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+            value = new Matrix4x3(
+                value.M11, value.M12, value.M13,
+                value.M21, value.M22, value.M23,
+                value.M31, value.M32, value.M33,
+                value.M41 * scale, value.M42 * scale, value.M43 * scale);
+        }
+    }
+
     public static void PersistLengthVector3(this StatePersister persister, ref Vector3 value, [CallerArgumentExpression("value")] string name = "")
     {
         persister.PersistVector3(ref value, name);

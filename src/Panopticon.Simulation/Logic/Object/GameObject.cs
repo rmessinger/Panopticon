@@ -1737,7 +1737,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         var transform = reader.Mode == StatePersistMode.Write
             ? Matrix4x3.FromMatrix4x4(Transform.Matrix)
             : Matrix4x3.Identity;
-        reader.PersistMatrix4x3(ref transform);
+        reader.PersistLengthMatrix4x3(ref transform);
         if (reader.Mode == StatePersistMode.Read)
         {
             SetTransformMatrix(transform.ToMatrix4x4());
@@ -1816,8 +1816,8 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             reader.SkipUnknownBytes(66);
         }
 
-        reader.PersistSingle(ref _visionRange);
-        reader.PersistSingle(ref _shroudClearingRange);
+        reader.PersistLengthSingle(ref _visionRange);
+        reader.PersistLengthSingle(ref _shroudClearingRange);
 
         reader.SkipUnknownBytes(4);
 

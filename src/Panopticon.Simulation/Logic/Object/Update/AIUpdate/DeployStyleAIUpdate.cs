@@ -47,7 +47,7 @@ public class DeployStyleAIUpdate : AIUpdate
 
             reader.SkipUnknownBytes(4);
             reader.PersistObjectId(ref _targetObjectId);
-            reader.PersistVector3(ref _targetPosition);
+            reader.PersistLengthVector3(ref _targetPosition);
 
             reader.PersistBoolean(ref _unknownBool1); // repositioning to fire at ground?
             reader.PersistBoolean(ref _unknownBool2); // repositioning to fire at target?

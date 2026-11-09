@@ -11,7 +11,7 @@ public class RallyPointManager : IPersistableObject
 
     public void Persist(StatePersister reader)
     {
-        reader.PersistVector3(ref _rallyPoint);
+        reader.PersistLengthVector3(ref _rallyPoint);
         reader.PersistBoolean(ref _isRallyPointSet);
     }
 

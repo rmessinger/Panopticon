@@ -130,9 +130,9 @@ public abstract class DockUpdate : UpdateModule
         base.Load(reader);
         reader.EndObject();
 
-        reader.PersistVector3(ref _position1);
-        reader.PersistVector3(ref _position2);
-        reader.PersistVector3(ref _position3);
+        reader.PersistLengthVector3(ref _position1);
+        reader.PersistLengthVector3(ref _position2);
+        reader.PersistLengthVector3(ref _position3);
         reader.PersistInt32(ref _numApproachPositions1);
         reader.PersistBoolean(ref _unknownBool);
 
@@ -140,7 +140,7 @@ public abstract class DockUpdate : UpdateModule
             _approachPositions,
             static (StatePersister persister, ref Vector3 item) =>
             {
-                persister.PersistVector3Value(ref item);
+                persister.PersistLengthVector3Value(ref item);
             });
 
         reader.PersistListWithUInt32Count(

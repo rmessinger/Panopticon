@@ -143,7 +143,7 @@ public struct DamageInfoInput() : IPersistableObject
             reader.PersistEnum(ref DamageStatusType);
             reader.PersistVector3(ref ShockWaveVector);
             reader.PersistSingle(ref ShockWaveAmount);
-            reader.PersistSingle(ref ShockWaveRadius);
+            reader.PersistLengthSingle(ref ShockWaveRadius);
             reader.PersistSingle(ref ShockWaveTaperOff);
 
             var attackerName = SourceTemplate?.Name ?? "";

@@ -1878,9 +1878,9 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         reader.PersistSingle(ref yawRate);
         reader.PersistSingle(ref rollRate);
         reader.PersistSingle(ref pitchRate);
-        reader.PersistVector3(ref acceleration);
-        reader.PersistVector3(ref previousAcceleration);
-        reader.PersistVector3(ref velocity);
+        reader.PersistLengthVector3(ref acceleration);
+        reader.PersistLengthVector3(ref previousAcceleration);
+        reader.PersistLengthVector3(ref velocity);
 
         // We've never seen version 1 in the wild.
         if (version < 2)
@@ -1898,7 +1898,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         reader.PersistLogicFrame(ref _motiveForceExpires);
         reader.PersistSingle(ref _extraBounciness);
         reader.PersistSingle(ref _extraFriction);
-        reader.PersistSingle(ref velocityMagnitude);
+        reader.PersistLengthSingle(ref velocityMagnitude);
 
         if (BepuBody is { } bepu)
         {

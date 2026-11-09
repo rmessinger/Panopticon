@@ -2274,16 +2274,16 @@ public sealed class Locomotor : IPersistableObject
             reader.PersistLogicFrame(ref _donutTimer);
         }
 
-        reader.PersistVector3(ref _maintainPosition);
+        reader.PersistLengthVector3(ref _maintainPosition);
         reader.PersistSingle(ref _brakingFactor);
         reader.PersistSingle(ref _maxLift);
         reader.PersistSingle(ref _maxSpeed);
         reader.PersistSingle(ref _maxAcceleration);
         reader.PersistSingle(ref _maxBraking);
         reader.PersistSingle(ref _maxTurnRate);
-        reader.PersistSingle(ref _closeEnoughDistance);
+        reader.PersistLengthSingle(ref _closeEnoughDistance);
         reader.PersistEnumFlags(ref _flags);
-        reader.PersistSingle(ref _preferredHeight);
+        reader.PersistLengthSingle(ref _preferredHeight);
         reader.PersistSingle(ref _preferredHeightDamping);
         reader.PersistSingle(ref _angleOffset);
         reader.PersistSingle(ref _offsetIncrement);

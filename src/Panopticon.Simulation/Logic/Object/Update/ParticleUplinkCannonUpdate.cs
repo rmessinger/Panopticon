@@ -88,17 +88,17 @@ public sealed class ParticleUplinkCannonUpdate : UpdateModule
         reader.PersistArray(_flareFxLocations, Vector3ArrayPersister);
         reader.PersistArray(_flareFxTransforms, Matrix4x3ArrayPersister);
 
-        reader.PersistVector3(ref _unknownPosition1);
-        reader.PersistVector3(ref _readyToFireFxLocationMaybe);
-        reader.PersistVector3(ref _targetPosition);
+        reader.PersistLengthVector3(ref _unknownPosition1);
+        reader.PersistLengthVector3(ref _readyToFireFxLocationMaybe);
+        reader.PersistLengthVector3(ref _targetPosition);
 
         reader.PersistBoolean(ref _unknownBool1);
         reader.PersistBoolean(ref _unknownBool2);
 
         reader.SkipUnknownBytes(1);
 
-        reader.PersistVector3(ref _initialLaunchPosition);
-        reader.PersistVector3(ref _currentPosition);
+        reader.PersistLengthVector3(ref _initialLaunchPosition);
+        reader.PersistLengthVector3(ref _currentPosition);
 
         reader.PersistUInt32(ref _scorchMarkCounter);
 
@@ -116,8 +116,8 @@ public sealed class ParticleUplinkCannonUpdate : UpdateModule
     }
 
     private static void UIntArrayPersister(StatePersister persister, ref uint item) => persister.PersistUInt32Value(ref item);
-    private static void Vector3ArrayPersister(StatePersister persister, ref Vector3 item) => persister.PersistVector3Value(ref item);
-    private static void Matrix4x3ArrayPersister(StatePersister persister, ref Matrix4x3 item) => persister.PersistMatrix4x3Value(ref item, readVersion: false);
+    private static void Vector3ArrayPersister(StatePersister persister, ref Vector3 item) => persister.PersistLengthVector3Value(ref item);
+    private static void Matrix4x3ArrayPersister(StatePersister persister, ref Matrix4x3 item) => persister.PersistLengthMatrix4x3Value(ref item, readVersion: false);
 
     private enum DownlinkBeamStatus
     {

@@ -690,7 +690,7 @@ public class AIUpdate : UpdateModule, INavigationMovementSink
         var garbageBytes1 = 0;
         reader.PersistInt32(ref garbageBytes1);
 
-        reader.PersistVector3(ref _locationToGuard);
+        reader.PersistLengthVector3(ref _locationToGuard);
         reader.PersistObjectId(ref _objectToGuard);
 
         var triggerName = _areaToGuard?.Name ?? "";
@@ -711,7 +711,7 @@ public class AIUpdate : UpdateModule, INavigationMovementSink
             _waypointQueue,
             static (StatePersister persister, ref Vector3 item) =>
             {
-                persister.PersistVector3(ref item);
+                persister.PersistLengthVector3(ref item);
             });
 
         reader.PersistInt32(ref _waypointIndex);
@@ -735,17 +735,17 @@ public class AIUpdate : UpdateModule, INavigationMovementSink
         }
 
         reader.PersistObjectId(ref _requestedVictimId);
-        reader.PersistVector3(ref _requestedDestination);
-        reader.PersistVector3(ref _requestedDestination2);
+        reader.PersistLengthVector3(ref _requestedDestination);
+        reader.PersistLengthVector3(ref _requestedDestination2);
 
         reader.PersistObjectId(ref _ignoreObstacleId);
-        reader.PersistSingle(ref _pathExtraDistance);
+        reader.PersistLengthSingle(ref _pathExtraDistance);
         reader.PersistPoint2D(ref _pathfindGoalCell);
         reader.PersistPoint2D(ref _pathfindCurrentCell);
         reader.PersistLogicFrame(ref _ignoreCollisionsUntil);
         reader.PersistLogicFrame(ref _queueForPathFrame);
 
-        reader.PersistVector3(ref _finalPosition);
+        reader.PersistLengthVector3(ref _finalPosition);
         reader.PersistBoolean(ref _doFinalPosition);
 
         reader.PersistBoolean(ref _isAttackPath);
@@ -972,7 +972,7 @@ internal struct PathPoint : IPersistableObject
     public void Persist(StatePersister reader)
     {
         reader.PersistUInt32(ref _id);
-        reader.PersistVector3(ref _position);
+        reader.PersistLengthVector3(ref _position);
         reader.PersistUInt32(ref _unknownInt1);
         reader.PersistBoolean(ref _unknownBool1);
         reader.PersistUInt32(ref _nextId);

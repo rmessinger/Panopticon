@@ -539,8 +539,8 @@ public sealed class ShroudReveal : IPersistableObject
     {
         reader.PersistVersion(1);
 
-        reader.PersistVector3(ref Position);
-        reader.PersistSingle(ref VisionRange);
+        reader.PersistLengthVector3(ref Position);
+        reader.PersistLengthSingle(ref VisionRange);
         reader.PersistUInt16(ref Unknown);
         reader.PersistFrame(ref FrameSomething);
     }

@@ -31,8 +31,8 @@ public sealed class LaserUpdate : ClientUpdateModule
         base.Load(reader);
         reader.EndObject();
 
-        reader.PersistVector3(ref _flare1Position);
-        reader.PersistVector3(ref _flare2Position);
+        reader.PersistLengthVector3(ref _flare1Position);
+        reader.PersistLengthVector3(ref _flare2Position);
         reader.SkipUnknownBytes(1);
         reader.PersistUInt32(ref _flare1SystemId);
         reader.PersistUInt32(ref _flare2SystemId);

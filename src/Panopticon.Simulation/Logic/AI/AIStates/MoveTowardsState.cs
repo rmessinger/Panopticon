@@ -23,10 +23,10 @@ internal class MoveTowardsState : State
     {
         reader.PersistVersion(1);
 
-        reader.PersistVector3(ref _targetPosition);
+        reader.PersistLengthVector3(ref _targetPosition);
         reader.PersistUInt32(ref _unknownInt1);
         reader.PersistBoolean(ref _unknownBool1); // True until frame after path is ready in AIUpdate, then it's false
-        reader.PersistVector3(ref _unknownPosition2); // Empty until frame after path is ready in AIUpdate, then it's the original path destination (original because the one in _targetPosition will have been modified to be at the centre of a terrain cell)
+        reader.PersistLengthVector3(ref _unknownPosition2); // Empty until frame after path is ready in AIUpdate, then it's the original path destination (original because the one in _targetPosition will have been modified to be at the centre of a terrain cell)
         reader.PersistLogicFrame(ref _unknownFrame); // 0 until frame X after path is ready in AIUpdate, then it's frame X
         reader.PersistUInt32(ref _unknownInt3);
         reader.PersistBoolean(ref _unknownBool2);
