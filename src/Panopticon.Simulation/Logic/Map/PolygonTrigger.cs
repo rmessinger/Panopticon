@@ -15,16 +15,16 @@ public sealed class PolygonTrigger : IPersistableObject
 
     public required string Name { get; init; }
     [AddedIn(SageGame.CncGeneralsZeroHour)]
-    public string? LayerName { get; private set; }
-    public uint TriggerId { get; private set; }
-    public bool IsWater { get; private set; }
-    public bool IsRiver { get; private set; }
+    public string? LayerName { get; internal set; }
+    public uint TriggerId { get; internal set; }
+    public bool IsWater { get; internal set; }
+    public bool IsRiver { get; internal set; }
 
     /// <summary>
     /// For rivers, this is the index into the array of Points
     /// for the point where the river flows from.
     /// </summary>
-    public uint RiverStart { get; private set; }
+    public uint RiverStart { get; internal set; }
 
     // Shared water options
     [AddedIn(SageGame.Bfme)]
@@ -52,7 +52,7 @@ public sealed class PolygonTrigger : IPersistableObject
     [AddedIn(SageGame.Bfme)]
     public float RiverAlpha { get; private set; }
 
-    public Point3D[] Points { get; private set; } = [];
+    public Point3D[] Points { get; internal set; } = [];
 
     private Rectangle _bounds;
     private bool _boundsNeedsUpdate = true;
@@ -203,11 +203,24 @@ public sealed class PolygonTrigger : IPersistableObject
     internal void WriteTo(BinaryWriter writer, ushort version)
     {
         writer.WriteUInt16PrefixedAsciiString(Name);
-        writer.WriteUInt16PrefixedAsciiString(LayerName);
+
+        if (version >= 4)
+        {
+            writer.WriteUInt16PrefixedAsciiString(LayerName);
+        }
+
         writer.Write(TriggerId);
-        writer.Write(IsWater);
-        writer.Write(IsRiver);
-        writer.Write(RiverStart);
+
+        if (version >= 2)
+        {
+            writer.Write(IsWater);
+        }
+
+        if (version >= 3)
+        {
+            writer.Write(IsRiver);
+            writer.Write(RiverStart);
+        }
 
         // BFME+
         if (version >= 5)
