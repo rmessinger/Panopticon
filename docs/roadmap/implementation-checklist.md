@@ -1559,6 +1559,16 @@ complete H2a group merges. Each item corresponds to one card.
   - AC: a unit authored in the new format loads with full parity to its INI-authored equivalent,
     including participation/material/filter overrides; no Bepu-specific type or handle is serialized,
     and a new schema field does not break loading older content.
+- [ ] H4-1 Schema and record-fidelity design gate (`WI-H4-01`).
+  - AC: decisions confirmed or amended with recorded verdicts.
+- [ ] H4-2 Package reader adapter implementing `IUnitSourceAdapter` (`WI-H4-02`).
+  - AC: a fixture package reads to an equal `UnitContentSet` with valued unclassified fields and re-issued handles.
+- [ ] H4-3 Package writer from resolved records (`WI-H4-03`).
+  - AC: a resolved closure writes and reads back equal; error resolutions refuse to write.
+- [ ] H4-4 Physics fields and forward compatibility (`WI-H4-04`).
+  - AC: physics fields round-trip with no BepuPhysics types or handles; a future-field package loads with a warning and re-emits the field.
+- [ ] H4-5 Bounded INI parity proof (`WI-H4-05`).
+  - AC: a bounded Generals roster materializes equal on both paths, plus one behavioral assertion.
 - [ ] H5 Legacy migration & compatibility tooling (`.map`/INI → new formats, round-trip
   validator).
   - AC: a converted legacy map and unit roster load through the new formats and play identically

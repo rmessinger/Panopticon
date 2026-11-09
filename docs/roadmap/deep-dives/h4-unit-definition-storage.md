@@ -97,7 +97,7 @@ adapter could not map, including its value:
 Rationale for preferring this over a retained INI payload per record: records stay the single
 interchange truth; packages stay diffable and merge-friendly because no source syntax is embedded
 for typed records; and the existing inheritance merge (`SourceRecord.MergeUnclassified`) already
-unions parent and child lists, so values ride the existing rules. One added rule: two unclassified
+concatenates parent and child lists, so values ride the existing rules. One added rule: two unclassified
 fields with the same name, parent and child, resolve child-wins with the parent entry retained in
 the package as overridden provenance; today the merge concatenates and the writer must not lose the
 parent entry.
@@ -145,7 +145,7 @@ cross-track note):
 
 | Field | Type | Meaning |
 |---|---|---|
-| `PhysicsParticipation` | `Authored<PhysicsParticipationKind>` | Participation override: `Default`, `Dynamic`, `Kinematic`, `Static`, `Sensor`, `None`, matching the F4a category set (`../track-f-terrain-destruction.md#phases`, phase F4a). Absent means the engine's default classification. |
+| `PhysicsParticipation` | `Authored<PhysicsParticipationKind>` | Participation override: `Dynamic`, `Kinematic`, `Static`, `Sensor`, `None`, matching the F4a category set (`../track-f-terrain-destruction.md#phases`, phase F4a). Absent means the engine's default classification. |
 | `CollisionLayer` | `Authored<string>` | Stable engine-owned layer name. |
 | `CollisionMask` | `ListOverride<string>` | Stable engine-owned layer names this record collides with. |
 | `PhysicsMaterial` | `Authored<string>` | Stable engine-owned material id; the material table is engine data, not package data. |
@@ -158,8 +158,8 @@ names gated on AQ-H4-1 rather than guessed enums.
 ### D-H4-6. Quantity and frame tags
 
 The format stores every quantity's declared unit exactly as the adapter emitted it
-(`Types/QuantityUnit.cs`). `GameUnit` means legacy engine game units and is never reinterpreted as
-feet or meters; `Meters` is explicitly metric; per-frame and per-second rate variants stay
+(`Types/QuantityUnit.cs`). `GameDistance` means legacy engine game units and is never reinterpreted as
+feet or meters; `Meters` is explicitly metric; per-second rate variants and `LogicFrames` stay
 distinct tags. Conversion never happens in the format: normalization stays at the source boundary
 and per-frame conversion stays in `UnitConversionPolicy` at materialization. After the H2b cutover
 ([h2b-metric-core.md](h2b-metric-core.md)), adapters emit metric tags; packages written before the
@@ -315,3 +315,26 @@ python3 scripts/check_brace_newline.py
 
 WI-H4-05 prefixes `CNC_GENERALS_PATH` on the test command as shown in its scope. Documentation
 changes (WI-H4-01, this scaffold) require link resolution and Mermaid checks only.
+
+## WI-H4-01 review verdicts
+
+Verified at `7b7b9585f`. `Units/` is unchanged since the planning base `2e5d3770`, so the current-state table holds at both. Amendments are recorded in the Grounding column.
+
+| Decision | Verdict | Grounding |
+|---|---|---|
+| D-H4-1 Container and manifest | Confirmed | Map packages stay separate per the H1 decision in `h1-h2-map-storage.md`; `ContentSource.cs:13-21` provides the id and name-case rule. |
+| D-H4-2 Valued unclassified fields | Confirmed as amended | `Types/UnclassifiedField.cs:10` carries no value. `SourceRecord.cs:58-60` concatenates parent and child lists; "unions" amended to "concatenates". |
+| D-H4-3 Retained INI payload | Confirmed | `UnitModule.cs:23` types the per-module binding as `LegacyBinding?`; `LegacyModuleBinding` is not a field type. `Maps/RetainedSection.cs:9` holds name, version, bytes, and SHA-256. The current-state table cites `RetainedSection.cs:5`, a blank line; the correct line is 9. |
+| D-H4-4 Schema versioning | Confirmed | No unit-content `schemaVersion` exists under `Units/`; `Maps/RetainedSection.cs:23` is the existing integer section-version precedent. |
+| D-H4-5 Physics fields | Confirmed as amended | No physics fields exist on `UnitRecord.cs`; `GeometryMajorRadius` and `GeometryHeight` are present (`UnitRecord.cs:24`, `:26`). Track F's F4a names five categories (`track-f-terrain-destruction.md:25`); `Default` removed from the enum list because absence already means the engine default. |
+| D-H4-6 Quantity and frame tags | Confirmed as amended | `Types/QuantityUnit.cs` has `GameDistance`, not `GameUnit`, and no per-frame rate tag; amended to name `GameDistance`, the per-second variants, and `LogicFrames`. Conversion stays at materialization in `Materialization/UnitConversionPolicy.cs:43-73`. |
+| D-H4-7 Publication path unchanged | Confirmed | `UnitInheritanceResolver.cs:17` consumes a `UnitContentSet`; `Materialization/UnitContentPublisher.cs:30` pops its scope on registration failure, and `Unload` is at line 96. |
+
+Open questions:
+
+| ID | Verdict | Owner | Consequence |
+|---|---|---|---|
+| AQ-H4-1 | Open | Track F (F4a unstarted) | WI-H4-04 ships enum-valued physics fields as reserved optional names per D-H4-5; no guessed enums. |
+| AQ-H4-2 | Open | H4 | String stable ids per D-H4-5; name tables not landed (no `CollisionLayer` or `PhysicsMaterial` under `src/`). |
+
+Tickets 964 through 981 now exist in OpenProject for H4 (964 to 968), H5 (969 to 973), H6 (974 to 977), and H7 (978 to 981), per the ticket workflow.

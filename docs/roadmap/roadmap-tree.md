@@ -333,10 +333,10 @@ mindmap
       H2a Unit-content import layer ⮕
       H2b Metric core units ⮕
       H3 New map storage format
-      H4 New object and unit-definition storage format
-      H5 Legacy migration and compatibility tooling
-      H6 Authoring and pipeline integration
-      H7 Validation and round-trip regression
+      H4 New object and unit-definition storage format ⮕
+      H5 Legacy migration and compatibility tooling ⮕
+      H6 Authoring and pipeline integration ⮕
+      H7 Validation and round-trip regression ⮕
     W. Western Front simulation
       W0 Charter fixture ⮕
       W1 Aggregate sector simulation ⮕
