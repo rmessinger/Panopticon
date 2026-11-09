@@ -1561,7 +1561,7 @@ complete H2a group merges. Each item corresponds to one card.
     and a new schema field does not break loading older content.
 - [ ] H4-1 Schema and record-fidelity design gate (`WI-H4-01`).
   - AC: decisions confirmed or amended with recorded verdicts.
-- [ ] H4-2 Package reader adapter implementing `IUnitSourceAdapter` (`WI-H4-02`).
+- [x] H4-2 Package reader adapter implementing `IUnitSourceAdapter` (`WI-H4-02`).
   - AC: a fixture package reads to an equal `UnitContentSet` with valued unclassified fields and re-issued handles.
 - [ ] H4-3 Package writer from resolved records (`WI-H4-03`).
   - AC: a resolved closure writes and reads back equal; error resolutions refuse to write.
