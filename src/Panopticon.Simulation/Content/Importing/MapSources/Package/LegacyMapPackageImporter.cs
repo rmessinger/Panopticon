@@ -30,9 +30,23 @@ public sealed class LegacyMapPackageImporter
     public MapPackageWriteResult Import() => Import(_interchange, _targetPackageRoot);
 
     public static MapPackageWriteResult Write(MapInterchange interchange, string targetPackageRoot) =>
-        Import(interchange, targetPackageRoot);
+        Import(interchange, targetPackageRoot, null, null);
 
-    public static MapPackageWriteResult Import(MapInterchange interchange, string targetPackageRoot)
+    public static MapPackageWriteResult Write(
+        MapInterchange interchange,
+        string targetPackageRoot,
+        IReadOnlyList<MapPackageCompanionEntry>? companions,
+        IReadOnlyDictionary<string, byte[]>? companionPayloads) =>
+        Import(interchange, targetPackageRoot, companions, companionPayloads);
+
+    public static MapPackageWriteResult Import(MapInterchange interchange, string targetPackageRoot) =>
+        Import(interchange, targetPackageRoot, null, null);
+
+    public static MapPackageWriteResult Import(
+        MapInterchange interchange,
+        string targetPackageRoot,
+        IReadOnlyList<MapPackageCompanionEntry>? companions,
+        IReadOnlyDictionary<string, byte[]>? companionPayloads)
     {
         ArgumentNullException.ThrowIfNull(interchange);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetPackageRoot);
@@ -166,9 +180,10 @@ public sealed class LegacyMapPackageImporter
             waypoints,
             provenance,
             layers,
-            retainedEntries);
+            retainedEntries,
+            companions);
 
-        var payloadProvider = new InterchangePayloadProvider(chunkLookup, retainedLookup);
+        var payloadProvider = new InterchangePayloadProvider(chunkLookup, retainedLookup, companionPayloads);
 
         return MapPackageDirectoryWriter.Write(targetPackageRoot, manifest, payloadProvider);
     }
@@ -180,13 +195,16 @@ public sealed class LegacyMapPackageImporter
     {
         private readonly Dictionary<(int X, int Y), Chunk> _chunks;
         private readonly Dictionary<string, RetainedSection> _retained;
+        private readonly IReadOnlyDictionary<string, byte[]>? _companions;
 
         public InterchangePayloadProvider(
             Dictionary<(int X, int Y), Chunk> chunks,
-            Dictionary<string, RetainedSection> retained)
+            Dictionary<string, RetainedSection> retained,
+            IReadOnlyDictionary<string, byte[]>? companions = null)
         {
             _chunks = chunks;
             _retained = retained;
+            _companions = companions;
         }
 
         public float[] GetHeights(MapPackageLayerEntry entry)
@@ -217,6 +235,16 @@ public sealed class LegacyMapPackageImporter
         {
             var section = _retained[entry.SectionName];
             return section.Bytes.ToArray();
+        }
+
+        public byte[] GetCompanion(MapPackageCompanionEntry entry)
+        {
+            if (_companions is not null && _companions.TryGetValue(entry.Name, out var bytes))
+            {
+                return bytes;
+            }
+
+            return [];
         }
     }
 }

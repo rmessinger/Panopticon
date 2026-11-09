@@ -395,9 +395,11 @@ public sealed class MainWindow : Window
         var file = HeaderMenu("File");
         file.Menu!.Items.Add(Item("New Map…", "Ctrl+N", OnMenuNew));
         file.Menu!.Items.Add(Item("Open Map…", "Ctrl+O", OnMenuOpen));
+        file.Menu!.Items.Add(Item("Open Package…", null, OnMenuOpenPackage));
         file.Menu!.Items.Add(new NativeMenuItemSeparator());
         file.Menu!.Items.Add(Item("Save", "Ctrl+S", OnMenuSave));
         file.Menu!.Items.Add(Item("Save As…", "Ctrl+Shift+S", OnMenuSaveAs));
+        file.Menu!.Items.Add(Item("Save As Package…", null, OnMenuSaveAsPackage));
         file.Menu!.Items.Add(new NativeMenuItemSeparator());
         file.Menu!.Items.Add(Item("Exit", null, OnMenuExit));
         menu.Items.Add(file);
@@ -616,6 +618,37 @@ public sealed class MainWindow : Window
         }
     }
 
+    private async void OnMenuOpenPackage(object? sender, EventArgs e)
+    {
+        if (!await PromptForUnsavedChangesAsync())
+        {
+            return;
+        }
+
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Open Map Package",
+            AllowMultiple = false,
+        });
+
+        if (folders.Count != 1)
+        {
+            return;
+        }
+
+        var path = folders[0].Path.LocalPath;
+        try
+        {
+            var editorMap = EditorMap.OpenPackage(path);
+            _viewModel.CurrentMap = editorMap;
+            _viewModel.StatusMessage = $"Opened package: {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            await AppMessageBox.ShowAsync(this, "Open Package Error", ex.Message);
+        }
+    }
+
     private async void OnMenuSave(object? sender, EventArgs e)
     {
         if (_viewModel.CurrentMap is null)
@@ -625,7 +658,15 @@ public sealed class MainWindow : Window
 
         if (_viewModel.CurrentMap.FilePath is null)
         {
-            await OnMenuSaveAsAsync();
+            if (_viewModel.CurrentMap.IsPackage)
+            {
+                await OnMenuSaveAsPackageAsync();
+            }
+            else
+            {
+                await OnMenuSaveAsAsync();
+            }
+
             return;
         }
 
@@ -637,6 +678,38 @@ public sealed class MainWindow : Window
         catch (Exception ex)
         {
             await AppMessageBox.ShowAsync(this, "Save Error", ex.Message);
+        }
+    }
+
+    private async void OnMenuSaveAsPackage(object? sender, EventArgs e) => await OnMenuSaveAsPackageAsync();
+
+    private async Task OnMenuSaveAsPackageAsync()
+    {
+        if (_viewModel.CurrentMap is null)
+        {
+            return;
+        }
+
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Save Map As Package",
+            AllowMultiple = false,
+        });
+
+        if (folders.Count != 1)
+        {
+            return;
+        }
+
+        try
+        {
+            var path = folders[0].Path.LocalPath;
+            _viewModel.CurrentMap.SaveAsPackage(path);
+            _viewModel.StatusMessage = $"Saved package: {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            await AppMessageBox.ShowAsync(this, "Save As Package Error", ex.Message);
         }
     }
 

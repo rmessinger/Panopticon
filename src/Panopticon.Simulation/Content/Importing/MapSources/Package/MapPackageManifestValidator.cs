@@ -40,6 +40,7 @@ public static class MapPackageManifestValidator
         ValidateWaypoints(manifest, stableIds, diagnostics);
         ValidateProvenance(manifest, stableIds, diagnostics);
         ValidateRetainedSections(manifest, diagnostics);
+        ValidateCompanions(manifest, diagnostics);
 
         if (diagnostics.Count > 100)
         {
@@ -851,6 +852,59 @@ public static class MapPackageManifestValidator
                 diagnostics.Add(new MapPackageDiagnostic(
                     MapPackageDiagnostic.DigestInvalid,
                     $"Retained section '{section.SectionName}' SHA-256 '{section.Sha256}' must be 64 lowercase hex characters."));
+            }
+        }
+    }
+
+    private static void ValidateCompanions(MapPackageManifest manifest, List<MapPackageDiagnostic> diagnostics)
+    {
+        if (manifest.Companions is null)
+        {
+            return;
+        }
+
+        var seenNames = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var companion in manifest.Companions)
+        {
+            if (companion is null)
+            {
+                RequireComponent(companion, "CompanionEntry", diagnostics);
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(companion.Name))
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.PathInvalid,
+                    "Companion entry has an empty or whitespace name."));
+            }
+            else if (!seenNames.Add(companion.Name))
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.CompanionNameDuplicate,
+                    $"Duplicate companion member name '{companion.Name}'."));
+            }
+
+            if (!MapPackagePath.TryValidatePath(companion.Path, out var pathReason))
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.PathInvalid,
+                    $"Companion member '{companion.Name}' path is invalid: {pathReason}"));
+            }
+
+            if (!MapPackagePath.IsValidSha256(companion.Sha256))
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.DigestInvalid,
+                    $"Companion member '{companion.Name}' SHA-256 '{companion.Sha256}' must be 64 lowercase hex characters."));
+            }
+
+            if (companion.ByteLength < 0)
+            {
+                diagnostics.Add(new MapPackageDiagnostic(
+                    MapPackageDiagnostic.ResourceLimitExceeded,
+                    $"Companion member '{companion.Name}' declares negative byte length {companion.ByteLength}."));
             }
         }
     }

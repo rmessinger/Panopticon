@@ -61,6 +61,10 @@ public sealed record MapPackageDiagnostic(string Code, string Message)
 
     public const string RetainedDuplicate = RetainedNameDuplicate;
 
+    public const string CompanionNameDuplicate = "companion-name-duplicate";
+
+    public const string CompanionDuplicate = CompanionNameDuplicate;
+
     public const string IdentitySourceKind = "identity-source-kind";
 
     public const string SourceKind = IdentitySourceKind;
