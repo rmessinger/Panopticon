@@ -162,7 +162,6 @@ public sealed class PersistSiteClassificationTests
         {
             ["_angle"] = "angle",
             ["scale"] = "sentinel check (must equal 1.0f), dimensionless",
-            ["meshTransform"] = "model-space bone transform, not a world translation; TODO notes absolute, left unconverted pending a mesh-space audit",
         },
         ["src/Panopticon.Simulation/Logic/Map/BuildListInfo.cs"] = new Dictionary<string, string>(StringComparer.Ordinal)
         {

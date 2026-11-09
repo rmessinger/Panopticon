@@ -297,6 +297,106 @@ public sealed class SaveVersionUnitContextTests
     }
 
     [Fact]
+    public void LegacyV2Stream_GhostBoneMeshTransform_ScalesOnlyTranslation()
+    {
+        var originalMatrix = new Matrix4x3(
+            0f, 1f, 0f,
+            -1f, 0f, 0f,
+            0f, 0f, 1f,
+            100f, 200f, 50f);
+
+        byte[] legacyStreamBytes;
+        using (var stream = new MemoryStream())
+        {
+            using (var writer = new StateWriter(stream, SageGame.CncGenerals))
+            {
+                writer.BeginObject();
+                byte version2 = 2;
+                writer.PersistByte(ref version2, "Version");
+                var gameState = new GameState();
+                writer.PersistEnum(ref gameState.GameType);
+                writer.PersistAsciiString(ref gameState.MapPath);
+                writer.PersistDateTime(ref gameState.Timestamp);
+                writer.PersistUnicodeString(ref gameState.DisplayName);
+                writer.PersistAsciiString(ref gameState.MapFileName);
+                writer.PersistAsciiString(ref gameState.Side);
+                writer.PersistUInt32(ref gameState.MissionIndex);
+                writer.EndObject();
+
+                var matrixToWrite = originalMatrix;
+                writer.PersistMatrix4x3(ref matrixToWrite, readVersion: false);
+            }
+
+            legacyStreamBytes = stream.ToArray();
+        }
+
+        using (var stream = new MemoryStream(legacyStreamBytes, writable: false))
+        {
+            using var reader = new StateReader(stream, SageGame.CncGenerals);
+            var readGameState = new GameState();
+            reader.PersistObject(readGameState);
+            Assert.Equal(StreamUnitContext.LegacyFeet, reader.UnitContext);
+
+            var readMatrix = Matrix4x3.Identity;
+            reader.PersistLengthMatrix4x3(ref readMatrix, readVersion: false);
+
+            Assert.Equal(originalMatrix.M11, readMatrix.M11);
+            Assert.Equal(originalMatrix.M12, readMatrix.M12);
+            Assert.Equal(originalMatrix.M13, readMatrix.M13);
+            Assert.Equal(originalMatrix.M21, readMatrix.M21);
+            Assert.Equal(originalMatrix.M22, readMatrix.M22);
+            Assert.Equal(originalMatrix.M23, readMatrix.M23);
+            Assert.Equal(originalMatrix.M31, readMatrix.M31);
+            Assert.Equal(originalMatrix.M32, readMatrix.M32);
+            Assert.Equal(originalMatrix.M33, readMatrix.M33);
+
+            const float s = (float)UnitConversionPolicy.GeneralsFeetToMeters;
+            const float tolerance = 1e-4f;
+            Assert.Equal(100f * s, readMatrix.M41, tolerance);
+            Assert.Equal(200f * s, readMatrix.M42, tolerance);
+            Assert.Equal(50f * s, readMatrix.M43, tolerance);
+        }
+    }
+
+    [Fact]
+    public void V3Stream_GhostBoneMeshTransform_RoundTripsWithoutDoubleScaling()
+    {
+        var metricMatrix = new Matrix4x3(
+            0f, 1f, 0f,
+            -1f, 0f, 0f,
+            0f, 0f, 1f,
+            30.48f, 60.96f, 15.24f);
+
+        byte[] v3StreamBytes;
+        using (var stream = new MemoryStream())
+        {
+            using (var writer = new StateWriter(stream, SageGame.CncGenerals))
+            {
+                var gameState = new GameState();
+                writer.PersistObject(gameState);
+
+                var matrixToWrite = metricMatrix;
+                writer.PersistLengthMatrix4x3(ref matrixToWrite, readVersion: false);
+            }
+
+            v3StreamBytes = stream.ToArray();
+        }
+
+        using (var stream = new MemoryStream(v3StreamBytes, writable: false))
+        {
+            using var reader = new StateReader(stream, SageGame.CncGenerals);
+            var readGameState = new GameState();
+            reader.PersistObject(readGameState);
+            Assert.Equal(StreamUnitContext.Metric, reader.UnitContext);
+
+            var readMatrix = Matrix4x3.Identity;
+            reader.PersistLengthMatrix4x3(ref readMatrix, readVersion: false);
+
+            Assert.Equal(metricMatrix, readMatrix);
+        }
+    }
+
+    [Fact]
     public void LegacyV2Stream_RepresentativeModuleSites_ConvertLengthsAndPreserveNonLengths()
     {
         var velocity = new Vector3(10f, 20f, 5f);

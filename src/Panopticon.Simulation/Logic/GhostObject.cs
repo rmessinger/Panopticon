@@ -143,11 +143,11 @@ public sealed class GhostObject : IPersistableObject
                     var meshTransform = reader.Mode == StatePersistMode.Write
                         ? Matrix4x3.FromMatrix4x4(modelInstance.RelativeBoneTransforms[model.SubObjects[k].Bone.Index])
                         : Matrix4x3.Identity;
-                    reader.PersistMatrix4x3(ref meshTransform, readVersion: false);
+                    reader.PersistLengthMatrix4x3(ref meshTransform, readVersion: false);
 
                     if (reader.Mode == StatePersistMode.Read)
                     {
-                        // TODO: meshTransform is actually absolute, not relative.
+                        // Bone transforms are absolute model-space matrices; translations convert under legacy feet.
                         modelInstance.RelativeBoneTransforms[model.SubObjects[k].Bone.Index] = meshTransform.ToMatrix4x4();
                     }
 
