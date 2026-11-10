@@ -344,6 +344,43 @@ public sealed class StagedPackTests : IDisposable
         Assert.True(spawned.BodyModule.MaxHealth > 0);
     }
 
+    [Fact]
+    public void PackWithMalformedQuantityValue_FailsPublicationAndLeavesScopeDepthUnchanged()
+    {
+        var packageDir = Path.Combine(_tempRoot, "synthetic-pkg");
+        SyntheticUnitPackage.ConvertToPackage(packageDir);
+
+        UnitPackageTamper.EditRecordPayload(packageDir, SyntheticUnitPackage.RootName, payload =>
+        {
+            payload["maxHealth"] = new System.Text.Json.Nodes.JsonObject
+            {
+                ["value"] = new System.Text.Json.Nodes.JsonObject
+                {
+                    ["value"] = 1,
+                    ["unit"] = "1",
+                },
+                ["unit"] = "HitPoints",
+            };
+        });
+
+        using var fileSystem = new MemoryFileSystem();
+        var store = new AssetStore(SageGame.CncGenerals, fileSystem, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
+        store.PushScope();
+        var initialDepth = store.ScopeDepth;
+
+        var packDir = Path.Combine(_tempRoot, "pack");
+        Directory.CreateDirectory(packDir);
+        var packPkgDir = Path.Combine(packDir, "pkg-01");
+        CopyDirectory(packageDir, packPkgDir);
+
+        var packReader = new StagedPackReader(packDir);
+        var result = packReader.LoadAndPublish(store);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Diagnostics, d => d.IsError && d.Message.Contains("Quantity 'value' must be a finite number or numeric string, got Object."));
+        Assert.Equal(initialDepth, store.ScopeDepth);
+    }
+
     private static void CopyDirectory(string sourceDir, string destDir)
     {
         Directory.CreateDirectory(destDir);

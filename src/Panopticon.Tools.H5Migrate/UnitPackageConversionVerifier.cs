@@ -271,19 +271,55 @@ public static class UnitPackageConversionVerifier
         {
             var exp = expected.Unclassified[i];
             var act = actual.Unclassified[i];
+            var differing = new List<string>();
 
-            if (exp.Name != act.Name
-                || exp.AffectsGameplay != act.AffectsGameplay
-                || exp.ExcludedByPolicy != act.ExcludedByPolicy
-                || exp.RawValue != act.RawValue
-                || exp.RawBlock != act.RawBlock
-                || exp.Provenance != act.Provenance)
+            if (exp.Name != act.Name)
+            {
+                differing.Add("name");
+            }
+
+            if (exp.AffectsGameplay != act.AffectsGameplay)
+            {
+                differing.Add("affectsGameplay");
+            }
+
+            if (exp.ExcludedByPolicy != act.ExcludedByPolicy)
+            {
+                differing.Add("excludedByPolicy");
+            }
+
+            if (exp.RawValue != act.RawValue)
+            {
+                differing.Add("rawValue");
+            }
+
+            if (!SameRawBlock(exp.RawBlock, act.RawBlock))
+            {
+                differing.Add("rawBlock");
+            }
+
+            if (exp.Provenance != act.Provenance)
+            {
+                differing.Add("provenance");
+            }
+
+            if (differing.Count > 0)
             {
                 diagnostics.Add(new UnitPackageConversionDiagnostic(
                     H5MigrateCliDiagnostics.VerificationFailed,
-                    $"Unclassified field '{exp.Name}' mismatch for '{expected.Id}'."));
+                    $"Unclassified field '{exp.Name}' mismatch for '{expected.Id}': {string.Join(", ", differing)} differs."));
             }
         }
+    }
+
+    private static bool SameRawBlock(IReadOnlyList<string>? expected, IReadOnlyList<string>? actual)
+    {
+        if (expected is null || actual is null)
+        {
+            return expected is null && actual is null;
+        }
+
+        return expected.SequenceEqual(actual);
     }
 
     private static void VerifyUnit(

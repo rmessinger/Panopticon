@@ -13,9 +13,9 @@ namespace Panopticon.Tools.H5Migrate;
 /// </summary>
 internal static class RoundTripFailureClassifier
 {
-    private static readonly Regex MapCountPattern = new(@"(\d+) differs from re-read (\d+)", RegexOptions.CultureInvariant);
+    private static readonly Regex MapCountPattern = new(@"^(?:objects|waypoints|retained section) count (\d+) differs from re-read (\d+)\.", RegexOptions.CultureInvariant);
 
-    private static readonly Regex UnitCountPattern = new(@"expected (\d+), got (\d+)", RegexOptions.CultureInvariant);
+    private static readonly Regex UnitRecordCountPattern = new(@"^(?:Resolution closure|Reloaded set records) count mismatch: expected (\d+), got (\d+)\.", RegexOptions.CultureInvariant);
 
     private static readonly Regex QuotedSubjectPattern = new(@"'([^']+)'", RegexOptions.CultureInvariant);
 
@@ -152,15 +152,12 @@ internal static class RoundTripFailureClassifier
             return ("retained", null);
         }
 
-        if (message.Contains("count mismatch", System.StringComparison.Ordinal))
+        var countMatch = UnitRecordCountPattern.Match(message);
+        if (countMatch.Success)
         {
-            var countMatch = UnitCountPattern.Match(message);
-            if (countMatch.Success)
-            {
-                var expected = int.Parse(countMatch.Groups[1].Value, CultureInfo.InvariantCulture);
-                var actual = int.Parse(countMatch.Groups[2].Value, CultureInfo.InvariantCulture);
-                return ("closure", actual < expected ? RoundTripFailureClass.MissingRecord : RoundTripFailureClass.ExtraRecord);
-            }
+            var expected = int.Parse(countMatch.Groups[1].Value, CultureInfo.InvariantCulture);
+            var actual = int.Parse(countMatch.Groups[2].Value, CultureInfo.InvariantCulture);
+            return ("closure", actual < expected ? RoundTripFailureClass.MissingRecord : RoundTripFailureClass.ExtraRecord);
         }
 
         if (message.Contains("is missing from reloaded package", System.StringComparison.Ordinal))

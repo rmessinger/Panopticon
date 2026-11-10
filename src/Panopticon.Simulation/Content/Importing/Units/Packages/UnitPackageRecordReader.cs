@@ -286,12 +286,12 @@ public static class UnitPackageRecordReader
             SourceRecord createdRecord = expectedKind switch
             {
                 ContentKind.Unit => ReadUnit(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source, retainedNatives, diagnostics),
-                ContentKind.Weapon => ReadWeapon(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
+                ContentKind.Weapon => ReadWeapon(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source, diagnostics),
                 ContentKind.Armor => ReadArmor(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
-                ContentKind.Locomotor => ReadLocomotor(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
-                ContentKind.Upgrade => ReadUpgrade(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
-                ContentKind.Ability => ReadAbility(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
-                ContentKind.Projectile => ReadProjectile(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
+                ContentKind.Locomotor => ReadLocomotor(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source, diagnostics),
+                ContentKind.Upgrade => ReadUpgrade(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source, diagnostics),
+                ContentKind.Ability => ReadAbility(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source, diagnostics),
+                ContentKind.Projectile => ReadProjectile(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source, diagnostics),
                 ContentKind.VisualState => ReadVisualState(root, recordId, provenance, parent, legacyBinding, unclassifiedList, source),
                 _ => throw new ArgumentOutOfRangeException(nameof(expectedKind), expectedKind, null),
             };
@@ -383,18 +383,18 @@ public static class UnitPackageRecordReader
             Legacy = legacyBinding,
             Unclassified = unclassified,
             DisplayName = root.TryGetProperty("displayName", out var dn) ? UnitPackageAuthoredHelper.ParseString(dn, source) : default,
-            MaxHealth = root.TryGetProperty("maxHealth", out var mh) ? UnitPackageAuthoredHelper.ParseQuantity(mh, source) : default,
-            InitialHealth = root.TryGetProperty("initialHealth", out var ih) ? UnitPackageAuthoredHelper.ParseQuantity(ih, source) : default,
-            GeometryMajorRadius = root.TryGetProperty("geometryMajorRadius", out var gmr) ? UnitPackageAuthoredHelper.ParseQuantity(gmr, source) : default,
-            GeometryHeight = root.TryGetProperty("geometryHeight", out var gh) ? UnitPackageAuthoredHelper.ParseQuantity(gh, source) : default,
-            VisionRange = root.TryGetProperty("visionRange", out var vr) ? UnitPackageAuthoredHelper.ParseQuantity(vr, source) : default,
-            DeathDuration = root.TryGetProperty("deathDuration", out var dd) ? UnitPackageAuthoredHelper.ParseQuantity(dd, source) : default,
+            MaxHealth = ReadQuantity(root, "maxHealth", id, provenance, source, diagnostics),
+            InitialHealth = ReadQuantity(root, "initialHealth", id, provenance, source, diagnostics),
+            GeometryMajorRadius = ReadQuantity(root, "geometryMajorRadius", id, provenance, source, diagnostics),
+            GeometryHeight = ReadQuantity(root, "geometryHeight", id, provenance, source, diagnostics),
+            VisionRange = ReadQuantity(root, "visionRange", id, provenance, source, diagnostics),
+            DeathDuration = ReadQuantity(root, "deathDuration", id, provenance, source, diagnostics),
             KindOf = root.TryGetProperty("kindOf", out var ko) ? UnitPackageListOverrideDto.ParseStringList(ko) : ListOverride<string>.Inherit,
             Locomotors = root.TryGetProperty("locomotors", out var lm) ? UnitPackageListOverrideDto.ParseContentIdList(lm, source, ContentKind.Locomotor) : ListOverride<ContentId>.Inherit,
             Weapons = root.TryGetProperty("weapons", out var wp) ? UnitPackageListOverrideDto.ParseContentIdList(wp, source, ContentKind.Weapon) : ListOverride<ContentId>.Inherit,
             Armor = root.TryGetProperty("armor", out var ar) ? UnitPackageAuthoredHelper.ParseContentId(ar, source, ContentKind.Armor) : default,
-            BuildCost = root.TryGetProperty("buildCost", out var bc) ? UnitPackageAuthoredHelper.ParseQuantity(bc, source) : default,
-            BuildTime = root.TryGetProperty("buildTime", out var bt) ? UnitPackageAuthoredHelper.ParseQuantity(bt, source) : default,
+            BuildCost = ReadQuantity(root, "buildCost", id, provenance, source, diagnostics),
+            BuildTime = ReadQuantity(root, "buildTime", id, provenance, source, diagnostics),
             Prerequisites = root.TryGetProperty("prerequisites", out var pr) ? UnitPackageListOverrideDto.ParseContentIdList(pr, source, ContentKind.Unit) : ListOverride<ContentId>.Inherit,
             Produces = root.TryGetProperty("produces", out var pd) ? UnitPackageListOverrideDto.ParseContentIdList(pd, source, ContentKind.Unit) : ListOverride<ContentId>.Inherit,
             Upgrades = root.TryGetProperty("upgrades", out var ug) ? UnitPackageListOverrideDto.ParseContentIdList(ug, source, ContentKind.Upgrade) : ListOverride<ContentId>.Inherit,
@@ -414,22 +414,23 @@ public static class UnitPackageRecordReader
         ContentId? parent,
         LegacyBinding? legacyBinding,
         IReadOnlyList<UnclassifiedField> unclassified,
-        ContentSource source)
+        ContentSource source,
+        List<ImportDiagnostic> diagnostics)
     {
         return new WeaponRecord(id, provenance)
         {
             Parent = parent,
             Legacy = legacyBinding,
             Unclassified = unclassified,
-            PrimaryDamage = root.TryGetProperty("primaryDamage", out var pd) ? UnitPackageAuthoredHelper.ParseQuantity(pd, source) : default,
-            PrimaryDamageRadius = root.TryGetProperty("primaryDamageRadius", out var pdr) ? UnitPackageAuthoredHelper.ParseQuantity(pdr, source) : default,
+            PrimaryDamage = ReadQuantity(root, "primaryDamage", id, provenance, source, diagnostics),
+            PrimaryDamageRadius = ReadQuantity(root, "primaryDamageRadius", id, provenance, source, diagnostics),
             DamageType = root.TryGetProperty("damageType", out var dt) ? UnitPackageAuthoredHelper.ParseString(dt, source) : default,
-            AttackRange = root.TryGetProperty("attackRange", out var ar) ? UnitPackageAuthoredHelper.ParseQuantity(ar, source) : default,
-            MinimumAttackRange = root.TryGetProperty("minimumAttackRange", out var mar) ? UnitPackageAuthoredHelper.ParseQuantity(mar, source) : default,
-            ReloadTime = root.TryGetProperty("reloadTime", out var rt) ? UnitPackageAuthoredHelper.ParseQuantity(rt, source) : default,
-            PreAttackDelay = root.TryGetProperty("preAttackDelay", out var pad) ? UnitPackageAuthoredHelper.ParseQuantity(pad, source) : default,
+            AttackRange = ReadQuantity(root, "attackRange", id, provenance, source, diagnostics),
+            MinimumAttackRange = ReadQuantity(root, "minimumAttackRange", id, provenance, source, diagnostics),
+            ReloadTime = ReadQuantity(root, "reloadTime", id, provenance, source, diagnostics),
+            PreAttackDelay = ReadQuantity(root, "preAttackDelay", id, provenance, source, diagnostics),
             ClipSize = root.TryGetProperty("clipSize", out var cs) ? UnitPackageAuthoredHelper.ParseInt(cs, source) : default,
-            ClipReloadTime = root.TryGetProperty("clipReloadTime", out var crt) ? UnitPackageAuthoredHelper.ParseQuantity(crt, source) : default,
+            ClipReloadTime = ReadQuantity(root, "clipReloadTime", id, provenance, source, diagnostics),
             TargetCategories = root.TryGetProperty("targetCategories", out var tc) ? UnitPackageListOverrideDto.ParseStringList(tc) : ListOverride<string>.Inherit,
             Projectile = root.TryGetProperty("projectile", out var pj) ? UnitPackageAuthoredHelper.ParseContentId(pj, source, ContentKind.Projectile) : default,
             Presentation = root.TryGetProperty("presentation", out var ps) ? UnitPackageListOverrideDto.ParseContentIdList(ps, source, ContentKind.Unit) : ListOverride<ContentId>.Inherit,
@@ -472,18 +473,19 @@ public static class UnitPackageRecordReader
         ContentId? parent,
         LegacyBinding? legacyBinding,
         IReadOnlyList<UnclassifiedField> unclassified,
-        ContentSource source)
+        ContentSource source,
+        List<ImportDiagnostic> diagnostics)
     {
         return new LocomotorRecord(id, provenance)
         {
             Parent = parent,
             Legacy = legacyBinding,
             Unclassified = unclassified,
-            Speed = root.TryGetProperty("speed", out var sp) ? UnitPackageAuthoredHelper.ParseQuantity(sp, source) : default,
-            TurnRate = root.TryGetProperty("turnRate", out var tr) ? UnitPackageAuthoredHelper.ParseQuantity(tr, source) : default,
-            Acceleration = root.TryGetProperty("acceleration", out var ac) ? UnitPackageAuthoredHelper.ParseQuantity(ac, source) : default,
-            Braking = root.TryGetProperty("braking", out var br) ? UnitPackageAuthoredHelper.ParseQuantity(br, source) : default,
-            PreferredHeight = root.TryGetProperty("preferredHeight", out var ph) ? UnitPackageAuthoredHelper.ParseQuantity(ph, source) : default,
+            Speed = ReadQuantity(root, "speed", id, provenance, source, diagnostics),
+            TurnRate = ReadQuantity(root, "turnRate", id, provenance, source, diagnostics),
+            Acceleration = ReadQuantity(root, "acceleration", id, provenance, source, diagnostics),
+            Braking = ReadQuantity(root, "braking", id, provenance, source, diagnostics),
+            PreferredHeight = ReadQuantity(root, "preferredHeight", id, provenance, source, diagnostics),
             CanHover = root.TryGetProperty("canHover", out var ch) ? UnitPackageAuthoredHelper.ParseBool(ch, source) : default,
             Appearance = root.TryGetProperty("appearance", out var ap) ? UnitPackageAuthoredHelper.ParseString(ap, source) : default,
             Surfaces = root.TryGetProperty("surfaces", out var sf) ? UnitPackageListOverrideDto.ParseStringList(sf) : ListOverride<string>.Inherit,
@@ -497,7 +499,8 @@ public static class UnitPackageRecordReader
         ContentId? parent,
         LegacyBinding? legacyBinding,
         IReadOnlyList<UnclassifiedField> unclassified,
-        ContentSource source)
+        ContentSource source,
+        List<ImportDiagnostic> diagnostics)
     {
         return new UpgradeRecord(id, provenance)
         {
@@ -505,8 +508,8 @@ public static class UnitPackageRecordReader
             Legacy = legacyBinding,
             Unclassified = unclassified,
             DisplayName = root.TryGetProperty("displayName", out var dn) ? UnitPackageAuthoredHelper.ParseString(dn, source) : default,
-            BuildCost = root.TryGetProperty("buildCost", out var bc) ? UnitPackageAuthoredHelper.ParseQuantity(bc, source) : default,
-            BuildTime = root.TryGetProperty("buildTime", out var bt) ? UnitPackageAuthoredHelper.ParseQuantity(bt, source) : default,
+            BuildCost = ReadQuantity(root, "buildCost", id, provenance, source, diagnostics),
+            BuildTime = ReadQuantity(root, "buildTime", id, provenance, source, diagnostics),
             Scope = root.TryGetProperty("scope", out var sc) ? UnitPackageAuthoredHelper.ParseString(sc, source) : default,
             Prerequisites = root.TryGetProperty("prerequisites", out var pr) ? UnitPackageListOverrideDto.ParseContentIdList(pr, source, ContentKind.Upgrade) : ListOverride<ContentId>.Inherit,
         };
@@ -519,7 +522,8 @@ public static class UnitPackageRecordReader
         ContentId? parent,
         LegacyBinding? legacyBinding,
         IReadOnlyList<UnclassifiedField> unclassified,
-        ContentSource source)
+        ContentSource source,
+        List<ImportDiagnostic> diagnostics)
     {
         return new AbilityRecord(id, provenance)
         {
@@ -527,8 +531,8 @@ public static class UnitPackageRecordReader
             Legacy = legacyBinding,
             Unclassified = unclassified,
             Family = root.TryGetProperty("family", out var fm) ? UnitPackageAuthoredHelper.ParseString(fm, source) : default,
-            Range = root.TryGetProperty("range", out var rg) ? UnitPackageAuthoredHelper.ParseQuantity(rg, source) : default,
-            Cooldown = root.TryGetProperty("cooldown", out var cd) ? UnitPackageAuthoredHelper.ParseQuantity(cd, source) : default,
+            Range = ReadQuantity(root, "range", id, provenance, source, diagnostics),
+            Cooldown = ReadQuantity(root, "cooldown", id, provenance, source, diagnostics),
             Weapon = root.TryGetProperty("weapon", out var wp) ? UnitPackageAuthoredHelper.ParseContentId(wp, source, ContentKind.Weapon) : default,
             RequiredUpgrade = root.TryGetProperty("requiredUpgrade", out var ru) ? UnitPackageAuthoredHelper.ParseContentId(ru, source, ContentKind.Upgrade) : default,
         };
@@ -541,14 +545,15 @@ public static class UnitPackageRecordReader
         ContentId? parent,
         LegacyBinding? legacyBinding,
         IReadOnlyList<UnclassifiedField> unclassified,
-        ContentSource source)
+        ContentSource source,
+        List<ImportDiagnostic> diagnostics)
     {
         return new ProjectileRecord(id, provenance)
         {
             Parent = parent,
             Legacy = legacyBinding,
             Unclassified = unclassified,
-            Speed = root.TryGetProperty("speed", out var sp) ? UnitPackageAuthoredHelper.ParseQuantity(sp, source) : default,
+            Speed = ReadQuantity(root, "speed", id, provenance, source, diagnostics),
             Visual = root.TryGetProperty("visual", out var vs) ? UnitPackageAuthoredHelper.ParseContentId(vs, source, ContentKind.VisualState) : default,
         };
     }
@@ -580,5 +585,34 @@ public static class UnitPackageRecordReader
             ModelKey = root.TryGetProperty("modelKey", out var mk) ? UnitPackageAuthoredHelper.ParseString(mk, source) : default,
             StateAnimations = animations,
         };
+    }
+
+    private static Authored<Quantity> ReadQuantity(
+        JsonElement root,
+        string propertyName,
+        ContentId recordId,
+        Provenance provenance,
+        ContentSource source,
+        List<ImportDiagnostic> diagnostics)
+    {
+        if (!root.TryGetProperty(propertyName, out var prop))
+        {
+            return default;
+        }
+
+        var authored = UnitPackageAuthoredHelper.ParseQuantity(prop, source, out var error);
+
+        if (error is not null && !error.StartsWith("Quantity unit invalid:", StringComparison.Ordinal))
+        {
+            diagnostics.Add(new ImportDiagnostic(
+                ImportDiagnosticSeverity.Error,
+                ImportStage.Read,
+                UnitPackageDiagnosticCodes.PayloadInvalid,
+                $"Record '{recordId}' field '{propertyName}' quantity invalid: {error}",
+                recordId,
+                provenance));
+        }
+
+        return authored;
     }
 }

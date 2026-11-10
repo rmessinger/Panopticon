@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Panopticon.Content.Importing.Units.Packages;
@@ -21,10 +22,34 @@ public static class UnitPackageQuantityDto
             return false;
         }
 
-        if (!element.TryGetProperty("value", out var valueProp) || !valueProp.TryGetDouble(out var value) || !double.IsFinite(value))
+        if (!element.TryGetProperty("value", out var valueProp))
         {
-            reason = "Quantity is missing a finite numeric 'value'.";
+            reason = $"Quantity 'value' must be a finite number or numeric string, got {JsonValueKind.Undefined}.";
             return false;
+        }
+
+        if (valueProp.ValueKind is not (JsonValueKind.Number or JsonValueKind.String))
+        {
+            reason = $"Quantity 'value' must be a finite number or numeric string, got {valueProp.ValueKind}.";
+            return false;
+        }
+
+        double value;
+        if (valueProp.ValueKind == JsonValueKind.Number)
+        {
+            if (!valueProp.TryGetDouble(out value) || !double.IsFinite(value))
+            {
+                reason = "Quantity is missing a finite numeric 'value'.";
+                return false;
+            }
+        }
+        else
+        {
+            if (!double.TryParse(valueProp.GetString(), CultureInfo.InvariantCulture, out value) || !double.IsFinite(value))
+            {
+                reason = "Quantity is missing a finite numeric 'value'.";
+                return false;
+            }
         }
 
         if (!element.TryGetProperty("unit", out var unitProp))

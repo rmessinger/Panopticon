@@ -128,7 +128,7 @@ public static class RoundTripValidator
             allowProvenanceAllowlist: true);
 
         findings.AddRange(verification.Diagnostics.Select(RoundTripFailureClassifier.ForUnit));
-        findings.AddRange(DiagnosticSetFindings(expectedResolution.Diagnostics, reloadedSet.Diagnostics));
+        findings.AddRange(DiagnosticSetFindings(expectedResolution.Diagnostics, reloadedResolution.Diagnostics));
 
         if (expectedResolution.Succeeded && reloadedResolution.Succeeded)
         {

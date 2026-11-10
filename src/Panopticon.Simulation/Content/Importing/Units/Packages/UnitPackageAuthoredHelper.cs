@@ -10,27 +10,46 @@ public static class UnitPackageAuthoredHelper
 {
     public static Authored<Quantity> ParseQuantity(JsonElement element, ContentSource defaultSource)
     {
+        return ParseQuantity(element, defaultSource, out _);
+    }
+
+    public static Authored<Quantity> ParseQuantity(
+        JsonElement element,
+        ContentSource defaultSource,
+        out string? error)
+    {
+        error = null;
+
         if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
         {
             return Authored<Quantity>.Omitted;
         }
 
-        if (element.ValueKind == JsonValueKind.Object)
+        if (element.ValueKind != JsonValueKind.Object)
         {
-            if (element.TryGetProperty("value", out var vProp) && vProp.ValueKind == JsonValueKind.Object)
-            {
-                if (UnitPackageQuantityDto.TryParse(vProp, out var qInner, out _))
-                {
-                    return WithOrigin(element, defaultSource, Authored.Of(qInner.Value));
-                }
-            }
-
-            if (UnitPackageQuantityDto.TryParse(element, out var q, out _))
-            {
-                return Authored.Of(q.Value);
-            }
+            error = $"Expected JSON object for quantity, got {element.ValueKind}.";
+            return Authored<Quantity>.Omitted;
         }
 
+        if (!element.TryGetProperty("unit", out _) &&
+            element.TryGetProperty("value", out var vProp) &&
+            vProp.ValueKind == JsonValueKind.Object)
+        {
+            if (UnitPackageQuantityDto.TryParse(vProp, out var qInner, out var innerReason))
+            {
+                return WithOrigin(element, defaultSource, Authored.Of(qInner.Value));
+            }
+
+            error = innerReason;
+            return Authored<Quantity>.Omitted;
+        }
+
+        if (UnitPackageQuantityDto.TryParse(element, out var q, out var reason))
+        {
+            return Authored.Of(q.Value);
+        }
+
+        error = reason;
         return Authored<Quantity>.Omitted;
     }
 
