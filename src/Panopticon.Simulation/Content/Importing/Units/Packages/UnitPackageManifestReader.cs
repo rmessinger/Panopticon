@@ -19,6 +19,7 @@ public static class UnitPackageManifestReader
         "records",
         "retainedPayloads",
         "provenance",
+        "overrides",
     };
 
     public static (UnitPackageManifest? Manifest, IReadOnlyList<ImportDiagnostic> Diagnostics) ParseAndValidate(string json)
@@ -373,6 +374,38 @@ public static class UnitPackageManifestReader
                 pkgProvenance = new UnitPackageProvenance(srcId ?? string.Empty, fPath ?? string.Empty, line, layer);
             }
 
+            var overridesList = new List<ContentId>();
+            var sourceObj = sourceIdentity is not null ? new ContentSource(sourceIdentity.Id, sourceIdentity.CaseSensitiveNames) : ContentSource.Generals;
+
+            if (root.TryGetProperty("overrides", out var overridesProp) && overridesProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var elem in overridesProp.EnumerateArray())
+                {
+                    if (elem.ValueKind == JsonValueKind.String)
+                    {
+                        var name = elem.GetString();
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            overridesList.Add(new ContentId(sourceObj, ContentKind.Unit, name));
+                        }
+                    }
+                    else if (elem.ValueKind == JsonValueKind.Object)
+                    {
+                        var name = elem.TryGetProperty("name", out var nProp) ? nProp.GetString() : null;
+                        var kind = ContentKind.Unit;
+                        if (elem.TryGetProperty("kind", out var kProp) && StrictEnumParser.TryParse<ContentKind>(kProp, out var parsedKind, out _))
+                        {
+                            kind = parsedKind.Value;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            overridesList.Add(new ContentId(sourceObj, kind, name));
+                        }
+                    }
+                }
+            }
+
             var manifest = new UnitPackageManifest(
                 containerKind,
                 schemaVersion,
@@ -381,7 +414,8 @@ public static class UnitPackageManifestReader
                 recordsList,
                 retainedList,
                 pkgProvenance,
-                unknownMembers);
+                unknownMembers,
+                overridesList);
 
             return (manifest, diagnostics);
         }

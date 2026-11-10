@@ -1615,7 +1615,7 @@ complete H2a group merges. Each item corresponds to one card.
 - [x] H6-2 WorldBuilder package edit round trip with capture evidence (`WI-H6-02`).
   - AC: save-reopen state equals edited state for heights, objects, and companions; headless
     `--screenshot` extended to accept package directories; capture evidence recorded.
-- [ ] H6-3 Staged pack loading through H4 adapter and AssetStore scopes (`WI-H6-03`).
+- [x] H6-3 Staged pack loading through H4 adapter and AssetStore scopes (`WI-H6-03`).
   - AC: pack definitions resolve by name alongside built-in content; reverse-order unload
     restores prior state; failed pack publishes nothing and leaves ScopeDepth unchanged.
 - [ ] H6-4 INI edit and reload preservation check (`WI-H6-04`).

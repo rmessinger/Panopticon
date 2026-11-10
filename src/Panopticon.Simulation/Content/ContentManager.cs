@@ -1,8 +1,11 @@
 #nullable enable annotations
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Generals;
+using Panopticon.Content.Importing.Units.Materialization;
+using Panopticon.Content.Importing.Units.Packages;
 using Panopticon.Content.Translation;
 using Panopticon.Data.Ini;
 using Panopticon.Diagnostics;
@@ -180,4 +183,32 @@ public sealed class ContentManager : DisposableBase
     }
 
     internal FileSystemEntry GetScriptEntry(string scriptPath) => FileSystem.GetFile(scriptPath);
+
+    /// <summary>
+    /// Loads a staged H4 unit pack from a loose pack directory into new <see cref="AssetStore"/> scopes.
+    /// </summary>
+    public StagedPackLoadResult LoadUnitPack(
+        string packDirectory,
+        IReadOnlyCollection<ContentId>? overrides = null,
+        IReadOnlyCollection<string>? rootNames = null,
+        IUnitVisualInstaller? visualInstaller = null)
+    {
+        var reader = new StagedPackReader(packDirectory);
+        return reader.LoadAndPublish(
+            _game.AssetStore,
+            _game.SageGame,
+            null,
+            visualInstaller,
+            overrides,
+            rootNames);
+    }
+
+    /// <summary>
+    /// Unloads a previously loaded staged H4 unit pack in reverse publication order.
+    /// </summary>
+    public void UnloadUnitPack(StagedPackPublication publication, IEnumerable<ObjectDefinition>? liveDefinitions = null)
+    {
+        var publisher = new UnitContentPublisher(_game.AssetStore);
+        publication.Unload(publisher, liveDefinitions);
+    }
 }
