@@ -22,7 +22,9 @@ B4a implementation cards therefore call out the A5-6 checklist item where it aff
 - Original-engine `.map` write compatibility is not required for large maps. Reading legacy maps remains
   useful, but large-map authoring targets the H2/H3 path.
 - B4a-2 undo uses region deltas: a rectangle plus before and after arrays for each edited layer.
-- B4a-4 terrain LOD uses CDLOD: quadtree selection with continuous morph between levels.
+- B4a-4 terrain LOD uses CDLOD: quadtree selection with a continuous `MorphFactor` per node. The first
+  integration uses CPU edge stitching at weight 1 plus banded CPU morph for interior vertices, per the
+  [WI-B4a-07 design](#cdlod-streaming-design-wi-b4a-07).
 - B4a-5 owns the runtime chunk store: chunk residency, paging, dirty tracking, and runtime access.
   H3 owns on-disk chunk encoding.
 - The proposed runtime chunk layout matches B4b §5.1a: 128 lattice intervals per chunk, 129 lattice
@@ -343,6 +345,79 @@ Stored heights hold 4,056 x 17,161 = 69,605,016 samples. The unique lattice for 
 9,985 x 6,657 = 66,470,145 points, so apron and shared-edge duplication add about 4.7 percent. The whole
 Western Front is a later capacity problem and must page by region rather than relying on full residency.
 
+## CDLOD streaming design (WI-B4a-07)
+
+Design for B4a-4. WI-B4a-08 implements pure selection, and WI-B4a-09 implements patch residency inside `Terrain`. The names under [Planned types](#planned-types-binding-for-wi-b4a-08-and-wi-b4a-09) bind both.
+
+### Units
+
+| Unit | Size | Role | Source |
+|---|---|---|---|
+| Renderer patch | 16 intervals, 17 by 17 samples | One vertex buffer and one draw | `Terrain.PatchSize` (`Terrain.cs:62`), `CreatePatches` (`Terrain.cs:352-396`) |
+| Chunk read unit | 128 intervals, 129 core samples plus apron | One store read and one residency entry | [Chunk contract](#chunk-contract-proposed) |
+
+One chunk covers 8 by 8 level-0 patches. Selection and GPU residency count patches. Store reads, dirty state, and eviction count chunks.
+
+### Geometry contract
+
+- Node `(X, Y, Level)` covers `16 * 2^Level` intervals per axis from origin lattice index `(16 * 2^Level * X, 16 * 2^Level * Y)`. Level 0 is one renderer patch.
+- Every node has 17 by 17 vertices. Vertex `(i, k)` samples lattice index `min(origin + (i, k) * 2^Level, last)`, where `last` is `HeightMap.Width - 1` or `HeightMap.Height - 1` (`Terrain.cs:356-381`). A clipped node repeats its last sample, giving zero-area triangles, so all nodes share the index buffer cached by width and height (`TerrainPatch.cs:38-41`, `TerrainPatchIndexBufferCache.cs:16`).
+- Position uses the `HeightMap.GetPosition` mapping (`HeightMap.cs:126-129`), with height from `ITerrainLatticeSampler`. UV stays the sample's own lattice coordinate (`TerrainPatch.cs:83`), so tile-data lookups do not change with level or morph.
+- Normal uses full-resolution heights and the quad set of `HeightMap.CalculateNormal` (`HeightMap.cs:235-264`), so a sample's normal is the same at every level. It reads one sample past the node on each side, supplied by the chunk apron or by the map-edge rule (`HeightMap.cs:248`, [Border and apron interactions](#border-and-apron-interactions)).
+- Edge stitching: on an edge whose neighbour is one level coarser, the fine node's edge vertices take the neighbour's rendered positions. Even edge vertex `2j` takes rendered coarse vertex `j`. Odd edge vertex `2j + 1` takes the midpoint of rendered coarse vertices `j` and `j + 1`, interpolated by lattice coordinate at a clipped end. "Rendered" includes the neighbour's own morph. When the neighbour is unmorphed, even vertices equal their own samples because both levels sample the same heights.
+- Stitch weight on these edges is 1 regardless of the node morph factor. The fine edge then lies exactly on the coarse edge polyline, which is the no-crack guarantee that the geometry tests assert. A partial weight would leave a gap of `(1 - morph)` times the odd-vertex offset. `MorphFactor` applies to interior vertices only.
+- Morph: `MorphFactor` in [0, 1] is 0 at the node's own geometry and 1 at parent spacing. An interior vertex odd in x moves to the midpoint of its even x neighbours, likewise for y, and a vertex odd in both becomes the mean of its four even corners. The displacement is scaled by `MorphFactor`. Stitched edge vertices are excluded. Selection output carries the continuous value; `TerrainPatchStreamer` quantizes it into rebuild bands in WI-B4a-09, which also defines the band count.
+- Restricted quadtree: adjacent selected nodes differ by at most one level.
+
+### Selection (WI-B4a-08)
+
+- Inputs: camera position, `BoundingFrustum` (`Camera.cs:64`), pixel error threshold, optional previous selection, and node capacity.
+- `ICdlodErrorProvider` returns a node's minimum and maximum height over its footprint, read on demand for each visited node. Screen error is that height range scaled by distance, a conservative bound. Selection never warms the whole map and never scans the resident store at full resolution.
+- A resident `HeightMap` may serve as the provider for tests and small maps. Its whole-grid cost is listed under [Residual costs](#residual-whole-grid-costs-wi-b4a-09-does-not-solve).
+- Split when screen error exceeds the split threshold. Merge when error falls below the merge threshold. The split threshold is strictly greater than the merge threshold. With no previous selection, both equal the pixel threshold. With a previous selection, a previously selected leaf splits only above the split threshold, and a node whose descendants were selected stays split unless its error is below the merge threshold.
+- Splits are transactions. Splitting one node into four children adds three nodes, and any balancing split required by the one-level rule belongs to the same transaction. A transaction that would exceed capacity is rejected whole. Candidates are visited by descending screen error, ties broken by `(Level, Y, X)`.
+- Coverage: the selection is always a cut of the quadtree. A visible node leaves the selection only by splitting into children or merging into its parent, so capacity stops refinement without any visible region losing coverage. Culled nodes are absent.
+- Output is sorted by `(Level, Y, X)`. Each entry carries `MorphFactor` and `CdlodEdges` flags for neighbours one level coarser. A capacity below the root node count is rejected at construction.
+
+### Planned types (binding for WI-B4a-08 and WI-B4a-09)
+
+| Type | Shape | Notes |
+|---|---|---|
+| `ICdlodErrorProvider` | `GetHeightRange(CdlodNode node)` returns min and max height | On demand, per node |
+| `CdlodNode` | `int X`, `int Y`, `int Level`, `Rectangle ClippedExtent` | Identity is `(X, Y, Level)`; extent in lattice samples |
+| `CdlodSelection` | Ordered entries of `CdlodNode`, `MorphFactor`, `CdlodEdges` | Sorted output of selection |
+| `CdlodEdges` | Flags: north, east, south, west | Set when the neighbour across that edge is one level coarser |
+| `CdlodQuadtree` | Pure selection; no references to `Terrain`, `TerrainPatch`, graphics, or materials | WI-B4a-08 |
+| `ITerrainLatticeSampler` | `float GetHeight(int latticeX, int latticeY)` | Resident adapter over `HeightMap.GetHeight(int, int)` (`HeightMap.cs:32`); chunk adapter over `RuntimeTerrainChunkStore.GetHeight` (`RuntimeTerrainChunkStore.cs:130`) |
+| `TerrainPatchStreamer` | GPU residency inside `Terrain`, keyed by `(CdlodNode, morph band, edge flags)` | WI-B4a-09 |
+
+### Residency and capacity (WI-B4a-09)
+
+- CPU: the chunk adapter reads one node at a time through `GetChunk` (`RuntimeTerrainChunkStore.cs:55`). It does not call `LoadRegion` over visible bounds, which throws when the region exceeds `MaxResidentChunks` (`RuntimeTerrainChunkStore.cs:79-85`).
+- GPU vertex memory: 289 vertices of 32 bytes (`TerrainShaderResources.cs:85-87`), so 9,248 bytes per resident node (arithmetic). Capacity N bounds vertex buffers to `N * 9,248` bytes; 4,096 nodes is 36.1 MiB. The full-detail set at 4096 playable is 66,049 patches, or 582.5 MiB of vertex buffers (arithmetic). Capacity bounds GPU vertex memory; map size does not.
+- Release: a patch leaves GPU residency in the update that drops its node from the selection.
+- Rebuild: a node rebuilds when its key `(level, morph band, edge flags)` changes, or when a coarser neighbour's morph band changes the rendered positions on a stitched edge. One band change therefore rebuilds at most eight finer neighbours, two per edge.
+- Edits: editor height edits reach the streamer through the bounded `OnHeightMapChanged(bounds)` path (`Terrain.cs:313-334`). WI-B4a-09 extends that path to mark intersecting store chunks dirty (`RuntimeTerrainChunkStore.cs:177-191`, `:363`), rebuild nodes whose clipped extent intersects the bounds at every resident level, and invalidate cached height ranges for their ancestors. Dirty chunks are never evicted (`RuntimeTerrainChunkStore.cs:203-218`, `:242`).
+
+### Residual whole-grid costs (WI-B4a-09 does not solve)
+
+WI-B4a-09 streams patches only. The following stay whole-grid:
+
+| Cost | 4096 playable | Western Front extent | Source |
+|---|---|---|---|
+| Tile-data texture | 257.50 MiB | 1,014.00 MiB | `Terrain.cs:398-452`, allocation `:403`; [Memory estimates](#memory-estimates) |
+| `HeightMap.Normals`, 12 bytes per sample | 193.13 MiB | 772.43 MiB | `HeightMap.cs:168-192` |
+| Resident `Elevations`, 2 bytes per sample | 32.20 MiB (arithmetic) | 126.78 MiB | `HeightMapData.cs:30`, `Game.cs:829`, `:850`, `:865` |
+| `Navigation` graph and `PartitionCellManager` cells | not measured (C5) | not measured | `Scene3D.cs:322-324`, `Navigation.cs:33,56` |
+
+Further whole-grid couplings: `Scene3D` builds `Terrain` and `Navigation` from the whole `HeightMap` (`Scene3D.cs:319`, `:322-324`), the decal renderer receives the whole `HeightMap` (`Terrain.cs:161`), and `Terrain.Intersect` scans resident patches only (`Terrain.cs:726-733`), so WI-B4a-09 must route picks through the selection.
+
+B4a closeout cannot claim whole-world memory boundedness from patch streaming alone. Tile-data texture, normals, and resident logic heights need region-bounded forms, which are outside WI-B4a-09. No H3 format expansion is part of WI-B4a-09.
+
+### Editor preview seam (group 14)
+
+`LoadMapCore` admits a map only when `ContentManager.GetMapEntry` resolves it (`GameViewportRenderer.cs:276`) and refuses it otherwise (`:284-286`). Minimal seam: also admit a directory package that `Game.IsDirectoryPackage` accepts (`Game.cs:906-916`), then call `StartSinglePlayerGame(mapPath)` unchanged. The runtime branch already loads such a package with no entry (`Game.cs:816`, `:837-841`). Legacy `.map` files outside the installation stay refused until saved as a package, or until a composite file system (`src/Panopticon.IO/CompositeFileSystem.cs:3`) layered over the installation is exposed through the user data file system that `GetMapEntry` checks first (`ContentManager.cs:173-179`). Neither route builds `Scene3D` ad hoc, which the comment at `GameViewportRenderer.cs:272-275` prohibits. The editor's package write result is discarded (`EditorMap.cs:108`), so the seam checks it before reporting a load.
+
 ## Sub-phases
 
 | Phase | Goal | Status |
@@ -350,7 +425,7 @@ Western Front is a later capacity problem and must page by region rather than re
 | B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
 | B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Height brush strokes (WI-B4a-04) and tile paint strokes (WI-B4a-05) use region deltas; mesh mold pushes per stamp (R13 open); `BlendLayerEdit` covers Blends, Impassability, and Buildability with no UI tool; other `BlendTileData` arrays not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
 | B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Presets, 16-bit default for large presets, and resident memory estimate in place ([WI-B4a-06](#wizard-presets-wi-b4a-06)); package round-trip of 16-bit elevation not covered |
-| B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
+| B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Design in [CDLOD streaming design](#cdlod-streaming-design-wi-b4a-07); implementation not started |
 | B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |
 | B4a-6. Round-trip and play validation | Validate large maps through WorldBuilder save, reload, engine load, and play. | Not started |
 | B4a-7. Large-population scenario authoring | Scale object placement, selection, multi-object edit/undo, and editor rendering for large populations. | Not started |
@@ -452,10 +527,13 @@ classDiagram
     +bool IsResident
     +bool IsDirty
   }
-  class CdlodTerrainStreamer {
+  class CdlodQuadtree {
     <<B4a-4>>
     +Select(camera) CdlodSelection
-    +BuildVisibleMeshes()
+  }
+  class TerrainPatchStreamer {
+    <<B4a-4>>
+    +Apply(selection)
   }
   class MapPackage {
     <<H3>>
@@ -474,8 +552,8 @@ classDiagram
   RegionDeltaEdit --> BlendTileData
   RegionDeltaEdit --> ObjectsList
   RuntimeTerrainChunkStore --> TerrainChunk
-  CdlodTerrainStreamer --> RuntimeTerrainChunkStore
-  CdlodTerrainStreamer --> TerrainPatch
+  TerrainPatchStreamer --> CdlodQuadtree
+  TerrainPatchStreamer --> TerrainPatch
   MapPackage ..> RuntimeTerrainChunkStore : serialized by H3
 ```
 
@@ -486,7 +564,7 @@ sequenceDiagram
   participant E as Engine load
   participant H2 as Map interchange
   participant Store as RuntimeTerrainChunkStore
-  participant Streamer as CdlodTerrainStreamer
+  participant Streamer as TerrainPatchStreamer
   participant Terrain as Terrain
   participant Camera as Camera
 
@@ -497,7 +575,7 @@ sequenceDiagram
     Camera->>Streamer: camera position and view range
     Streamer->>Store: LoadRegion(visible chunk bounds)
     Store-->>Streamer: resident chunks
-    Streamer->>Streamer: quadtree CDLOD selection and morph factors
+    Streamer->>Streamer: CdlodQuadtree selection and morph factors
     Streamer->>Terrain: build, update, or free visible meshes
   end
 ```
