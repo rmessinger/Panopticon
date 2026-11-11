@@ -82,6 +82,103 @@ B4a implementation cards therefore call out the A5-6 checklist item where it aff
 | C5 | Spatial and navigation structures size eagerly to full grid | `PartitionCellManager`, `Navigation` | Allocation and per-tick cost grow with map area. |
 | C6 | Legacy `.map` is the only save path in WorldBuilder | `EditorMap.Save`, `MapFile.WriteTo` | Chunked storage needs H2/H3 package output. |
 
+## Baseline audit (WI-B4a-02)
+
+Run context: Intel Core Ultra 7 265K, 20 cores, 125 GiB RAM, Linux. .NET SDK 10.0.109, runtime 10.0.9.
+Measured 2026-11-11 on commit `99f382642`, Release build.
+
+Probe method: a temporary xUnit fact, deleted after measurement and not committed, runs one playable size
+per `dotnet test` process. Each run calls `NewMapFactory.Create`, times one `HeightBrushTool` Mound stroke
+at the map centre (radius 10, strength 1, delta 100), calls `UndoStack.Undo`, then saves and reloads through
+the legacy and package paths. Phases use `Stopwatch` and `GC.GetAllocatedBytesForCurrentThread` deltas.
+Stop rules: 300 s process timeout, any phase above 60 s, an error, or no result file. Raw JSON and logs are
+kept outside the repository.
+
+Lattice is playable + 13 per axis (`MapFile.CreateEmpty`, `MapFile.cs:342-343`). Times are one sample per size.
+
+| Playable | Lattice | createMs | heightMapCtorMs | brushStrokeMs | undoMs | saveLegacyMs | loadLegacyMs | savePackageMs | loadPackageMs |
+|---|---|---|---|---|---|---|---|---|---|
+| 128 | 141 | 15.5 | 1.2 | 1.5 | 0.16 | 14.3 | 15.7 | 73.2 | 15.7 |
+| 256 | 269 | 14.7 | 3.9 | 1.5 | 0.14 | 16.4 | 22.5 | 74.6 | 30.9 |
+| 512 | 525 | 26.0 | 14.3 | 1.8 | 0.15 | 29.5 | 21.0 | 95.8 | 58.6 |
+| 1024 | 1037 | 36.8 | 24.5 | 3.0 | 0.13 | 132.5 | 50.7 | 219.8 | 104.7 |
+| 2048 | 2061 | 142.0 | 94.2 | 8.0 | 0.14 | 508.1 | 193.0 | 560.3 | 356.8 |
+| 4096 | 4109 | 469.4 | 375.5 | 21.3 | 0.14 | 2024.4 | 663.9 | 1975.7 | 1432.3 |
+
+| Playable | Working set MiB | createMiB | heightMapCtorMiB | brushMiB | legacy file MiB | package MiB | Render patches | Tile texture MiB |
+|---|---|---|---|---|---|---|---|---|
+| 128 | 97.4 | 0.80 | 0.22 | 0.08 | 0.18 | 0.24 | 81 | 0.30 |
+| 256 | 98.2 | 2.90 | 0.82 | 0.28 | 0.63 | 0.86 | 289 | 1.10 |
+| 512 | 100.4 | 11.04 | 3.14 | 1.06 | 2.40 | 3.26 | 1,089 | 4.19 |
+| 1024 | 111.0 | 43.07 | 12.28 | 4.11 | 9.36 | 12.67 | 4,225 | 16.38 |
+| 2048 | 153.3 | 170.10 | 48.56 | 16.21 | 36.97 | 50.00 | 16,641 | 64.75 |
+| 4096 | 323.0 | 676.19 | 193.13 | 64.41 | 146.93 | 198.67 | 66,049 | 257.50 |
+
+Working set is the test host process `WorkingSet64` after create. Render patches and tile texture are
+arithmetic, not GPU measurements. Patches use `ceil((lattice - 2) / 16)` per axis because `CreatePatches`
+subtracts one from `HeightMap.Width` (`Terrain.cs:356-357`, `HeightMap.cs:176`). The texture uses
+`(lattice - 1)^2 x 16` bytes (`Terrain.cs:403`).
+
+Growth from 2048 to 4096 (area x3.97): createMs x3.31, heightMapCtorMs x3.99, brushStrokeMs x2.65,
+saveLegacyMs x3.98, loadLegacyMs x3.44, savePackageMs x3.53, loadPackageMs x4.01. Allocation series grow
+x3.97 to x3.98. At 4096, create allocates 42.0 bytes per lattice sample, the `HeightMap` constructor
+12.0 (`Normals`, `HeightMap.cs:179`), a stroke 4.0 (two full `ushort` clones), the legacy file 9.1, and the
+package 12.3.
+
+### First failure
+
+All six sizes completed with no error, no timeout, no phase above 60 s, and no process death. No size
+failure was observed, so no size or memory limit is claimed. The first failing constraint is C3, on the edit
+path, because undo does not restore the stroke at any size. The centre sample reads 10 before the stroke,
+110 after it, and 110 after `Undo` at every size from 128 to 4096. The legacy and package reloads also hold
+110, so the saved files contain the unrestored value.
+
+Cause: `OnPointerDown` applies the stroke in place (`HeightBrushTool.cs:49`). `OnPointerUp` then calls
+`HeightMapEdit.Capture` (`HeightBrushTool.cs:115-122`). Its before-snapshot is read after the grid has been
+mutated (`HeightMapEdit.cs:38-48`), and its apply action is a no-op (`HeightBrushTool.cs:118-121`). `Revert`
+therefore restores post-stroke values (`HeightMapEdit.cs:71-74`, `UndoRedoStack.cs:32`). The patchBefore and
+patchAfter arrays built at `HeightBrushTool.cs:102-111` are never read. The full-grid clones at
+`HeightBrushTool.cs:43` and `:87` make the stroke cost scale with map area: 64.41 MiB at 4096 for a
+radius-10 stroke. No source test in the tree undoes a `HeightBrushTool` stroke.
+
+| Constraint | Status at 4096 | Evidence |
+|---|---|---|
+| C1 | Measured growth, no failure | createMiB 676.19, heightMapCtorMiB 193.13 |
+| C2 | Not measured, arithmetic only | 66,049 patches and 257.50 MiB tile texture, built in the `Terrain` constructor (`Terrain.cs:163`, `352-396`, `398-452`) |
+| C3 | Fails: undo does not restore; cost scales with area | Two full clones per stroke (`HeightBrushTool.cs:43`, `:87`); the undo error at `:115-122` |
+| C4 | Open: the existing patch edit is defeated by capture order | `HeightMapEdit.cs:38-48`; the region-delta contract is WI-B4a-03 |
+| C5 | Not measured by the probe | `PartitionCellManager` and `Navigation` are not constructed |
+| C6 | Stale wording, package path exists | Package save and reload round-trip (`EditorMap.cs:106-111`, `148-153`); new maps default to legacy (`EditorMap.cs:44-50`); the package write result is discarded (`EditorMap.cs:108`) |
+
+### Resident renderer and chunk store
+
+Resident renderer: `Terrain` builds every patch and one whole-map tile texture in its constructor (C2).
+The editor's 3D preview loads only maps inside the game file system (`GameViewportRenderer.cs:276-287`), so
+a new map outside the installation has no preview at any size. The probe does not construct `Terrain`.
+
+Chunk store: this stack contains `RuntimeTerrainChunkStore` (`src/Panopticon.Simulation/Terrain/RuntimeTerrainChunkStore.cs:14`),
+which bounds resident chunks and never evicts dirty data. `LargeMapRoundTripTests` covers the bounded read
+path (`test/Panopticon.Simulation.Tests/Terrain/LargeMapRoundTripTests.cs:42`). The probe does not exercise
+the store, so its paging limits are not measured here. The statement under Chunk contract (proposed) that no
+store exists is stale for this stack.
+
+### A5-6 status
+
+The A5-6 checkbox is checked (`implementation-checklist.md:728`). The normal-size leg holds: at 128 and 256
+the author, save, and reload legs complete. `WorldBuilderRoundTripTests.SavedNewMap_StartsInEngine`
+(32 x 32 map, `CNC_GENERALS_PATH` set) passed: 1 passed, 0 failed, 0 skipped. The checked clause that undo/redo
+is proven by test does not hold for height strokes, because undo does not restore the centre at any size. This
+audit documents that gap for the functional-gap clause at `implementation-checklist.md:732-733`. The checkbox
+is not changed here. The fix belongs to WI-B4a-04 with the region-delta contract from WI-B4a-03.
+
+### Limitations
+
+- One run per size on a shared host. Timings are single wall-clock samples, not CI-grade.
+- Release build. Working set is the whole test host process, not an editor process.
+- One stroke at the map centre, radius 10. Undo runs before the saves, so the saved files hold the post-stroke state.
+- Not measured: `Terrain` construction, GPU memory, render cost, C5 structures, chunk-store paging, and engine load of any map larger than 32 x 32.
+- Growth beyond 4096 is not measured. No OOM or process death was observed.
+
 ## Chunk contract (proposed)
 
 B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract. The rationale is in
@@ -184,7 +281,7 @@ Western Front is a later capacity problem and must page by region rather than re
 
 | Phase | Goal | Status |
 |---|---|---|
-| B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Not started |
+| B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
 | B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Not started |
 | B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Not started |
 | B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
