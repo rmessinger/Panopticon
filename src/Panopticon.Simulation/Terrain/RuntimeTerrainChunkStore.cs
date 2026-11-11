@@ -17,6 +17,14 @@ public sealed class RuntimeTerrainChunkStore
 
     private const int ApronSamples = MapChunkGeometry.ApronSamplesPerSide;
 
+    // Stored arrays overlap only with the eight lattice-neighbour chunks.
+    private static readonly (int Dx, int Dy)[] NeighbourOffsets =
+    [
+        (-1, -1), (0, -1), (1, -1),
+        (-1, 0), (1, 0),
+        (-1, 1), (0, 1), (1, 1),
+    ];
+
     private readonly ITerrainChunkSource _source;
 
     private readonly Dictionary<ChunkKey, (TerrainChunkData Data, long LastAccess)> _resident = new();
@@ -54,6 +62,7 @@ public sealed class RuntimeTerrainChunkStore
 
         var loaded = _source.LoadChunk(key);
         MakeRoom(1, protectedKeys: null);
+        SynchronizeSeams(loaded);
         _resident[key] = (loaded, ++_accessCounter);
         return loaded;
     }
@@ -102,9 +111,17 @@ public sealed class RuntimeTerrainChunkStore
 
         foreach (var key in keys)
         {
-            var data = fetched.TryGetValue(key, out var loaded) ? loaded : _resident[key].Data;
-            _resident[key] = (data, ++_accessCounter);
-            result.Add(data);
+            if (fetched.TryGetValue(key, out var loaded))
+            {
+                SynchronizeSeams(loaded);
+                _resident[key] = (loaded, ++_accessCounter);
+                result.Add(loaded);
+                continue;
+            }
+
+            var resident = _resident[key].Data;
+            _resident[key] = (resident, ++_accessCounter);
+            result.Add(resident);
         }
 
         return result;
@@ -152,8 +169,8 @@ public sealed class RuntimeTerrainChunkStore
         var chunk = GetChunk(key);
         ArgumentOutOfRangeException.ThrowIfNegative(storedX);
         ArgumentOutOfRangeException.ThrowIfNegative(storedY);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(storedX, chunk.CoreWidth + (2 * ApronSamples));
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(storedY, chunk.CoreHeight + (2 * ApronSamples));
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(storedX, StoredExtentX(chunk));
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(storedY, StoredExtentY(chunk));
         return chunk.StoredHeights[StoredIndex(chunk, storedX, storedY)];
     }
 
@@ -164,7 +181,10 @@ public sealed class RuntimeTerrainChunkStore
 
         foreach (var entry in _resident.Values)
         {
-            WriteCoveredSample(entry.Data, latticeX, latticeY, value);
+            if (TryLocateStored(entry.Data, latticeX, latticeY, out var storedX, out var storedY))
+            {
+                WriteStoredCell(entry.Data, storedX, storedY, value);
+            }
         }
 
         owner.IsDirty = true;
@@ -238,17 +258,100 @@ public sealed class RuntimeTerrainChunkStore
         }
     }
 
-    private static void WriteCoveredSample(TerrainChunkData chunk, int latticeX, int latticeY, float value)
+    // Resident core wins, then the incoming core, then the first resident apron copy; neighbours follow NeighbourOffsets order.
+    private void SynchronizeSeams(TerrainChunkData incoming)
     {
-        var storedX = latticeX - ((chunk.Key.Cx * IntervalsPerChunkAxis) - ApronSamples);
-        var storedY = latticeY - ((chunk.Key.Cy * IntervalsPerChunkAxis) - ApronSamples);
+        var neighbours = ResidentNeighbours(incoming.Key);
 
-        if ((uint)storedX >= (uint)(chunk.CoreWidth + (2 * ApronSamples))
-            || (uint)storedY >= (uint)(chunk.CoreHeight + (2 * ApronSamples)))
+        if (neighbours.Count == 0)
         {
             return;
         }
 
+        var originX = (incoming.Key.Cx * IntervalsPerChunkAxis) - ApronSamples;
+        var originY = (incoming.Key.Cy * IntervalsPerChunkAxis) - ApronSamples;
+
+        for (var storedY = 0; storedY < StoredExtentY(incoming); storedY++)
+        {
+            for (var storedX = 0; storedX < StoredExtentX(incoming); storedX++)
+            {
+                var latticeX = originX + storedX;
+                var latticeY = originY + storedY;
+                var seamCovered = false;
+                float? residentCore = null;
+                float? residentApron = null;
+
+                foreach (var neighbour in neighbours)
+                {
+                    if (!TryLocateStored(neighbour, latticeX, latticeY, out var neighbourX, out var neighbourY))
+                    {
+                        continue;
+                    }
+
+                    seamCovered = true;
+                    var sample = neighbour.StoredHeights[StoredIndex(neighbour, neighbourX, neighbourY)];
+
+                    if (IsCore(neighbour, neighbourX, neighbourY))
+                    {
+                        residentCore ??= sample;
+                    }
+                    else
+                    {
+                        residentApron ??= sample;
+                    }
+                }
+
+                if (!seamCovered)
+                {
+                    continue;
+                }
+
+                var target = residentCore
+                    ?? (IsCore(incoming, storedX, storedY)
+                        ? incoming.StoredHeights[StoredIndex(incoming, storedX, storedY)]
+                        : residentApron!.Value);
+
+                WriteStoredCell(incoming, storedX, storedY, target);
+
+                foreach (var neighbour in neighbours)
+                {
+                    if (TryLocateStored(neighbour, latticeX, latticeY, out var neighbourX, out var neighbourY))
+                    {
+                        WriteStoredCell(neighbour, neighbourX, neighbourY, target);
+                    }
+                }
+            }
+        }
+    }
+
+    private List<TerrainChunkData> ResidentNeighbours(ChunkKey key)
+    {
+        var neighbours = new List<TerrainChunkData>(NeighbourOffsets.Length);
+
+        foreach (var (dx, dy) in NeighbourOffsets)
+        {
+            if (_resident.TryGetValue(new ChunkKey(key.Cx + dx, key.Cy + dy), out var entry))
+            {
+                neighbours.Add(entry.Data);
+            }
+        }
+
+        return neighbours;
+    }
+
+    private static bool TryLocateStored(TerrainChunkData chunk, int latticeX, int latticeY, out int storedX, out int storedY)
+    {
+        storedX = latticeX - ((chunk.Key.Cx * IntervalsPerChunkAxis) - ApronSamples);
+        storedY = latticeY - ((chunk.Key.Cy * IntervalsPerChunkAxis) - ApronSamples);
+        return (uint)storedX < (uint)StoredExtentX(chunk) && (uint)storedY < (uint)StoredExtentY(chunk);
+    }
+
+    private static bool IsCore(TerrainChunkData chunk, int storedX, int storedY) =>
+        storedX >= ApronSamples && storedX < ApronSamples + chunk.CoreWidth
+        && storedY >= ApronSamples && storedY < ApronSamples + chunk.CoreHeight;
+
+    private static void WriteStoredCell(TerrainChunkData chunk, int storedX, int storedY, float value)
+    {
         var index = StoredIndex(chunk, storedX, storedY);
 
         if (BitConverter.SingleToInt32Bits(chunk.StoredHeights[index]) == BitConverter.SingleToInt32Bits(value))
@@ -260,8 +363,12 @@ public sealed class RuntimeTerrainChunkStore
         chunk.IsDirty = true;
     }
 
+    private static int StoredExtentX(TerrainChunkData chunk) => chunk.CoreWidth + (2 * ApronSamples);
+
+    private static int StoredExtentY(TerrainChunkData chunk) => chunk.CoreHeight + (2 * ApronSamples);
+
     private static int StoredIndex(TerrainChunkData chunk, int storedX, int storedY) =>
-        (storedY * (chunk.CoreWidth + (2 * ApronSamples))) + storedX;
+        (storedY * StoredExtentX(chunk)) + storedX;
 
     private static ChunkKey[] SortedKeys(IEnumerable<ChunkKey> keys) =>
         keys.OrderBy(key => key.Cx).ThenBy(key => key.Cy).ToArray();
