@@ -218,7 +218,16 @@ public sealed class NewMapWizardPresetTests
     public void EstimateResidentBytes_MatchesLatticeCellsTimesPerCellBytes()
     {
         // Lattice (10 + 2 * 2 + 1) x (10 + 2 * 2 + 1) = 225 cells.
-        Assert.Equal(225L * 29, NewMapFactory.EstimateResidentBytes(10, 10, 2));
+        Assert.Equal(225L * 29, NewMapFactory.EstimateResidentBytes(10, 10, 2, use16BitElevation: false));
+        Assert.Equal(225L * 30, NewMapFactory.EstimateResidentBytes(10, 10, 2, use16BitElevation: true));
+    }
+
+    [Fact]
+    public void EstimateResidentBytes_SixteenBitGrowsEstimate()
+    {
+        var estimate8 = NewMapFactory.EstimateResidentBytes(200, 200, BorderWidth, use16BitElevation: false);
+        var estimate16 = NewMapFactory.EstimateResidentBytes(200, 200, BorderWidth, use16BitElevation: true);
+        Assert.True(estimate16 > estimate8);
     }
 
     [Fact]

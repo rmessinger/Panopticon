@@ -190,7 +190,7 @@ public sealed class NewMapWizardWindow : WbDialog
 
     private void ShowMemoryEstimate(NewMapParameters parameters)
     {
-        var bytes = NewMapFactory.EstimateResidentBytes(parameters.PlayableWidth, parameters.PlayableHeight, parameters.BorderWidth);
+        var bytes = NewMapFactory.EstimateResidentBytes(parameters.PlayableWidth, parameters.PlayableHeight, parameters.BorderWidth, parameters.Use16BitElevation);
         _memoryEstimate.Text = $"Estimated resident memory: {bytes / BytesPerMiB:N1} MiB (estimate)";
     }
 

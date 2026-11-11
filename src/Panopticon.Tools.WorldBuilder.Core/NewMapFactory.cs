@@ -46,10 +46,23 @@ public static class NewMapFactory
     public const int MinimumBorderWidth = 2;
 
     /// <summary>
-    /// Bytes per lattice sample allocated by a new map: elevations 2, Tiles 2, Blends, ThreeWayBlends and
-    /// CliffTextures 4 each, Impassability 1, HeightMap Normals 12.
+    /// Bytes per lattice sample allocated by a new map with 8-bit elevation: elevations 1, Tiles 2,
+    /// Blends, ThreeWayBlends and CliffTextures 4 each (12), Impassability 1, Buildability 1,
+    /// HeightMap Normals 12 (total 29).
     /// </summary>
-    public const long EstimatedBytesPerLatticeCell = 29;
+    public const long EstimatedBytesPerLatticeCell8Bit = 29;
+
+    /// <summary>
+    /// Bytes per lattice sample allocated by a new map with 16-bit elevation: elevations 2, Tiles 2,
+    /// Blends, ThreeWayBlends and CliffTextures 4 each (12), Impassability 1, Buildability 1,
+    /// HeightMap Normals 12 (total 30).
+    /// </summary>
+    public const long EstimatedBytesPerLatticeCell16Bit = 30;
+
+    /// <summary>
+    /// Default bytes per lattice sample (8-bit elevation).
+    /// </summary>
+    public const long EstimatedBytesPerLatticeCell = EstimatedBytesPerLatticeCell8Bit;
 
     public static IReadOnlyList<NewMapPreset> Presets { get; } =
     [
@@ -140,10 +153,11 @@ public static class NewMapFactory
     /// Estimate of the resident bytes a new map allocates for its lattice. Inputs are expected to have passed
     /// <see cref="TryValidate"/>.
     /// </summary>
-    public static long EstimateResidentBytes(int playableWidth, int playableHeight, int borderWidth)
+    public static long EstimateResidentBytes(int playableWidth, int playableHeight, int borderWidth, bool use16BitElevation = false)
     {
         var latticeCells = LatticeSide(playableWidth, borderWidth) * LatticeSide(playableHeight, borderWidth);
-        return latticeCells * EstimatedBytesPerLatticeCell;
+        var bytesPerCell = use16BitElevation ? EstimatedBytesPerLatticeCell16Bit : EstimatedBytesPerLatticeCell8Bit;
+        return latticeCells * bytesPerCell;
     }
 
     public static EditorMap Create(NewMapParameters p)
