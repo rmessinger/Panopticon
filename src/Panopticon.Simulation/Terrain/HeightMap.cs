@@ -6,7 +6,7 @@ using Panopticon.Mathematics;
 
 namespace Panopticon.Terrain;
 
-public sealed class HeightMap
+public sealed class HeightMap : ITerrainLatticeSampler
 {
     // Corresponds to MAP_XY_FACTOR in ZH
     public const int HorizontalScale = 10;

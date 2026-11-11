@@ -8,12 +8,14 @@ using Panopticon.Content.Loaders;
 using Panopticon.Data.Map;
 using Panopticon.Data.Tga;
 using Panopticon.Graphics;
+using Panopticon.Graphics.Cameras;
 using Panopticon.Graphics.Rendering.Water;
 using Panopticon.Graphics.Shaders;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Rendering;
+using Panopticon.Terrain.Cdlod;
 using Panopticon.Terrain.Decals;
 using Panopticon.Utilities;
 using Panopticon.Utilities.Extensions;
@@ -60,6 +62,17 @@ public sealed class Terrain : DisposableBase
     private readonly List<TerrainPatch> _patches = new();
 
     internal const int PatchSize = 17;
+
+    private const int StreamingPatchThreshold = 1024;
+    private const int StreamingNodeCapacity = 4096;
+    private const float StreamingErrorThresholdPixels = 2f;
+
+    private readonly bool _streaming;
+    private readonly CachedHeightRangeProvider _heightRangeProvider;
+    private readonly CdlodQuadtree _quadtree;
+    private readonly TerrainPatchStreamer _streamer;
+    private readonly Dictionary<CdlodNode, int> _streamedBands = new();
+    private CdlodSelection _streamedSelection;
 
     public readonly MapFile Map;
 
@@ -160,7 +173,34 @@ public sealed class Terrain : DisposableBase
 
         _decalRenderer = AddDisposable(new TerrainDecalRenderer(loadContext, heightMap, Decals, scene));
 
+        _streaming = RequiresStreaming(HeightMap);
+        if (_streaming)
+        {
+            _heightRangeProvider = new CachedHeightRangeProvider(HeightMap);
+            _quadtree = new CdlodQuadtree(
+                HeightMap.Width,
+                HeightMap.Height,
+                _heightRangeProvider,
+                StreamingNodeCapacity,
+                StreamingErrorThresholdPixels);
+            _streamer = AddDisposable(new TerrainPatchStreamer(CreateStreamedPatch, ReleaseStreamedPatch));
+        }
+
         OnHeightMapChanged();
+    }
+
+    public bool StreamingEnabled => _streaming;
+
+    public int StreamedPatchCount => _streaming ? _streamer.ResidentCount : 0;
+
+    public long StreamedVertexBytes => _streaming ? _streamer.ResidentVertexBytes : 0;
+
+    private static bool RequiresStreaming(HeightMap heightMap)
+    {
+        const int tilesPerPatch = PatchSize - 1;
+        var patchesX = ((long)heightMap.Width - 1 + tilesPerPatch - 1) / tilesPerPatch;
+        var patchesY = ((long)heightMap.Height - 1 + tilesPerPatch - 1) / tilesPerPatch;
+        return patchesX * patchesY > StreamingPatchThreshold;
     }
 
     /// <summary>
@@ -313,6 +353,14 @@ public sealed class Terrain : DisposableBase
     private void OnHeightMapChanged(in RectangleF bounds)
     {
         _decalRenderer?.Invalidate(bounds);
+        if (_streaming)
+        {
+            var latticeBounds = ToLatticeBounds(bounds);
+            _heightRangeProvider.Invalidate(latticeBounds);
+            _streamer.ForgetIntersecting(latticeBounds, HeightMap.Width, HeightMap.Height);
+            return;
+        }
+
         for (var i = 0; i < _patches.Count; i++)
         {
             var patch = _patches[i];
@@ -336,6 +384,14 @@ public sealed class Terrain : DisposableBase
     internal void OnHeightMapChanged()
     {
         _decalRenderer?.Invalidate();
+        if (_streaming)
+        {
+            _heightRangeProvider.Clear();
+            _streamer.Update(new CdlodSelection(Array.Empty<CdlodSelectedNode>()));
+            _streamedSelection = null;
+            return;
+        }
+
         foreach (var patch in _patches)
         {
             patch.Dispose();
@@ -393,6 +449,71 @@ public sealed class Terrain : DisposableBase
                 _patches.Add(patch);
             }
         }
+    }
+
+    private Rectangle ToLatticeBounds(in RectangleF worldBounds)
+    {
+        var border = (int)Map.HeightMapData.BorderWidth;
+        var scale = HeightMap.HorizontalScale;
+
+        var left = Math.Max(0, (int)MathF.Floor(worldBounds.Left / scale) + border - 1);
+        var top = Math.Max(0, (int)MathF.Floor(worldBounds.Top / scale) + border - 1);
+        var right = Math.Min(HeightMap.Width - 1, (int)MathF.Ceiling(worldBounds.Right / scale) + border + 1);
+        var bottom = Math.Min(HeightMap.Height - 1, (int)MathF.Ceiling(worldBounds.Bottom / scale) + border + 1);
+
+        return new Rectangle(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
+    }
+
+    private void UpdateStreamedPatches(Camera camera)
+    {
+        var border = (float)Map.HeightMapData.BorderWidth * HeightMap.HorizontalScale;
+
+        var cdlodCamera = new CdlodCamera(
+            camera.Position + new Vector3(border, border, 0),
+            new BoundingFrustum(Matrix4x4.CreateTranslation(-border, -border, 0) * camera.BoundingFrustum.Matrix),
+            0.5f * camera.ScreenSize.Y * camera.Projection.M22);
+
+        var selection = _quadtree.Select(cdlodCamera, _streamedSelection);
+        _streamedSelection = selection;
+
+        _streamedBands.Clear();
+        foreach (var item in selection.Nodes)
+        {
+            _streamedBands[item.Node] = TerrainPatchStreamer.QuantizeMorphBand(item.MorphFactor);
+        }
+
+        _streamer.Update(selection);
+    }
+
+    private TerrainPatch CreateStreamedPatch(CdlodSelectedNode selected, int band)
+    {
+        var geometry = TerrainPatchGeometry.Build(
+            HeightMap,
+            selected.Node,
+            TerrainPatchStreamer.QuantizeMorph(band),
+            selected.CoarserEdges,
+            edge => _streamedBands.TryGetValue(TerrainPatchGeometry.GetCoarseNeighbour(selected.Node, edge), out var neighbourBand)
+                ? TerrainPatchStreamer.QuantizeMorph(neighbourBand)
+                : (float?)null,
+            HeightMap);
+
+        var patch = new TerrainPatch(
+            geometry,
+            selected.Node.ClippedExtent(HeightMap.Width, HeightMap.Height),
+            _graphicsDevice,
+            _material);
+
+        _renderBucket.AddObject(patch);
+        _patches.Add(patch);
+
+        return patch;
+    }
+
+    private void ReleaseStreamedPatch(TerrainPatch patch)
+    {
+        _renderBucket.RemoveObject(patch);
+        _patches.Remove(patch);
+        patch.Dispose();
     }
 
     private static Texture CreateTileDataTexture(
@@ -752,7 +873,7 @@ public sealed class Terrain : DisposableBase
         return HeightMap.GetHeight(x, y);
     }
 
-    internal void Update(WaterSettings waterSettings, in TimeInterval time, GraphicsSettings settings)
+    internal void Update(WaterSettings waterSettings, in TimeInterval time, GraphicsSettings settings, Camera camera = null)
     {
         _decalRenderer.Update(settings);
         RadiusCursorDecals.Update(time);
@@ -762,5 +883,10 @@ public sealed class Terrain : DisposableBase
             : -1;
 
         _materialConstantsBuffer.Update(_graphicsDevice);
+
+        if (_streaming && camera != null)
+        {
+            UpdateStreamedPatches(camera);
+        }
     }
 }
