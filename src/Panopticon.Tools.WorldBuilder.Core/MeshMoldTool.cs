@@ -93,7 +93,6 @@ public sealed class MeshMoldTool : IEditorTool
             },
             "Mesh Mold");
 
-        edit.Apply();
         map.UndoStack.Push(edit);
     }
 }
