@@ -61,10 +61,10 @@ public sealed class SpillPaintTool : IEditorTool
         // BFS flood fill — capped at 10000 tiles to avoid freezing
         const int maxTiles = 10_000;
         var queue = new Queue<(int, int)>();
-        var visited = new HashSet<(int, int)>();
+        var beforeByCell = new Dictionary<(int X, int Y), ushort>();
         queue.Enqueue((startX, startY));
 
-        while (queue.Count > 0 && visited.Count < maxTiles)
+        while (queue.Count > 0 && beforeByCell.Count < maxTiles)
         {
             var (cx, cy) = queue.Dequeue();
             if (cx < 0 || cy < 0 || cx >= w || cy >= h)
@@ -72,7 +72,7 @@ public sealed class SpillPaintTool : IEditorTool
                 continue;
             }
 
-            if (visited.Contains((cx, cy)))
+            if (beforeByCell.ContainsKey((cx, cy)))
             {
                 continue;
             }
@@ -82,14 +82,19 @@ public sealed class SpillPaintTool : IEditorTool
                 continue;
             }
 
-            visited.Add((cx, cy));
-            var edit = BlendTileEdit.CreateSingle(blendTileData, cx, cy, SelectedTileIndex);
-            map.UndoStack.Push(edit);
+            beforeByCell.Add((cx, cy), targetTile);
+            tiles[cx, cy] = SelectedTileIndex;
 
             queue.Enqueue((cx - 1, cy));
             queue.Enqueue((cx + 1, cy));
             queue.Enqueue((cx, cy - 1));
             queue.Enqueue((cx, cy + 1));
+        }
+
+        var edit = BlendTileEdit.FromTouchedCells(blendTileData, beforeByCell, "Paint Tile");
+        if (edit is not null)
+        {
+            map.UndoStack.Push(edit);
         }
     }
 }
