@@ -846,6 +846,11 @@ public sealed class Terrain : DisposableBase
 
     public Vector3? Intersect(Ray ray)
     {
+        if (_streaming)
+        {
+            return TerrainHeightfieldRay.Intersect(HeightMap, ray);
+        }
+
         float? closestIntersection = null;
 
         foreach (var patch in _patches)
