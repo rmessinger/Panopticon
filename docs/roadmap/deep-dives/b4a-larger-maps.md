@@ -349,7 +349,7 @@ Western Front is a later capacity problem and must page by region rather than re
 |---|---|---|
 | B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
 | B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Height brush strokes (WI-B4a-04) and tile paint strokes (WI-B4a-05) use region deltas; mesh mold pushes per stamp (R13 open); `BlendLayerEdit` covers Blends, Impassability, and Buildability with no UI tool; other `BlendTileData` arrays not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
-| B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Not started |
+| B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Presets, 16-bit default for large presets, and resident memory estimate in place ([WI-B4a-06](#wizard-presets-wi-b4a-06)); package round-trip of 16-bit elevation not covered |
 | B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
 | B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |
 | B4a-6. Round-trip and play validation | Validate large maps through WorldBuilder save, reload, engine load, and play. | Not started |
@@ -370,6 +370,10 @@ Western Front is a later capacity problem and must page by region rather than re
 | [`WI-B4a-09`](https://projects.reid-corp.com/work_packages/359) | Stream visible terrain patches | Draft | `WI-B4a-07` |
 | [`WI-B4a-10`](https://projects.reid-corp.com/work_packages/360) | Implement runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
 | [`WI-B4a-11`](https://projects.reid-corp.com/work_packages/361) | Validate large-map round-trip and play | Draft | `WI-B4a-10`, H6 |
+
+### Wizard presets (WI-B4a-06)
+
+The new-map wizard offers Standard (200 x 200), Large (512 x 512), Very Large (1024 x 1024), and Huge (2048 x 2048). Large presets default to 16-bit elevation. Presets only fill the fields; custom sizes stay accepted. `NewMapFactory.TryValidate` rejects a size only when its lattice (playable + 2 x border + 1 per axis) exceeds `int.MaxValue` samples per axis or in total. The wizard's memory line is an estimate of 29 bytes per lattice sample, based on the arrays a new map allocates, not a measurement. 16-bit elevation is verified on the legacy `.map` save path; package round-trip of elevations above 255 is not covered.
 
 ## Sequencing notes
 

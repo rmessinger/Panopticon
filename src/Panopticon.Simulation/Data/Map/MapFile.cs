@@ -337,7 +337,7 @@ public class MapFile
     /// without null chunks. Engine-playable defaults (sides, lighting values, waypoints,
     /// start positions) are WI-A5-35 scope.
     /// </summary>
-    public static MapFile CreateEmpty(uint playableWidth, uint playableHeight, uint borderWidth, ushort initialHeight)
+    public static MapFile CreateEmpty(uint playableWidth, uint playableHeight, uint borderWidth, ushort initialHeight, bool use16BitElevation = false)
     {
         var totalWidth = playableWidth + borderWidth * 2 + 1;
         var totalHeight = playableHeight + borderWidth * 2 + 1;
@@ -353,7 +353,9 @@ public class MapFile
 
         return new MapFile
         {
-            HeightMapData = HeightMapData.Create(borderWidth, elevations),
+            HeightMapData = use16BitElevation
+                ? HeightMapData.Create16Bit(borderWidth, elevations)
+                : HeightMapData.Create(borderWidth, elevations),
             // Parse sizes the blend grid from the height-map dimensions (the elevation grid,
             // playable + border*2 + 1 per side), so the factory gets the same dims.
             BlendTileData = BlendTileData.Create(totalWidth, totalHeight),

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -10,39 +11,52 @@ namespace Panopticon.Tools.WorldBuilder.Avalonia.Views;
 /// <summary>Modal replacement for the MAUI new-map wizard.</summary>
 public sealed class NewMapWizardWindow : WbDialog
 {
+    private const string CustomPresetName = "Custom";
+    private const double BytesPerMiB = 1024.0 * 1024.0;
+
     public event EventHandler<EditorMap>? MapCreated;
 
     public EditorMap? Result { get; private set; }
 
+    private readonly ComboBox _presetPicker;
     private readonly TextBox _widthEntry;
     private readonly TextBox _heightEntry;
     private readonly TextBox _borderWidthEntry;
-    private readonly Slider _heightSlider;
-    private readonly TextBlock _heightValue;
+    private readonly TextBox _initialHeightEntry;
+    private readonly CheckBox _sixteenBitCheck;
+    private readonly TextBlock _memoryEstimate;
     private readonly TextBlock _validationError;
+    private bool _applyingPreset;
 
     public NewMapWizardWindow()
-        : base("New Map", 520, 620)
+        : base("New Map", 520, 680)
     {
+        _presetPicker = new ComboBox
+        {
+            ItemsSource = NewMapFactory.Presets.Select(p => p.Name).Append(CustomPresetName).ToList(),
+            SelectedIndex = 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
         _widthEntry = Entry("200");
         _heightEntry = Entry("200");
         _borderWidthEntry = Entry("6");
-        _heightValue = new TextBlock { Text = "50", VerticalAlignment = VerticalAlignment.Center };
+        _initialHeightEntry = Entry("50");
+        _sixteenBitCheck = new CheckBox
+        {
+            Content = "16-bit elevation (on by default for large presets)",
+            Foreground = new SolidColorBrush(WbTheme.Text),
+        };
+        _memoryEstimate = new TextBlock
+        {
+            FontSize = 13,
+            Foreground = new SolidColorBrush(WbTheme.Text),
+            TextWrapping = TextWrapping.Wrap,
+        };
 
-        _heightSlider = new Slider
-        {
-            Minimum = 0,
-            Maximum = 255,
-            Value = 50,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        _heightSlider.PropertyChanged += (_, e) =>
-        {
-            if (e.Property == Slider.ValueProperty)
-            {
-                _heightValue.Text = ((int)_heightSlider.Value).ToString();
-            }
-        };
+        _presetPicker.SelectionChanged += (_, _) => OnPresetSelected();
+        _widthEntry.PropertyChanged += (_, e) => SwitchToCustomOnManualEdit(e.Property);
+        _heightEntry.PropertyChanged += (_, e) => SwitchToCustomOnManualEdit(e.Property);
+        OnPresetSelected();
 
         _validationError = new TextBlock
         {
@@ -70,16 +84,11 @@ public sealed class NewMapWizardWindow : WbDialog
         Grid.SetColumn(_heightEntry, 2);
         dimensions.Children.Add(_heightEntry);
 
-        var sliderRow = new Grid
+        var presetRow = new StackPanel
         {
-            ColumnDefinitions = new ColumnDefinitions("*,80"),
-            Children =
-            {
-                _heightSlider,
-            },
+            Spacing = 6,
+            Children = { Label("Preset"), _presetPicker },
         };
-        Grid.SetColumn(_heightValue, 1);
-        sliderRow.Children.Add(_heightValue);
 
         var cancel = SecondaryButton("Cancel");
         cancel.Click += (_, _) => Close();
@@ -105,8 +114,10 @@ public sealed class NewMapWizardWindow : WbDialog
                                 Spacing = 12,
                                 Children =
                                 {
+                                    presetRow,
                                     dimensions,
-                                    Hint("Common sizes: 200×200, 300×300, 400×400, 500×500"),
+                                    _memoryEstimate,
+                                    Hint("Presets fill the fields. Custom sizes have no preset cap; only the array limit rejects a size."),
                                 },
                             }),
                             Card("Initial Ground Height", new StackPanel
@@ -114,8 +125,9 @@ public sealed class NewMapWizardWindow : WbDialog
                                 Spacing = 12,
                                 Children =
                                 {
-                                    sliderRow,
-                                    Hint("Height range: 0 (sea level) to 255 (max elevation)"),
+                                    _initialHeightEntry,
+                                    _sixteenBitCheck,
+                                    Hint("Initial height: 0 to 255 without 16-bit elevation, 0 to 65535 with it. 16-bit elevation is verified on the legacy .map save path only; package round-trip of values above 255 is not covered."),
                                 },
                             }),
                             Card("Border Width", new StackPanel
@@ -146,9 +158,46 @@ public sealed class NewMapWizardWindow : WbDialog
         ((Grid)Content).Children.Add(buttons);
     }
 
+    private void OnPresetSelected()
+    {
+        var index = _presetPicker.SelectedIndex;
+        if (index < 0 || index >= NewMapFactory.Presets.Count)
+        {
+            return;
+        }
+
+        var preset = NewMapFactory.Presets[index];
+        _applyingPreset = true;
+        _widthEntry.Text = preset.PlayableWidth.ToString();
+        _heightEntry.Text = preset.PlayableHeight.ToString();
+        _sixteenBitCheck.IsChecked = preset.Use16BitElevation;
+        _applyingPreset = false;
+
+        var parameters = TryParseParameters(out _);
+        if (parameters is not null)
+        {
+            ShowMemoryEstimate(parameters);
+        }
+    }
+
+    private void SwitchToCustomOnManualEdit(AvaloniaProperty property)
+    {
+        if (!_applyingPreset && property == TextBox.TextProperty)
+        {
+            _presetPicker.SelectedIndex = NewMapFactory.Presets.Count;
+        }
+    }
+
+    private void ShowMemoryEstimate(NewMapParameters parameters)
+    {
+        var bytes = NewMapFactory.EstimateResidentBytes(parameters.PlayableWidth, parameters.PlayableHeight, parameters.BorderWidth);
+        _memoryEstimate.Text = $"Estimated resident memory: {bytes / BytesPerMiB:N1} MiB (estimate)";
+    }
+
     private void OnCreate(object? sender, EventArgs e)
     {
-        if (!TryParseInputs(out var width, out var height, out var borderWidth, out var initialHeight, out var error))
+        var parameters = TryParseParameters(out var error);
+        if (parameters is null)
         {
             _validationError.Text = error;
             _validationError.IsVisible = true;
@@ -156,47 +205,51 @@ public sealed class NewMapWizardWindow : WbDialog
         }
 
         _validationError.IsVisible = false;
+        ShowMemoryEstimate(parameters);
 
-        Result = NewMapFactory.Create(new NewMapParameters
-        {
-            PlayableWidth = width,
-            PlayableHeight = height,
-            InitialHeight = initialHeight,
-            BorderWidth = borderWidth,
-        });
+        Result = NewMapFactory.Create(parameters);
 
         MapCreated?.Invoke(this, Result);
         Close();
     }
 
-    private bool TryParseInputs(
-        out int width, out int height,
-        out int borderWidth, out byte initialHeight,
-        out string error)
+    private NewMapParameters? TryParseParameters(out string error)
     {
-        width = height = borderWidth = 0;
-        initialHeight = 0;
         error = string.Empty;
 
-        if (!int.TryParse(_widthEntry.Text, out width) || width < 10)
+        if (!int.TryParse(_widthEntry.Text, out var width))
         {
-            error = "Width must be at least 10.";
-            return false;
+            error = "Width must be a whole number.";
+            return null;
         }
 
-        if (!int.TryParse(_heightEntry.Text, out height) || height < 10)
+        if (!int.TryParse(_heightEntry.Text, out var height))
         {
-            error = "Height must be at least 10.";
-            return false;
+            error = "Height must be a whole number.";
+            return null;
         }
 
-        if (!int.TryParse(_borderWidthEntry.Text, out borderWidth) || borderWidth < 2)
+        if (!int.TryParse(_borderWidthEntry.Text, out var borderWidth))
         {
-            error = "Border width must be at least 2.";
-            return false;
+            error = "Border width must be a whole number.";
+            return null;
         }
 
-        initialHeight = (byte)Math.Clamp((int)_heightSlider.Value, 0, 255);
-        return true;
+        if (!int.TryParse(_initialHeightEntry.Text, out var initialHeight) || initialHeight < 0 || initialHeight > ushort.MaxValue)
+        {
+            error = "Initial height must be a whole number from 0 to 65535.";
+            return null;
+        }
+
+        var parameters = new NewMapParameters
+        {
+            PlayableWidth = width,
+            PlayableHeight = height,
+            BorderWidth = borderWidth,
+            InitialHeight = (ushort)initialHeight,
+            Use16BitElevation = _sixteenBitCheck.IsChecked == true,
+        };
+
+        return NewMapFactory.TryValidate(parameters, out error) ? parameters : null;
     }
 }
