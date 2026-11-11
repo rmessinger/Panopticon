@@ -18,8 +18,9 @@ namespace Panopticon.Tools.GeoImport;
 /// <summary>
 /// In-process entry of the GeoImport CLI over the card 18 importer and reader:
 /// `import --manifest &lt;path&gt; --out &lt;dir&gt; [--force]`, `report --payload &lt;dir&gt;`,
-/// and `preview --payload &lt;dir&gt; --textures &lt;map.json&gt; [--crop cx0,cy0,cx1,cy1]
-/// [--force] --out &lt;maps dir&gt;`. Exit codes: 0 success, 1 operational or input failure,
+/// `preview --payload &lt;dir&gt; --textures &lt;map.json&gt; [--crop cx0,cy0,cx1,cy1]
+/// [--force] --out &lt;maps dir&gt;`, and `package --payload &lt;dir&gt; --out &lt;package dir&gt;
+/// [--name &lt;map name&gt;] [--force]`. Exit codes: 0 success, 1 operational or input failure,
 /// 2 usage error. Every diagnostic prints as one line `severity code stage message` with
 /// whitespace normalized, so messages containing newlines cannot break the line protocol.
 /// Cancellation propagates through the token and never misreports a published payload.
@@ -58,11 +59,12 @@ public static class GeoImportCli
         var parser = new Parser(with => with.HelpWriter = null);
 
         return parser
-            .ParseArguments<ImportOptions, ReportOptions, PreviewOptions>(arguments)
+            .ParseArguments<ImportOptions, ReportOptions, PreviewOptions, PackageOptions>(arguments)
             .MapResult(
                 (ImportOptions importOptions) => RunImport(importOptions, standardOut, errorOut, cancellationToken),
                 (ReportOptions reportOptions) => RunReport(reportOptions, standardOut, errorOut, cancellationToken),
                 (PreviewOptions previewOptions) => RunPreview(previewOptions, options, standardOut, errorOut, cancellationToken),
+                (PackageOptions packageOptions) => RunPackage(packageOptions, standardOut, errorOut, cancellationToken),
                 _ => UsageFailure(errorOut));
     }
 
@@ -233,6 +235,87 @@ public static class GeoImportCli
             errorOut.WriteLine(
                 NormalizeWhitespace(
                     $"cancelled: the preview was cancelled; the published payload at {payloadRoot} is unchanged"));
+            return OperationalFailureExit;
+        }
+    }
+
+    /// <summary>
+    /// The package verb: converts a published payload into an H3 map package directory. The
+    /// payload is an unmodified read input. An existing output directory is refused unless
+    /// --force is set, because the package writer replaces it. Conversion is not cancellable,
+    /// so cancellation only applies while the payload is opened.
+    /// </summary>
+    private static int RunPackage(PackageOptions options, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
+    {
+        var mapName = string.IsNullOrWhiteSpace(options.MapName)
+            ? Path.GetFileName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(options.PayloadDirectory)))
+            : options.MapName;
+
+        if (string.IsNullOrWhiteSpace(mapName))
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    "package failed: the payload directory has no name to default the map name to; pass --name"));
+            return OperationalFailureExit;
+        }
+
+        if (!options.Force && Path.Exists(options.OutputDirectory))
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    $"package failed: the output {options.OutputDirectory} already exists; pass --force to replace it"));
+            return OperationalFailureExit;
+        }
+
+        try
+        {
+            var diagnostics = new GeoDiagnosticBag();
+            var reader = GeneratedMapPayloadReader.Open(options.PayloadDirectory, diagnostics, cancellationToken: cancellationToken);
+
+            if (reader is null)
+            {
+                WriteDiagnostics(diagnostics.Items, standardOut, errorOut);
+                errorOut.WriteLine(
+                    NormalizeWhitespace(
+                        $"package failed: the published payload at {options.PayloadDirectory} is unchanged"));
+                return OperationalFailureExit;
+            }
+
+            using (reader)
+            {
+                var result = GeneratedMapPackageConverter.Convert(reader, mapName, options.OutputDirectory);
+
+                if (!result.Success || result.PackageRoot is null)
+                {
+                    foreach (var diagnostic in result.Diagnostics)
+                    {
+                        errorOut.WriteLine(NormalizeWhitespace(diagnostic));
+                    }
+
+                    errorOut.WriteLine(
+                        NormalizeWhitespace(
+                            $"package failed: the published payload at {options.PayloadDirectory} is unchanged"));
+                    return OperationalFailureExit;
+                }
+
+                // Success printing observes no cancellation token: a package that finished
+                // must not be misreported by a late cancel.
+                standardOut.WriteLine($"package: {NormalizeWhitespace(result.PackageRoot)}");
+                standardOut.WriteLine($"chunks: {result.ChunkCount}");
+
+                foreach (var limitation in result.Limitations)
+                {
+                    standardOut.WriteLine($"limitation: {NormalizeWhitespace(limitation)}");
+                }
+            }
+
+            return SuccessExit;
+        }
+        catch (OperationCanceledException)
+        {
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    $"cancelled: the package was cancelled; the published payload at {options.PayloadDirectory} is unchanged"));
             return OperationalFailureExit;
         }
     }
@@ -434,7 +517,8 @@ public static class GeoImportCli
             NormalizeWhitespace(
                 "usage: geoimport import --manifest <path> --out <dir> [--force]; "
                 + "geoimport report --payload <dir>; "
-                + "geoimport preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir>"));
+                + "geoimport preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir>; "
+                + "geoimport package --payload <dir> --out <package dir> [--name <map name>] [--force]"));
         return UsageExit;
     }
 
@@ -475,5 +559,21 @@ public static class GeoImportCli
 
         [Option('o', "out", Required = true, HelpText = "Maps directory that receives <payload name>.map.")]
         public string MapsDirectory { get; set; } = null!;
+    }
+
+    [Verb("package", HelpText = "Converts a published payload into an H3 map package directory.")]
+    public sealed class PackageOptions
+    {
+        [Option('p', "payload", Required = true, HelpText = "Path to the published payload directory.")]
+        public string PayloadDirectory { get; set; } = null!;
+
+        [Option('o', "out", Required = true, HelpText = "Output H3 map package directory.")]
+        public string OutputDirectory { get; set; } = null!;
+
+        [Option('n', "name", HelpText = "Map name; defaults to the payload directory name.")]
+        public string? MapName { get; set; }
+
+        [Option('f', "force", HelpText = "Replace an existing output directory.")]
+        public bool Force { get; set; }
     }
 }
