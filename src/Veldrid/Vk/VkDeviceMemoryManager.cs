@@ -347,59 +347,10 @@ namespace Veldrid.Vk
             {
                 _totalAllocatedBytes -= block.Size;
 
-                int index = FindFirstFreeBlockAfter(block.Offset);
-                _freeBlocks.Insert(index, block);
-                MergeWithNeighbors(index);
+                VkChunkFreeList.Insert(_freeBlocks, block, _memoryTypeIndex, (IntPtr)_mappedPtr);
 #if DEBUG
                 RemoveAllocatedBlock(block);
 #endif
-            }
-
-            private int FindFirstFreeBlockAfter(ulong offset)
-            {
-                int low = 0;
-                int high = _freeBlocks.Count;
-                while (low < high)
-                {
-                    int mid = low + (high - low) / 2;
-                    if (_freeBlocks[mid].Offset > offset)
-                    {
-                        high = mid;
-                    }
-                    else
-                    {
-                        low = mid + 1;
-                    }
-                }
-
-                return low;
-            }
-
-            private void MergeWithNeighbors(int index)
-            {
-                if (index > 0 && _freeBlocks[index - 1].End == _freeBlocks[index].Offset)
-                {
-                    index--;
-                    MergeWithNext(index);
-                }
-
-                if (index + 1 < _freeBlocks.Count && _freeBlocks[index].End == _freeBlocks[index + 1].Offset)
-                {
-                    MergeWithNext(index);
-                }
-            }
-
-            private void MergeWithNext(int index)
-            {
-                VkMemoryBlock mergedBlock = new VkMemoryBlock(
-                    Memory,
-                    _freeBlocks[index].Offset,
-                    _freeBlocks[index + 1].End - _freeBlocks[index].Offset,
-                    _memoryTypeIndex,
-                    _mappedPtr,
-                    false);
-                _freeBlocks[index] = mergedBlock;
-                _freeBlocks.RemoveAt(index + 1);
             }
 
 #if DEBUG
