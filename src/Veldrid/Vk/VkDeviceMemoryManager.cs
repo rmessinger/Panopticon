@@ -345,74 +345,80 @@ namespace Veldrid.Vk
 
             public void Free(VkMemoryBlock block)
             {
-                for (int i = 0; i < _freeBlocks.Count; i++)
-                {
-                    if (_freeBlocks[i].Offset > block.Offset)
-                    {
-                        _freeBlocks.Insert(i, block);
-                        MergeContiguousBlocks();
-#if DEBUG
-                        RemoveAllocatedBlock(block);
-#endif
-                        return;
-                    }
-                }
+                _totalAllocatedBytes -= block.Size;
 
-                _freeBlocks.Add(block);
+                int index = FindFirstFreeBlockAfter(block.Offset);
+                _freeBlocks.Insert(index, block);
+                MergeWithNeighbors(index);
 #if DEBUG
                 RemoveAllocatedBlock(block);
 #endif
-                _totalAllocatedBytes -= block.Size;
             }
 
-            private void MergeContiguousBlocks()
+            private int FindFirstFreeBlockAfter(ulong offset)
             {
-                int contiguousLength = 1;
-                for (int i = 0; i < _freeBlocks.Count - 1; i++)
+                int low = 0;
+                int high = _freeBlocks.Count;
+                while (low < high)
                 {
-                    ulong blockStart = _freeBlocks[i].Offset;
-                    while (i + contiguousLength < _freeBlocks.Count
-                        && _freeBlocks[i + contiguousLength - 1].End == _freeBlocks[i + contiguousLength].Offset)
+                    int mid = low + (high - low) / 2;
+                    if (_freeBlocks[mid].Offset > offset)
                     {
-                        contiguousLength += 1;
+                        high = mid;
                     }
-
-                    if (contiguousLength > 1)
+                    else
                     {
-                        ulong blockEnd = _freeBlocks[i + contiguousLength - 1].End;
-                        _freeBlocks.RemoveRange(i, contiguousLength);
-                        VkMemoryBlock mergedBlock = new VkMemoryBlock(
-                            Memory,
-                            blockStart,
-                            blockEnd - blockStart,
-                            _memoryTypeIndex,
-                            _mappedPtr,
-                            false);
-                        _freeBlocks.Insert(i, mergedBlock);
-                        contiguousLength = 0;
+                        low = mid + 1;
                     }
                 }
+
+                return low;
+            }
+
+            private void MergeWithNeighbors(int index)
+            {
+                if (index > 0 && _freeBlocks[index - 1].End == _freeBlocks[index].Offset)
+                {
+                    index--;
+                    MergeWithNext(index);
+                }
+
+                if (index + 1 < _freeBlocks.Count && _freeBlocks[index].End == _freeBlocks[index + 1].Offset)
+                {
+                    MergeWithNext(index);
+                }
+            }
+
+            private void MergeWithNext(int index)
+            {
+                VkMemoryBlock mergedBlock = new VkMemoryBlock(
+                    Memory,
+                    _freeBlocks[index].Offset,
+                    _freeBlocks[index + 1].End - _freeBlocks[index].Offset,
+                    _memoryTypeIndex,
+                    _mappedPtr,
+                    false);
+                _freeBlocks[index] = mergedBlock;
+                _freeBlocks.RemoveAt(index + 1);
             }
 
 #if DEBUG
-            private List<VkMemoryBlock> _allocatedBlocks = new List<VkMemoryBlock>();
+            private readonly HashSet<(ulong Offset, ulong Size)> _allocatedBlocks = new HashSet<(ulong Offset, ulong Size)>();
 
             private void CheckAllocatedBlock(VkMemoryBlock block)
             {
-                foreach (VkMemoryBlock oldBlock in _allocatedBlocks)
+                foreach ((ulong Offset, ulong Size) oldBlock in _allocatedBlocks)
                 {
-                    Debug.Assert(!BlocksOverlap(block, oldBlock), "Allocated blocks have overlapped.");
+                    Debug.Assert(!BlocksOverlap(block.Offset, block.Size, oldBlock.Offset, oldBlock.Size), "Allocated blocks have overlapped.");
                 }
 
-                _allocatedBlocks.Add(block);
+                _allocatedBlocks.Add((block.Offset, block.Size));
             }
 
-            private bool BlocksOverlap(VkMemoryBlock first, VkMemoryBlock second)
+            private bool BlocksOverlap(ulong firstStart, ulong firstSize, ulong secondStart, ulong secondSize)
             {
-                ulong firstStart = first.Offset;
-                ulong firstEnd = first.Offset + first.Size;
-                ulong secondStart = second.Offset;
-                ulong secondEnd = second.Offset + second.Size;
+                ulong firstEnd = firstStart + firstSize;
+                ulong secondEnd = secondStart + secondSize;
 
                 return (firstStart <= secondStart && firstEnd > secondStart
                     || firstStart >= secondStart && firstEnd <= secondEnd
@@ -422,7 +428,7 @@ namespace Veldrid.Vk
 
             private void RemoveAllocatedBlock(VkMemoryBlock block)
             {
-                Debug.Assert(_allocatedBlocks.Remove(block), "Unable to remove a supposedly allocated block.");
+                Debug.Assert(_allocatedBlocks.Remove((block.Offset, block.Size)), "Unable to remove a supposedly allocated block.");
             }
 #endif
 
