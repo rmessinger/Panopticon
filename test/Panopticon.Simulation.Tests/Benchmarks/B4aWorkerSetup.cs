@@ -81,7 +81,14 @@ internal static class B4aWorkerSetup
                 }
                 else
                 {
-                    log.WriteLine(e.Data);
+                    try
+                    {
+                        log.WriteLine(e.Data);
+                    }
+                    catch (IOException)
+                    {
+                        // Log is best effort; a write error here would otherwise fault the reader thread.
+                    }
                 }
             }
         };
