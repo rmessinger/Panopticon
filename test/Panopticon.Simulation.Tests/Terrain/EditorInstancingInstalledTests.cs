@@ -56,13 +56,29 @@ public sealed class EditorInstancingInstalledTests
 
     private const float CameraHeight = 3000f;
 
-    private const string SharedTempRoot = "/mnt/pit2/Network Storage/temp";
+    internal const string ArtifactRootVariable = "PANOPTICON_EDITOR_INSTANCING_ARTIFACT_ROOT";
+
+    internal const string CaptureRootVariable = "PANOPTICON_EDITOR_INSTANCING_CAPTURE_ROOT";
 
     private readonly ITestOutputHelper _output;
 
     public EditorInstancingInstalledTests(ITestOutputHelper output)
     {
         _output = output;
+    }
+
+    internal static string ResolveArtifactDirectory(string runStamp)
+    {
+        var configuredRoot = System.Environment.GetEnvironmentVariable(ArtifactRootVariable);
+        return string.IsNullOrWhiteSpace(configuredRoot)
+            ? Path.Combine(Path.GetTempPath(), $"b4a-g17-validation-{runStamp}-{Guid.NewGuid():N}")
+            : Path.Combine(configuredRoot, $"b4a-g17-validation-{runStamp}");
+    }
+
+    internal static string? ResolveCaptureRoot()
+    {
+        var configuredRoot = System.Environment.GetEnvironmentVariable(CaptureRootVariable);
+        return string.IsNullOrWhiteSpace(configuredRoot) ? null : configuredRoot;
     }
 
     [GameFact(SageGame.CncGenerals)]
@@ -72,7 +88,7 @@ public sealed class EditorInstancingInstalledTests
         Directory.CreateDirectory(tempDir);
 
         var runStamp = DateTime.UtcNow.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
-        var logDir = Path.Combine("/home/rmessinger/log", $"b4a-g17-validation-{runStamp}");
+        var logDir = ResolveArtifactDirectory(runStamp);
         Directory.CreateDirectory(logDir);
         MarkPhase(logDir, "start");
 
@@ -204,8 +220,17 @@ public sealed class EditorInstancingInstalledTests
             var gifPath = Path.Combine(logDir, "editor-instancing-camera-sweep.gif");
             VerifyFramesAndAssembleGif(frameFiles, gifPath);
             MarkPhase(logDir, "gif assembled");
-            PublishCaptures(gifPath, frameFiles);
-            MarkPhase(logDir, "captures published");
+            var captureRoot = ResolveCaptureRoot();
+            if (captureRoot is null)
+            {
+                MarkPhase(logDir, $"captures not published: {CaptureRootVariable} unset; captures remain in artifact root");
+                _output.WriteLine($"Shared capture publication skipped: {CaptureRootVariable} unset; captures remain in artifact root.");
+            }
+            else
+            {
+                PublishCaptures(captureRoot, gifPath, frameFiles);
+                MarkPhase(logDir, "captures published");
+            }
 
             _output.WriteLine($"Evidence (headless real runtime, not interactive UI):");
             foreach (var file in frameFiles)
@@ -238,27 +263,27 @@ public sealed class EditorInstancingInstalledTests
         File.AppendAllText(Path.Combine(logDir, "phases.log"), line + System.Environment.NewLine);
     }
 
-    private static bool CaptureVersionTaken(string stem)
+    private static bool CaptureVersionTaken(string captureRoot, string stem)
     {
-        return File.Exists(Path.Combine(SharedTempRoot, stem + ".gif"))
-            || File.Exists(Path.Combine(SharedTempRoot, stem + ".png"))
-            || Directory.Exists(Path.Combine(SharedTempRoot, "frames", stem));
+        return File.Exists(Path.Combine(captureRoot, stem + ".gif"))
+            || File.Exists(Path.Combine(captureRoot, stem + ".png"))
+            || Directory.Exists(Path.Combine(captureRoot, "frames", stem));
     }
 
-    private void PublishCaptures(string gifPath, string[] frameFiles)
+    private void PublishCaptures(string captureRoot, string gifPath, string[] frameFiles)
     {
-        Assert.True(Directory.Exists(SharedTempRoot), $"Shared capture root '{SharedTempRoot}' is not available.");
+        Assert.True(Directory.Exists(captureRoot), $"Shared capture root '{captureRoot}' is not available.");
 
         var version = 1;
-        while (CaptureVersionTaken($"b4a-g17-editor-instancing-v{version}"))
+        while (CaptureVersionTaken(captureRoot, $"b4a-g17-editor-instancing-v{version}"))
         {
             version++;
         }
 
         var stem = $"b4a-g17-editor-instancing-v{version}";
-        var gifTarget = Path.Combine(SharedTempRoot, stem + ".gif");
-        var stillTarget = Path.Combine(SharedTempRoot, stem + ".png");
-        var framesDir = Path.Combine(SharedTempRoot, "frames", stem);
+        var gifTarget = Path.Combine(captureRoot, stem + ".gif");
+        var stillTarget = Path.Combine(captureRoot, stem + ".png");
+        var framesDir = Path.Combine(captureRoot, "frames", stem);
 
         File.Copy(gifPath, gifTarget, overwrite: false);
         File.Copy(frameFiles[0], stillTarget, overwrite: false);
