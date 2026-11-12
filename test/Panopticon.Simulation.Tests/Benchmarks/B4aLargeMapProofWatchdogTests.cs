@@ -39,6 +39,25 @@ public sealed class B4aLargeMapProofWatchdogTests
     }
 
     [Fact]
+    public void StaleWallClockMarker_DoesNotKillWorkerThatCompletesWithinStageLimit()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        using var scratch = new Scratch();
+        var verdict = B4aProofWatchdog.Run(
+            FakeWorker(scratch.Root, "stale-marker", 2),
+            scratch.Root,
+            new B4aProofWatchdog.Limits(TimeSpan.FromSeconds(15), 2 * GiB, Poll));
+
+        Assert.Equal(B4aProofWatchdog.Outcome.Completed, verdict.Outcome);
+        Assert.Equal(0, verdict.ExitCode);
+        Assert.True(verdict.WorkerExited);
+    }
+
+    [Fact]
     public void SleepWorker_ExceedsStageLimit_GuardFailsAndKillsWorker()
     {
         if (!OperatingSystem.IsLinux())

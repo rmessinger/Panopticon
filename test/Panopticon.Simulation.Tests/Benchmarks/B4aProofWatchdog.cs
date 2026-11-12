@@ -9,14 +9,16 @@ using System.Text.Json;
 namespace Panopticon.Tests.Benchmarks;
 
 /// <summary>
-/// Outer guard for the B4a proof worker. Kills the worker's process tree when the newest stage marker
-/// is older than the stage limit or the tree's resident set exceeds the RSS limit. Tree RSS is read
-/// from /proc, so the guard reports zero RSS on non-Linux hosts.
+/// Outer guard for the B4a proof worker. Kills the worker's process tree when the current stage has
+/// run longer than the stage limit or the tree's resident set exceeds the RSS limit. A stage's age is
+/// measured by this host's monotonic clock from the first poll that observes its marker. Tree RSS is
+/// read from /proc, so the guard reports zero RSS on non-Linux hosts.
 /// </summary>
 internal sealed class B4aProofWatchdog
 {
     private const string StageMarkerFileName = "stage-marker.json";
     private const int BudgetExitCode = 2;
+    private const string NoMarkerStage = "before first stage marker";
     private static readonly TimeSpan KillWait = TimeSpan.FromSeconds(10);
     private static readonly JsonSerializerOptions MarkerOptions = new(JsonSerializerDefaults.Web);
     private static readonly char[] WhitespaceSeparators = [' ', '\t'];
@@ -47,8 +49,10 @@ internal sealed class B4aProofWatchdog
         ArgumentNullException.ThrowIfNull(limits);
 
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Watchdog could not start the worker.");
-        var spawnedUtc = DateTimeOffset.UtcNow;
         var peakTreeRss = 0L;
+        var stage = NoMarkerStage;
+        string? markerIdentity = null;
+        var stageStart = Stopwatch.GetTimestamp();
         while (true)
         {
             if (process.WaitForExit(limits.PollInterval))
@@ -61,10 +65,17 @@ internal sealed class B4aProofWatchdog
                 };
             }
 
-            var (stage, startedUtc) = LatestMarker(artifactRoot) is { } marker
-                ? (marker.Stage, marker.StartedUtc)
-                : ("before first stage marker", spawnedUtc);
-            if (DateTimeOffset.UtcNow - startedUtc > limits.StageLimit)
+            // Age runs from the first poll that sees a marker, so the worker's StartedUtc never meets this clock.
+            var marker = LatestMarker(artifactRoot);
+            var identity = marker is null ? null : $"{marker.Stage}|{marker.StartedUtc.ToString("O", CultureInfo.InvariantCulture)}";
+            if (identity != markerIdentity)
+            {
+                markerIdentity = identity;
+                stage = marker?.Stage ?? NoMarkerStage;
+                stageStart = Stopwatch.GetTimestamp();
+            }
+
+            if (Stopwatch.GetElapsedTime(stageStart) > limits.StageLimit)
             {
                 return Kill(process, Outcome.GuardFail, $"stage '{stage}' exceeded {limits.StageLimit.TotalSeconds:F0} s", peakTreeRss);
             }

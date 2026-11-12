@@ -112,7 +112,7 @@ internal static class B4aConsumerProofRunner
             var summaryPath = Path.Combine(artifactDirectory, "stage-summary.json");
             BenchmarkReportWriter.WriteJson(run.Record, recordJsonPath);
             BenchmarkReportWriter.WriteCsv(run.Record, Path.Combine(artifactDirectory, "b4a-consumer-record.csv"));
-            B4aStageSummaryJson.WriteTo(run, plan, summaryPath);
+            B4aStageSummaryJson.WriteTo(run, plan, summaryPath, runtime.Runs.Select(r => r.DisposeMs).ToArray());
 
             failingChecks.AddRange(FailingChecks(summaryPath, run, runtime.Runs, plan));
             guardFailures.AddRange(BudgetOverruns(run, runtime.Runs));
@@ -313,6 +313,11 @@ internal static class B4aConsumerProofRunner
             case "ok":
                 return 0;
 
+            case "stale-marker":
+                WriteStageMarker(root, FakeStage, repeat: null, startedUtc: DateTimeOffset.UtcNow - TimeSpan.FromHours(1));
+                Thread.Sleep(TimeSpan.FromSeconds(seconds));
+                return 0;
+
             case "sleep":
                 Thread.Sleep(TimeSpan.FromSeconds(seconds));
                 return 0;
@@ -341,13 +346,13 @@ internal static class B4aConsumerProofRunner
         return 0;
     }
 
-    private static StageMarker WriteStageMarker(string directory, string stage, int? repeat)
+    private static StageMarker WriteStageMarker(string directory, string stage, int? repeat, DateTimeOffset? startedUtc = null)
     {
         var marker = new StageMarker(
             SchemaVersion: 1,
             Stage: stage,
             Repeat: repeat,
-            StartedUtc: DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+            StartedUtc: (startedUtc ?? DateTimeOffset.UtcNow).ToString("O", CultureInfo.InvariantCulture),
             Pid: Environment.ProcessId);
 
         var path = Path.Combine(directory, StageMarkerFileName);

@@ -235,6 +235,26 @@ public sealed class B4aConsumerBenchmarkTests
     }
 
     [Fact]
+    public void SmokeRun_LoadedTypesMatchPlanWithOnlyStartWaypointsUnplaced()
+    {
+        var run = B4aConsumerBenchmark.Run(B4aConsumerPlan.SmokeScale, new InstallFreeSmokePlayRuntime());
+
+        Assert.All(run.Observations, o => Assert.True(o.LoadedTypesMatchPlan));
+    }
+
+    [Fact]
+    public void SmokeRun_LoadedHeightsAndBlendTilesMatchSaved()
+    {
+        var run = B4aConsumerBenchmark.Run(B4aConsumerPlan.SmokeScale, new InstallFreeSmokePlayRuntime());
+
+        Assert.All(run.Observations, o =>
+        {
+            Assert.True(o.LoadedHeightsMatchSaved);
+            Assert.True(o.LoadedBlendTilesMatchSaved);
+        });
+    }
+
+    [Fact]
     public void ViewportRenderer_LogicFrameSeamIsInertBeforeInitialize()
     {
         using var renderer = new GameViewportRenderer { Installation = null };

@@ -19,4 +19,7 @@ public sealed record B4aRepeatObservation(
     int MeshMoldChangedCellCount,
     bool MeshMoldUndoRestoredPreStroke,
     bool MeshMoldRedoReappliedStroke,
-    int SavedPropertyCount);
+    int SavedPropertyCount,
+    bool LoadedTypesMatchPlan,
+    bool LoadedHeightsMatchSaved,
+    bool LoadedBlendTilesMatchSaved);

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using System.Text.Json;
 using Panopticon.Data.Map;
 using Panopticon.Terrain;
@@ -34,6 +35,7 @@ public static class B4aConsumerBenchmark
     private const float Spacing = 20f;
     private const string ObjectTypeName = "AmericaTankCrusader";
     private const string PlacementIndexProperty = "b4aPlacementIndex";
+    private const int PlayerStartWaypointCount = 2;
 
     public static B4aConsumerRun Run(B4aConsumerPlan plan, IB4aPlayRuntime play, Action<string>? stageStarting = null)
     {
@@ -97,6 +99,8 @@ public static class B4aConsumerBenchmark
 
         var savedObjects = map.MapFile.ObjectsList.Objects.Select(PersistedIdentity).ToArray();
         var savedPropertyCount = map.MapFile.ObjectsList.Objects.Sum(o => o.Properties.Count);
+        var savedElevations = (ushort[,])map.MapFile.HeightMapData.Elevations.Clone();
+        var savedBlendTiles = BlendTileBytes(map.MapFile.BlendTileData);
         meter.Measure(SaveStage, () => map.SaveAsPackage(packageDirectory));
         var loaded = meter.Measure(LoadStage, () => EditorMap.OpenPackage(packageDirectory));
         var played = meter.Measure(PlayStage, () => play.RunFrames(packageDirectory, plan.PlayFrames, Seed));
@@ -117,7 +121,10 @@ public static class B4aConsumerBenchmark
             moldChangedCells,
             moldUndoRestored,
             moldRedoReapplied,
-            savedPropertyCount);
+            savedPropertyCount,
+            LoadedTypesMatchPlan(loadedObjects, plan.ObjectCount),
+            HeightsMatchSaved(savedElevations, loaded.MapFile.HeightMapData.Elevations),
+            BlendTileBytes(loaded.MapFile.BlendTileData).SequenceEqual(savedBlendTiles));
     }
 
     private static (EditorMap Map, int BrushCenterDelta, MeshMoldStroke MoldStroke) Author(B4aConsumerPlan plan)
@@ -254,6 +261,38 @@ public static class B4aConsumerBenchmark
     private static bool LoadedMatchesSaved(string[] saved, MapObject[] loaded)
     {
         return saved.SequenceEqual(loaded.Select(PersistedIdentity));
+    }
+
+    private static bool LoadedTypesMatchPlan(MapObject[] loaded, int placedCount)
+    {
+        var nonWaypoints = loaded.Where(o => o.TypeName != Panopticon.Scripting.Waypoint.ObjectTypeName).ToArray();
+        return nonWaypoints.All(o => o.TypeName == ObjectTypeName)
+            && nonWaypoints.Length == placedCount
+            && loaded.Count(o => o.TypeName == Panopticon.Scripting.Waypoint.ObjectTypeName) == PlayerStartWaypointCount;
+    }
+
+    // Full-grid equality covers every edge row, seam, and interior sample. The authored grid must vary,
+    // otherwise equality would hold for any flat map.
+    private static bool HeightsMatchSaved(ushort[,] saved, ushort[,] loaded)
+    {
+        if (saved.GetLength(0) != loaded.GetLength(0) || saved.GetLength(1) != loaded.GetLength(1))
+        {
+            return false;
+        }
+
+        var values = saved.Cast<ushort>();
+        return values.Min() < values.Max() && values.SequenceEqual(loaded.Cast<ushort>());
+    }
+
+    private static byte[] BlendTileBytes(BlendTileData blendTiles)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+        {
+            blendTiles.WriteTo(writer);
+        }
+
+        return stream.ToArray();
     }
 
     // Covers every field the map file persists, so equal strings mean equal saved state.
