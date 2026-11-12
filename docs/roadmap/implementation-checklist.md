@@ -835,7 +835,7 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: the store serves chunks behind the grounded contract; H3 owns the disk format.
 - [ ] B4a-6 Large-map round-trip and play (`WI-B4a-11`).
   - AC: a large map authors, saves, reloads, and plays within B1 budgets.
-- [ ] B4a-7 Large-population authoring (no cards yet; pairs with A5-5) (`TBD`).
+- [ ] B4a-7 Large-population authoring (`WP1008`, `WP1009`, `WP1012`; pairs with A5-5).
   - AC: bulk placement and region multi-object edits stay interactive.
 - [x] B5 Rendering at scale
       ([deep dive](deep-dives/b5-rendering-at-scale.md)): GPU instancing for repeated unit

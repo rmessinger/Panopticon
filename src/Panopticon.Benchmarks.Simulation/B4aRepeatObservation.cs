@@ -14,4 +14,12 @@ public sealed record B4aRepeatObservation(
     bool RegionUndoRestoredAuthoredState,
     int LoadedObjectCount,
     bool LoadedObjectsMatchSaved,
-    int PlayFramesCompleted);
+    int PlayFramesCompleted,
+    int MeshMoldUndoEntriesAdded,
+    int MeshMoldChangedCellCount,
+    bool MeshMoldUndoRestoredPreStroke,
+    bool MeshMoldRedoReappliedStroke,
+    int SavedPropertyCount,
+    bool LoadedTypesMatchPlan,
+    bool LoadedHeightsMatchSaved,
+    bool LoadedBlendTilesMatchSaved);

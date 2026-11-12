@@ -37,6 +37,13 @@ public static class Program
             return;
         }
 
+        if (Array.Exists(args, a => a.Equals(B4aConsumerProofRunner.ProofFlag, StringComparison.OrdinalIgnoreCase)
+            || a.Equals(B4aConsumerProofRunner.FakeWorkerFlag, StringComparison.OrdinalIgnoreCase)))
+        {
+            Environment.Exit(B4aConsumerProofRunner.Dispatch(args, reporter));
+            return;
+        }
+
         if (Array.Exists(args, a => a.Equals("--run-assert", StringComparison.OrdinalIgnoreCase)))
         {
             Environment.Exit(RunAndAssertCommand(args, reporter));
