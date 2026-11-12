@@ -193,6 +193,8 @@ public sealed class B4aConsumerBenchmarkTests
         Assert.Equal(200, B4aConsumerPlan.SmokeScale.ObjectCount);
         Assert.Equal(10, B4aConsumerPlan.SmokeScale.PlayFrames);
         Assert.Equal(3, B4aConsumerPlan.SmokeScale.Repeats);
+        Assert.Equal(500, B4aConsumerPlan.SmokeScale.PlayableSize);
+        Assert.Equal(513, B4aConsumerPlan.SmokeScale.LatticeSize);
     }
 
     [Fact]
@@ -201,6 +203,50 @@ public sealed class B4aConsumerBenchmarkTests
         Assert.Equal(10_000, B4aConsumerPlan.FullScale.ObjectCount);
         Assert.Equal(300, B4aConsumerPlan.FullScale.PlayFrames);
         Assert.Equal(3, B4aConsumerPlan.FullScale.Repeats);
+        Assert.Equal(4096, B4aConsumerPlan.FullScale.PlayableSize);
+        Assert.Equal(4109, B4aConsumerPlan.FullScale.LatticeSize);
+    }
+
+    [Fact]
+    public void SmokeRun_AuthorMeshMoldStrokeAddsOneUndoEntryAndUndoRedoRestoreHeights()
+    {
+        var run = B4aConsumerBenchmark.Run(B4aConsumerPlan.SmokeScale, new InstallFreeSmokePlayRuntime());
+
+        Assert.All(run.Observations, o =>
+        {
+            Assert.Equal(1, o.MeshMoldUndoEntriesAdded);
+            Assert.True(o.MeshMoldChangedCellCount > 0);
+            Assert.True(o.MeshMoldUndoRestoredPreStroke);
+            Assert.True(o.MeshMoldRedoReappliedStroke);
+        });
+    }
+
+    [Fact]
+    public void SmokeRun_LoadedObjectsMatchSavedAcrossFullPersistedSequence()
+    {
+        var run = B4aConsumerBenchmark.Run(B4aConsumerPlan.SmokeScale, new InstallFreeSmokePlayRuntime());
+
+        Assert.All(run.Observations, o =>
+        {
+            Assert.True(o.LoadedObjectsMatchSaved);
+            // Every placed object carries its placement index property, so properties were compared, not skipped.
+            Assert.True(o.SavedPropertyCount >= o.AuthoredObjectCount);
+        });
+    }
+
+    [Fact]
+    public void ViewportRenderer_LogicFrameSeamIsInertBeforeInitialize()
+    {
+        using var renderer = new GameViewportRenderer { Installation = null };
+
+        renderer.EnableFixedLogicTimestep();
+        renderer.Initialize(64, 64);
+
+        Assert.False(renderer.IsInitialized);
+        Assert.Equal(0u, renderer.CurrentLogicFrame);
+        Assert.Equal(0, renderer.LoadedGameObjectCount);
+        Assert.Equal(0, renderer.StreamedTerrainPatchCount);
+        Assert.Equal(0L, renderer.StreamedTerrainVertexBytes);
     }
 
     // Independent oracle for the strip regions: the grid is row-major with ceil(sqrt(n)) columns,
