@@ -38,6 +38,12 @@ public sealed class GameViewportRenderer : IDisposable
     public required GameInstallation? Installation { get; set; }
 
     /// <summary>
+    /// Seed for the 3D preview boot. <see langword="null"/> boots with a tick-count seed.
+    /// Applies to the next <see cref="LoadMap"/>.
+    /// </summary>
+    public int? BootSeed { get; set; }
+
+    /// <summary>
     /// The currently active editor tool. Pointer events are forwarded to this tool
     /// after terrain picking resolves the world position.
     /// </summary>
@@ -323,7 +329,15 @@ public sealed class GameViewportRenderer : IDisposable
 
         if (mapPath != null && AdmitsForPreview(hasMapEntry, isDirectoryPackage))
         {
-            _game.StartSinglePlayerGame(mapPath);
+            if (BootSeed is { } seed)
+            {
+                _game.StartSinglePlayerGame(mapPath, seed);
+            }
+            else
+            {
+                _game.StartSinglePlayerGame(mapPath);
+            }
+
             FrameCameraOnMap(map);
             LoadStatus?.Invoke($"3D preview: {Path.GetFileName(mapPath)}");
         }

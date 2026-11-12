@@ -203,11 +203,12 @@ internal static class B4aConsumerProofRunner
 
         for (var repeat = 0; repeat < Math.Min(playRuns.Count, observations.Count); repeat++)
         {
-            var scene = playRuns[repeat].LoadedGameObjectCount;
-            var package = observations[repeat].LoadedObjectCount;
-            if (scene != package)
+            var play = playRuns[repeat];
+            if (play.LoadedGameObjectCount != play.ExpectedGameObjectCount)
             {
-                failing.Add($"loadedGameObjectCountMatchesPackage (repeat {repeat}: scene {scene}, package {package})");
+                failing.Add(
+                    $"loadedGameObjectCountMatchesExpected (repeat {repeat}: scene {play.LoadedGameObjectCount}, " +
+                    $"expected {play.ExpectedGameObjectCount}, package {play.MapObjectCount})");
             }
         }
 

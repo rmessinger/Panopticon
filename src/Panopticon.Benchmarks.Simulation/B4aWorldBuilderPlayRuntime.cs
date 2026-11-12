@@ -14,7 +14,7 @@ namespace Panopticon.Benchmarks.Simulation;
 /// Play stage over the real WorldBuilder viewport. Each call opens the package, boots an offscreen
 /// game through <see cref="GameViewportRenderer"/> under a fixed logic timestep, renders the frames,
 /// and disposes the game. Timings and render counters are kept per call in <see cref="Runs"/>.
-/// The seed is not applied: the editor boot path has no seed input.
+/// Each call boots with the seed passed to <see cref="RunFrames"/>, recorded as <see cref="RunInfo.BootSeed"/>.
 /// </summary>
 public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
 {
@@ -25,6 +25,7 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
     private const uint ViewportWidth = 1280;
     private const uint ViewportHeight = 800;
     private const string PreviewStatusPrefix = "3D preview:";
+    private const int MaxExtraRenderCalls = 5;
 
     private readonly GameInstallation _installation;
     private readonly string? _captureDirectory;
@@ -60,7 +61,7 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
         double disposeMs;
         try
         {
-            info = Play(renderer, map, frames, _runs.Count);
+            info = Play(renderer, map, frames, _runs.Count, (int)seed);
         }
         finally
         {
@@ -74,7 +75,7 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
         return info.FramesCompleted;
     }
 
-    private RunInfo Play(GameViewportRenderer renderer, EditorMap map, int frames, int runIndex)
+    private RunInfo Play(GameViewportRenderer renderer, EditorMap map, int frames, int runIndex, int bootSeed)
     {
         _stageStarting?.Invoke(BootStage);
         var bootWatch = Stopwatch.StartNew();
@@ -86,6 +87,7 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
             throw new InvalidOperationException("Viewport renderer did not initialize; check the Generals installation.");
         }
 
+        renderer.BootSeed = bootSeed;
         renderer.LoadMap(map);
         if (loadStatus is null || !loadStatus.StartsWith(PreviewStatusPrefix, StringComparison.Ordinal))
         {
@@ -98,21 +100,24 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
         _stageStarting?.Invoke(FramesStage);
         var captureFrames = CaptureFrameIndices(frames);
         var capturePaths = new List<string>(captureFrames.Length);
-        var frameWallMs = new List<double>(frames);
+        var frameWallMs = new List<double>(frames + MaxExtraRenderCalls);
         var logicStart = renderer.CurrentLogicFrame;
-        for (var frame = 0; frame < frames; frame++)
+        var renderCalls = 0;
+        while (renderCalls < frames + MaxExtraRenderCalls && LogicFrameDelta(renderer, logicStart) < frames)
         {
             var start = Stopwatch.GetTimestamp();
             renderer.RenderFrame();
             frameWallMs.Add(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
 
-            if (_captureDirectory is not null && Array.IndexOf(captureFrames, frame) >= 0)
+            if (_captureDirectory is not null && Array.IndexOf(captureFrames, renderCalls) >= 0)
             {
-                capturePaths.Add(CaptureFrame(renderer, _captureDirectory, runIndex, frame));
+                capturePaths.Add(CaptureFrame(renderer, _captureDirectory, runIndex, renderCalls));
             }
+
+            renderCalls++;
         }
 
-        var framesCompleted = (int)(renderer.CurrentLogicFrame - logicStart);
+        var framesCompleted = LogicFrameDelta(renderer, logicStart);
         var stats = renderer.RenderStatistics
             ?? throw new InvalidOperationException("Render statistics are unavailable after the frame loop.");
 
@@ -120,6 +125,7 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
             runIndex,
             frames,
             framesCompleted,
+            renderCalls,
             bootWatch.Elapsed.TotalMilliseconds,
             frameWallMs,
             0,
@@ -128,10 +134,23 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
             stats.InstancedBatches,
             stats.InstancesDrawn,
             map.MapFile.ObjectsList.Objects.Length,
+            CountSceneObjects(map),
             renderer.LoadedGameObjectCount,
             renderer.StreamedTerrainPatchCount,
             renderer.StreamedTerrainVertexBytes,
-            capturePaths);
+            capturePaths,
+            bootSeed);
+    }
+
+    private static int LogicFrameDelta(GameViewportRenderer renderer, uint startFrame)
+    {
+        return (int)(renderer.CurrentLogicFrame - startFrame);
+    }
+
+    // Player-start waypoints are authored as map objects but load as scene Waypoints, not GameObjects.
+    private static int CountSceneObjects(EditorMap map)
+    {
+        return map.MapFile.ObjectsList.Objects.Count(o => o.TypeName != Panopticon.Scripting.Waypoint.ObjectTypeName);
     }
 
     // Capture happens after the frame's stopwatch stops, so readback does not inflate frame times.
@@ -155,17 +174,22 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
         return [.. new[] { 0, frames / 3, 2 * frames / 3, frames - 1 }.Distinct().Order()];
     }
 
+    /// <param name="FramesCompleted">Logic-frame delta over the frame loop, equal to <see cref="FramesRequested"/> unless the render cap was hit.</param>
+    /// <param name="RenderCallCount">Number of <c>RenderFrame</c> calls made, including any needed to reach the logic-frame delta.</param>
     /// <param name="FrameWallMs">Wall time of each <c>RenderFrame</c> call, in order, excluding captures.</param>
     /// <param name="DisposeMs">Time to dispose the renderer and its game after the frames.</param>
     /// <param name="DrawCalls">Last frame's <c>RenderStatistics</c> draw-call count.</param>
     /// <param name="MapObjectCount">Objects in the opened map package.</param>
+    /// <param name="ExpectedGameObjectCount">Package objects that load as scene GameObjects; player-start waypoints excluded.</param>
     /// <param name="LoadedGameObjectCount">Game objects in the booted scene after the frame loop.</param>
     /// <param name="StreamedTerrainPatchCount">Terrain patches resident in the streamer after the frame loop.</param>
     /// <param name="StreamedTerrainVertexBytes">Terrain vertex bytes resident in the streamer after the frame loop.</param>
+    /// <param name="BootSeed">Seed the game booted with, passed to the renderer before the map load.</param>
     public sealed record RunInfo(
         int RunIndex,
         int FramesRequested,
         int FramesCompleted,
+        int RenderCallCount,
         double BootMs,
         IReadOnlyList<double> FrameWallMs,
         double DisposeMs,
@@ -174,8 +198,10 @@ public sealed class B4aWorldBuilderPlayRuntime : IB4aPlayRuntime
         int InstancedBatches,
         int InstancesDrawn,
         int MapObjectCount,
+        int ExpectedGameObjectCount,
         int LoadedGameObjectCount,
         int StreamedTerrainPatchCount,
         long StreamedTerrainVertexBytes,
-        IReadOnlyList<string> CapturePaths);
+        IReadOnlyList<string> CapturePaths,
+        int BootSeed);
 }

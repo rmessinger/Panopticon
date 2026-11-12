@@ -19,6 +19,7 @@ internal sealed class B4aProofWatchdog
     private const int BudgetExitCode = 2;
     private static readonly TimeSpan KillWait = TimeSpan.FromSeconds(10);
     private static readonly JsonSerializerOptions MarkerOptions = new(JsonSerializerDefaults.Web);
+    private static readonly char[] WhitespaceSeparators = [' ', '\t'];
 
     internal enum Outcome
     {
@@ -161,8 +162,10 @@ internal sealed class B4aProofWatchdog
                 return 0;
             }
 
-            var kilobytes = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
-            return long.Parse(kilobytes, CultureInfo.InvariantCulture) * 1024;
+            var fields = line.Split(WhitespaceSeparators, StringSplitOptions.RemoveEmptyEntries);
+            return fields.Length > 1 && long.TryParse(fields[1], NumberStyles.None, CultureInfo.InvariantCulture, out var kilobytes)
+                ? kilobytes * 1024
+                : 0;
         }
         catch (IOException)
         {
