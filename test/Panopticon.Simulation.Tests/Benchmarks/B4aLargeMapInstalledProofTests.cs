@@ -12,8 +12,8 @@ namespace Panopticon.Tests.Benchmarks;
 
 /// <summary>
 /// Installed outer proof for B4a-G18. Runs the TestHarness proof worker at full scale under
-/// <see cref="B4aProofWatchdog"/> and checks its worker result. Requires CNC_GENERALS_PATH and a
-/// Release build of the worker; the worker DLL can be overridden with PANOPTICON_B4A_WORKER_DLL.
+/// <see cref="B4aProofWatchdog"/> and checks its worker result. Requires CNC_GENERALS_PATH. A missing
+/// Release worker DLL is built as bounded setup; PANOPTICON_B4A_WORKER_DLL overrides the DLL path.
 /// </summary>
 [Collection("SerialGameTests")]
 public sealed class B4aLargeMapInstalledProofTests
@@ -23,12 +23,12 @@ public sealed class B4aLargeMapInstalledProofTests
     private const string CaptureRootVariable = "PANOPTICON_B4A_CAPTURE_ROOT";
     private const string WorkerProjectFile = "src/Panopticon.Tools.TestHarness/Panopticon.Tools.TestHarness.csproj";
     private const string WorkerDllRelativePath = "src/Panopticon.Tools.TestHarness/bin/Release/net10.0/Panopticon.Tools.TestHarness.dll";
-    private const string BuildCommand = "dotnet build src/Panopticon.Tools.TestHarness -c Release";
     private const string WorkerResultFileName = "worker-result.json";
     private const string StageSummaryFileName = "stage-summary.json";
     private const string StageMarkerFileName = "stage-marker.json";
     private const long GiB = 1024L * 1024 * 1024;
     private static readonly TimeSpan StageLimit = TimeSpan.FromSeconds(120);
+    private static readonly TimeSpan SetupTimeout = TimeSpan.FromSeconds(120);
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
 
     private readonly ITestOutputHelper _output;
@@ -53,13 +53,17 @@ public sealed class B4aLargeMapInstalledProofTests
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(InstallPathVariable)),
             $"{InstallPathVariable} must point to the Generals installation for the B4a installed proof.");
 
-        var workerDll = ResolveWorkerDll();
         var artifactRoot = Path.Combine(Path.GetTempPath(), $"b4a-large-map-proof-{Guid.NewGuid():N}");
         Directory.CreateDirectory(artifactRoot);
         _output.WriteLine($"B4a installed proof artifact root: {artifactRoot}");
 
+        var setup = ResolveWorkerDll(artifactRoot);
+        _output.WriteLine(setup.BuildDuration is { } buildDuration
+            ? $"B4a worker setup built {setup.WorkerDll} (Release) in {buildDuration.TotalSeconds:F1} s, outside the stage budgets; build log {setup.BuildLogPath}."
+            : $"B4a worker setup used existing {setup.WorkerDll}.");
+
         var verdict = B4aProofWatchdog.Run(
-            WorkerStartInfo(workerDll, artifactRoot),
+            WorkerStartInfo(setup.WorkerDll, artifactRoot),
             artifactRoot,
             new B4aProofWatchdog.Limits(StageLimit, 16 * GiB, PollInterval));
 
@@ -122,21 +126,23 @@ public sealed class B4aLargeMapInstalledProofTests
         _output.WriteLine($"B4a installed proof stage summary: {summaryPath}");
     }
 
-    private static string ResolveWorkerDll()
+    private static B4aWorkerSetup.Result ResolveWorkerDll(string artifactRoot)
     {
         var overridden = Environment.GetEnvironmentVariable(WorkerDllVariable);
         if (!string.IsNullOrWhiteSpace(overridden))
         {
             Assert.True(File.Exists(overridden), $"{WorkerDllVariable} points to a missing file: {overridden}");
-            return overridden;
+            return new B4aWorkerSetup.Result(overridden, null, null);
         }
 
         var repoRoot = FindRepoRoot();
-        var dll = Path.Combine(repoRoot, WorkerDllRelativePath);
-        Assert.True(
-            File.Exists(dll),
-            $"B4a proof worker is not built at {dll}. Run `{BuildCommand}` first; setup is outside the stage budgets.");
-        return dll;
+        return B4aWorkerSetup.EnsureWorkerDll(
+            repoRoot,
+            WorkerDllRelativePath,
+            artifactRoot,
+            SetupTimeout,
+            B4aWorkerSetup.DrainTimeout,
+            () => B4aWorkerSetup.BuildStartInfo(repoRoot, WorkerProjectFile));
     }
 
     private static string FindRepoRoot()
