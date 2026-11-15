@@ -28,6 +28,8 @@ public static class GeneratedMapPackageConverter
     private const string LegacyAssetScope = "legacy";
     private const string ControlPointCategory = "control-point";
     private const int HeightSectionVersion = 5;
+    private const string HeightQuantizationLimitation =
+        "Terrain heights are quantized to the resident height grid (0.0390625 game height units per step, round half to even); stored heights differ from the payload by at most half a step where the payload is off-grid.";
 
     private static readonly DecoderOptions DecodeOptions = new() { SkipMetadata = true };
 
@@ -78,12 +80,13 @@ public static class GeneratedMapPackageConverter
 
         var diagnostics = new List<string>();
         var chunks = new List<Chunk>();
+        var heightQuantizer = new HeightQuantizer();
 
         for (var chunkY = 0; chunkY < grid.ChunksY; chunkY++)
         {
             for (var chunkX = 0; chunkX < grid.ChunksX; chunkX++)
             {
-                var chunk = ReadChunk(reader, grid.ImageryPixelsPerSample is not null, chunkX, chunkY, diagnostics);
+                var chunk = ReadChunk(reader, grid.ImageryPixelsPerSample is not null, chunkX, chunkY, heightQuantizer, diagnostics);
 
                 if (chunk is null)
                 {
@@ -92,6 +95,13 @@ public static class GeneratedMapPackageConverter
 
                 chunks.Add(chunk);
             }
+        }
+
+        if (heightQuantizer.RejectedCount > 0)
+        {
+            return Failed([Format(
+                GeneratedMapPackageDiagnosticCodes.HeightQuantization,
+                $"{heightQuantizer.RejectedCount} of {heightQuantizer.SampleCount} terrain samples are non-finite or outside the range the resident height grid represents; no package was written.")]);
         }
 
         var (vectorLayers, vectorConflicts, vectorDiagnostics) = BuildVectorLayers(metadata.Features);
@@ -145,7 +155,65 @@ public static class GeneratedMapPackageConverter
             return Failed(write.Diagnostics.Select(diagnostic => Format(diagnostic.Code, diagnostic.Message)));
         }
 
-        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
+        var heightDiagnostics = new List<string>();
+        var limitations = Limitations;
+
+        if (heightQuantizer.ChangedCount > 0)
+        {
+            var maxError = heightQuantizer.MaxError.ToString("R", CultureInfo.InvariantCulture);
+            heightDiagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.HeightQuantization,
+                $"Quantized {heightQuantizer.ChangedCount} of {heightQuantizer.SampleCount} terrain samples to the resident height grid (step 0.0390625 game height units); max error {maxError} game height units, bound 0.01953125."));
+            limitations = [.. Limitations, HeightQuantizationLimitation];
+        }
+
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).Concat(heightDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, limitations);
+    }
+
+    private sealed class HeightQuantizer
+    {
+        private const double Step = 0.0390625d;
+        private const double LowestAcceptedQuotient = -0.5d;
+        private const double HighestRejectedQuotient = 65535.5d;
+
+        public long SampleCount { get; private set; }
+
+        public long RejectedCount { get; private set; }
+
+        public long ChangedCount { get; private set; }
+
+        public double MaxError { get; private set; }
+
+        public float[] Quantize(ReadOnlySpan<float> source)
+        {
+            var quantized = new float[source.Length];
+
+            for (var index = 0; index < source.Length; index++)
+            {
+                var value = source[index];
+                var quotient = (double)value / Step;
+                SampleCount++;
+
+                if (!double.IsFinite(quotient) || quotient < LowestAcceptedQuotient || quotient >= HighestRejectedQuotient)
+                {
+                    RejectedCount++;
+                    quantized[index] = value;
+                    continue;
+                }
+
+                var elevation = (ushort)Math.Round(quotient, MidpointRounding.ToEven);
+                var result = (float)(elevation * Step);
+                quantized[index] = result;
+
+                if (result != value)
+                {
+                    ChangedCount++;
+                    MaxError = Math.Max(MaxError, Math.Abs((double)result - value));
+                }
+            }
+
+            return quantized;
+        }
     }
 
     private static Chunk? ReadChunk(
@@ -153,6 +221,7 @@ public static class GeneratedMapPackageConverter
         bool hasImagery,
         int chunkX,
         int chunkY,
+        HeightQuantizer heightQuantizer,
         List<string> diagnostics)
     {
         var terrain = ReadLayer(bag => reader.ReadTerrain(chunkX, chunkY, bag), "terrain", chunkX, chunkY, diagnostics);
@@ -197,7 +266,7 @@ public static class GeneratedMapPackageConverter
 
         return new Chunk(
             new ChunkKey(chunkX, chunkY),
-            new HeightLayer(terrain.Heights.ToArray()),
+            new HeightLayer(heightQuantizer.Quantize(terrain.Heights.Span)),
             new MaterialLayer(materials.Indices.ToArray()),
             new MaskLayer(masks.Flags.ToArray()),
             imagery);

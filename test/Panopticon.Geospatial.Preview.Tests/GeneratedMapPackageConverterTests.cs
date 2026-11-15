@@ -21,6 +21,7 @@ namespace Panopticon.Geospatial.Preview.Tests;
 public sealed class GeneratedMapPackageConverterTests
 {
     private const string MapName = "fixture-map";
+    private const string HeightQuantizationPrefix = GeneratedMapPackageDiagnosticCodes.HeightQuantization + ":";
 
     [Fact]
     public void GeneratedMapPackageWritesFixturePayloadThatReloadsIntact()
@@ -33,7 +34,7 @@ public sealed class GeneratedMapPackageConverterTests
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        Assert.Empty(result.Diagnostics);
+        Assert.StartsWith(HeightQuantizationPrefix, Assert.Single(result.Diagnostics), StringComparison.Ordinal);
         Assert.Equal(target, result.PackageRoot);
         Assert.NotNull(result.Model);
         Assert.True(File.Exists(Path.Combine(target, MapPackageFormat.ManifestFileName)));
@@ -61,7 +62,9 @@ public sealed class GeneratedMapPackageConverterTests
             var (chunkX, chunkY) = expectedKeys[index];
             var chunk = model.Layout.Chunks[index];
 
-            Assert.Equal(PreviewPayloadFixture.TerrainFromLattice(chunkX, chunkY), chunk.Heights.Samples.ToArray());
+            Assert.Equal(
+                PreviewPayloadFixture.TerrainFromLattice(chunkX, chunkY).Select(PreviewPayloadFixture.ResidentGridHeight).ToArray(),
+                chunk.Heights.Samples.ToArray());
             Assert.Equal(PreviewPayloadFixture.MaterialFromLattice(chunkX, chunkY), chunk.Materials!.Indices.ToArray());
             Assert.Equal(PreviewPayloadFixture.MaskFromLattice(chunkX, chunkY), chunk.Masks!.Flags.ToArray());
         }
@@ -133,18 +136,20 @@ public sealed class GeneratedMapPackageConverterTests
         using var unrepresentableReader = PreviewPayloadFixture.OpenPayload(unrepresentableScratch.Root);
         var unrepresentableTarget = Path.Combine(unrepresentableScratch.Root, "package");
         Assert.True(GeneratedMapPackageConverter.Convert(unrepresentableReader, MapName, unrepresentableTarget).Success);
-        var unrepresentableModel = new PackageReader(unrepresentableTarget).Read();
 
-        // The fixture's 0.5 game unit Y term is not a multiple of the 0.0390625 quantum, so the bridge rejects it.
-        var exception = Assert.Throws<MapImportException>(() => RuntimeBridge.MaterializeHeightMapData(unrepresentableModel));
-        Assert.Contains(exception.Diagnostics, diagnostic => diagnostic.Code == MapInterchangeDiagnostic.HeightRepresentable);
+        // The fixture's 0.5 game unit Y term is off the 0.0390625 grid; the converter quantizes it so the bridge accepts the package.
+        AssertResidentHeights(
+            unrepresentableTarget,
+            (latticeX, latticeY) => PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(latticeX, latticeY)));
 
         using var representableScratch = new PreviewPayloadFixture.ScratchRoot();
         Func<long, long, float> heightOverride = (latticeX, latticeY) => 1000f + (1.25f * latticeX);
         PreviewPayloadFixture.CreatePayload(representableScratch.Root, heightOverride: heightOverride);
         using var representableReader = PreviewPayloadFixture.OpenPayload(representableScratch.Root);
         var representableTarget = Path.Combine(representableScratch.Root, "package");
-        Assert.True(GeneratedMapPackageConverter.Convert(representableReader, MapName, representableTarget).Success);
+        var representableResult = GeneratedMapPackageConverter.Convert(representableReader, MapName, representableTarget);
+        Assert.True(representableResult.Success, string.Join("; ", representableResult.Diagnostics));
+        Assert.Empty(representableResult.Diagnostics);
         var representableModel = new PackageReader(representableTarget).Read();
 
         var expectedKeys = ChunkCoordinates(representableReader.Metadata.Grid.ChunksX, representableReader.Metadata.Grid.ChunksY).ToArray();
@@ -158,16 +163,144 @@ public sealed class GeneratedMapPackageConverterTests
                 representableModel.Layout.Chunks[index].Heights.Samples.ToArray());
         }
 
-        var heights = RuntimeBridge.MaterializeHeightMapData(representableModel);
+        AssertResidentHeights(representableTarget, heightOverride);
+    }
 
-        for (var latticeY = 0; latticeY < representableModel.Layout.LatticeHeight; latticeY++)
+    [Fact]
+    public void GeneratedMapPackageQuantizesTiesToEvenSteps()
+    {
+        // Half-step ties 0.5, 1.5, 2.5 and 3.5 round to 0, 2, 2 and 4 steps under round-half-even.
+        float[] ties = [0.01953125f, 0.05859375f, 0.09765625f, 0.13671875f];
+        Func<long, long, float> heightOverride = (latticeX, latticeY) => ties[((latticeX % 4) + 4) % 4];
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, heightOverride: heightOverride);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+        var stored = model.Layout.Chunks
+            .SelectMany(chunk => chunk.Heights.Samples.ToArray())
+            .Distinct()
+            .OrderBy(value => value)
+            .ToArray();
+        Assert.Equal(new[] { 0f, 0.078125f, 0.15625f }, stored);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageKeepsGridMaximumAndRoundsHalfStepBelowZeroToZero()
+    {
+        // 2559.9609375 is the largest representable height (65535 steps); -0.01953125 is half a step below zero.
+        Func<long, long, float> heightOverride = (latticeX, latticeY) =>
         {
-            for (var latticeX = 0; latticeX < representableModel.Layout.LatticeWidth; latticeX++)
+            if (latticeX == 0 && latticeY == 0)
             {
-                var resident = heights.Elevations[latticeX, latticeY] * heights.VerticalScale;
-                Assert.Equal(heightOverride(latticeX, latticeY), resident);
+                return 2559.9609375f;
+            }
+
+            if (latticeX == 1 && latticeY == 0)
+            {
+                return -0.01953125f;
+            }
+
+            return PreviewPayloadFixture.GlobalHeight(latticeX, latticeY);
+        };
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, heightOverride: heightOverride);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+        var samples = model.Layout.Chunks.Single(chunk => chunk.Key.Cx == 0 && chunk.Key.Cy == 0).Heights.Samples.ToArray();
+        var stride = ChunkLayout.StoredPointsPerChunkAxis;
+        Assert.Equal(2559.9609375f, samples[(1 * stride) + 1]);
+        Assert.Equal(0f, samples[(1 * stride) + 2]);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageRejectsTerrainBeyondResidentRangeWithoutPackage()
+    {
+        // 2559.98046875 is 65535.5 steps, the first value past the representable range.
+        Func<long, long, float> heightOverride = (latticeX, latticeY) =>
+            latticeX == 0 && latticeY == 0 ? 2559.98046875f : PreviewPayloadFixture.GlobalHeight(latticeX, latticeY);
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, heightOverride: heightOverride);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var grid = reader.Metadata.Grid;
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.False(result.Success);
+        var diagnostic = Assert.Single(result.Diagnostics);
+        Assert.StartsWith(HeightQuantizationPrefix, diagnostic, StringComparison.Ordinal);
+        var storedSamples = grid.TotalChunkCount * ChunkLayout.StoredPointsPerChunkAxis * ChunkLayout.StoredPointsPerChunkAxis;
+        Assert.Contains($"1 of {storedSamples} terrain samples", diagnostic, StringComparison.Ordinal);
+        Assert.Null(result.Model);
+        Assert.Null(result.PackageRoot);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void GeneratedMapPackageConversionLeavesPayloadTerrainUnchanged()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        Assert.True(GeneratedMapPackageConverter.Convert(reader, MapName, target).Success);
+
+        var terrain = reader.ReadTerrain(0, 0, new GeoDiagnosticBag());
+        Assert.NotNull(terrain);
+        Assert.Equal(PreviewPayloadFixture.TerrainFromLattice(0, 0), terrain!.Heights.ToArray());
+    }
+
+    [Fact]
+    public void GeneratedMapPackageReportsHeightQuantizationCountAndMaxError()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var grid = reader.Metadata.Grid;
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var diagnostic = Assert.Single(result.Diagnostics);
+
+        var total = 0;
+        var changed = 0;
+        var maxError = 0d;
+
+        foreach (var (chunkX, chunkY) in ChunkCoordinates(grid.ChunksX, grid.ChunksY))
+        {
+            foreach (var value in PreviewPayloadFixture.TerrainFromLattice(chunkX, chunkY))
+            {
+                var quantized = PreviewPayloadFixture.ResidentGridHeight(value);
+                total++;
+
+                if (quantized != value)
+                {
+                    changed++;
+                    maxError = Math.Max(maxError, Math.Abs((double)quantized - value));
+                }
             }
         }
+
+        var maxErrorText = maxError.ToString("R", CultureInfo.InvariantCulture);
+        Assert.True(changed > 0);
+        Assert.True(maxError <= 0.01953125d);
+        Assert.StartsWith(HeightQuantizationPrefix, diagnostic, StringComparison.Ordinal);
+        Assert.Contains($"Quantized {changed} of {total} terrain samples", diagnostic, StringComparison.Ordinal);
+        Assert.Contains($"max error {maxErrorText} game height units", diagnostic, StringComparison.Ordinal);
+        Assert.Contains(result.Limitations, limitation => limitation.Contains("quantized to the resident height grid", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -309,7 +442,7 @@ public sealed class GeneratedMapPackageConverterTests
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        var diagnostic = Assert.Single(result.Diagnostics);
+        var diagnostic = Assert.Single(NonHeightDiagnostics(result));
         Assert.Contains("tree-0/tree-0#0", diagnostic, StringComparison.Ordinal);
 
         var model = new PackageReader(target).Read();
@@ -363,7 +496,7 @@ public sealed class GeneratedMapPackageConverterTests
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        var diagnostic = Assert.Single(result.Diagnostics);
+        var diagnostic = Assert.Single(NonHeightDiagnostics(result));
         Assert.Contains("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", diagnostic, StringComparison.Ordinal);
 
         var model = new PackageReader(target).Read();
@@ -404,7 +537,7 @@ public sealed class GeneratedMapPackageConverterTests
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        Assert.Single(result.Diagnostics);
+        Assert.Single(NonHeightDiagnostics(result));
 
         var model = new PackageReader(target).Read();
         var entry = Assert.Single(model.Provenance.GeneratedFeatures);
@@ -605,8 +738,8 @@ public sealed class GeneratedMapPackageConverterTests
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        Assert.NotEmpty(result.Diagnostics);
-        Assert.All(result.Diagnostics, diagnostic => Assert.StartsWith(GeneratedMapPackageDiagnosticCodes.StableIdDeduplicated + ":", diagnostic, StringComparison.Ordinal));
+        Assert.NotEmpty(NonHeightDiagnostics(result));
+        Assert.All(NonHeightDiagnostics(result), diagnostic => Assert.StartsWith(GeneratedMapPackageDiagnosticCodes.StableIdDeduplicated + ":", diagnostic, StringComparison.Ordinal));
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("identical duplicate vector emissions were collapsed", StringComparison.Ordinal));
 
         var model = new PackageReader(target).Read();
@@ -792,6 +925,26 @@ public sealed class GeneratedMapPackageConverterTests
         }
 
         return sum / 2d;
+    }
+
+    private static void AssertResidentHeights(string packageRoot, Func<long, long, float> expected)
+    {
+        var model = new PackageReader(packageRoot).Read();
+        var heights = RuntimeBridge.MaterializeHeightMapData(model);
+
+        for (var latticeY = 0; latticeY < model.Layout.LatticeHeight; latticeY++)
+        {
+            for (var latticeX = 0; latticeX < model.Layout.LatticeWidth; latticeX++)
+            {
+                var resident = heights.Elevations[latticeX, latticeY] * heights.VerticalScale;
+                Assert.Equal(expected(latticeX, latticeY), resident);
+            }
+        }
+    }
+
+    private static IEnumerable<string> NonHeightDiagnostics(GeneratedMapPackageResult result)
+    {
+        return result.Diagnostics.Where(diagnostic => !diagnostic.StartsWith(HeightQuantizationPrefix, StringComparison.Ordinal));
     }
 
     private static IEnumerable<(int ChunkX, int ChunkY)> ChunkCoordinates(int chunksX, int chunksY)

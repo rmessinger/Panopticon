@@ -28,4 +28,6 @@ public static class GeneratedMapPackageDiagnosticCodes
     public const string BuildingHeightUnresolved = "GEO-PKG-012";
 
     public const string BuildingGenerated = "GEO-PKG-013";
+
+    public const string HeightQuantization = "GEO-PKG-014";
 }

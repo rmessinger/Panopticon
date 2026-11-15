@@ -280,8 +280,10 @@ public sealed class GeneratedBuildingBuilderTests
 
         // Support set = lattice points (9..21)^2 (footprint box expanded by one sample);
         // the fixture terrain is strictly increasing, so the extremes sit at the corners.
-        Assert.Equal(PreviewPayloadFixture.GlobalHeight(9, 9), building.SupportMinZ);
-        Assert.Equal(PreviewPayloadFixture.GlobalHeight(21, 21), building.SupportMaxZ);
+        // Seating reads the quantized terrain the converter wrote, not the raw payload values.
+        Assert.Equal(PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(9, 9)), building.SupportMinZ);
+        Assert.Equal(PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(21, 21)), building.SupportMaxZ);
+        Assert.NotEqual(PreviewPayloadFixture.GlobalHeight(9, 9), building.SupportMinZ);
         Assert.Equal(building.SupportMinZ - 1d, building.BaseZ);
         Assert.Equal(building.SupportMaxZ + building.HeightGameUnits, building.EaveZ);
         Assert.Equal(1d, building.SinkGameUnits);
@@ -291,7 +293,7 @@ public sealed class GeneratedBuildingBuilderTests
         {
             for (var gx = 10; gx <= 20; gx++)
             {
-                var sample = PreviewPayloadFixture.GlobalHeight(gx, gy);
+                var sample = PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(gx, gy));
                 Assert.True(building.BaseZ <= sample, $"BaseZ {building.BaseZ} exceeds sample ({gx}, {gy}) = {sample}");
                 Assert.True(building.EaveZ >= sample + 12d, $"EaveZ {building.EaveZ} is below sample ({gx}, {gy}) + height = {sample + 12d}");
             }

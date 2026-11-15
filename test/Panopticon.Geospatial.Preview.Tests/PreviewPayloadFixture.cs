@@ -46,6 +46,13 @@ internal static class PreviewPayloadFixture
         return (float)(1000d + (1.25d * latticeX) + (0.5d * latticeY));
     }
 
+    /// <summary>Round-half-even quantization onto the resident height grid, as the converter stores it.</summary>
+    public static float ResidentGridHeight(float value)
+    {
+        const double step = 0.0390625d;
+        return (float)(Math.Round(value / step, MidpointRounding.ToEven) * step);
+    }
+
     /// <summary>Deterministic global material index over the core lattice.</summary>
     public static byte GlobalMaterial(long latticeX, long latticeY)
     {

@@ -44,7 +44,7 @@ public class GeoImportPackageCliTests
 
         Assert.Contains(lines, line => line.StartsWith("package: ", StringComparison.Ordinal));
         Assert.Contains(lines, line => line == "chunks: 1");
-        Assert.Equal(5, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
+        Assert.Equal(6, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
 
         var interchange = new PackageReader(package).Read();
 
@@ -160,7 +160,7 @@ public class GeoImportPackageCliTests
 
         Assert.Contains(lines, line => line.StartsWith("package: ", StringComparison.Ordinal));
         Assert.Contains(lines, line => line == "chunks: 1");
-        Assert.Equal(5, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
+        Assert.Equal(6, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
         Assert.Contains(
             lines,
             line => line.StartsWith("diagnostic: ", StringComparison.Ordinal) && line.Contains("GEO-PKG-008", StringComparison.Ordinal) && line.Contains(stableId, StringComparison.Ordinal));
