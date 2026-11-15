@@ -45,6 +45,8 @@ public static class MapInterchangeValidator
 
     private const int MaxVectorGeometryDepth = 16;
 
+    private const int MaxMeshVerticesPerSegment = 65535;
+
     public static IReadOnlyList<MapInterchangeDiagnostic> Validate(MapInterchange map)
     {
         ArgumentNullException.ThrowIfNull(map);
@@ -71,6 +73,7 @@ public static class MapInterchangeValidator
         ValidateWaypoints(map, stableIds, diagnostics);
         ValidateProvenance(map, stableIds, diagnostics);
         ValidateVectorLayers(map, diagnostics);
+        ValidateBuildings(map, diagnostics);
         ValidateRetainedSections(map, diagnostics);
         return diagnostics;
     }
@@ -1029,6 +1032,369 @@ public static class MapInterchangeValidator
         diagnostics.Add(new MapInterchangeDiagnostic(
             MapInterchangeDiagnostic.VectorLayer,
             $"{subject} point position ({position.X}, {position.Y}, {position.AltitudeMeters}) is not finite."));
+    }
+
+    private static void ValidateBuildings(MapInterchange map, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        var layer = map.Buildings;
+
+        if (layer is null)
+        {
+            return;
+        }
+
+        var meshChunkKeys = ValidateMeshChunks(layer.MeshChunks, diagnostics);
+
+        if (layer.Buildings is null)
+        {
+            AddNullComponent(diagnostics, "BuildingLayerSet.Buildings");
+            return;
+        }
+
+        var seenBuildings = new HashSet<(string SourceId, string FeatureId)>();
+        var seenPartStableIds = new HashSet<string>();
+
+        foreach (var building in layer.Buildings)
+        {
+            if (building is null)
+            {
+                AddNullComponent(diagnostics, "BuildingLayerSet.Buildings entry");
+                continue;
+            }
+
+            var subject = $"GeneratedBuilding '{building.SourceId}' (FeatureId '{building.FeatureId}')";
+
+            if (!seenBuildings.Add((building.SourceId, building.FeatureId)))
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.BuildingDuplicate,
+                    $"{subject} repeats the (SourceId, FeatureId) pair of an earlier building."));
+            }
+
+            if (building.Attributes is null)
+            {
+                AddNullComponent(diagnostics, $"{subject} Attributes");
+            }
+
+            ValidateBuildingFields(building, subject, diagnostics);
+
+            if (building.Parts is null)
+            {
+                AddNullComponent(diagnostics, $"{subject} Parts");
+                continue;
+            }
+
+            if (building.Parts.Count < 1)
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.BuildingLayer,
+                    $"{subject} carries no parts; at least one is required."));
+            }
+
+            for (var index = 0; index < building.Parts.Count; index++)
+            {
+                ValidateBuildingPart(building.Parts[index], $"{subject} part {index}", meshChunkKeys, seenPartStableIds, diagnostics);
+            }
+        }
+    }
+
+    private static void ValidateBuildingFields(GeneratedBuilding building, string subject, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (string.IsNullOrWhiteSpace(building.SourceId) || string.IsNullOrWhiteSpace(building.FeatureId))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} carries an empty SourceId or FeatureId; both are required."));
+        }
+
+        if (!double.IsFinite(building.HeightMeters) || building.HeightMeters <= 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} HeightMeters is {building.HeightMeters}; it must be finite and greater than zero."));
+        }
+
+        if (!double.IsFinite(building.HeightGameUnits) || building.HeightGameUnits <= 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} HeightGameUnits is {building.HeightGameUnits}; it must be finite and greater than zero."));
+        }
+
+        if (building.HeightSource is not ("SourceAttribute" or "UsageMedian" or "GlobalMedian"))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} HeightSource '{building.HeightSource}' is not a known height source (SourceAttribute, UsageMedian, or GlobalMedian)."));
+        }
+
+        if (building.RoofRule is not ("Flat" or "Gabled"))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} RoofRule '{building.RoofRule}' is not a known roof rule (Flat or Gabled)."));
+        }
+
+        if (building.MaterialVariant < 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} declares MaterialVariant {building.MaterialVariant}; material variants are non-negative."));
+        }
+
+        if (!double.IsFinite(building.SupportMinZ) || !double.IsFinite(building.SupportMaxZ) || building.SupportMinZ > building.SupportMaxZ)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} declares support range {building.SupportMinZ}..{building.SupportMaxZ}; both bounds must be finite with SupportMinZ <= SupportMaxZ."));
+        }
+
+        if (!double.IsFinite(building.SinkGameUnits) || building.SinkGameUnits < 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} SinkGameUnits is {building.SinkGameUnits}; it must be finite and non-negative."));
+        }
+
+        if (!double.IsFinite(building.BaseZ) || !double.IsFinite(building.EaveZ) || building.EaveZ <= building.BaseZ)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} declares vertical extent {building.BaseZ}..{building.EaveZ}; both bounds must be finite with EaveZ > BaseZ."));
+        }
+    }
+
+    private static void ValidateBuildingPart(
+        BuildingPart? part,
+        string subject,
+        HashSet<(int ChunkX, int ChunkY)>? meshChunkKeys,
+        HashSet<string> seenPartStableIds,
+        List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (part is null)
+        {
+            AddNullComponent(diagnostics, subject);
+            return;
+        }
+
+        subject = $"{subject} '{part.PartStableId}'";
+
+        if (!seenPartStableIds.Add(part.PartStableId))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingDuplicate,
+                $"{subject} repeats the PartStableId of an earlier part."));
+        }
+
+        if (part.Footprint is null)
+        {
+            AddNullComponent(diagnostics, $"{subject} Footprint");
+        }
+        else if (part.Footprint is not (VectorPolygonGeometry or VectorMultiGeometry))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} footprint is {part.Footprint.GetType().Name}; part footprints are polygons or multi-geometries."));
+        }
+        else
+        {
+            ValidateVectorGeometry(part.Footprint, $"{subject} Footprint", 0, diagnostics);
+        }
+
+        if (part.ChunkX < 0 || part.ChunkY < 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} declares chunk ({part.ChunkX}, {part.ChunkY}); chunk coordinates are non-negative."));
+        }
+        else if (meshChunkKeys is not null && !meshChunkKeys.Contains((part.ChunkX, part.ChunkY)))
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} references chunk ({part.ChunkX}, {part.ChunkY}); no mesh chunk carries that chunk key."));
+        }
+    }
+
+    private static HashSet<(int ChunkX, int ChunkY)>? ValidateMeshChunks(IReadOnlyList<BuildingMeshChunk>? meshChunks, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        var keys = new HashSet<(int ChunkX, int ChunkY)>();
+
+        if (meshChunks is null)
+        {
+            AddNullComponent(diagnostics, "BuildingLayerSet.MeshChunks");
+            return null;
+        }
+
+        var sawNullEntry = false;
+
+        foreach (var chunk in meshChunks)
+        {
+            if (chunk is null)
+            {
+                AddNullComponent(diagnostics, "BuildingLayerSet.MeshChunks entry");
+                sawNullEntry = true;
+                continue;
+            }
+
+            var subject = $"BuildingMeshChunk ({chunk.ChunkX}, {chunk.ChunkY})";
+
+            if (chunk.ChunkX < 0 || chunk.ChunkY < 0)
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.BuildingLayer,
+                    $"{subject} carries a negative chunk coordinate; chunk coordinates are non-negative."));
+                continue;
+            }
+
+            if (!keys.Add((chunk.ChunkX, chunk.ChunkY)))
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.BuildingDuplicate,
+                    $"{subject} appears more than once."));
+                continue;
+            }
+
+            if (chunk.Segments is null)
+            {
+                AddNullComponent(diagnostics, $"{subject} Segments");
+                continue;
+            }
+
+            for (var index = 0; index < chunk.Segments.Count; index++)
+            {
+                ValidateMeshSegment(chunk.Segments[index], $"{subject} segment {index}", diagnostics);
+            }
+        }
+
+        // A null entry leaves the chunk inventory incomplete, so part-to-chunk cross-checks are skipped.
+        return sawNullEntry ? null : keys;
+    }
+
+    private static void ValidateMeshSegment(BuildingMeshSegment? segment, string subject, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (segment is null)
+        {
+            AddNullComponent(diagnostics, subject);
+            return;
+        }
+
+        if (segment.MaterialVariant < 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} declares MaterialVariant {segment.MaterialVariant}; material variants are non-negative."));
+        }
+
+        var vertices = segment.Vertices;
+
+        if (vertices is null)
+        {
+            AddNullComponent(diagnostics, $"{subject} Vertices");
+            return;
+        }
+
+        if (vertices.Count < 1 || vertices.Count > MaxMeshVerticesPerSegment)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} carries {vertices.Count} vertices; a segment carries 1 to {MaxMeshVerticesPerSegment}."));
+        }
+
+        var indices = segment.Indices;
+
+        if (indices is null)
+        {
+            AddNullComponent(diagnostics, $"{subject} Indices");
+            return;
+        }
+
+        if (indices.Count < 1 || indices.Count % 3 != 0)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} carries {indices.Count} indices; a non-empty multiple-of-three triangle list is required."));
+        }
+
+        var vertexCount = (uint)vertices.Count;
+
+        for (var index = 0; index < indices.Count; index++)
+        {
+            if (indices[index] < vertexCount)
+            {
+                continue;
+            }
+
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} index {index} references vertex {indices[index]} outside the {vertices.Count}-vertex segment."));
+            break;
+        }
+
+        var positionsFinite = true;
+
+        for (var index = 0; index < vertices.Count; index++)
+        {
+            var vertex = vertices[index];
+
+            if (!double.IsFinite(vertex.X) || !double.IsFinite(vertex.Y) || !double.IsFinite(vertex.Z))
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.BuildingLayer,
+                    $"{subject} vertex {index} position ({vertex.X}, {vertex.Y}, {vertex.Z}) is not finite."));
+                positionsFinite = false;
+            }
+
+            if (!double.IsFinite(vertex.NormalX) || !double.IsFinite(vertex.NormalY) || !double.IsFinite(vertex.NormalZ))
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.BuildingLayer,
+                    $"{subject} vertex {index} normal ({vertex.NormalX}, {vertex.NormalY}, {vertex.NormalZ}) is not finite."));
+                continue;
+            }
+
+            var normalLengthSquared = (vertex.NormalX * vertex.NormalX) + (vertex.NormalY * vertex.NormalY) + (vertex.NormalZ * vertex.NormalZ);
+
+            if (normalLengthSquared > 0)
+            {
+                continue;
+            }
+
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.BuildingLayer,
+                $"{subject} vertex {index} carries a zero-length normal."));
+        }
+
+        if (!positionsFinite)
+        {
+            return;
+        }
+
+        double minX = double.PositiveInfinity;
+        double minY = double.PositiveInfinity;
+        double minZ = double.PositiveInfinity;
+        double maxX = double.NegativeInfinity;
+        double maxY = double.NegativeInfinity;
+        double maxZ = double.NegativeInfinity;
+
+        for (var index = 0; index < vertices.Count; index++)
+        {
+            var vertex = vertices[index];
+            minX = Math.Min(minX, vertex.X);
+            minY = Math.Min(minY, vertex.Y);
+            minZ = Math.Min(minZ, vertex.Z);
+            maxX = Math.Max(maxX, vertex.X);
+            maxY = Math.Max(maxY, vertex.Y);
+            maxZ = Math.Max(maxZ, vertex.Z);
+        }
+
+        if (minX == segment.MinX && minY == segment.MinY && minZ == segment.MinZ && maxX == segment.MaxX && maxY == segment.MaxY && maxZ == segment.MaxZ)
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.BuildingLayer,
+            $"{subject} stores bounds ({segment.MinX}, {segment.MinY}, {segment.MinZ})..({segment.MaxX}, {segment.MaxY}, {segment.MaxZ}); its vertices span ({minX}, {minY}, {minZ})..({maxX}, {maxY}, {maxZ})."));
     }
 
     private static void RequireQuantity(MapQuantity quantity, string field, List<MapInterchangeDiagnostic> diagnostics)

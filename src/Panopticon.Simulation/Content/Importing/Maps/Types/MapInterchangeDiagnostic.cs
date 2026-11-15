@@ -65,5 +65,9 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string VectorFeatureDuplicate = "vector-feature-duplicate";
 
+    public const string BuildingLayer = "building-layer";
+
+    public const string BuildingDuplicate = "building-duplicate";
+
     public override string ToString() => $"{Code}: {Message}";
 }
