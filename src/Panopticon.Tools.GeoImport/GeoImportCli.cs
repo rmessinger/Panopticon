@@ -303,6 +303,11 @@ public static class GeoImportCli
                 standardOut.WriteLine($"package: {NormalizeWhitespace(result.PackageRoot)}");
                 standardOut.WriteLine($"chunks: {result.ChunkCount}");
 
+                foreach (var diagnostic in result.Diagnostics)
+                {
+                    standardOut.WriteLine($"diagnostic: {NormalizeWhitespace(diagnostic)}");
+                }
+
                 foreach (var limitation in result.Limitations)
                 {
                     standardOut.WriteLine($"limitation: {NormalizeWhitespace(limitation)}");

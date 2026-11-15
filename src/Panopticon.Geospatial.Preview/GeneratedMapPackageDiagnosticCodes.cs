@@ -18,4 +18,6 @@ public static class GeneratedMapPackageDiagnosticCodes
     public const string FillCountOverflow = "GEO-PKG-007";
 
     public const string StableIdDeduplicated = "GEO-PKG-008";
+
+    public const string StableIdSourceConflict = "GEO-PKG-009";
 }

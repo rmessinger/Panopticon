@@ -11,6 +11,7 @@ using Panopticon.Geospatial.Manifest;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Panopticon.Geospatial.Sampling;
+using SixLabors.ImageSharp;
 using Xunit;
 
 namespace Panopticon.Geospatial.Preview.Tests;
@@ -159,26 +160,73 @@ internal static class PreviewPayloadFixture
             objectPlacement: new GeneratedObjectPlacement(objectDefinition, orientationDegrees));
     }
 
-    /// <summary>Mapped passability or buildability region over a fixed square footprint with an explicit part id.</summary>
-    public static GeneratedFeature MaskRegion(GeneratedFeatureKind kind, string featureId, string partId, bool flag)
+    /// <summary>Mapped passability or buildability region over a square footprint with an explicit part id, rule index, and span.</summary>
+    public static GeneratedFeature MaskRegion(GeneratedFeatureKind kind, string featureId, string partId, bool flag, int ruleIndex = -1, double span = 10d)
     {
         return kind == GeneratedFeatureKind.Passability
             ? new GeneratedFeature(
                 kind,
-                new GeoPolygon(Ring((500000d, 6000000d), (500010d, 6000000d), (500010d, 6000010d), (500000d, 6000010d), (500000d, 6000000d))),
+                new GeoPolygon(Ring((500000d, 6000000d), (500000d + span, 6000000d), (500000d + span, 6000000d + span), (500000d, 6000000d + span), (500000d, 6000000d))),
                 "vectors",
                 featureId,
                 partId,
-                -1,
+                ruleIndex,
                 passable: flag)
             : new GeneratedFeature(
                 kind,
-                new GeoPolygon(Ring((500000d, 6000000d), (500010d, 6000000d), (500010d, 6000010d), (500000d, 6000010d), (500000d, 6000000d))),
+                new GeoPolygon(Ring((500000d, 6000000d), (500000d + span, 6000000d), (500000d + span, 6000000d + span), (500000d, 6000000d + span), (500000d, 6000000d))),
                 "vectors",
                 featureId,
                 partId,
-                -1,
+                ruleIndex,
                 buildable: flag);
+    }
+
+    /// <summary>Analytic RGBA pixel of the fixture imagery at chunk-local (x, y); the PNG encoder and assertions share this.</summary>
+    public static byte[] ImageryPixel(int chunkX, int chunkY, int x, int y)
+    {
+        return [(byte)((x + chunkX) % 256), (byte)((y + chunkY) % 256), (byte)((x * y) % 256), 255];
+    }
+
+    /// <summary>Full RGBA buffer for one fixture imagery chunk in row-major order.</summary>
+    public static byte[] ImageryPixels(int chunkX, int chunkY, int pixelsPerAxis)
+    {
+        var rgba = new byte[pixelsPerAxis * pixelsPerAxis * 4];
+
+        for (var y = 0; y < pixelsPerAxis; y++)
+        {
+            for (var x = 0; x < pixelsPerAxis; x++)
+            {
+                ImageryPixel(chunkX, chunkY, x, y).CopyTo(rgba, ((y * pixelsPerAxis) + x) * 4);
+            }
+        }
+
+        return rgba;
+    }
+
+    /// <summary>Encodes the fixture imagery pixels as the payload's fixed RGBA8 PNG.</summary>
+    public static byte[] ImageryPng(int chunkX, int chunkY, int pixelsPerAxis)
+    {
+        using var image = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(pixelsPerAxis, pixelsPerAxis);
+
+        image.ProcessPixelRows(accessor =>
+        {
+            for (var y = 0; y < pixelsPerAxis; y++)
+            {
+                var row = accessor.GetRowSpan(y);
+
+                for (var x = 0; x < pixelsPerAxis; x++)
+                {
+                    var pixel = ImageryPixel(chunkX, chunkY, x, y);
+                    row[x] = new SixLabors.ImageSharp.PixelFormats.Rgba32(pixel[0], pixel[1], pixel[2], pixel[3]);
+                }
+            }
+        });
+
+        using var stream = new MemoryStream();
+        image.SaveAsPng(stream);
+
+        return stream.ToArray();
     }
 
     public static GeneratedFeature AnnotationLine()
@@ -213,7 +261,8 @@ internal static class PreviewPayloadFixture
         int chunksX = 2,
         int chunksY = 2,
         List<GeneratedFeature>? features = null,
-        Func<long, long, float>? heightOverride = null)
+        Func<long, long, float>? heightOverride = null,
+        int? imageryPixelsPerSample = null)
     {
         var diagnostics = new GeoDiagnosticBag();
         var writer = GeneratedMapPayloadWriter.Create(outputDirectory, [], diagnostics);
@@ -221,6 +270,7 @@ internal static class PreviewPayloadFixture
         Assert.False(diagnostics.HasErrors);
 
         var palette = new MaterialPalette(PaletteNames);
+        var pixelsPerAxis = imageryPixelsPerSample is { } samples ? ChunkLayout.IntervalsPerChunk * samples : 0;
         var descriptors = new List<PayloadChunkDescriptor>();
         for (var chunkY = 0; chunkY < chunksY; chunkY++)
         {
@@ -229,17 +279,21 @@ internal static class PreviewPayloadFixture
                 var terrain = writer.WriteTerrain(new TerrainChunk(chunkX, chunkY, TerrainFromLattice(chunkX, chunkY, heightOverride)));
                 var materials = writer.WriteMaterial(new MaterialChunk(chunkX, chunkY, palette, MaterialFromLattice(chunkX, chunkY)));
                 var masks = writer.WriteMask(new TerrainMaskChunk(chunkX, chunkY, MaskFromLattice(chunkX, chunkY)));
+                var imagery = imageryPixelsPerSample is null
+                    ? null
+                    : writer.WriteImagery(new ImageryChunk(chunkX, chunkY, pixelsPerAxis, ImageryPng(chunkX, chunkY, pixelsPerAxis)));
 
                 Assert.NotNull(terrain);
                 Assert.NotNull(materials);
                 Assert.NotNull(masks);
+                Assert.Equal(imageryPixelsPerSample is null, imagery is null);
 
-                descriptors.Add(new PayloadChunkDescriptor(chunkX, chunkY, terrain!, materials!, masks!, null));
+                descriptors.Add(new PayloadChunkDescriptor(chunkX, chunkY, terrain!, materials!, masks!, imagery));
             }
         }
 
         var metadata = new GeneratedMapPayloadMetadata(
-            new PayloadGridDefinition(chunksX, chunksY, Transform(), PlayableArea(chunksX, chunksY), null, new SlopeThresholds(45d, 15d)),
+            new PayloadGridDefinition(chunksX, chunksY, Transform(), PlayableArea(chunksX, chunksY), imageryPixelsPerSample, new SlopeThresholds(45d, 15d)),
             palette,
             features ?? DefaultFeatures(),
             ManifestSha256Hex,

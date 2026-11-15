@@ -11,6 +11,7 @@ using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Generation;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Manifest;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using SixLabors.ImageSharp;
@@ -36,6 +37,7 @@ public static class GeneratedMapPackageConverter
         "Imagery keeps payload PNG row order (north row first).",
         "Line and polygon feature geometry is preserved as provenance attribute text, not package layers.",
         "Conversion holds chunk data in memory; streaming is not supported.",
+        "The import report is an import result, not package content; a reloaded package carries an empty import-report placeholder by design.",
     ];
 
     public static GeneratedMapPackageResult Convert(IGeneratedMapPayloadReader reader, string mapName, string targetPackageRoot)
@@ -92,7 +94,12 @@ public static class GeneratedMapPackageConverter
             }
         }
 
-        var (features, provenanceFeatures, dedupeDiagnostics) = DedupeFeatures(metadata.Features);
+        var (features, provenanceFeatures, dedupeDiagnostics, sourceConflicts) = DedupeFeatures(metadata.Features);
+
+        if (sourceConflicts.Count > 0)
+        {
+            return Failed(sourceConflicts);
+        }
 
         var interchange = new MapInterchange(
             MapInterchange.CurrentSchemaVersion,
@@ -306,9 +313,11 @@ public static class GeneratedMapPackageConverter
     // One source feature can be staged twice by overlapping mappings, and one source part can
     // be mapped into several mask features (for example passability plus buildability); the
     // interchange validator rejects every repeated stable id. Exact duplicates collapse to one
-    // feature, same-part provenance projections collapse to one entry, and conflicts that
-    // touch placed objects or waypoints still fail validation unchanged.
-    private static (IReadOnlyList<GeneratedFeature> Features, IReadOnlyList<GeneratedFeature> ProvenanceFeatures, IReadOnlyList<string> Diagnostics) DedupeFeatures(
+    // feature, same-part provenance projections collapse to one entry when their source
+    // geometry and source attributes are identical, and conflicts that touch placed objects or
+    // waypoints still fail validation unchanged. Keep-first is the explicit input-order policy
+    // (mapper rules are ordered); permutation invariance is not claimed.
+    private static (IReadOnlyList<GeneratedFeature> Features, IReadOnlyList<GeneratedFeature> ProvenanceFeatures, IReadOnlyList<string> Diagnostics, IReadOnlyList<string> SourceConflicts) DedupeFeatures(
         IReadOnlyList<GeneratedFeature> features)
     {
         var kept = new List<GeneratedFeature>(features.Count);
@@ -349,19 +358,47 @@ public static class GeneratedMapPackageConverter
         }
 
         var samePartDrops = new Dictionary<string, int>(StringComparer.Ordinal);
+        var sourceConflicts = new List<string>();
         var skippedProvenance = new HashSet<GeneratedFeature>();
 
         foreach (var group in provenanceGroups.Values)
         {
-            if (group.Count > 1 && group.Count(EmitsPlacedFeature) <= 1)
+            if (group.Count <= 1 || group.Count(EmitsPlacedFeature) > 1)
             {
-                for (var index = 1; index < group.Count; index++)
-                {
-                    skippedProvenance.Add(group[index]);
-                }
-
-                samePartDrops[StableIdOf(group[0])] = group.Count - 1;
+                // Groups with two or more placed emitters keep today's behavior: validation
+                // rejects the repeated stable id and the conversion fails.
+                continue;
             }
+
+            // A provenance-only group merges only when every member is a projection of the
+            // same source part with identical source geometry and source attributes; a group
+            // that fails that proof must not silently lose a differing member.
+            var conflicts = false;
+
+            for (var index = 1; index < group.Count; index++)
+            {
+                if (!string.Equals(GeometryText(group[0].Geometry), GeometryText(group[index].Geometry), StringComparison.Ordinal)
+                    || !SameAttributes(group[0].Attributes, group[index].Attributes))
+                {
+                    conflicts = true;
+                    break;
+                }
+            }
+
+            if (conflicts)
+            {
+                sourceConflicts.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.StableIdSourceConflict,
+                    $"StableId '{StableIdOf(group[0])}' is shared by {group.Count} features of one source part whose source geometry or source attributes differ; the duplicates cannot be merged."));
+                continue;
+            }
+
+            for (var index = 1; index < group.Count; index++)
+            {
+                skippedProvenance.Add(group[index]);
+            }
+
+            samePartDrops[StableIdOf(group[0])] = group.Count - 1;
         }
 
         var provenanceFeatures = new List<GeneratedFeature>(kept.Count);
@@ -390,7 +427,7 @@ public static class GeneratedMapPackageConverter
                 $"StableId '{pair.Key}' was emitted by {pair.Value + 1} further features of the same source part; only the first provenance entry was kept."));
         }
 
-        return (kept, provenanceFeatures, diagnostics);
+        return (kept, provenanceFeatures, diagnostics, sourceConflicts);
     }
 
     private static string StableIdOf(GeneratedFeature feature) => $"{feature.FeatureId}/{feature.PartId}";
@@ -419,7 +456,10 @@ public static class GeneratedMapPackageConverter
             feature.SourceId,
             geometry,
             feature.Position,
-            feature.ObjectPlacement);
+            feature.ObjectPlacement,
+            feature.Passable,
+            feature.Buildable,
+            feature.Coverage);
     }
 
     private static bool SameAttributes(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
@@ -592,7 +632,10 @@ public static class GeneratedMapPackageConverter
         string SourceId,
         string Geometry,
         GamePosition? Position,
-        GeneratedObjectPlacement? Placement);
+        GeneratedObjectPlacement? Placement,
+        bool? Passable,
+        bool? Buildable,
+        ManifestMaskCoverage? Coverage);
 
     private static string Format(string code, string message) => $"{code}: {message}";
 

@@ -9,6 +9,7 @@ using Panopticon.Content.Importing.MapSources;
 using Panopticon.Content.Importing.MapSources.Package;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
+using Panopticon.Geospatial.Generation;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
@@ -94,6 +95,9 @@ public sealed class GeneratedMapPackageConverterTests
     [Fact]
     public void GeneratedMapPackageIsByteIdenticalAcrossRuns()
     {
+        // Byte identity across independently staged runs is claimed; permutation invariance
+        // of the input feature order is explicitly not (dedupe keeps the first occurrence in
+        // input order).
         using var firstScratch = new PreviewPayloadFixture.ScratchRoot();
         PreviewPayloadFixture.CreatePayload(firstScratch.Root);
         using var secondScratch = new PreviewPayloadFixture.ScratchRoot();
@@ -341,11 +345,15 @@ public sealed class GeneratedMapPackageConverterTests
     [Fact]
     public void GeneratedMapPackageMergesSamePartMaskFeatureProvenance()
     {
+        // Real-pair shape: one source part mapped by rule 0 into a passability feature and by
+        // rule 1 into a buildability feature. Keep-first retains the passability entry because
+        // it is first in the input order (permutation invariance is explicitly not claimed);
+        // the chunk masks still carry both projected bits from the payload lattice.
         using var scratch = new PreviewPayloadFixture.ScratchRoot();
         var features = new[]
         {
-            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false),
-            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Buildability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 0),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Buildability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 1),
         }.ToList();
         PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
@@ -360,8 +368,164 @@ public sealed class GeneratedMapPackageConverterTests
         var model = new PackageReader(target).Read();
         var entry = Assert.Single(model.Provenance.GeneratedFeatures);
         Assert.Equal("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", entry.StableId);
+        Assert.Equal("Passability", entry.Kind);
+        Assert.Equal(4, entry.Attributes.Count);
+        Assert.Equal("vectors", entry.Attributes["sourceId"]);
+        Assert.Equal("0", entry.Attributes["ruleIndex"]);
+        Assert.Equal("Passability", entry.Attributes["kind"]);
+        Assert.Equal(ExpectedMaskGeometryText(span: 10d), entry.Attributes["geometry"]);
+
+        var expectedFlags = PreviewPayloadFixture.MaskFromLattice(0, 0);
+        Assert.Equal(expectedFlags, model.Layout.Chunks[0].Masks!.Flags.ToArray());
+        Assert.Contains(expectedFlags, flag => flag == (byte)TerrainMaskFlags.Impassable);
+        Assert.Contains(expectedFlags, flag => flag == (byte)TerrainMaskFlags.Unbuildable);
+
         Assert.Null(model.Objects);
         Assert.Null(model.Waypoints);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageMergeKeepsFirstInReversedInputOrder()
+    {
+        // The same same-part pair with the opposite list order: keep-first retains the
+        // buildability entry instead, pinning that retention follows input order rather than
+        // any rule-kind preference.
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Buildability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 1),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 0),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.Single(result.Diagnostics);
+
+        var model = new PackageReader(target).Read();
+        var entry = Assert.Single(model.Provenance.GeneratedFeatures);
+        Assert.Equal("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", entry.StableId);
+        Assert.Equal("Buildability", entry.Kind);
+        Assert.Equal("1", entry.Attributes["ruleIndex"]);
+        Assert.Equal("Buildability", entry.Attributes["kind"]);
+        Assert.Equal("vectors", entry.Attributes["sourceId"]);
+        Assert.Equal(ExpectedMaskGeometryText(span: 10d), entry.Attributes["geometry"]);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageSourceIdentityConflictFailsWithoutPackage()
+    {
+        // Same stable id, same source part, but the members' source geometry differs: the
+        // same-part merge proof fails and the conversion must fail without a package.
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 0),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Buildability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 1, span: 20d),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.False(result.Success);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Contains(GeneratedMapPackageDiagnosticCodes.StableIdSourceConflict, StringComparison.Ordinal)
+                && diagnostic.Contains("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", StringComparison.Ordinal)
+                && diagnostic.Contains("geometry", StringComparison.Ordinal));
+        Assert.Null(result.Model);
+        Assert.Null(result.PackageRoot);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void GeneratedMapPackageMaskFlagsParticipateInIdentityKey()
+    {
+        // Same stable id, identical geometry, rule index, and attributes, differing only in
+        // the mask flag: the emissions must not classify as identical duplicates, so the
+        // same-part merge handles them and its diagnostic text pins that classification.
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "zone-0", "vectors/zone-0#0", flag: true, ruleIndex: 0),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "zone-0", "vectors/zone-0#0", flag: false, ruleIndex: 0),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Contains("same source part", diagnostic, StringComparison.Ordinal);
+        Assert.DoesNotContain("identical duplicate", diagnostic, StringComparison.Ordinal);
+
+        var model = new PackageReader(target).Read();
+        var entry = Assert.Single(model.Provenance.GeneratedFeatures);
+        Assert.Equal("Passability", entry.Kind);
+        Assert.Equal("0", entry.Attributes["ruleIndex"]);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageImageryRoundTripsThroughReload()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, imageryPixelsPerSample: 1);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+
+        var pixelsPerAxis = ChunkLayout.IntervalsPerChunk * reader.Metadata.Grid.ImageryPixelsPerSample!.Value;
+        var expectedKeys = ChunkCoordinates(reader.Metadata.Grid.ChunksX, reader.Metadata.Grid.ChunksY).ToArray();
+
+        for (var index = 0; index < expectedKeys.Length; index++)
+        {
+            var (chunkX, chunkY) = expectedKeys[index];
+            var imagery = model.Layout.Chunks[index].Imagery;
+
+            Assert.NotNull(imagery);
+            Assert.Equal(pixelsPerAxis, imagery!.Width);
+            Assert.Equal(pixelsPerAxis, imagery.Height);
+            Assert.Equal(PreviewPayloadFixture.ImageryPixels(chunkX, chunkY, pixelsPerAxis), imagery.Rgba);
+        }
+
+        var (manifest, manifestDiagnostics) = MapPackageManifestJson.ParseAndValidate(File.ReadAllText(Path.Combine(target, MapPackageFormat.ManifestFileName)));
+        Assert.NotNull(manifest);
+        Assert.Empty(manifestDiagnostics);
+
+        var imageryEntries = manifest!.Layers.Where(layer => layer.LayerKind == MapPackageFormat.LayerKindImagery).ToArray();
+        Assert.Equal(expectedKeys.Length, imageryEntries.Length);
+
+        for (var index = 0; index < expectedKeys.Length; index++)
+        {
+            var (chunkX, chunkY) = expectedKeys[index];
+            var entry = Assert.Single(imageryEntries, layer => layer.ChunkX == chunkX && layer.ChunkY == chunkY);
+            Assert.Equal($"layers/imagery_{chunkX}_{chunkY}.raw", entry.Path);
+            Assert.Equal(MapPackageFormat.EncodingRgba8, entry.Encoding);
+            Assert.Equal(pixelsPerAxis, entry.Width);
+            Assert.Equal(pixelsPerAxis, entry.Height);
+            Assert.Equal(
+                Convert.ToHexString(SHA256.HashData(PreviewPayloadFixture.ImageryPixels(chunkX, chunkY, pixelsPerAxis))).ToLowerInvariant(),
+                entry.Sha256);
+        }
+    }
+
+    private static string ExpectedMaskGeometryText(double span)
+    {
+        var far = string.Create(CultureInfo.InvariantCulture, $"{500000d + span}");
+        var north = string.Create(CultureInfo.InvariantCulture, $"{6000000d + span}");
+
+        return $"Polygon((500000 6000000, {far} 6000000, {far} {north}, 500000 {north}, 500000 6000000, 500000 6000000))";
     }
 
     [Fact]
