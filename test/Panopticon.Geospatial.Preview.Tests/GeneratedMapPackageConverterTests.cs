@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
 using Panopticon.Content.Importing.MapSources.Package;
@@ -87,6 +88,35 @@ public sealed class GeneratedMapPackageConverterTests
         Assert.Equal(transform.VerticalDatum, layoutTransform.VerticalDatum);
         Assert.Equal<double?>(transform.VerticalOriginMeters, layoutTransform.VerticalOrigin?.Value);
         Assert.Equal<double?>(transform.VerticalExaggeration, layoutTransform.VerticalExaggeration);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageIsByteIdenticalAcrossRuns()
+    {
+        using var firstScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(firstScratch.Root);
+        using var secondScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(secondScratch.Root);
+        var firstTarget = Path.Combine(firstScratch.Root, "package");
+        var secondTarget = Path.Combine(secondScratch.Root, "package");
+
+        using (var firstReader = PreviewPayloadFixture.OpenPayload(firstScratch.Root))
+        {
+            var firstResult = GeneratedMapPackageConverter.Convert(firstReader, MapName, firstTarget);
+            Assert.True(firstResult.Success, string.Join("; ", firstResult.Diagnostics));
+        }
+
+        using (var secondReader = PreviewPayloadFixture.OpenPayload(secondScratch.Root))
+        {
+            var secondResult = GeneratedMapPackageConverter.Convert(secondReader, MapName, secondTarget);
+            Assert.True(secondResult.Success, string.Join("; ", secondResult.Diagnostics));
+        }
+
+        var firstTree = PackageFileDigests(firstTarget);
+        var secondTree = PackageFileDigests(secondTarget);
+
+        Assert.NotEmpty(firstTree);
+        Assert.Equal(firstTree, secondTree);
     }
 
     [Fact]
@@ -186,6 +216,76 @@ public sealed class GeneratedMapPackageConverterTests
     }
 
     [Fact]
+    public void GeneratedMapPackagePlacedObjectsRoundTripThroughReload()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.Waypoint("wp-alpha", 640d, 1280d, 1100d, "alpha"),
+            PreviewPayloadFixture.ObjectCandidate("tree-0", 512d, 768d, 1050d, "TreeOak", 90d),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+
+        // Only object-candidate features become placed objects; the waypoint does not.
+        Assert.NotNull(model.Objects);
+        var placed = Assert.Single(model.Objects!.Objects);
+        Assert.Equal("tree-0", placed.StableId);
+        Assert.Equal(512d, placed.X.Value);
+        Assert.Equal(768d, placed.Y.Value);
+        Assert.Equal(1050d, placed.Z.Value);
+        Assert.Equal(MapQuantityUnit.GameUnit, placed.X.Unit);
+        Assert.Equal(MapQuantityFrame.MapLocalXy, placed.X.Frame);
+        Assert.Equal(MapQuantityFrame.MapLocalZ, placed.Z.Frame);
+        Assert.Equal(90d * Math.PI / 180d, placed.OrientationRadians);
+        Assert.Equal("legacy", placed.Type.Scope);
+        Assert.Equal("TreeOak", placed.Type.Name);
+        Assert.Equal(0u, placed.RoadType);
+        Assert.Empty(placed.LegacyProperties);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageCarriesConverterImportReport()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.NotNull(result.Model);
+        var report = result.Model!.Report;
+
+        var diagnostic = Assert.Single(report.Diagnostics);
+        Assert.Equal("GEO-VAL-001 Info: Control points matched.", diagnostic);
+        Assert.Equal(new[] { "GsdRatioX [0.98, 1.02]", "GsdRatioY [0.97, 1.03]" }, report.KernelAndSampleDistanceRatios);
+
+        // Only control-point category checks survive; the payload-category inventory check is dropped.
+        var check = Assert.Single(report.ControlPointResults);
+        Assert.Equal("corner-offset: Passed: Corner offset within tolerance.", check);
+        Assert.Equal(0, report.OutsideFootprintCellCount);
+        Assert.Equal(0, report.NodataCellCount);
+
+        // The package format stores objects, waypoints, and provenance but not the import
+        // report ("Import result, not package content"), so a reload reads back the empty
+        // placeholder instead of the converter's report.
+        var model = new PackageReader(target).Read();
+        Assert.Empty(model.Report.Diagnostics);
+        Assert.Empty(model.Report.KernelAndSampleDistanceRatios);
+        Assert.Empty(model.Report.ControlPointResults);
+        Assert.Equal(0, model.Report.OutsideFootprintCellCount);
+        Assert.Equal(0, model.Report.NodataCellCount);
+    }
+
+    [Fact]
     public void GeneratedMapPackageMissingChunkFailsWithoutPackage()
     {
         using var scratch = new PreviewPayloadFixture.ScratchRoot();
@@ -232,5 +332,16 @@ public sealed class GeneratedMapPackageConverterTests
     private static IEnumerable<(int ChunkX, int ChunkY)> ChunkCoordinates(int chunksX, int chunksY)
     {
         return Enumerable.Range(0, chunksY).SelectMany(chunkY => Enumerable.Range(0, chunksX).Select(chunkX => (chunkX, chunkY)));
+    }
+
+    /// <summary>One "relative path sha256" line per file under the package root, ordered by path for stable comparison.</summary>
+    private static IReadOnlyList<string> PackageFileDigests(string packageRoot)
+    {
+        return Directory
+            .EnumerateFiles(packageRoot, "*", SearchOption.AllDirectories)
+            .Select(file => (Path: Path.GetRelativePath(packageRoot, file), Digest: Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant()))
+            .OrderBy(entry => entry.Path, StringComparer.Ordinal)
+            .Select(entry => $"{entry.Path} {entry.Digest}")
+            .ToArray();
     }
 }

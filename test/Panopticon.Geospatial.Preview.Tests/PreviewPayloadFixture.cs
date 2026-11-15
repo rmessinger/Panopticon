@@ -139,6 +139,26 @@ internal static class PreviewPayloadFixture
             position: new GamePosition(gameX, gameY, GlobalHeight((long)(gameX / 10), (long)(gameY / 10))));
     }
 
+    /// <summary>Mapped object candidate at payload game XY with an object definition and resolved orientation.</summary>
+    public static GeneratedFeature ObjectCandidate(
+        string featureId,
+        double gameX,
+        double gameY,
+        double gameZ,
+        string objectDefinition,
+        double orientationDegrees)
+    {
+        return new GeneratedFeature(
+            GeneratedFeatureKind.ObjectCandidate,
+            new GeoPointGeometry(new GeoPosition(new Vector2d(500000d + gameX, 6000000d + gameY))),
+            "vectors",
+            featureId,
+            featureId + "#0",
+            -1,
+            position: new GamePosition(gameX, gameY, gameZ),
+            objectPlacement: new GeneratedObjectPlacement(objectDefinition, orientationDegrees));
+    }
+
     public static GeneratedFeature AnnotationLine()
     {
         return new GeneratedFeature(
@@ -301,7 +321,8 @@ internal static class PreviewPayloadFixture
             new PayloadFeatureGenerationSummary(
                 featureList.Count,
                 [.. Enum.GetValues<GeneratedFeatureKind>().Select(kind => new PayloadFeatureKindCount(kind, counts[kind]))]),
-            [new PayloadValidationCheck("payload", "chunk-inventory", PayloadValidationStatus.Passed, message: "Inventory complete.")],
+            [new PayloadValidationCheck("control-point", "corner-offset", PayloadValidationStatus.Passed, expected: 0d, actual: 0.5d, tolerance: 1d, units: "meters", message: "Corner offset within tolerance."),
+             new PayloadValidationCheck("payload", "chunk-inventory", PayloadValidationStatus.Passed, message: "Inventory complete.")],
             payloadSha256Hex);
     }
 
@@ -313,7 +334,15 @@ internal static class PreviewPayloadFixture
             counts[kernel] = kernel == SampleKernel.Nearest ? sampleCount : 0;
         }
 
-        return new PayloadSamplingSummary(sampleCount, 0, 0, 0, [.. Enum.GetValues<SampleKernel>().Select(kernel => new PayloadKernelSampleCount(kernel, counts[kernel]))]);
+        return new PayloadSamplingSummary(
+            sampleCount,
+            0,
+            0,
+            0,
+            [.. Enum.GetValues<SampleKernel>().Select(kernel => new PayloadKernelSampleCount(kernel, counts[kernel]))],
+            new PayloadObservedRanges(
+                gsdRatioX: new PayloadObservedRange(0.98d, 1.02d),
+                gsdRatioY: new PayloadObservedRange(0.97d, 1.03d)));
     }
 
     private static GeoRing Ring(params (double X, double Y)[] positions)
