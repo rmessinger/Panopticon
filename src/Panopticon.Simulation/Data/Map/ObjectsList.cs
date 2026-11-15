@@ -122,6 +122,35 @@ public sealed class ObjectsList : Asset
         Objects = updated;
     }
 
+    /// <summary>
+    /// Replaces the contents of the objects list with the specified array reference.
+    /// Caller transfers ownership of the array; used for snapshot restore during undo/redo operations.
+    /// </summary>
+    public void ReplaceContents(MapObject[] objects)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+
+        if (objects.Length > 0)
+        {
+            var set = new HashSet<MapObject>(objects.Length, ReferenceEqualityComparer.Instance);
+            for (var i = 0; i < objects.Length; i++)
+            {
+                var item = objects[i];
+                if (item is null)
+                {
+                    throw new ArgumentException("Array contains a null object reference.", nameof(objects));
+                }
+
+                if (!set.Add(item))
+                {
+                    throw new ArgumentException("Array contains duplicate object references.", nameof(objects));
+                }
+            }
+        }
+
+        Objects = objects;
+    }
+
     internal static ObjectsList Parse(BinaryReader reader, MapParseContext context)
     {
         return ParseAsset(reader, context, version =>
