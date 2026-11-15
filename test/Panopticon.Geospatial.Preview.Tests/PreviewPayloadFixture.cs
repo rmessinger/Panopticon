@@ -159,6 +159,28 @@ internal static class PreviewPayloadFixture
             objectPlacement: new GeneratedObjectPlacement(objectDefinition, orientationDegrees));
     }
 
+    /// <summary>Mapped passability or buildability region over a fixed square footprint with an explicit part id.</summary>
+    public static GeneratedFeature MaskRegion(GeneratedFeatureKind kind, string featureId, string partId, bool flag)
+    {
+        return kind == GeneratedFeatureKind.Passability
+            ? new GeneratedFeature(
+                kind,
+                new GeoPolygon(Ring((500000d, 6000000d), (500010d, 6000000d), (500010d, 6000010d), (500000d, 6000010d), (500000d, 6000000d))),
+                "vectors",
+                featureId,
+                partId,
+                -1,
+                passable: flag)
+            : new GeneratedFeature(
+                kind,
+                new GeoPolygon(Ring((500000d, 6000000d), (500010d, 6000000d), (500010d, 6000010d), (500000d, 6000010d), (500000d, 6000000d))),
+                "vectors",
+                featureId,
+                partId,
+                -1,
+                buildable: flag);
+    }
+
     public static GeneratedFeature AnnotationLine()
     {
         return new GeneratedFeature(

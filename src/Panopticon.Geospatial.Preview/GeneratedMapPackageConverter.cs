@@ -16,6 +16,7 @@ using Panopticon.Geospatial.Payload.Models;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
+using GeneratedFeature = Panopticon.Geospatial.Features.GeneratedFeature;
 using MapGeneratedFeature = Panopticon.Content.Importing.Maps.GeneratedFeature;
 
 namespace Panopticon.Geospatial.Preview;
@@ -91,14 +92,16 @@ public static class GeneratedMapPackageConverter
             }
         }
 
+        var (features, provenanceFeatures, dedupeDiagnostics) = DedupeFeatures(metadata.Features);
+
         var interchange = new MapInterchange(
             MapInterchange.CurrentSchemaVersion,
             new MapIdentity(mapName, MapSourceKind.Generated, null),
             BuildLayout(grid, chunks, latticeWidth, latticeHeight, (uint)mapArea),
             BuildBlend(metadata),
-            BuildObjects(metadata),
-            BuildWaypoints(metadata),
-            BuildProvenance(metadata),
+            BuildObjects(features),
+            BuildWaypoints(features),
+            BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
             []);
 
@@ -116,7 +119,7 @@ public static class GeneratedMapPackageConverter
             return Failed(write.Diagnostics.Select(diagnostic => Format(diagnostic.Code, diagnostic.Message)));
         }
 
-        return new GeneratedMapPackageResult(true, [], interchange, targetPackageRoot, chunks.Count, Limitations);
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
     }
 
     private static Chunk? ReadChunk(
@@ -300,11 +303,148 @@ public static class GeneratedMapPackageConverter
             .Select((name, index) => new MaterialPaletteEntry((byte)index, name, new AssetReference(TerrainAssetScope, name)))
             .ToArray());
 
-    private static PlacedObjectSet? BuildObjects(GeneratedMapPayloadMetadata metadata)
+    // One source feature can be staged twice by overlapping mappings, and one source part can
+    // be mapped into several mask features (for example passability plus buildability); the
+    // interchange validator rejects every repeated stable id. Exact duplicates collapse to one
+    // feature, same-part provenance projections collapse to one entry, and conflicts that
+    // touch placed objects or waypoints still fail validation unchanged.
+    private static (IReadOnlyList<GeneratedFeature> Features, IReadOnlyList<GeneratedFeature> ProvenanceFeatures, IReadOnlyList<string> Diagnostics) DedupeFeatures(
+        IReadOnlyList<GeneratedFeature> features)
+    {
+        var kept = new List<GeneratedFeature>(features.Count);
+        var seen = new Dictionary<EmissionKey, GeneratedFeature>();
+        var identicalDrops = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var feature in features)
+        {
+            var key = EmissionKeyOf(feature);
+
+            if (key is { } emissionKey)
+            {
+                if (seen.TryGetValue(emissionKey, out var first) && SameAttributes(first.Attributes, feature.Attributes))
+                {
+                    identicalDrops[StableIdOf(feature)] = identicalDrops.TryGetValue(StableIdOf(feature), out var count) ? count + 1 : 1;
+                    continue;
+                }
+
+                seen.TryAdd(emissionKey, feature);
+            }
+
+            kept.Add(feature);
+        }
+
+        var provenanceGroups = new Dictionary<string, List<GeneratedFeature>>(StringComparer.Ordinal);
+
+        foreach (var feature in kept)
+        {
+            var stableId = StableIdOf(feature);
+
+            if (!provenanceGroups.TryGetValue(stableId, out var group))
+            {
+                group = new List<GeneratedFeature>();
+                provenanceGroups.Add(stableId, group);
+            }
+
+            group.Add(feature);
+        }
+
+        var samePartDrops = new Dictionary<string, int>(StringComparer.Ordinal);
+        var skippedProvenance = new HashSet<GeneratedFeature>();
+
+        foreach (var group in provenanceGroups.Values)
+        {
+            if (group.Count > 1 && group.Count(EmitsPlacedFeature) <= 1)
+            {
+                for (var index = 1; index < group.Count; index++)
+                {
+                    skippedProvenance.Add(group[index]);
+                }
+
+                samePartDrops[StableIdOf(group[0])] = group.Count - 1;
+            }
+        }
+
+        var provenanceFeatures = new List<GeneratedFeature>(kept.Count);
+
+        foreach (var feature in kept)
+        {
+            if (!skippedProvenance.Contains(feature))
+            {
+                provenanceFeatures.Add(feature);
+            }
+        }
+
+        var diagnostics = new List<string>(identicalDrops.Count + samePartDrops.Count);
+
+        foreach (var pair in identicalDrops)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.StableIdDeduplicated,
+                $"StableId '{pair.Key}' was emitted by {pair.Value + 1} identical duplicate features; the duplicates were dropped."));
+        }
+
+        foreach (var pair in samePartDrops)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.StableIdDeduplicated,
+                $"StableId '{pair.Key}' was emitted by {pair.Value + 1} further features of the same source part; only the first provenance entry was kept."));
+        }
+
+        return (kept, provenanceFeatures, diagnostics);
+    }
+
+    private static string StableIdOf(GeneratedFeature feature) => $"{feature.FeatureId}/{feature.PartId}";
+
+    private static bool EmitsPlacedFeature(GeneratedFeature feature) =>
+        (feature.Kind == GeneratedFeatureKind.ObjectCandidate && feature.Position is not null && feature.ObjectPlacement is not null)
+        || (feature.Kind == GeneratedFeatureKind.Waypoint && feature.Position is not null);
+
+    private static EmissionKey? EmissionKeyOf(GeneratedFeature feature)
+    {
+        var geometry = feature.Geometry switch
+        {
+            GeoPointGeometry or GeoLineString or GeoPolygon => GeometryText(feature.Geometry),
+            _ => null,
+        };
+
+        if (geometry is null)
+        {
+            return null;
+        }
+
+        return new EmissionKey(
+            StableIdOf(feature),
+            feature.Kind,
+            feature.RuleIndex,
+            feature.SourceId,
+            geometry,
+            feature.Position,
+            feature.ObjectPlacement);
+    }
+
+    private static bool SameAttributes(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
+    {
+        if (left.Count != right.Count)
+        {
+            return false;
+        }
+
+        foreach (var pair in left)
+        {
+            if (!right.TryGetValue(pair.Key, out var value) || value != pair.Value)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static PlacedObjectSet? BuildObjects(IReadOnlyList<GeneratedFeature> features)
     {
         var objects = new List<PlacedObject>();
 
-        foreach (var feature in metadata.Features)
+        foreach (var feature in features)
         {
             if (feature.Kind != GeneratedFeatureKind.ObjectCandidate
                 || feature.Position is not { } position
@@ -327,11 +467,11 @@ public static class GeneratedMapPackageConverter
         return objects.Count == 0 ? null : new PlacedObjectSet(objects);
     }
 
-    private static WaypointSet? BuildWaypoints(GeneratedMapPayloadMetadata metadata)
+    private static WaypointSet? BuildWaypoints(IReadOnlyList<GeneratedFeature> features)
     {
         var waypoints = new List<Waypoint>();
 
-        foreach (var feature in metadata.Features)
+        foreach (var feature in features)
         {
             if (feature.Kind != GeneratedFeatureKind.Waypoint || feature.Position is not { } position)
             {
@@ -352,15 +492,15 @@ public static class GeneratedMapPackageConverter
     private static string WaypointName(IReadOnlyDictionary<string, string> attributes, string featureId) =>
         attributes.TryGetValue("name", out var name) && !string.IsNullOrWhiteSpace(name) ? name : featureId;
 
-    private static Provenance BuildProvenance(GeneratedMapPayloadMetadata metadata)
+    private static Provenance BuildProvenance(GeneratedMapPayloadMetadata metadata, IReadOnlyList<GeneratedFeature> emittedFeatures)
     {
         var sources = metadata.Provenance
             .Select(source => new SourceRecord(source.Kind.ToString(), [source.Sha256Hex], null, null))
             .ToArray();
 
-        var features = new List<MapGeneratedFeature>(metadata.Features.Count);
+        var features = new List<MapGeneratedFeature>(emittedFeatures.Count);
 
-        foreach (var feature in metadata.Features)
+        foreach (var feature in emittedFeatures)
         {
             var attributes = new Dictionary<string, string>(feature.Attributes, StringComparer.Ordinal)
             {
@@ -440,6 +580,19 @@ public static class GeneratedMapPackageConverter
     private static MapQuantity GameXy(double value) => new(value, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalXy);
 
     private static MapQuantity GameZ(double value) => new(value, MapQuantityUnit.GameUnit, MapQuantityFrame.MapLocalZ);
+
+    // Everything the converter projects into the interchange except the attribute text, which
+    // is compared separately because dictionaries have no structural equality. Geometries with
+    // no exact emitted text (composite geometries emit only the type name) return null so
+    // those features never group as duplicates.
+    private readonly record struct EmissionKey(
+        string StableId,
+        GeneratedFeatureKind Kind,
+        int RuleIndex,
+        string SourceId,
+        string Geometry,
+        GamePosition? Position,
+        GeneratedObjectPlacement? Placement);
 
     private static string Format(string code, string message) => $"{code}: {message}";
 

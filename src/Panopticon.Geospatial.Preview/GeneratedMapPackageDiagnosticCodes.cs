@@ -16,4 +16,6 @@ public static class GeneratedMapPackageDiagnosticCodes
     public const string LatticeAreaOverflow = "GEO-PKG-006";
 
     public const string FillCountOverflow = "GEO-PKG-007";
+
+    public const string StableIdDeduplicated = "GEO-PKG-008";
 }

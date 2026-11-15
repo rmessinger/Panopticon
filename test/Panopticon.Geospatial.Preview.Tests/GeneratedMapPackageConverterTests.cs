@@ -8,6 +8,7 @@ using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
 using Panopticon.Content.Importing.MapSources.Package;
 using Panopticon.Geospatial;
+using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
@@ -283,6 +284,84 @@ public sealed class GeneratedMapPackageConverterTests
         Assert.Empty(model.Report.ControlPointResults);
         Assert.Equal(0, model.Report.OutsideFootprintCellCount);
         Assert.Equal(0, model.Report.NodataCellCount);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageDeduplicatesIdenticalDuplicateFeatures()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var duplicate = PreviewPayloadFixture.ObjectCandidate("tree-0", 512d, 768d, 1050d, "TreeOak", 90d);
+        var features = new[]
+        {
+            PreviewPayloadFixture.Waypoint("wp-alpha", 640d, 1280d, 1100d, "alpha"),
+            duplicate,
+            duplicate,
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Contains("tree-0/tree-0#0", diagnostic, StringComparison.Ordinal);
+
+        var model = new PackageReader(target).Read();
+        Assert.NotNull(model.Objects);
+        Assert.Single(model.Objects!.Objects);
+        Assert.Single(model.Waypoints!.Waypoints);
+        Assert.Equal(2, model.Provenance.GeneratedFeatures.Count);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageConflictingDuplicateFeatureFailsWithoutPackage()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.ObjectCandidate("tree-0", 512d, 768d, 1050d, "TreeOak", 90d),
+            PreviewPayloadFixture.ObjectCandidate("tree-0", 512d, 768d, 1055d, "TreeOak", 90d),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.False(result.Success);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Contains("stable-id-duplicate", StringComparison.Ordinal) && diagnostic.Contains("tree-0/tree-0#0", StringComparison.Ordinal));
+        Assert.Null(result.Model);
+        Assert.Null(result.PackageRoot);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void GeneratedMapPackageMergesSamePartMaskFeatureProvenance()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Buildability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Contains("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", diagnostic, StringComparison.Ordinal);
+
+        var model = new PackageReader(target).Read();
+        var entry = Assert.Single(model.Provenance.GeneratedFeatures);
+        Assert.Equal("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", entry.StableId);
+        Assert.Null(model.Objects);
+        Assert.Null(model.Waypoints);
     }
 
     [Fact]
