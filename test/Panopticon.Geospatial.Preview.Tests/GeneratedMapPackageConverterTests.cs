@@ -22,6 +22,7 @@ public sealed class GeneratedMapPackageConverterTests
 {
     private const string MapName = "fixture-map";
     private const string HeightQuantizationPrefix = GeneratedMapPackageDiagnosticCodes.HeightQuantization + ":";
+    private const string HeightQuantizationSummaryPrefix = GeneratedMapPackageDiagnosticCodes.HeightQuantizationSummary + ":";
 
     [Fact]
     public void GeneratedMapPackageWritesFixturePayloadThatReloadsIntact()
@@ -34,7 +35,7 @@ public sealed class GeneratedMapPackageConverterTests
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        Assert.StartsWith(HeightQuantizationPrefix, Assert.Single(result.Diagnostics), StringComparison.Ordinal);
+        Assert.StartsWith(HeightQuantizationSummaryPrefix, Assert.Single(result.Diagnostics), StringComparison.Ordinal);
         Assert.Equal(target, result.PackageRoot);
         Assert.NotNull(result.Model);
         Assert.True(File.Exists(Path.Combine(target, MapPackageFormat.ManifestFileName)));
@@ -297,7 +298,7 @@ public sealed class GeneratedMapPackageConverterTests
         var maxErrorText = maxError.ToString("R", CultureInfo.InvariantCulture);
         Assert.True(changed > 0);
         Assert.True(maxError <= 0.01953125d);
-        Assert.StartsWith(HeightQuantizationPrefix, diagnostic, StringComparison.Ordinal);
+        Assert.StartsWith(HeightQuantizationSummaryPrefix, diagnostic, StringComparison.Ordinal);
         Assert.Contains($"Quantized {changed} of {total} terrain samples", diagnostic, StringComparison.Ordinal);
         Assert.Contains($"max error {maxErrorText} game height units", diagnostic, StringComparison.Ordinal);
         Assert.Contains(result.Limitations, limitation => limitation.Contains("quantized to the resident height grid", StringComparison.Ordinal));
@@ -944,7 +945,7 @@ public sealed class GeneratedMapPackageConverterTests
 
     private static IEnumerable<string> NonHeightDiagnostics(GeneratedMapPackageResult result)
     {
-        return result.Diagnostics.Where(diagnostic => !diagnostic.StartsWith(HeightQuantizationPrefix, StringComparison.Ordinal));
+        return result.Diagnostics.Where(diagnostic => !diagnostic.StartsWith(HeightQuantizationSummaryPrefix, StringComparison.Ordinal));
     }
 
     private static IEnumerable<(int ChunkX, int ChunkY)> ChunkCoordinates(int chunksX, int chunksY)

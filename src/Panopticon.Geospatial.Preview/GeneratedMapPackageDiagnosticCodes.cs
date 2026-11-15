@@ -29,5 +29,9 @@ public static class GeneratedMapPackageDiagnosticCodes
 
     public const string BuildingGenerated = "GEO-PKG-013";
 
+    /// <summary>Fatal: terrain samples are non-finite or outside the resident height grid range; no package is written.</summary>
     public const string HeightQuantization = "GEO-PKG-014";
+
+    /// <summary>Informational: count and maximum error of terrain samples quantized to the resident height grid.</summary>
+    public const string HeightQuantizationSummary = "GEO-PKG-015";
 }

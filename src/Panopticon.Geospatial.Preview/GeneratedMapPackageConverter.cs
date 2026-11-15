@@ -162,7 +162,7 @@ public static class GeneratedMapPackageConverter
         {
             var maxError = heightQuantizer.MaxError.ToString("R", CultureInfo.InvariantCulture);
             heightDiagnostics.Add(Format(
-                GeneratedMapPackageDiagnosticCodes.HeightQuantization,
+                GeneratedMapPackageDiagnosticCodes.HeightQuantizationSummary,
                 $"Quantized {heightQuantizer.ChangedCount} of {heightQuantizer.SampleCount} terrain samples to the resident height grid (step 0.0390625 game height units); max error {maxError} game height units, bound 0.01953125."));
             limitations = [.. Limitations, HeightQuantizationLimitation];
         }

@@ -653,14 +653,14 @@ public static class GeneratedBuildingBuilder
             var dx = end.X - start.X;
             var dy = end.Y - start.Y;
             var scale = 1d / Math.Sqrt((dx * dx) + (dy * dy));
-            var normalX = -dy * scale;
-            var normalY = dx * scale;
+            var normalX = dy * scale;
+            var normalY = -dx * scale;
             var baseVertex = new BuildingVertex(start.X, start.Y, baseZ, normalX, normalY, 0d);
             var startTop = new BuildingVertex(start.X, start.Y, eaveZ, normalX, normalY, 0d);
             var endTop = new BuildingVertex(end.X, end.Y, eaveZ, normalX, normalY, 0d);
             var endBase = new BuildingVertex(end.X, end.Y, baseZ, normalX, normalY, 0d);
-            triangles.Add(new MeshTriangle(baseVertex, startTop, endTop));
-            triangles.Add(new MeshTriangle(baseVertex, endTop, endBase));
+            triangles.Add(new MeshTriangle(baseVertex, endTop, startTop));
+            triangles.Add(new MeshTriangle(baseVertex, endBase, endTop));
         }
     }
 

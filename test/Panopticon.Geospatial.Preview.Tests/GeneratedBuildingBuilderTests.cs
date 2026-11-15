@@ -301,6 +301,60 @@ public sealed class GeneratedBuildingBuilderTests
     }
 
     [Fact]
+    public void SquareWallsFaceAwayFromFootprint()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            BuildingRegion(GeneratedFeatureKind.Annotation, "wall-square", "wall#0", GameSquare(100d, 100d, 200d, 200d), BuildingAttributes(hauteur: 12d, usage: "residential")),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var building = Assert.Single(result.Model!.Buildings!.Buildings);
+        var wallVertices = result.Model.Buildings!.MeshChunks
+            .SelectMany(chunk => chunk.Segments)
+            .Where(segment => segment.MaterialVariant < 4)
+            .SelectMany(segment => segment.Indices.Select(index => segment.Vertices[(int)index]))
+            .ToArray();
+        var centreX = (wallVertices.Min(vertex => vertex.X) + wallVertices.Max(vertex => vertex.X)) / 2d;
+        var centreY = (wallVertices.Min(vertex => vertex.Y) + wallVertices.Max(vertex => vertex.Y)) / 2d;
+        const double tolerance = 1e-9;
+
+        var walls = wallVertices
+            .Chunk(3)
+            .Where(triangle => triangle.All(vertex => vertex.Z >= building.BaseZ - tolerance && vertex.Z <= building.EaveZ + tolerance)
+                && triangle.Any(vertex => vertex.Z <= building.BaseZ + tolerance))
+            .ToArray();
+
+        Assert.Equal(8, walls.Length);
+        foreach (var triangle in walls)
+        {
+            var a = triangle[0];
+            var b = triangle[1];
+            var c = triangle[2];
+            var ux = b.X - a.X;
+            var uy = b.Y - a.Y;
+            var uz = b.Z - a.Z;
+            var vx = c.X - a.X;
+            var vy = c.Y - a.Y;
+            var vz = c.Z - a.Z;
+            var normalX = (uy * vz) - (uz * vy);
+            var normalY = (uz * vx) - (ux * vz);
+            var outwardX = ((a.X + b.X + c.X) / 3d) - centreX;
+            var outwardY = ((a.Y + b.Y + c.Y) / 3d) - centreY;
+
+            Assert.True((normalX * outwardX) + (normalY * outwardY) > 0d, $"Wall triangle at ({a.X}, {a.Y}) winds inward.");
+            Assert.True((a.NormalX * normalX) + (a.NormalY * normalY) > 0d, $"Wall normal at ({a.X}, {a.Y}) points inward.");
+            Assert.Equal(0d, a.NormalZ);
+        }
+    }
+
+    [Fact]
     public void CrossChunkFootprintAssignsPartsToExpectedChunks()
     {
         using var scratch = new PreviewPayloadFixture.ScratchRoot();
@@ -480,11 +534,11 @@ public sealed class GeneratedBuildingBuilderTests
         GeoPolygon polygon,
         IReadOnlyDictionary<string, string> attributes,
         int ruleIndex = 0) => kind switch
-    {
-        GeneratedFeatureKind.Passability => new GeneratedFeature(kind, polygon, "vectors", featureId, partId, ruleIndex, attributes, passable: false),
-        GeneratedFeatureKind.Buildability => new GeneratedFeature(kind, polygon, "vectors", featureId, partId, ruleIndex, attributes, buildable: false),
-        _ => new GeneratedFeature(kind, polygon, "vectors", featureId, partId, ruleIndex, attributes),
-    };
+        {
+            GeneratedFeatureKind.Passability => new GeneratedFeature(kind, polygon, "vectors", featureId, partId, ruleIndex, attributes, passable: false),
+            GeneratedFeatureKind.Buildability => new GeneratedFeature(kind, polygon, "vectors", featureId, partId, ruleIndex, attributes, buildable: false),
+            _ => new GeneratedFeature(kind, polygon, "vectors", featureId, partId, ruleIndex, attributes),
+        };
 
     /// <summary>One "relative path sha256" line per file under the package root, ordered by path for stable comparison.</summary>
     private static IReadOnlyList<string> PackageFileDigests(string packageRoot)
