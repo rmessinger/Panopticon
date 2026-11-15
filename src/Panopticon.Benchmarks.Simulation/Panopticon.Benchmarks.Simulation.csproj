@@ -9,6 +9,7 @@
     <ProjectReference Include="..\Panopticon.Mods.Generals\Panopticon.Mods.Generals.csproj" />
     <ProjectReference Include="..\Panopticon.Simulation\Panopticon.Simulation.csproj" />
     <ProjectReference Include="..\Panopticon.Tools.ReplaySketch.Core\Panopticon.Tools.ReplaySketch.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.Tools.WorldBuilder.Core\Panopticon.Tools.WorldBuilder.Core.csproj" />
   </ItemGroup>
 
 </Project>
