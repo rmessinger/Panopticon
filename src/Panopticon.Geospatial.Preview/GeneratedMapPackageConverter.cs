@@ -101,6 +101,16 @@ public static class GeneratedMapPackageConverter
             return Failed(vectorConflicts);
         }
 
+        // Buildings consume the same original emissions as BuildVectorLayers, before
+        // provenance dedupe, so one source part mapped into several mask features still
+        // yields one building part.
+        var (buildings, buildingDiagnostics, buildingConflicts) = GeneratedBuildingBuilder.Build(metadata.Features, grid, chunks);
+
+        if (buildingConflicts.Count > 0)
+        {
+            return Failed(buildingConflicts);
+        }
+
         var (features, provenanceFeatures, dedupeDiagnostics, sourceConflicts) = DedupeFeatures(metadata.Features);
 
         if (sourceConflicts.Count > 0)
@@ -118,7 +128,8 @@ public static class GeneratedMapPackageConverter
             BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
             [],
-            vectorLayers: vectorLayers);
+            vectorLayers: vectorLayers,
+            buildings: buildings);
 
         var validation = MapInterchangeValidator.Validate(interchange);
 
@@ -134,7 +145,7 @@ public static class GeneratedMapPackageConverter
             return Failed(write.Diagnostics.Select(diagnostic => Format(diagnostic.Code, diagnostic.Message)));
         }
 
-        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
     }
 
     private static Chunk? ReadChunk(
@@ -438,7 +449,7 @@ public static class GeneratedMapPackageConverter
         return (kept, provenanceFeatures, diagnostics, sourceConflicts);
     }
 
-    private static string StableIdOf(GeneratedFeature feature) => $"{feature.FeatureId}/{feature.PartId}";
+    internal static string StableIdOf(GeneratedFeature feature) => $"{feature.FeatureId}/{feature.PartId}";
 
     private static bool EmitsPlacedFeature(GeneratedFeature feature) =>
         (feature.Kind == GeneratedFeatureKind.ObjectCandidate && feature.Position is not null && feature.ObjectPlacement is not null)
@@ -470,7 +481,7 @@ public static class GeneratedMapPackageConverter
             feature.Coverage);
     }
 
-    private static bool SameAttributes(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
+    internal static bool SameAttributes(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
     {
         if (left.Count != right.Count)
         {
@@ -574,7 +585,7 @@ public static class GeneratedMapPackageConverter
         return (new VectorLayerSet(vectorFeatures), conflicts, diagnostics);
     }
 
-    private static VectorGeometry? ConvertVectorGeometry(GeoGeometry geometry, List<string> conflicts)
+    internal static VectorGeometry? ConvertVectorGeometry(GeoGeometry geometry, List<string> conflicts)
     {
         switch (geometry)
         {
@@ -623,7 +634,7 @@ public static class GeneratedMapPackageConverter
     // type name, which would make distinct same-tuple multis look identical and collapse
     // instead of conflicting, so multis render their children recursively. Line, polygon,
     // and point texts stay identical to GeometryText.
-    private static string VectorGeometryText(GeoGeometry geometry) => geometry switch
+    internal static string VectorGeometryText(GeoGeometry geometry) => geometry switch
     {
         GeoMultiGeometry multi => "Multi(" + string.Join(", ", multi.Geometries.Select(VectorGeometryText)) + ")",
         _ => GeometryText(geometry),
@@ -747,7 +758,7 @@ public static class GeneratedMapPackageConverter
     private static string FormatCheck(PayloadValidationCheck check) =>
         $"{check.Name}: {check.Status}" + (check.Message is null ? string.Empty : $": {check.Message}");
 
-    private static string GeometryText(GeoGeometry geometry) => geometry switch
+    internal static string GeometryText(GeoGeometry geometry) => geometry switch
     {
         GeoPointGeometry point => $"Point({PositionText(point.Position)})",
         GeoLineString line => "LineString(" + string.Join(", ", line.Positions.Select(PositionText)) + ")",
@@ -755,9 +766,9 @@ public static class GeneratedMapPackageConverter
         _ => geometry.GetType().Name,
     };
 
-    private static string RingText(GeoRing ring) => "(" + string.Join(", ", ring.Positions.Select(PositionText)) + ")";
+    internal static string RingText(GeoRing ring) => "(" + string.Join(", ", ring.Positions.Select(PositionText)) + ")";
 
-    private static string PositionText(GeoPosition position)
+    internal static string PositionText(GeoPosition position)
     {
         var coordinate = position.Coordinate;
 

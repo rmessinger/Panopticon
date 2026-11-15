@@ -22,4 +22,10 @@ public static class GeneratedMapPackageDiagnosticCodes
     public const string StableIdSourceConflict = "GEO-PKG-009";
 
     public const string VectorFeatureConflict = "GEO-PKG-010";
+
+    public const string BuildingConflict = "GEO-PKG-011";
+
+    public const string BuildingHeightUnresolved = "GEO-PKG-012";
+
+    public const string BuildingGenerated = "GEO-PKG-013";
 }
