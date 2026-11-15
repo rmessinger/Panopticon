@@ -16,12 +16,16 @@ internal sealed class B4aStageMeter : IDisposable
     private readonly Dictionary<string, List<B4aStageRepeat>> _repeats = new(StringComparer.Ordinal);
     private uint _frame;
 
+    public Action<string>? StageStarting { get; init; }
+
     public IReadOnlyList<TickMetricSample> TickSamples => _recorder.TickSamples;
 
     public IReadOnlyList<SystemMetricSample> SystemSamples => _recorder.SystemSamples;
 
     public T Measure<T>(string stage, Func<T> body)
     {
+        StageStarting?.Invoke(stage);
+
         if (!_repeats.TryGetValue(stage, out var repeats))
         {
             repeats = [];

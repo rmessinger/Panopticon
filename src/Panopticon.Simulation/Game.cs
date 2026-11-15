@@ -1119,12 +1119,17 @@ public sealed class Game : DisposableBase, IGame
 
     public void StartSinglePlayerGame(string mapFileName)
     {
+        StartSinglePlayerGame(mapFileName, Environment.TickCount);
+    }
+
+    public void StartSinglePlayerGame(string mapFileName, int seed)
+    {
         StartGame(
             mapFileName,
             new EchoConnection(),
             null,
             GameType.SinglePlayer,
-            seed: Environment.TickCount);
+            seed);
     }
 
     public void EndGame()
