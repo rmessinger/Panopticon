@@ -67,6 +67,12 @@ public sealed class GameViewportRenderer : IDisposable
     public Veldrid.GraphicsDevice? GraphicsDevice => _game?.GraphicsDevice;
 
     /// <summary>
+    /// Per-frame render-path counters from the booted game (B5). Null before
+    /// <see cref="Initialize"/> or before a map is loaded.
+    /// </summary>
+    public RenderStatistics? RenderStatistics => _game?.Graphics.RenderStatistics;
+
+    /// <summary>
     /// Creates the offscreen game. Frames render into the panel framebuffer;
     /// the front-end presents them however its UI toolkit requires.
     /// </summary>
