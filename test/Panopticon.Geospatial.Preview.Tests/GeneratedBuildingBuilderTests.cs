@@ -37,7 +37,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var building = Assert.Single(result.Model!.Buildings!.Buildings);
@@ -79,7 +79,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var original = result.Model!.Buildings!;
@@ -145,7 +145,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var buildings = result.Model!.Buildings!.Buildings;
@@ -182,7 +182,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var byFeature = result.Model!.Buildings!.Buildings.ToDictionary(building => building.FeatureId);
@@ -218,7 +218,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.False(result.Success);
         Assert.Contains(
@@ -244,7 +244,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.False(result.Success);
         Assert.Contains(
@@ -273,7 +273,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var building = Assert.Single(result.Model!.Buildings!.Buildings);
@@ -312,7 +312,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var building = Assert.Single(result.Model!.Buildings!.Buildings);
@@ -368,7 +368,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var building = Assert.Single(result.Model!.Buildings!.Buildings);
@@ -428,13 +428,13 @@ public sealed class GeneratedBuildingBuilderTests
 
         using (var firstReader = PreviewPayloadFixture.OpenPayload(firstScratch.Root))
         {
-            var firstResult = GeneratedMapPackageConverter.Convert(firstReader, MapName, firstTarget);
+            var firstResult = GeneratedMapPackageConverter.Convert(firstReader, MapName, firstTarget, PreviewPayloadFixture.DefaultTextureMap());
             Assert.True(firstResult.Success, string.Join("; ", firstResult.Diagnostics));
         }
 
         using (var secondReader = PreviewPayloadFixture.OpenPayload(secondScratch.Root))
         {
-            var secondResult = GeneratedMapPackageConverter.Convert(secondReader, MapName, secondTarget);
+            var secondResult = GeneratedMapPackageConverter.Convert(secondReader, MapName, secondTarget, PreviewPayloadFixture.DefaultTextureMap());
             Assert.True(secondResult.Success, string.Join("; ", secondResult.Diagnostics));
         }
 
@@ -459,7 +459,7 @@ public sealed class GeneratedBuildingBuilderTests
         using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
         var target = Path.Combine(scratch.Root, "package");
 
-        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
         var building = Assert.Single(result.Model!.Buildings!.Buildings);

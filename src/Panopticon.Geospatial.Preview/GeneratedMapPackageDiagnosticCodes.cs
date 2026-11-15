@@ -34,4 +34,7 @@ public static class GeneratedMapPackageDiagnosticCodes
 
     /// <summary>Informational: count and maximum error of terrain samples quantized to the resident height grid.</summary>
     public const string HeightQuantizationSummary = "GEO-PKG-015";
+
+    /// <summary>Fatal: the palette is empty or a palette entry has no resolvable texture binding; no package is written.</summary>
+    public const string BlendTextureUnresolved = "GEO-PKG-016";
 }

@@ -2,9 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using Panopticon.Content.Importing.Maps;
+using Panopticon.Data.Map;
 
 namespace Panopticon.Content.Importing.MapSources.Package;
 
@@ -153,10 +156,11 @@ public sealed class LegacyMapPackageImporter
             }
         }
 
-        var retainedLookup = new Dictionary<string, RetainedSection>(interchange.RetainedSections.Count, StringComparer.Ordinal);
-        var retainedEntries = new List<MapPackageRetainedEntry>(interchange.RetainedSections.Count);
+        var retainedSections = ResolveRetainedSections(interchange);
+        var retainedLookup = new Dictionary<string, RetainedSection>(retainedSections.Count, StringComparer.Ordinal);
+        var retainedEntries = new List<MapPackageRetainedEntry>(retainedSections.Count);
 
-        foreach (var section in interchange.RetainedSections)
+        foreach (var section in retainedSections)
         {
             retainedLookup[section.SectionName] = section;
             var digest = ComputeSha256Hex(section.Bytes.ToArray());
@@ -260,6 +264,38 @@ public sealed class LegacyMapPackageImporter
 
     private static string ComputeSha256Hex(byte[] bytes) =>
         Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+
+    // A typed component without a same-name retained section is serialized into one, so the
+    // package reader recovers it. Existing retained sections, including legacy-sourced ones,
+    // are kept as authored.
+    private static IReadOnlyList<RetainedSection> ResolveRetainedSections(MapInterchange interchange)
+    {
+        var sections = new List<RetainedSection>(interchange.RetainedSections);
+
+        if (interchange.BlendTileData is not null
+            && !sections.Exists(section => section.SectionName == BlendTileData.AssetName)
+            && RuntimeBridge.MaterializeBlendTileData(interchange) is { } blend)
+        {
+            sections.Add(Retain(blend, BlendTileData.AssetName, (writer, _) => blend.WriteTo(writer)));
+        }
+
+        return sections;
+    }
+
+    /// <summary>Serializes one section the way the legacy writer frames it: a fresh name table, the payload, and the section version.</summary>
+    private static RetainedSection Retain(Asset section, string sectionName, Action<BinaryWriter, AssetNameCollection> writeTo)
+    {
+        using var stream = new MemoryStream();
+
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+        {
+            writeTo(writer, new AssetNameCollection());
+        }
+
+        var bytes = stream.ToArray();
+
+        return new RetainedSection(sectionName, section.Version, bytes, Convert.ToHexStringLower(SHA256.HashData(bytes)));
+    }
 
     private sealed class InterchangePayloadProvider : IMapPackagePayloadProvider
     {

@@ -42,7 +42,11 @@ public static class GeneratedMapPackageConverter
         "The import report is an import result, not package content; a reloaded package carries an empty import-report placeholder by design.",
     ];
 
-    public static GeneratedMapPackageResult Convert(IGeneratedMapPayloadReader reader, string mapName, string targetPackageRoot)
+    public static GeneratedMapPackageResult Convert(
+        IGeneratedMapPayloadReader reader,
+        string mapName,
+        string targetPackageRoot,
+        PreviewTextureMap? textureMap = null)
     {
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentException.ThrowIfNullOrWhiteSpace(mapName);
@@ -128,6 +132,14 @@ public static class GeneratedMapPackageConverter
             return Failed(sourceConflicts);
         }
 
+        var blendDiagnostics = new List<string>();
+        var blendTileData = BuildBlendTileData(metadata, chunks, textureMap, latticeWidth, latticeHeight, blendDiagnostics);
+
+        if (blendTileData is null)
+        {
+            return Failed(blendDiagnostics);
+        }
+
         var interchange = new MapInterchange(
             MapInterchange.CurrentSchemaVersion,
             new MapIdentity(mapName, MapSourceKind.Generated, null),
@@ -138,6 +150,7 @@ public static class GeneratedMapPackageConverter
             BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
             [],
+            blendTileData: blendTileData,
             vectorLayers: vectorLayers,
             buildings: buildings);
 
@@ -397,6 +410,108 @@ public static class GeneratedMapPackageConverter
         new(metadata.Palette.Names
             .Select((name, index) => new MaterialPaletteEntry((byte)index, name, new AssetReference(TerrainAssetScope, name)))
             .ToArray());
+
+    private static MapBlendTileData? BuildBlendTileData(
+        GeneratedMapPayloadMetadata metadata,
+        IReadOnlyList<Chunk> chunks,
+        PreviewTextureMap? textureMap,
+        int latticeWidth,
+        int latticeHeight,
+        List<string> diagnostics)
+    {
+        var palette = metadata.Palette;
+
+        if (palette.Count == 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BlendTextureUnresolved,
+                "The payload palette is empty; no terrain texture can be materialized; no package was written."));
+            return null;
+        }
+
+        var canonicalByIndex = new string[palette.Count];
+        var unresolved = new List<string>();
+
+        for (var index = 0; index < palette.Count; index++)
+        {
+            var name = palette.Names[index];
+            string? canonical = null;
+            var resolution = textureMap is null
+                ? PreviewTextureResolution.MissingBinding
+                : textureMap.TryResolve(name, out canonical);
+
+            if (resolution == PreviewTextureResolution.Resolved)
+            {
+                canonicalByIndex[index] = canonical!;
+            }
+            else
+            {
+                unresolved.Add(name);
+            }
+        }
+
+        if (unresolved.Count > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BlendTextureUnresolved,
+                $"Palette entries without a resolvable texture binding: {string.Join(", ", unresolved)}; no package was written."));
+            return null;
+        }
+
+        var table = GeneratedPaletteBlend.FromCanonicalNames(canonicalByIndex);
+        var materialIndices = new byte[latticeWidth, latticeHeight];
+        var maskFlags = new TerrainMaskFlags[latticeWidth, latticeHeight];
+
+        foreach (var chunk in chunks)
+        {
+            var originX = chunk.Key.Cx * ChunkLayout.IntervalsPerChunk;
+            var originY = chunk.Key.Cy * ChunkLayout.IntervalsPerChunk;
+            var coreWidth = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeWidth - originX);
+            var coreHeight = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeHeight - originY);
+            var materials = chunk.Materials!.Indices;
+            var masks = chunk.Masks!.Flags;
+
+            for (var y = 0; y < coreHeight; y++)
+            {
+                for (var x = 0; x < coreWidth; x++)
+                {
+                    materialIndices[originX + x, originY + y] = materials[(y * coreWidth) + x];
+                    maskFlags[originX + x, originY + y] = (TerrainMaskFlags)masks[(y * coreWidth) + x];
+                }
+            }
+        }
+
+        var tiles = new ushort[latticeWidth, latticeHeight];
+        var impassability = new bool[latticeWidth, latticeHeight];
+
+        GeneratedPaletteBlend.PaintTiles(
+            tiles,
+            impassability,
+            table,
+            materialIndices,
+            maskFlags,
+            0,
+            latticeWidth,
+            latticeHeight,
+            out _,
+            out _);
+
+        return new MapBlendTileData(
+            Version: 8,
+            NumTiles: (uint)((long)latticeWidth * latticeHeight),
+            Tiles: tiles,
+            Blends: new uint[latticeWidth, latticeHeight],
+            ThreeWayBlends: new uint[latticeWidth, latticeHeight],
+            CliffTextures: new uint[latticeWidth, latticeHeight],
+            Impassability: impassability,
+            TextureCellCount: 16,
+            Textures: table.Textures.Select(name => new MapBlendTextureRecord(name, 0, 16, 4, 0)).ToArray(),
+            MagicValue1: 0,
+            MagicValue2: 0,
+            BlendDescriptions: [],
+            ParsedCliffTextureMappingsCount: 0,
+            CliffTextureMappings: []);
+    }
 
     // One source feature can be staged twice by overlapping mappings, and one source part can
     // be mapped into several mask features (for example passability plus buildability); the

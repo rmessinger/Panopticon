@@ -26,9 +26,6 @@ public static class GeneratedMapPreviewBuilder
     /// <summary>Legacy 16-bit height step (HeightMapData.VerticalScale of version 5 maps).</summary>
     public const double HeightQuantumGameUnits = 0.0390625;
 
-    /// <summary>Tile values one standard CellSize 4 texture occupies in BlendTileData.</summary>
-    private const int TileValuesPerTexture = 64;
-
     public static GeneratedMapPreviewResult Build(
         IGeneratedMapPayloadReader reader,
         PreviewTextureMap textureMap,
@@ -110,11 +107,21 @@ public static class GeneratedMapPreviewBuilder
             }
         }
 
-        ExtendBorderPadding(stored, border, coreWidth, coreHeight);
+        GeneratedPaletteBlend.ExtendBorderPadding(stored, border, coreWidth, coreHeight);
 
         var mapFile = MapFile.CreateFromHeights(stored, border, textureTable.Textures[0]);
         mapFile.BlendTileData.ReplaceTextures(textureTable.Textures);
-        PaintBlendTiles(mapFile.BlendTileData, textureTable, materialIndices, maskFlags, border, coreWidth, coreHeight, out var impassableCount, out var unbuildableCount);
+        GeneratedPaletteBlend.PaintTiles(
+            mapFile.BlendTileData.Tiles,
+            mapFile.BlendTileData.Impassability,
+            textureTable,
+            materialIndices,
+            maskFlags,
+            border,
+            coreWidth,
+            coreHeight,
+            out var impassableCount,
+            out var unbuildableCount);
         ApplyWaypoints(mapFile, waypoints);
 
         var transform = new PreviewTransform(
@@ -183,9 +190,7 @@ public static class GeneratedMapPreviewBuilder
         return true;
     }
 
-    private sealed record PaletteTextureTable(string[] Textures, int[] OrdinalByPaletteIndex);
-
-    private static PaletteTextureTable? TryResolvePaletteTextures(MaterialPalette palette, PreviewTextureMap textureMap, GeoDiagnosticBag diagnostics)
+    private static GeneratedPaletteBlend.PaletteTextureTable? TryResolvePaletteTextures(MaterialPalette palette, PreviewTextureMap textureMap, GeoDiagnosticBag diagnostics)
     {
         var missing = new List<string>();
         var unknown = new List<string>();
@@ -231,22 +236,7 @@ public static class GeneratedMapPreviewBuilder
             return null;
         }
 
-        // Distinct canonical names in palette order form the texture table.
-        var textures = new List<string>(canonicalByIndex.Length);
-        var ordinalByIndex = new int[canonicalByIndex.Length];
-        foreach (var (canonical, index) in canonicalByIndex.Select((value, index) => (value, index)))
-        {
-            var ordinal = textures.IndexOf(canonical!);
-            if (ordinal < 0)
-            {
-                ordinal = textures.Count;
-                textures.Add(canonical!);
-            }
-
-            ordinalByIndex[index] = ordinal;
-        }
-
-        return new PaletteTextureTable([.. textures], ordinalByIndex);
+        return GeneratedPaletteBlend.FromCanonicalNames(canonicalByIndex!);
     }
 
     private static bool TryStitchChunks(
@@ -290,92 +280,6 @@ public static class GeneratedMapPreviewBuilder
         }
 
         return !diagnostics.HasErrors;
-    }
-
-    private static void PaintBlendTiles(
-        BlendTileData blendTiles,
-        PaletteTextureTable textureTable,
-        byte[,] materialIndices,
-        TerrainMaskFlags[,] maskFlags,
-        uint border,
-        long coreWidth,
-        long coreHeight,
-        out long impassableCount,
-        out long unbuildableCount)
-    {
-        impassableCount = 0L;
-        unbuildableCount = 0L;
-
-        for (var y = 0; y < coreHeight; y++)
-        {
-            for (var x = 0; x < coreWidth; x++)
-            {
-                var ordinal = textureTable.OrdinalByPaletteIndex[materialIndices[x, y]];
-                blendTiles.Tiles[x + border, y + border] = (ushort)(ordinal * TileValuesPerTexture);
-
-                var flags = maskFlags[x, y];
-                if ((flags & TerrainMaskFlags.Impassable) != 0)
-                {
-                    blendTiles.Impassability[x + border, y + border] = true;
-                    impassableCount++;
-                }
-
-                if ((flags & TerrainMaskFlags.Unbuildable) != 0)
-                {
-                    // The authoritative payload bit is retained unconverted: legacy
-                    // Buildability polarity is unverified and never implies impassable.
-                    unbuildableCount++;
-                }
-            }
-        }
-
-        // Border tile cells extend the nearest core edge like the border heights;
-        // border impassability stays clear, the padding carries no payload data.
-        ExtendBorderPadding(blendTiles.Tiles, border, coreWidth, coreHeight);
-    }
-
-    private static void ExtendBorderPadding(ushort[,] stored, uint border, long coreWidth, long coreHeight)
-    {
-        for (var y = 0L; y < coreHeight + (2L * border); y++)
-        {
-            long coreY;
-            if (y < border)
-            {
-                coreY = 0;
-            }
-            else if (y >= border + coreHeight)
-            {
-                coreY = coreHeight - 1;
-            }
-            else
-            {
-                coreY = y - border;
-            }
-
-            for (var x = 0L; x < coreWidth + (2L * border); x++)
-            {
-                if (x >= border && x < border + coreWidth && y >= border && y < border + coreHeight)
-                {
-                    continue;
-                }
-
-                long coreX;
-                if (x < border)
-                {
-                    coreX = 0;
-                }
-                else if (x >= border + coreWidth)
-                {
-                    coreX = coreWidth - 1;
-                }
-                else
-                {
-                    coreX = x - border;
-                }
-
-                stored[x, y] = stored[coreX + border, coreY + border];
-            }
-        }
     }
 
     private sealed record WaypointPlan(

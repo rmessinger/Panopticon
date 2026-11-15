@@ -88,7 +88,7 @@ internal static class PreviewPayloadFixture
         return heights;
     }
 
-    public static byte[] MaterialFromLattice(int chunkX, int chunkY)
+    public static byte[] MaterialFromLattice(int chunkX, int chunkY, Func<long, long, byte>? materialAt = null)
     {
         var indices = new byte[ChunkLayout.PointsPerChunkAxis * ChunkLayout.PointsPerChunkAxis];
 
@@ -97,7 +97,7 @@ internal static class PreviewPayloadFixture
             for (var x = 0; x < ChunkLayout.PointsPerChunkAxis; x++)
             {
                 indices[(y * ChunkLayout.PointsPerChunkAxis) + x] =
-                    GlobalMaterial((chunkX * ChunkLayout.IntervalsPerChunk) + x, (chunkY * ChunkLayout.IntervalsPerChunk) + y);
+                    (materialAt ?? GlobalMaterial)((chunkX * ChunkLayout.IntervalsPerChunk) + x, (chunkY * ChunkLayout.IntervalsPerChunk) + y);
             }
         }
 
@@ -294,7 +294,8 @@ internal static class PreviewPayloadFixture
         int chunksY = 2,
         List<GeneratedFeature>? features = null,
         Func<long, long, float>? heightOverride = null,
-        int? imageryPixelsPerSample = null)
+        int? imageryPixelsPerSample = null,
+        Func<long, long, byte>? materialAt = null)
     {
         var diagnostics = new GeoDiagnosticBag();
         var writer = GeneratedMapPayloadWriter.Create(outputDirectory, [], diagnostics);
@@ -309,7 +310,7 @@ internal static class PreviewPayloadFixture
             for (var chunkX = 0; chunkX < chunksX; chunkX++)
             {
                 var terrain = writer.WriteTerrain(new TerrainChunk(chunkX, chunkY, TerrainFromLattice(chunkX, chunkY, heightOverride)));
-                var materials = writer.WriteMaterial(new MaterialChunk(chunkX, chunkY, palette, MaterialFromLattice(chunkX, chunkY)));
+                var materials = writer.WriteMaterial(new MaterialChunk(chunkX, chunkY, palette, MaterialFromLattice(chunkX, chunkY, materialAt)));
                 var masks = writer.WriteMask(new TerrainMaskChunk(chunkX, chunkY, MaskFromLattice(chunkX, chunkY)));
                 var imagery = imageryPixelsPerSample is null
                     ? null
