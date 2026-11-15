@@ -584,3 +584,18 @@ The H3 map package format defines a loose directory container in version 1 with 
 
 The vector layer is an optional strict-JSON sidecar at `vectors/vector-features.json`. The manifest `vectorLayer` entry records its path, encoding (`json`), byte length, SHA-256, and feature count. The staged writer verifies the sidecar before publication, and the reader verifies it on read. Package version 2 is written only when a non-empty vector layer is present. The `vectorLayer` property is omitted when null, so vector-free packages stay at version 1 and serialize without it. Readers accept versions 1 and 2. A vector entry under version 1, an unsupported package version, unknown manifest or sidecar fields, digest, byte-length, or feature-count mismatches, and unsafe paths fail with typed diagnostics and publish or read nothing.
 
+### Generated building layer
+
+The optional building layer is the `buildings/` entry. `buildings/buildings.json` holds 1,676 building records (4,463,275 bytes, SHA-256 `19f59642a1a0405c84b30d662dcd470ce9019d1f904132de5b5aa399803108b8`). `buildings/chunk-0-0.bin` is the only mesh chunk file (`pbm1` encoding, 3,518,724 bytes, 8 segments, 125,658 vertices, 125,658 indices, 41,886 triangles). A package with this layer is version 3.
+
+Generation from the Sedan payload turns 1,679 source parts into 1,676 buildings. Heights come from source attributes for 1,662 buildings and from the usage median for 14; 0 use the global median. Roofs are 569 gabled and 1,107 flat.
+
+Runtime status: the installed Game does not yet render this layer. Headless `ScenarioCapture` runs (`--headless --built-in-scenario ScenarioCapture`, `CNC_GENERALS_PATH` set, Vulkan offscreen, no display, no overlay) fail in two steps:
+
+- `RuntimeBridge.MaterializeHeightMapData` rejects every chunk because the stored float32 heights are not multiples of 0.0390625 (5/128), the runtime's elevation step.
+- With heights rounded to that step in a derived copy (maximum change 0.0195 game units, not committed), `SidesListUtility.SetupSkirmishGameSides` throws `NullReferenceException`, because the package path builds no `SidesList`.
+
+A buildings-off package with identical terrain layers, no building layer, and no vector layer fails at the second step, so the building layer is not the cause. The same harness renders the R2-03 footprints legacy `.map` (exit 0, terrain only), so headless capture works on the host. The capture of the legacy terrain is `r3-g4-buildings-v1-control-legacy-terrain-overview-v1.png` (1,800,356 bytes) under `/mnt/pit2/Network Storage/temp/r3-g4-buildings-v1/`. It is a control, not building evidence. No building-on or building-off frame exists yet.
+
+Per-frame figures are static, derived from the package and `GeneratedBuildingRenderer`, not measured: 41,886 triangles and 16 render items (one opaque and one shadow item per segment, 8 segments). The historical prototype frame time of 3.340 ms is HISTORICAL. It was not reproduced here and sets no threshold.
+
