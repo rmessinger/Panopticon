@@ -837,6 +837,8 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: a large map authors, saves, reloads, and plays within B1 budgets.
 - [ ] B4a-7 Large-population authoring (`WP1008`, `WP1009`, `WP1012`; pairs with A5-5).
   - AC: bulk placement and region multi-object edits stay interactive.
+- [ ] B4a-5 follow-up: chunk store persistence to directory packages ([`WP1018`](https://projects.reid-corp.com/work_packages/1018); planned, not implemented; [deep dive](deep-dives/b4a-larger-maps.md#chunk-store-persistence-wp1018-planned)).
+  - AC: a flush persists dirty chunk store edits to a writable directory package; unsupported sources fail with dirty state intact.
 - [x] B5 Rendering at scale
       ([deep dive](deep-dives/b5-rendering-at-scale.md)): GPU instancing for repeated unit
       models through the source-agnostic `RenderItem` seam (W3D, glTF/PBR, and any C1

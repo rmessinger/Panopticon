@@ -250,8 +250,7 @@ WI-B4a-05 (`PaintSingleTileTool`, `PaintLargeTileTool`, `SpillPaintTool`, `MeshM
 ## Chunk contract (proposed)
 
 B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract. The rationale is in
-[§5.1a](r-real-world-terrain.md#51a-chunk-layout). No `RuntimeTerrainChunkStore` exists in the tree; the
-name in the diagrams is the proposed B4a-5 type. The layout is already encoded in the interchange model
+[§5.1a](r-real-world-terrain.md#51a-chunk-layout). `RuntimeTerrainChunkStore` now exists in the tree as an additive store (bounded residency over chunk sources, dirty-protected eviction), but no whole-grid consumer uses it: the terrain streamer and resident materialization do not, so the binding described below remains proposed. The layout is already encoded in the interchange model
 `MapInterchange` (`src/Panopticon.Simulation/Content/Importing/Maps/MapInterchange.cs:10`) through the
 constants in `MapChunkGeometry` (`src/Panopticon.Simulation/Content/Importing/Maps/MapChunkGeometry.cs:8-18`).
 
@@ -344,6 +343,58 @@ Somme extent: about 78 x 52 chunks, carried from the settled extent above, gives
 Stored heights hold 4,056 x 17,161 = 69,605,016 samples. The unique lattice for the same extent is
 9,985 x 6,657 = 66,470,145 points, so apron and shared-edge duplication add about 4.7 percent. The whole
 Western Front is a later capacity problem and must page by region rather than relying on full residency.
+
+### Chunk store persistence (WP1018, planned)
+
+Planned follow-up, not implemented. Ticket: [`WP1018`](https://projects.reid-corp.com/work_packages/1018), "Persist runtime terrain chunk store edits to directory packages" (New).
+
+Current limitation:
+
+- Store edits (`RuntimeTerrainChunkStore.SetHeight`) and seam synchronization mark the affected resident chunks dirty (`src/Panopticon.Simulation/Terrain/RuntimeTerrainChunkStore.cs:190`, `:363`). Dirty chunks are protected from eviction: `Evict` throws `TerrainChunkStoreCapacityException` (`:210-213`), and `MakeRoom` throws when no clean chunk can be evicted (`:248-253`).
+- `MarkClean` clears the dirty flag and writes nothing (`:195-201`). No flush operation exists.
+- WorldBuilder does not use the store, and its save path does not write store-only edits.
+
+Planned direction:
+
+- An explicit flush-all operation on the store. It goes through an optional source capability that only a writable, directory-backed package source implements. In-memory and read-only sources fail explicitly and leave dirty state intact.
+- Eviction never saves. Eviction of a dirty chunk stays refused. `MarkClean` remains a dirty-flag reset and is documented as not a save.
+
+Geometry and consistency:
+
+- Chunk cores hold 129 samples per axis over a 128-interval stride, so adjacent cores share a boundary row and column. Cores are not disjoint.
+- Each lattice point has one canonical owner, chosen by the store's lattice resolution: floor division by 128, clamped to the last chunk at the far edge (`RuntimeTerrainChunkStore.cs:227-228`). Other chunks hold duplicate core copies and apron copies of the same point.
+- A flush resolves every shared copy from the canonical owner's value. This includes non-resident neighbours that hold stale copies; a residency cap of 1 is the proving case, since no neighbour is resident. Partial edge chunks are included. Cells outside the lattice keep their stored values.
+
+Publication:
+
+- Publication reuses `MapPackageDirectoryWriter.Write`. It stages every file, verifies length, digest, containment, and the staged manifest, and only then commits (`src/Panopticon.Simulation/Content/Importing/MapSources/Package/MapPackageDirectoryWriter.cs:147-172`).
+- Commit is two renames, not an atomic exchange: the existing target moves to a backup sibling, then the staging directory moves into place (`:165-171`).
+- A handled failure removes the staging directory and restores the backup (`:186-193`, `:639-660`). If restoring fails, the result is `RecoveryRequired` and both copies are kept. If backup removal fails after a successful commit, the backup sibling remains (`:662-677`).
+- The scheme is not power-loss safe between the two renames, and it does not serialize concurrent writers.
+- Readers already open are not updated and must be reopened after a save. A stale reader that re-reads swapped files fails on digest mismatch (`MapPackageChunkFileReader.cs:191`) and never returns silently wrong data.
+- Existing coverage: `MapPackageChunkAtomicWriteTests` covers overwrite and staging-failure rollback. No test in the tree drives the commit-time rollback path.
+
+Prepared state:
+
+- The new manifest, entry map, layout, and manifest hash are computed and validated before commit. The source-state swap after commit does no disk I/O, so it cannot report failure after the package has changed.
+- Before preparation, a stale-source check compares the on-disk manifest with the manifest the source loaded. A mismatch fails the flush and preserves dirty state.
+- The flush assumes one writer per package directory. The writer does not enforce this.
+
+Scope exclusions:
+
+- No H3 schema change, no UI, and no expansion of whole-grid consumers.
+- Layer payloads, retained sections, companions, objects, and metadata that the flush does not change stay byte-identical, and their digests are unchanged.
+
+Future acceptance tests (planned, not written):
+
+- Edit, flush, clean eviction, then reload from the same source and from a fresh source; both agree.
+- Shared-point closure at residency cap 1: unloaded neighbours' duplicate core and apron copies equal the canonical owner after flush.
+- Multiple dirty seams and partial edge chunks.
+- Repeated flush, and flush with no dirty chunks.
+- Unsupported source fails with dirty state intact.
+- Deterministic payload-fault injection: prior package unchanged and dirty flags preserved; a retry without the fault succeeds. Deterministic commit-phase (rename) fault injection is also planned and has no existing test: a failed commit restores the prior package with dirty flags preserved, or reports `RecoveryRequired` with both copies kept when restore fails.
+- Digests unchanged for untouched entries.
+- Residency cap and LRU regression.
 
 ## CDLOD streaming design (WI-B4a-07)
 
