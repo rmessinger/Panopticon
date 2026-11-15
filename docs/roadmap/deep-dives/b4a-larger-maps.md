@@ -200,16 +200,16 @@ Behaviour that holds today is pinned by [`RegionDeltaContractTests.cs`](../../..
 
 - `R3` Each layer's representation is chosen by the implementing work package, which states the choice. Let `R` be the rectangle and `T` the set of cells the stroke wrote or read. A dense form stores every cell of `R`. A sparse form stores ordered `(cell index, before, after)` entries for exactly `T`. Storage cost is O(|R|) for dense and O(|T|) for sparse, never O(grid). A sparse form that stores any cell outside `T` is non-compliant. The rectangle of a single Mound or Dig stamp is `(2r + 3)` square (`HeightBrushTool.cs:95-100`). No sparse form exists in the tree.
 - `R4` Object edits are not region deltas. `ObjectPlacementEdit` holds an `ObjectsList` and a `MapObject` reference, not a rectangle (`src/Panopticon.Tools.WorldBuilder.Core/ObjectPlacementEdit.cs:8-12`). R1 to R3 and R6 to R7 do not apply to it. R8 and R13 do.
-- `R5` A stroke allocates no array sized to the full grid, so its cost scales with rectangle area. `HeightBrushTool` violates this with two full-grid clones (`HeightBrushTool.cs:43`, `:87`).
+- `R5` A stroke allocates no array sized to the full grid, so its cost scales with rectangle area. At the WI-B4a-03 audit, `HeightBrushTool` violated this with two full-grid clones (audit-era `HeightBrushTool.cs:43`, `:87`); resolved by WI-B4a-04 (WP354).
 
 ### Capture order
 
 - `R6` Before values are read before the first mutation of each cell, and after values are read after the stroke's last mutation. `HeightMapEdit.Capture` reads before at `HeightMapEdit.cs:38-48`, runs the action at `:50`, and reads after at `:52-61`. A stroke whose rectangle grows while dragging stores each cell's before value on first touch, before writing it, in a stroke-local buffer.
-- `R7` Capture from a grid already mutated in place is prohibited. `HeightBrushTool` writes the live grid on pointer down and move (`HeightBrushTool.cs:49`, `:67`), then captures with a no-op action (`:115-122`), so before equals after and Undo does nothing. The G7 probe measured a centre sample of 110 after Undo, against 10 before the stroke ([Baseline audit](#baseline-audit-wi-b4a-02)).
+- `R7` Capture from a grid already mutated in place is prohibited. At the WI-B4a-03 audit, `HeightBrushTool` wrote the live grid on pointer down and move (audit-era `HeightBrushTool.cs:49`, `:67`), then captured with a no-op action (`:115-122`), so before equaled after and Undo did nothing; resolved by WI-B4a-04 (WP354). The G7 probe measured a centre sample of 110 after Undo, against 10 before the stroke ([Baseline audit](#baseline-audit-wi-b4a-02)).
 
 ### Single application owner
 
-- `R8` `UndoRedoStack.Push` is the only caller that applies a new edit (`src/Panopticon.Tools.WorldBuilder.Core/UndoRedoStack.cs:16-22`). Tools do not call `Apply`, and do not mutate the grid outside the `applyAction` passed to `Capture`, which runs once between the two reads. `MeshMoldTool` calls `edit.Apply()` before `Push` (`MeshMoldTool.cs:96-97`), so the after arrays are written twice. The writes are idempotent, so the grid is correct, but the rule is broken.
+- `R8` `UndoRedoStack.Push` is the only caller that applies a new edit (`src/Panopticon.Tools.WorldBuilder.Core/UndoRedoStack.cs:16-22`). Tools do not call `Apply`, and do not mutate the grid outside the `applyAction` passed to `Capture`, which runs once between the two reads. At the WI-B4a-03 audit, `MeshMoldTool` called `edit.Apply()` before `Push` (audit-era `MeshMoldTool.cs:96-97`), so the after arrays were written twice. The writes were idempotent, so the grid was correct, but the rule was broken; resolved by WI-B4a-05 (WP355).
 
 ### Apply and Revert
 
@@ -223,7 +223,7 @@ Behaviour that holds today is pinned by [`RegionDeltaContractTests.cs`](../../..
 
 ### Coalescing
 
-- `R13` One pointer stroke (down, moves, up) produces exactly one undo entry covering the whole stroke rectangle. Moves update the pending edit or stroke-local buffer and never push to the undo stack. `HeightBrushTool` pushes once at pointer up (`HeightBrushTool.cs:124`) but violates R5 to R7. Tools that push per call, per tile, or per move violate this rule: `PaintLargeTileTool` pushes `TileSize * TileSize` entries per call (`PaintLargeTileTool.cs:61-81`), `PaintSingleTileTool` pushes on every pointer event (`PaintSingleTileTool.cs:24`, `:35`, `:54-55`), `SpillPaintTool` pushes per visited tile (`SpillPaintTool.cs:86-87`), and `MeshMoldTool` pushes per stamp (`MeshMoldTool.cs:30`, `:41`, `:97`). Object tools push once per click (`PlaceObjectTool.cs:38`, `DeleteTool.cs:40`, `WaypointTool.cs:37`) and comply.
+- `R13` One pointer stroke (down, moves, up) produces exactly one undo entry covering the whole stroke rectangle. Moves update the pending edit or stroke-local buffer and never push to the undo stack. `HeightBrushTool` pushes once at pointer up (`HeightBrushTool.cs:101`). At the WI-B4a-03 audit, paint tools pushed per call, per tile, or per move: `PaintLargeTileTool` pushed `TileSize * TileSize` entries per call (audit-era `PaintLargeTileTool.cs:61-81`), `PaintSingleTileTool` pushed on every pointer event (audit-era `PaintSingleTileTool.cs:24`, `:35`, `:54-55`), and `SpillPaintTool` pushed per visited tile (audit-era `SpillPaintTool.cs:86-87`); resolved by WI-B4a-05 (WP355). `MeshMoldTool` pushes per stamp (`MeshMoldTool.cs:30`, `:41`, `:96`) and violates this rule. Object tools push once per click (`PlaceObjectTool.cs:38`, `DeleteTool.cs:40`, `WaypointTool.cs:37`) and comply.
 
 ### Viewport seam
 
@@ -349,7 +349,7 @@ Western Front is a later capacity problem and must page by region rather than re
 |---|---|---|
 | B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
 | B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Height brush strokes (WI-B4a-04) and tile paint strokes (WI-B4a-05) use region deltas; mesh mold pushes per stamp (R13 open); `BlendLayerEdit` covers Blends, Impassability, and Buildability with no UI tool; other `BlendTileData` arrays not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
-| B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Not started |
+| B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Presets, 16-bit default for large presets, and resident memory estimate in place ([WI-B4a-06](#wizard-presets-wi-b4a-06)); package round-trip of 16-bit elevation not covered |
 | B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
 | B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |
 | B4a-6. Round-trip and play validation | Validate large maps through WorldBuilder save, reload, engine load, and play. | Not started |
@@ -370,6 +370,10 @@ Western Front is a later capacity problem and must page by region rather than re
 | [`WI-B4a-09`](https://projects.reid-corp.com/work_packages/359) | Stream visible terrain patches | Draft | `WI-B4a-07` |
 | [`WI-B4a-10`](https://projects.reid-corp.com/work_packages/360) | Implement runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
 | [`WI-B4a-11`](https://projects.reid-corp.com/work_packages/361) | Validate large-map round-trip and play | Draft | `WI-B4a-10`, H6 |
+
+### Wizard presets (WI-B4a-06)
+
+The new-map wizard offers Standard (200 x 200), Large (512 x 512), Very Large (1024 x 1024), and Huge (2048 x 2048). Large presets default to 16-bit elevation. Presets only fill the fields; custom sizes stay accepted. `NewMapFactory.TryValidate` rejects a size only when its lattice (playable + 2 x border + 1 per axis) exceeds `int.MaxValue` samples per axis or in total. The wizard's memory line is an estimate of 29 bytes per lattice sample, based on the arrays a new map allocates, not a measurement. 16-bit elevation is verified on the legacy `.map` save path; package round-trip of elevations above 255 is not covered.
 
 ## Sequencing notes
 
