@@ -24,7 +24,8 @@ public sealed record MapPackageManifest
         MapPackageProvenance? provenance = null,
         IReadOnlyList<MapPackageLayerEntry>? layers = null,
         IReadOnlyList<MapPackageRetainedEntry>? retainedSections = null,
-        IReadOnlyList<MapPackageCompanionEntry>? companions = null)
+        IReadOnlyList<MapPackageCompanionEntry>? companions = null,
+        MapPackageVectorLayerEntry? vectorLayer = null)
     {
         Format = format ?? string.Empty;
         PackageVersion = packageVersion;
@@ -38,6 +39,7 @@ public sealed record MapPackageManifest
         Layers = layers?.ToArray() ?? [];
         RetainedSections = retainedSections?.ToArray() ?? [];
         Companions = companions?.ToArray();
+        VectorLayer = vectorLayer;
     }
 
     public string Format { get; init; } = MapPackageFormat.PackageFormatName;
@@ -63,6 +65,8 @@ public sealed record MapPackageManifest
     public IReadOnlyList<MapPackageRetainedEntry> RetainedSections { get; init; }
 
     public IReadOnlyList<MapPackageCompanionEntry>? Companions { get; init; }
+
+    public MapPackageVectorLayerEntry? VectorLayer { get; init; }
 
     public string ToJson() => MapPackageManifestJson.Serialize(this);
 

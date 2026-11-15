@@ -136,6 +136,17 @@ public static class MapPackageDirectoryWriter
                 }
             }
 
+            if (manifest.VectorLayer is not null)
+            {
+                var vectorFailure = StageVectorLayerFile(stage, manifest.VectorLayer, payloads);
+
+                if (vectorFailure is not null)
+                {
+                    diagnostics.Add(vectorFailure);
+                    return new MapPackageWriteResult(false, diagnostics);
+                }
+            }
+
             var manifestFailure = StageManifest(stage, manifest);
 
             if (manifestFailure is not null)
@@ -294,6 +305,24 @@ public static class MapPackageDirectoryWriter
         return WriteStagedFile(stage, entry.Path, encoded);
     }
 
+    private static MapPackageDiagnostic? StageVectorLayerFile(string stage, MapPackageVectorLayerEntry entry, IMapPackagePayloadProvider payloads)
+    {
+        byte[] encoded;
+
+        try
+        {
+            encoded = payloads.GetVectorLayer(entry);
+        }
+        catch (Exception ex)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageChunkDiagnostic.PayloadProviderFailed,
+                $"Staging payload data for the vector layer failed: {ex.Message}");
+        }
+
+        return WriteStagedFile(stage, entry.Path, encoded);
+    }
+
     private static MapPackageDiagnostic? StageManifest(string stage, MapPackageManifest manifest)
     {
         try
@@ -419,6 +448,16 @@ public static class MapPackageDirectoryWriter
                 {
                     return failure;
                 }
+            }
+        }
+
+        if (manifest.VectorLayer is not null)
+        {
+            var vectorFailure = VerifyStagedFile(stage, manifest.VectorLayer.Path, manifest.VectorLayer.ByteLength, manifest.VectorLayer.Sha256);
+
+            if (vectorFailure is not null)
+            {
+                return vectorFailure;
             }
         }
 

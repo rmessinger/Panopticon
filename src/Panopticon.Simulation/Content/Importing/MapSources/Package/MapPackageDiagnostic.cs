@@ -71,5 +71,7 @@ public sealed record MapPackageDiagnostic(string Code, string Message)
 
     public const string NodataPolicy = "nodata-policy";
 
+    public const string VectorLayer = "vector-layer";
+
     public override string ToString() => $"{Code}: {Message}";
 }

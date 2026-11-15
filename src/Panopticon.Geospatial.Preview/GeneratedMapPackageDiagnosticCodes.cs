@@ -20,4 +20,6 @@ public static class GeneratedMapPackageDiagnosticCodes
     public const string StableIdDeduplicated = "GEO-PKG-008";
 
     public const string StableIdSourceConflict = "GEO-PKG-009";
+
+    public const string VectorFeatureConflict = "GEO-PKG-010";
 }

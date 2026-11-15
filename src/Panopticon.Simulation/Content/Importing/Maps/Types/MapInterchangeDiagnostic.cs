@@ -61,5 +61,9 @@ public sealed record MapInterchangeDiagnostic(string Code, string Message)
 
     public const string UnsupportedAddressing = "unsupported-addressing";
 
+    public const string VectorLayer = "vector-layer";
+
+    public const string VectorFeatureDuplicate = "vector-feature-duplicate";
+
     public override string ToString() => $"{Code}: {Message}";
 }

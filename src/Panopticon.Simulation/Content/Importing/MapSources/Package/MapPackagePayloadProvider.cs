@@ -26,4 +26,7 @@ public interface IMapPackagePayloadProvider
 
     /// <summary>Raw UTF-8 text bytes for one companion member entry.</summary>
     byte[] GetCompanion(MapPackageCompanionEntry entry) => [];
+
+    /// <summary>Canonical UTF-8 JSON bytes for the vector layer entry.</summary>
+    byte[] GetVectorLayer(MapPackageVectorLayerEntry entry) => [];
 }

@@ -244,6 +244,31 @@ internal static class PreviewPayloadFixture
             -1);
     }
 
+    /// <summary>Annotation feature with an arbitrary geometry under the fixture stable-id convention.</summary>
+    public static GeneratedFeature Annotation(string featureId, GeoGeometry geometry)
+    {
+        return new GeneratedFeature(
+            GeneratedFeatureKind.Annotation,
+            geometry,
+            "vectors",
+            featureId,
+            "vectors/" + featureId + "#0",
+            -1);
+    }
+
+    /// <summary>Passability feature over an arbitrary polygon with its passable flag and rule index.</summary>
+    public static GeneratedFeature PassabilityPolygon(string featureId, GeoPolygon polygon, int ruleIndex, bool passable)
+    {
+        return new GeneratedFeature(
+            GeneratedFeatureKind.Passability,
+            polygon,
+            "vectors",
+            featureId,
+            featureId + "#0",
+            ruleIndex,
+            passable: passable);
+    }
+
     /// <summary>Default feature set: one ordinary waypoint inside any whole-map or single-chunk crop.</summary>
     public static List<GeneratedFeature> DefaultFeatures()
     {

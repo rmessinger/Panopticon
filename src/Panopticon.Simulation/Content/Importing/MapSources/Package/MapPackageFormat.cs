@@ -9,6 +9,8 @@ public static class MapPackageFormat
 
     public const int CurrentPackageVersion = 1;
 
+    public const int VectorPackageVersion = 2;
+
     public const string ManifestFileName = "manifest.json";
 
     public const string EncodingFloat32Le = "float32-le";
@@ -16,6 +18,10 @@ public static class MapPackageFormat
     public const string EncodingUint8 = "uint8";
 
     public const string EncodingRgba8 = "rgba8";
+
+    public const string EncodingJson = "json";
+
+    public const string VectorLayerPath = "vectors/vector-features.json";
 
     public const string LayerKindHeights = "heights";
 

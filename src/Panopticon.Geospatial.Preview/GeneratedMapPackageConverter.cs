@@ -35,7 +35,7 @@ public static class GeneratedMapPackageConverter
     [
         "Palette textures are material names in the terrain asset scope; gameplay texture binding is not performed.",
         "Imagery keeps payload PNG row order (north row first).",
-        "Line and polygon feature geometry is preserved as provenance attribute text, not package layers.",
+        "Line and polygon features are stored in the package vector layer; provenance keeps one entry per source part.",
         "Conversion holds chunk data in memory; streaming is not supported.",
         "The import report is an import result, not package content; a reloaded package carries an empty import-report placeholder by design.",
     ];
@@ -94,6 +94,13 @@ public static class GeneratedMapPackageConverter
             }
         }
 
+        var (vectorLayers, vectorConflicts, vectorDiagnostics) = BuildVectorLayers(metadata.Features);
+
+        if (vectorConflicts.Count > 0)
+        {
+            return Failed(vectorConflicts);
+        }
+
         var (features, provenanceFeatures, dedupeDiagnostics, sourceConflicts) = DedupeFeatures(metadata.Features);
 
         if (sourceConflicts.Count > 0)
@@ -110,7 +117,8 @@ public static class GeneratedMapPackageConverter
             BuildWaypoints(features),
             BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
-            []);
+            [],
+            vectorLayers: vectorLayers);
 
         var validation = MapInterchangeValidator.Validate(interchange);
 
@@ -126,7 +134,7 @@ public static class GeneratedMapPackageConverter
             return Failed(write.Diagnostics.Select(diagnostic => Format(diagnostic.Code, diagnostic.Message)));
         }
 
-        return new GeneratedMapPackageResult(true, dedupeDiagnostics.ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
     }
 
     private static Chunk? ReadChunk(
@@ -480,6 +488,147 @@ public static class GeneratedMapPackageConverter
         return true;
     }
 
+    // Vector layers project every emission from the original payload feature list before
+    // provenance dedupe: one source part may legitimately emit several vector features (for
+    // example passability plus buildability of one building). Emission identity is the tuple
+    // (SourceStableId, Kind, RuleIndex), the same identity the interchange validator checks
+    // for duplicates. Exact duplicates collapse to the first emission; any other same-tuple
+    // difference is a conflict that fails the conversion, as does a geometry type the vector
+    // format cannot represent. Point features are skipped because waypoints and objects
+    // already carry them; a point child inside a multi geometry is still converted.
+    private static (VectorLayerSet? Layers, IReadOnlyList<string> Conflicts, IReadOnlyList<string> Diagnostics) BuildVectorLayers(
+        IReadOnlyList<GeneratedFeature> features)
+    {
+        var vectorFeatures = new List<VectorFeature>(features.Count);
+        var seen = new Dictionary<VectorEmissionKey, VectorEmission>();
+        var collapsed = new Dictionary<VectorEmissionKey, int>();
+        var conflicts = new List<string>();
+
+        foreach (var feature in features)
+        {
+            if (feature.Geometry is GeoPointGeometry)
+            {
+                continue;
+            }
+
+            if (ConvertVectorGeometry(feature.Geometry, conflicts) is not { } geometry)
+            {
+                return (null, conflicts, []);
+            }
+
+            var stableId = StableIdOf(feature);
+            var key = new VectorEmissionKey(stableId, feature.Kind.ToString(), feature.RuleIndex);
+
+            if (seen.TryGetValue(key, out var first))
+            {
+                if (string.Equals(first.SourceId, feature.SourceId, StringComparison.Ordinal)
+                    && string.Equals(first.GeometryText, VectorGeometryText(feature.Geometry), StringComparison.Ordinal)
+                    && SameAttributes(first.Attributes, feature.Attributes)
+                    && first.Passable == feature.Passable
+                    && first.Buildable == feature.Buildable
+                    && first.Coverage == feature.Coverage)
+                {
+                    collapsed[key] = collapsed.TryGetValue(key, out var count) ? count + 1 : 1;
+                    continue;
+                }
+
+                conflicts.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.VectorFeatureConflict,
+                    $"Vector emission '{stableId}' (kind '{key.Kind}', rule index {key.RuleIndex}) is emitted again with a different SourceId, geometry, attributes, or flags; the conflicting vector emissions cannot be merged."));
+                return (null, conflicts, []);
+            }
+
+            seen.Add(key, new VectorEmission(
+                feature.SourceId,
+                VectorGeometryText(feature.Geometry),
+                feature.Attributes,
+                feature.Passable,
+                feature.Buildable,
+                feature.Coverage));
+            vectorFeatures.Add(new VectorFeature(
+                stableId,
+                feature.SourceId,
+                key.Kind,
+                feature.RuleIndex,
+                feature.Attributes,
+                feature.Passable,
+                feature.Buildable,
+                feature.Coverage?.ToString(),
+                geometry));
+        }
+
+        if (vectorFeatures.Count == 0)
+        {
+            return (null, conflicts, []);
+        }
+
+        var diagnostics = new List<string>(collapsed.Count);
+
+        foreach (var pair in collapsed)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.StableIdDeduplicated,
+                $"Vector emission '{pair.Key.SourceStableId}' (kind '{pair.Key.Kind}', rule index {pair.Key.RuleIndex}) was emitted by {pair.Value + 1} identical duplicate features; the identical duplicate vector emissions were collapsed."));
+        }
+
+        return (new VectorLayerSet(vectorFeatures), conflicts, diagnostics);
+    }
+
+    private static VectorGeometry? ConvertVectorGeometry(GeoGeometry geometry, List<string> conflicts)
+    {
+        switch (geometry)
+        {
+            case GeoPointGeometry point:
+                return new VectorPointGeometry(ConvertVectorPosition(point.Position));
+            case GeoLineString line:
+                return new VectorLineStringGeometry(line.Positions.Select(ConvertVectorPosition).ToArray());
+            case GeoPolygon polygon:
+                return new VectorPolygonGeometry(
+                    ConvertVectorRing(polygon.OuterRing),
+                    polygon.InnerRings.Select(ConvertVectorRing).ToArray());
+            case GeoMultiGeometry multi:
+                return ConvertVectorMulti(multi, conflicts);
+            default:
+                conflicts.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.VectorFeatureConflict,
+                    $"Feature geometry type '{geometry.GetType().Name}' is not a supported vector geometry; the conversion cannot represent it."));
+                return null;
+        }
+    }
+
+    private static VectorMultiGeometry? ConvertVectorMulti(GeoMultiGeometry multi, List<string> conflicts)
+    {
+        var children = new List<VectorGeometry>(multi.Geometries.Count);
+
+        foreach (var child in multi.Geometries)
+        {
+            if (ConvertVectorGeometry(child, conflicts) is not { } converted)
+            {
+                return null;
+            }
+
+            children.Add(converted);
+        }
+
+        return new VectorMultiGeometry(children);
+    }
+
+    private static VectorRing ConvertVectorRing(GeoRing ring) =>
+        new(ring.Positions.Select(ConvertVectorPosition).ToArray());
+
+    private static VectorPosition ConvertVectorPosition(GeoPosition position) =>
+        new(position.Coordinate.X, position.Coordinate.Y, position.AltitudeMeters);
+
+    // Vector identity comparison text. GeometryText renders a multi geometry as the bare
+    // type name, which would make distinct same-tuple multis look identical and collapse
+    // instead of conflicting, so multis render their children recursively. Line, polygon,
+    // and point texts stay identical to GeometryText.
+    private static string VectorGeometryText(GeoGeometry geometry) => geometry switch
+    {
+        GeoMultiGeometry multi => "Multi(" + string.Join(", ", multi.Geometries.Select(VectorGeometryText)) + ")",
+        _ => GeometryText(geometry),
+    };
+
     private static PlacedObjectSet? BuildObjects(IReadOnlyList<GeneratedFeature> features)
     {
         var objects = new List<PlacedObject>();
@@ -633,6 +782,19 @@ public static class GeneratedMapPackageConverter
         string Geometry,
         GamePosition? Position,
         GeneratedObjectPlacement? Placement,
+        bool? Passable,
+        bool? Buildable,
+        ManifestMaskCoverage? Coverage);
+
+    // Vector emission identity; the interchange validator checks the same tuple for duplicates.
+    private readonly record struct VectorEmissionKey(string SourceStableId, string Kind, int RuleIndex);
+
+    // First emission for a vector key; geometry is compared as emitted text and attributes
+    // separately because dictionaries have no structural equality.
+    private readonly record struct VectorEmission(
+        string SourceId,
+        string GeometryText,
+        IReadOnlyDictionary<string, string> Attributes,
         bool? Passable,
         bool? Buildable,
         ManifestMaskCoverage? Coverage);
