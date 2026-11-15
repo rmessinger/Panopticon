@@ -259,6 +259,19 @@ public sealed class GameViewportRenderer : IDisposable
     /// </summary>
     public event Action<string>? LoadStatus;
 
+    /// <summary>
+    /// Determines whether a map is admitted for 3D preview.
+    /// Maps are admitted if they exist within the game installation file system
+    /// or if they represent a valid directory package on disk.
+    /// </summary>
+    /// <param name="hasMapEntry">Whether the map path resolves to an entry in the game content manager.</param>
+    /// <param name="isDirectoryPackage">Whether the map path is a validated directory package.</param>
+    /// <returns><see langword="true"/> if the map can be loaded in the 3D preview; otherwise, <see langword="false"/>.</returns>
+    public static bool AdmitsForPreview(bool hasMapEntry, bool isDirectoryPackage)
+    {
+        return hasMapEntry || isDirectoryPackage;
+    }
+
     private void LoadMapCore(EditorMap map)
     {
         if (_game == null || map.MapFile.HeightMapData == null || map.MapFile.SidesList == null || map.MapFile.GlobalLighting == null)
@@ -271,9 +284,14 @@ public sealed class GameViewportRenderer : IDisposable
         // StartGame sequence (sides setup, scene construction, seeded randoms,
         // network buffer, camera framing, culling) that the render pipeline
         // expects. Maps outside the game file system are refused for the 3D
-        // preview rather than constructed ad hoc, which crashes GPU drivers;
+        // preview unless they represent a validated directory package;
         // mounting editor maps into a composite file system is follow-up work.
-        if (map.FilePath is { } mapPath && _game.ContentManager.GetMapEntry(mapPath) != null)
+        var mapPath = map.FilePath;
+        var entry = mapPath != null ? _game.ContentManager.GetMapEntry(mapPath) : null;
+        var hasMapEntry = entry != null;
+        var isDirectoryPackage = mapPath != null && Game.IsDirectoryPackagePath(mapPath, entry);
+
+        if (mapPath != null && AdmitsForPreview(hasMapEntry, isDirectoryPackage))
         {
             _game.StartSinglePlayerGame(mapPath);
             FrameCameraOnMap(map);
