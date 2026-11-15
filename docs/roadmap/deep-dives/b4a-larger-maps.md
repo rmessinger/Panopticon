@@ -234,11 +234,13 @@ Tools take `ViewportPointerEvent` (`src/Panopticon.Tools.WorldBuilder.Core/Viewp
 | Component | Rules violated | Work package |
 |---|---|---|
 | `HeightMapEdit`, `BlendTileEdit` | none | n/a |
-| `HeightBrushTool` | R5, R7, R8 (in-place mutation before capture) | WI-B4a-04 (WP354) |
+| `HeightBrushTool` | none | WI-B4a-04 (WP354) |
 | `MeshMoldTool` | R8 (Apply before Push), R13 (push per stamp) | Unassigned |
 | `PaintLargeTileTool`, `PaintSingleTileTool`, `SpillPaintTool` | R13 | Unassigned |
 | Object edits and object tools | none | n/a |
 | Layers other than Height and Tiles | no edit type exists | WI-B4a-05 (WP355) |
+
+WI-B4a-04 (`HeightBrushTool`): each stroke keeps a stroke-local before buffer for its rectangle, filled on first touch from cells that are not yet written, and pushes one `HeightMapEdit.FromPatches` edit at pointer up. The rectangle covers stamp centres whose reach meets the grid, expanded by `RadiusCells + 1` and clipped. A stroke that writes no in-bounds cell pushes nothing. A radius-10 stroke allocated 2,264 bytes at both playable 128 and playable 4096. Tests: `HeightBrushRegionDeltaTests` (Mound, Dig, and Smooth undo and redo; one entry per multi-move stroke; map edge; off-map; sub-cell offset; allocation).
 
 ## Chunk contract (proposed)
 
@@ -343,7 +345,7 @@ Western Front is a later capacity problem and must page by region rather than re
 | Phase | Goal | Status |
 |---|---|---|
 | B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
-| B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
+| B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Height brush strokes use region deltas (WI-B4a-04); other layers not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
 | B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Not started |
 | B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
 | B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |

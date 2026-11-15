@@ -12,8 +12,10 @@ public sealed class HeightBrushTool : IEditorTool
     private const int HorizontalScale = 10;
 
     private bool _isDragging;
-    private ushort[,]? _strokeBefore;
-    private int _strokeMinX, _strokeMinY, _strokeMaxX, _strokeMaxY;
+    private bool _strokeWroteGrid;
+    private ushort[,]? _regionBefore;
+    private int _regionMinX, _regionMinY, _regionMaxX, _regionMaxY;
+    private int _centreMinX, _centreMinY, _centreMaxX, _centreMaxY;
 
     public HeightBrushMode Mode { get; set; }
     public BrushSettings Brush { get; } = new();
@@ -40,14 +42,10 @@ public sealed class HeightBrushTool : IEditorTool
         }
 
         _isDragging = true;
-        _strokeBefore = (ushort[,])heightMapData.Elevations.Clone();
-        _strokeMinX = int.MaxValue;
-        _strokeMinY = int.MaxValue;
-        _strokeMaxX = int.MinValue;
-        _strokeMaxY = int.MinValue;
+        _strokeWroteGrid = false;
+        _regionBefore = null;
 
-        ApplyBrush(e.WorldPosition.Value, heightMapData);
-        UpdateBounds(e.WorldPosition.Value, heightMapData);
+        Stamp(e.WorldPosition.Value, heightMapData);
         map.MarkDirty();
     }
 
@@ -64,72 +62,116 @@ public sealed class HeightBrushTool : IEditorTool
             return;
         }
 
-        ApplyBrush(e.WorldPosition.Value, heightMapData);
-        UpdateBounds(e.WorldPosition.Value, heightMapData);
+        Stamp(e.WorldPosition.Value, heightMapData);
     }
 
     public void OnPointerUp(ViewportPointerEvent e, EditorMap map)
     {
-        if (!_isDragging || _strokeBefore is null)
+        if (!_isDragging)
         {
-            _isDragging = false;
             return;
         }
 
         _isDragging = false;
 
         var heightMapData = map.MapFile.HeightMapData;
-        if (heightMapData is null)
+        var regionBefore = _regionBefore;
+        var strokeWroteGrid = _strokeWroteGrid;
+        var minX = _regionMinX;
+        var minY = _regionMinY;
+        var maxX = _regionMaxX;
+        var maxY = _regionMaxY;
+        _regionBefore = null;
+
+        if (heightMapData is null || regionBefore is null || !strokeWroteGrid)
         {
             return;
         }
 
-        var after = (ushort[,])heightMapData.Elevations.Clone();
-        int w = heightMapData.Elevations.GetLength(0);
-        int h = heightMapData.Elevations.GetLength(1);
-
-        var before = _strokeBefore;
-        _strokeBefore = null;
-
-        // Build a patch-sized edit from the captured before/after
-        int startX = Math.Max(0, _strokeMinX - Brush.RadiusCells - 1);
-        int startY = Math.Max(0, _strokeMinY - Brush.RadiusCells - 1);
-        int endX = Math.Min(w - 1, _strokeMaxX + Brush.RadiusCells + 1);
-        int endY = Math.Min(h - 1, _strokeMaxY + Brush.RadiusCells + 1);
-        int pw = endX - startX + 1;
-        int ph = endY - startY + 1;
-
-        var patchBefore = new ushort[pw, ph];
-        var patchAfter = new ushort[pw, ph];
-        for (var dy = 0; dy < ph; dy++)
+        var elevations = heightMapData.Elevations;
+        var regionAfter = new ushort[regionBefore.GetLength(0), regionBefore.GetLength(1)];
+        for (var y = minY; y <= maxY; y++)
         {
-            for (var dx = 0; dx < pw; dx++)
+            for (var x = minX; x <= maxX; x++)
             {
-                patchBefore[dx, dy] = before[startX + dx, startY + dy];
-                patchAfter[dx, dy] = after[startX + dx, startY + dy];
+                regionAfter[x - minX, y - minY] = elevations[x, y];
             }
         }
 
-        // Restore before-state so HeightMapEdit.Capture can record before/after properly.
-        // Instead, build the edit directly from our captured data.
-        var edit = HeightMapEdit.Capture(
-            heightMapData,
-            startX, startY, pw, ph,
-            elevations =>
-            {
-                // already applied; no-op
-            },
-            Name);
-
-        map.UndoStack.Push(edit);
+        map.UndoStack.Push(HeightMapEdit.FromPatches(heightMapData, minX, minY, regionBefore, regionAfter, Name));
     }
 
     public object? GetPropertiesViewModel() => Brush;
 
-    private void ApplyBrush(Vector3 worldPos, HeightMapData heightMapData)
+    private void Stamp(Vector3 worldPos, HeightMapData heightMapData)
     {
         var (cx, cy) = WorldToCell(worldPos, heightMapData.BorderWidth);
         var elevations = heightMapData.Elevations;
+        var reach = Brush.RadiusCells + 1;
+        if (cx + reach < 0 || cy + reach < 0 || cx - reach >= elevations.GetLength(0) || cy - reach >= elevations.GetLength(1))
+        {
+            return;
+        }
+
+        IncludeCentre(cx, cy, elevations);
+        ApplyBrush(cx, cy, elevations);
+    }
+
+    private void IncludeCentre(int cx, int cy, ushort[,] elevations)
+    {
+        if (_regionBefore is null)
+        {
+            _centreMinX = _centreMaxX = cx;
+            _centreMinY = _centreMaxY = cy;
+        }
+        else
+        {
+            _centreMinX = Math.Min(_centreMinX, cx);
+            _centreMinY = Math.Min(_centreMinY, cy);
+            _centreMaxX = Math.Max(_centreMaxX, cx);
+            _centreMaxY = Math.Max(_centreMaxY, cy);
+        }
+
+        var reach = Brush.RadiusCells + 1;
+        var minX = Math.Max(0, _centreMinX - reach);
+        var minY = Math.Max(0, _centreMinY - reach);
+        var maxX = Math.Min(elevations.GetLength(0) - 1, _centreMaxX + reach);
+        var maxY = Math.Min(elevations.GetLength(1) - 1, _centreMaxY + reach);
+
+        if (_regionBefore is not null && minX == _regionMinX && minY == _regionMinY && maxX == _regionMaxX && maxY == _regionMaxY)
+        {
+            return;
+        }
+
+        GrowRegion(minX, minY, maxX, maxY, elevations);
+    }
+
+    // Cells outside the previous region have never been written, so their live values are their before values.
+    private void GrowRegion(int minX, int minY, int maxX, int maxY, ushort[,] elevations)
+    {
+        var previous = _regionBefore;
+        var grown = new ushort[maxX - minX + 1, maxY - minY + 1];
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                grown[x - minX, y - minY] = previous is not null
+                    && x >= _regionMinX && x <= _regionMaxX
+                    && y >= _regionMinY && y <= _regionMaxY
+                    ? previous[x - _regionMinX, y - _regionMinY]
+                    : elevations[x, y];
+            }
+        }
+
+        _regionBefore = grown;
+        _regionMinX = minX;
+        _regionMinY = minY;
+        _regionMaxX = maxX;
+        _regionMaxY = maxY;
+    }
+
+    private void ApplyBrush(int cx, int cy, ushort[,] elevations)
+    {
         int r = Brush.RadiusCells;
         int w = elevations.GetLength(0);
         int h = elevations.GetLength(1);
@@ -151,6 +193,8 @@ public sealed class HeightBrushTool : IEditorTool
                     continue;
                 }
 
+                _strokeWroteGrid = true;
+
                 float falloff = 1.0f - (dist / r);
                 float strength = Brush.Strength * falloff;
 
@@ -170,15 +214,6 @@ public sealed class HeightBrushTool : IEditorTool
                 }
             }
         }
-    }
-
-    private void UpdateBounds(Vector3 worldPos, HeightMapData heightMapData)
-    {
-        var (cx, cy) = WorldToCell(worldPos, heightMapData.BorderWidth);
-        _strokeMinX = Math.Min(_strokeMinX, cx);
-        _strokeMinY = Math.Min(_strokeMinY, cy);
-        _strokeMaxX = Math.Max(_strokeMaxX, cx);
-        _strokeMaxY = Math.Max(_strokeMaxY, cy);
     }
 
     private static ushort ComputeSmoothed(ushort[,] elevations, int cx, int cy, int radius, float strength)
