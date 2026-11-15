@@ -30,29 +30,46 @@ B4a implementation cards therefore call out the A5-6 checklist item where it aff
 
 ## How maps are sized today
 
-- `HeightMapData` stores `Width`, `Height`, `Area`, and a resident `ushort[,] Elevations`
-  array. It verifies `Width * Height == Area` while parsing and creates resident arrays for new maps
-  (`src/Panopticon.Simulation/Data/Map/HeightMapData.cs:18-43,49-78`).
-- `BlendTileData` stores texture, blend, passability, buildability, visibility, and related per-cell
-  arrays sized from `HeightMapData` (`src/Panopticon.Simulation/Data/Map/BlendTileData.cs:11-50,82-170`).
-- `HeightMap` exposes ten world units per sample and builds a resident normal array from the whole
-  grid (`src/Panopticon.Simulation/Terrain/HeightMap.cs:9-31,166-185`).
-- `Terrain` uses `PatchSize = 17` and creates all patches up front in `CreatePatches`
-  (`src/Panopticon.Simulation/Terrain/Terrain.cs:31-36,263-322`).
-- `Terrain.CreateTileDataTexture` builds one whole-map tile-data texture from `BlendTileData`
-  (`src/Panopticon.Simulation/Terrain/Terrain.cs:326-376`).
-- `PartitionCellManager.OnNewGame` allocates its full cell array from the map boundary
-  (`src/Panopticon.Simulation/Logic/PartitionCellManager.cs:30-65`).
-- `Navigation` creates a whole-map graph from the passability array
-  (`src/Panopticon.Simulation/Navigation/Navigation.cs:14-31`).
-- `EditorMap` wraps a resident `MapFile` and saves through `MapFile.WriteTo`
-  (`src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs:9-25,51-69`).
-- `HeightMapEdit` already records a rectangular before and after patch
-  (`src/Panopticon.Tools.WorldBuilder.Core/HeightMapEdit.cs:8-26,33-64`).
-- `HeightBrushTool` still clones the whole `Elevations` array at pointer down and pointer up before
-  slicing the affected patch (`src/Panopticon.Tools.WorldBuilder.Core/HeightBrushTool.cs:14-17,42-48,87-124`).
-- `ObjectsList` uses flat arrays and copies the whole array on add/remove
-  (`src/Panopticon.Simulation/Data/Map/ObjectsList.cs:8-23`).
+- `HeightMapData` stores `Width`, `Height`, `BorderWidth`, `Area`, and a resident `ushort[,] Elevations`
+  (`src/Panopticon.Simulation/Data/Map/HeightMapData.cs:19-30`). `Parse` allocates the full array and
+  rejects `Width * Height != Area` (`HeightMapData.cs:137-146`). `Create` wraps a caller-supplied array
+  (`HeightMapData.cs:35-46`). `MapFile.CreateEmpty` allocates new maps at `playable + 2 * border + 1`
+  per axis (`src/Panopticon.Simulation/Data/Map/MapFile.cs:342-345,356`).
+- `BlendTileData` stores tile, blend, passability, buildability, visibility, and related per-cell arrays
+  (`src/Panopticon.Simulation/Data/Map/BlendTileData.cs:18-53`). `Parse` sizes them from `HeightMapData`
+  (`BlendTileData.cs:184-195`). `CreateUniform` allocates each array at `width x height`
+  (`BlendTileData.cs:88-110`).
+- `HeightMap.HorizontalScale` is 10 world units per sample (`src/Panopticon.Simulation/Terrain/HeightMap.cs:12`).
+  `GetHeight(int, int)` indexes the whole `Elevations` array (`HeightMap.cs:32`). `Width` and `Height` are
+  the data dimensions minus one (`HeightMap.cs:176-177`). The constructor allocates
+  `Normals = new Vector3[Width, Height]` and fills every entry through `RefreshNormals`
+  (`HeightMap.cs:168-192`).
+- `Terrain.PatchSize` is 17 vertices, or 16 intervals (`src/Panopticon.Simulation/Terrain/Terrain.cs:62,354`).
+  `CreatePatches` builds every patch for the map (`Terrain.cs:352-396`). It runs from the constructor
+  (`Terrain.cs:163`) and from the full rebuild `OnHeightMapChanged()` (`Terrain.cs:336-350`). The bounded
+  `OnHeightMapChanged(bounds)` (`Terrain.cs:313-334`) rebuilds only intersecting patches.
+- `Terrain.CreateTileDataTexture` allocates `uint[Width * Height * 4]` for the whole map and uploads one
+  texture (`Terrain.cs:398-452`, allocation at `403`).
+- `TerrainPatch` reads `heightMap.GetPosition` and `heightMap.Normals[x, y]` over its own bounds
+  (`src/Panopticon.Simulation/Terrain/TerrainPatch.cs:72-86`, reads at `77` and `82`). It is a
+  patch-local consumer of the whole-grid arrays.
+- `PartitionCellManager.OnNewGame` takes the terrain boundary from `Borders[0]`
+  (`src/Panopticon.Simulation/Logic/PartitionCellManager.cs:92-101`) and allocates `_cells` for the full
+  boundary (`PartitionCellManager.cs:103`).
+- `Navigation` has two constructors, one from `BlendTileData.Impassability` and one from a `bool[,]` feed.
+  Both build a whole-map `Graph` (`src/Panopticon.Simulation/Navigation/Navigation.cs:29-45,52-68`, graph
+  construction at `33` and `56`).
+- `EditorMap.Save` (`src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs:99-124`) calls `MapFile.WriteTo`
+  at line 115 for legacy maps and `MapPackageConverter.SavePackage` at line 108 for packages.
+- `HeightMapEdit` records a rectangular before and after patch
+  (`src/Panopticon.Tools.WorldBuilder.Core/HeightMapEdit.cs:8-27,33-64`). `Apply` and `Revert` copy the
+  patch back (`HeightMapEdit.cs:66-93`).
+- `HeightBrushTool` clones the whole `Elevations` array at pointer down
+  (`src/Panopticon.Tools.WorldBuilder.Core/HeightBrushTool.cs:43`) and again at pointer up
+  (`HeightBrushTool.cs:87`), then slices the affected rectangle (`HeightBrushTool.cs:94-111`).
+- `ObjectsList` stores a flat `Objects` array (`src/Panopticon.Simulation/Data/Map/ObjectsList.cs:12`).
+  `AddObject` copies the whole array (`ObjectsList.cs:17-20`), and `RemoveObject` rebuilds it
+  (`ObjectsList.cs:26`).
 
 ## Constraints to lift
 
@@ -67,7 +84,11 @@ B4a implementation cards therefore call out the A5-6 checklist item where it aff
 
 ## Chunk contract (proposed)
 
-B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract.
+B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract. The rationale is in
+[§5.1a](r-real-world-terrain.md#51a-chunk-layout). No `RuntimeTerrainChunkStore` exists in the tree; the
+name in the diagrams is the proposed B4a-5 type. The layout is already encoded in the interchange model
+`MapInterchange` (`src/Panopticon.Simulation/Content/Importing/Maps/MapInterchange.cs:10`) through the
+constants in `MapChunkGeometry` (`src/Panopticon.Simulation/Content/Importing/Maps/MapChunkGeometry.cs:8-18`).
 
 | Property | Value |
 |---|---|
@@ -76,27 +97,88 @@ B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract.
 | Lattice points per chunk | 129 per axis; edge points duplicated in neighbours and equal |
 | Apron | one read-only sample on each side for normals |
 | Stored chunk sample count | 131 x 131 with apron |
-| Height payload | little-endian `float32` game units |
+| Height payload | little-endian `float32` game units (`MapPackageChunkCodec.cs:22`) |
 | Chunk key | `(cx, cy)` from southwest origin; +X east, +Y north |
 | Runtime owner | B4a-5 chunk store |
-| On-disk owner | H3 package encoding |
+| On-disk owner | H3 package encoding: writer `MapPackageDirectoryWriter.Write` (`src/Panopticon.Simulation/Content/Importing/MapSources/Package/MapPackageDirectoryWriter.cs:33`), codec `MapPackageChunkCodec` (`MapPackageChunkCodec.cs:15`), reader `MapPackageChunkFileReader` (`MapPackageChunkFileReader.cs:16`) |
 
-A 128-interval chunk aligns with eight current terrain patches in each axis because `Terrain.PatchSize`
-is 17 vertices, or 16 intervals. One chunk therefore holds an 8 x 8 patch grid at full detail before
-CDLOD coarsening.
+### Lattice and patch mapping
 
-Approximate resident payload per chunk:
+| Quantity | Value | Source |
+|---|---|---|
+| Chunk extent | 128 intervals x 10 units = 1280 game units per axis | `MapChunkGeometry.cs:10`, `HeightMap.cs:12` |
+| Core points | 129 per axis: 128 intervals plus the shared end point | `MapChunkGeometry.cs:8` |
+| Stored points | 131 per axis: 129 core plus one apron per side | `MapChunkGeometry.cs:14` |
+| Chunk origin | whole-map lattice index `(128 cx, 128 cy)` | `MapInterchangeValidator.cs:21` |
+| Shared edge | lattice column `128 (cx + 1)` is core column 128 of chunk `cx` and core column 0 of chunk `cx + 1` | `MapInterchangeValidator.cs:21-23` |
+| East apron | lattice column `128 (cx + 1) + 1`, core column 1 of chunk `cx + 1` | `MapInterchangeValidator.cs:33-34` |
+| Render patch | 17 vertices with stride 16, so adjacent patches share one edge | `Terrain.cs:62,354,377-381` |
+| Patches per chunk | `128 / 16 = 8` per axis; `8 x 8 = 64` at full detail | arithmetic |
+| Patch `(px, py)` | core-local vertices `16 px` through `16 px + 16` inclusive | arithmetic on `Terrain.cs:374-381` |
 
-| Layer | Estimate |
-|---|---|
-| Height apron | 131 x 131 x 4 bytes, about 67 KiB |
-| Material or tile indices | 129 x 129 x 1 to 2 bytes, about 16 to 33 KiB per layer |
-| Passability and buildability masks | 129 x 129 bits each, about 2 KiB per mask |
-| Current tile-data texture equivalent | 128 x 128 x 16 bytes, about 256 KiB before compression or packing changes |
+Chunk world origin: `(128 cx - BorderWidth) x 10` per axis, from `GetPosition` (`HeightMap.cs:126-129`).
 
-For the settled Somme extent in the Western Front decisions, about 78 x 52 chunks produce about
-4,056 chunks. Height aprons alone are about 266 MiB if fully resident. The whole Western Front is a
-later capacity problem and must page by region rather than relying on full residency.
+The current patch count formula does not fit a 129-point chunk. `CreatePatches` derives its extent from
+`HeightMap.Width - 1` (`Terrain.cs:356-368`), and `HeightMap.Width` is the data width minus one
+(`HeightMap.cs:176`). For a 129-point grid, that yields a last patch of 16 vertices (`Terrain.cs:380`).
+Chunk-local patch bounds must use the 129-point core extent.
+
+### Border and apron interactions
+
+- `BorderWidth` is map-edge padding inside the lattice. New maps size `Width` and `Height` to include both
+  borders (`MapFile.cs:342-343`). World-to-lattice conversions add it (`HeightMap.cs:88`, `104-105`,
+  `148-149`, `164`) and lattice-to-world conversions subtract it (`HeightMap.cs:127-128`). Chunk keys index
+  the padded lattice, so chunk origins in world units subtract `BorderWidth`.
+- The apron is a one-sample copy of the neighbour's core sample. It is not `BorderWidth`. A chunk on the
+  map edge has no neighbour on that side. Its apron follows the adapter clamp policy
+  (`src/Panopticon.Simulation/Content/Importing/MapSources/LegacyMapReader.cs:165-166`), and the validator
+  does not check map-edge aprons (`MapInterchangeValidator.cs:36-37`).
+- Normals at core edges read the apron. `CalculateNormal` reads quads `m = x - 1..x` and
+  `n = y - 1..y` (`HeightMap.cs:240-242`), and `CalculateQuadNormal` reads `x + 1` and `y + 1`
+  (`HeightMap.cs:215-218`). With the apron, a chunk-local normal matches the whole-grid normal everywhere
+  except the final global lattice column and row, where the whole-grid path substitutes `UnitZ`
+  (`HeightMap.cs:248`) or stores no normal (`HeightMap.cs:176-177`).
+- Shared edge points must be equal in both chunks because both chunks' normals and apron samples read
+  them (`MapInterchangeValidator.cs:33-37`).
+
+### Memory estimates
+
+These are estimates from element sizes, not measurements. Bytes are per chunk.
+
+| Layer | Basis | Bytes | KiB |
+|---|---|---|---|
+| Heights | 131 x 131 x 4, float32, with apron | 68,644 | 67.04 |
+| Normals | 129 x 129 x 12, `Vector3`, held in `HeightMap.Normals` today (`HeightMap.cs:168`) | 199,692 | 195.01 |
+| Material index, in memory | 129 x 129 x 2, `ushort` (`BlendTileData.cs:18`) | 33,282 | 32.50 |
+| Material index, palette bytes | 129 x 129 x 1, uint8 | 16,641 | 16.25 |
+| Impassability mask, in memory | 129 x 129 x 1, `bool` (`BlendTileData.cs:23`) | 16,641 | 16.25 |
+| Buildability mask, in memory | 129 x 129 x 1, `bool` (`BlendTileData.cs:47`) | 16,641 | 16.25 |
+| Two masks, bit-packed | 129 x 129 / 8 per mask, about 2,080 bytes each | 4,160 | 4.06 |
+| Subtotal, in memory | heights, normals, material `ushort`, two `bool` masks | 334,900 | 327.05 |
+| Current tile-data texture, state basis | 128 x 128 x 16, `R32_G32_B32_A32_UInt` (`Terrain.cs:451`) | 262,144 | 256.00 |
+| Current tile-data texture, 129 basis | 129 x 129 x 16 | 266,256 | 260.02 |
+
+The bit-packed row is a packing scenario. The H3 codec writes masks as raw uint8 flag bytes today
+(`MapPackageChunkCodec.cs:83-87`), so the in-memory `bool` and on-disk byte figures apply to the
+current encoding. The subtotal omits the other `BlendTileData` arrays, so the resident total is higher.
+
+Somme extent: about 78 x 52 chunks, carried from the settled extent above, gives 4,056 chunks.
+
+| Layer | Total bytes | MiB |
+|---|---|---|
+| Heights | 278,420,064 | 265.52 |
+| Normals | 809,950,752 | 772.43 |
+| Material index, in memory | 134,991,792 | 128.74 |
+| Impassability mask, in memory | 67,495,896 | 64.37 |
+| Buildability mask, in memory | 67,495,896 | 64.37 |
+| Combined in-memory subtotal | 1,358,354,400 | 1,295.43 |
+| Current tile-data texture, state basis | 1,063,256,064 | 1,014.00 |
+| Current resident `Elevations`, `ushort`, 9,985 x 6,657 lattice without border | 132,940,290 | 126.78 |
+| Full-detail render patches, 64 per chunk | 259,584 patches | n/a |
+
+Stored heights hold 4,056 x 17,161 = 69,605,016 samples. The unique lattice for the same extent is
+9,985 x 6,657 = 66,470,145 points, so apron and shared-edge duplication add about 4.7 percent. The whole
+Western Front is a later capacity problem and must page by region rather than relying on full residency.
 
 ## Sub-phases
 
