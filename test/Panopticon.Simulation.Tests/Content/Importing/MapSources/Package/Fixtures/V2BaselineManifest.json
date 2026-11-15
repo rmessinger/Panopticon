@@ -1,0 +1,195 @@
+{
+  "format": "panopticon-map-package",
+  "packageVersion": 2,
+  "schemaVersion": 1,
+  "identity": {
+    "name": "R3V1ByteBaseline",
+    "sourceKind": "LegacyMap",
+    "legacyGlobalVersion": 8
+  },
+  "layout": {
+    "sampleSpacing": {
+      "value": 10,
+      "unit": "GameUnit",
+      "frame": "MapLocalXy"
+    },
+    "latticeWidth": 129,
+    "latticeHeight": 129,
+    "chunksX": 1,
+    "chunksY": 1,
+    "border": 0,
+    "nodataPolicy": "Fail",
+    "heightSectionVersion": 3,
+    "mapArea": 16641,
+    "terrainBorders": [
+      {
+        "corner1X": 0,
+        "corner1Y": 0,
+        "x": 128,
+        "y": 128
+      }
+    ]
+  },
+  "blend": {
+    "palette": [
+      {
+        "index": 0,
+        "name": "grass",
+        "texture": {
+          "scope": "terrain",
+          "name": "grass"
+        }
+      },
+      {
+        "index": 1,
+        "name": "dirt",
+        "texture": {
+          "scope": "terrain",
+          "name": "dirt"
+        }
+      },
+      {
+        "index": 2,
+        "name": "rock",
+        "texture": {
+          "scope": "terrain",
+          "name": "rock"
+        }
+      }
+    ]
+  },
+  "objects": [
+    {
+      "stableId": "r3-obj-0",
+      "x": {
+        "value": 10,
+        "unit": "GameUnit",
+        "frame": "LegacyEngineXy"
+      },
+      "y": {
+        "value": 20,
+        "unit": "GameUnit",
+        "frame": "LegacyEngineXy"
+      },
+      "z": {
+        "value": 0,
+        "unit": "GameUnit",
+        "frame": "LegacyEngineZ"
+      },
+      "orientationRadians": 0,
+      "type": {
+        "scope": "legacy",
+        "name": "AmericaVehicleCrusader"
+      },
+      "roadType": 0,
+      "legacyProperties": {
+        "team": {
+          "type": "asciiString",
+          "value": "america"
+        }
+      }
+    }
+  ],
+  "waypoints": [
+    {
+      "stableId": "r3-wp-0",
+      "name": "R3Start",
+      "x": {
+        "value": 15,
+        "unit": "GameUnit",
+        "frame": "LegacyEngineXy"
+      },
+      "y": {
+        "value": 25,
+        "unit": "GameUnit",
+        "frame": "LegacyEngineXy"
+      },
+      "z": {
+        "value": 0,
+        "unit": "GameUnit",
+        "frame": "LegacyEngineZ"
+      }
+    }
+  ],
+  "provenance": {
+    "sourceSchemaVersion": "8",
+    "sources": [
+      {
+        "kind": "legacy-map",
+        "sha256Digests": [
+          "3f0a0e8db1e2c9de59a2f2b40dbe5c78a5b1e9f0d4c8a3b2e1f0d9c8b7a6f5e4"
+        ],
+        "originX": {
+          "value": 0,
+          "unit": "GameUnit",
+          "frame": "LegacyEngineXy"
+        },
+        "originY": {
+          "value": 0,
+          "unit": "GameUnit",
+          "frame": "LegacyEngineXy"
+        }
+      }
+    ],
+    "generatedFeatures": [
+      {
+        "stableId": "r3-gf-0",
+        "kind": "RoadCenterLine",
+        "attributes": {
+          "lanes": "2"
+        }
+      }
+    ]
+  },
+  "layers": [
+    {
+      "chunkX": 0,
+      "chunkY": 0,
+      "layerKind": "heights",
+      "path": "layers/heights_0_0.bin",
+      "encoding": "float32-le",
+      "width": 131,
+      "height": 131,
+      "byteLength": 68644,
+      "sha256": "c1334f55d960690fa3fc5ffad33ae0bf63fd29387973647ac58f5cbf546c696c"
+    },
+    {
+      "chunkX": 0,
+      "chunkY": 0,
+      "layerKind": "materials",
+      "path": "layers/materials_0_0.bin",
+      "encoding": "uint8",
+      "width": 129,
+      "height": 129,
+      "byteLength": 16641,
+      "sha256": "2186649ebec476503409b61db76ccf940745af82ee0682f1a39f6b54e6e7421b"
+    },
+    {
+      "chunkX": 0,
+      "chunkY": 0,
+      "layerKind": "masks",
+      "path": "layers/masks_0_0.bin",
+      "encoding": "uint8",
+      "width": 129,
+      "height": 129,
+      "byteLength": 16641,
+      "sha256": "26fc355336a9163f58461e709adf7eb4440e9609bd727b9df3f9e966bd8dd497"
+    }
+  ],
+  "retainedSections": [
+    {
+      "sectionName": "GlobalVersion",
+      "sectionVersion": 8,
+      "path": "retained/GlobalVersion.bin",
+      "byteLength": 4,
+      "sha256": "71315debfd9ee246b7925875b4c34b05249df087ae437f69465639e81e215796"
+    }
+  ],
+  "vectorLayer": {
+    "path": "vectors/vector-features.json",
+    "encoding": "json",
+    "byteLength": 3266,
+    "sha256": "4cb77a286491b725705e198edfe2f5bf36a11935f6ff1f2e2eb60288fbb8c124",
+    "featureCount": 4
+  }
+}

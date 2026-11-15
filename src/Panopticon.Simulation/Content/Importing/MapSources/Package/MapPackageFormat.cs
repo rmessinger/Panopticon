@@ -11,6 +11,8 @@ public static class MapPackageFormat
 
     public const int VectorPackageVersion = 2;
 
+    public const int BuildingPackageVersion = 3;
+
     public const string ManifestFileName = "manifest.json";
 
     public const string EncodingFloat32Le = "float32-le";
@@ -22,6 +24,13 @@ public static class MapPackageFormat
     public const string EncodingJson = "json";
 
     public const string VectorLayerPath = "vectors/vector-features.json";
+
+    public const string EncodingPbm1 = "pbm1";
+
+    public const string BuildingsMetadataPath = "buildings/buildings.json";
+
+    public static string BuildingMeshPath(int chunkX, int chunkY) =>
+        $"buildings/chunk-{chunkX.ToString(System.Globalization.CultureInfo.InvariantCulture)}-{chunkY.ToString(System.Globalization.CultureInfo.InvariantCulture)}.bin";
 
     public const string LayerKindHeights = "heights";
 

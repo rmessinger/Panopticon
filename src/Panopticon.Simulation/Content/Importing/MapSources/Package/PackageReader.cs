@@ -217,6 +217,13 @@ public sealed class PackageReader : IMapReader
             }
         }
 
+        BuildingLayerSet? buildingLayers = null;
+
+        if (manifest.Buildings is { } buildingsEntry)
+        {
+            buildingLayers = ReadBuildingLayer(buildingsEntry);
+        }
+
         if (!manifest.Layout.SampleSpacing.TryToMapQuantity(out var sampleSpacing))
         {
             throw new MapImportException(
@@ -283,7 +290,8 @@ public sealed class PackageReader : IMapReader
             provenance,
             report,
             retainedSections,
-            vectorLayers: vectorLayers);
+            vectorLayers: vectorLayers,
+            buildings: buildingLayers);
 
         var validationDiagnostics = MapInterchangeValidator.Validate(model);
 
@@ -293,5 +301,86 @@ public sealed class PackageReader : IMapReader
         }
 
         return model;
+    }
+
+    private BuildingLayerSet ReadBuildingLayer(MapPackageBuildingsEntry buildingsEntry)
+    {
+        var metadataResult = MapPackageChunkFileReader.ReadBuildingMetadata(_packageRoot, buildingsEntry);
+
+        if (!metadataResult.Success)
+        {
+            throw new MapImportException(
+                metadataResult.Diagnostics.Select(d => new MapInterchangeDiagnostic(d.Code, d.Message)).ToArray());
+        }
+
+        IReadOnlyList<GeneratedBuilding> buildings;
+
+        try
+        {
+            buildings = MapPackageBuildingCodec.DeserializeMetadata(metadataResult.Payload!);
+        }
+        catch (FormatException ex)
+        {
+            throw new MapImportException(
+            [
+                new MapInterchangeDiagnostic(MapPackageDiagnostic.BuildingLayer, ex.Message),
+            ]);
+        }
+
+        if (buildings.Count != buildingsEntry.BuildingCount)
+        {
+            throw new MapImportException(
+            [
+                new MapInterchangeDiagnostic(
+                    MapPackageDiagnostic.BuildingLayer,
+                    $"Building layer declares {buildingsEntry.BuildingCount} buildings; the payload holds {buildings.Count}."),
+            ]);
+        }
+
+        var meshChunks = new List<BuildingMeshChunk>(buildingsEntry.MeshChunks.Count);
+
+        foreach (var meshEntry in buildingsEntry.MeshChunks)
+        {
+            var meshResult = MapPackageChunkFileReader.ReadBuildingMesh(_packageRoot, meshEntry);
+
+            if (!meshResult.Success)
+            {
+                throw new MapImportException(
+                    meshResult.Diagnostics.Select(d => new MapInterchangeDiagnostic(d.Code, d.Message)).ToArray());
+            }
+
+            BuildingMeshChunk chunk;
+
+            try
+            {
+                chunk = MapPackageBuildingCodec.DecodeMesh(meshResult.Payload!, meshEntry.ChunkX, meshEntry.ChunkY);
+            }
+            catch (FormatException ex)
+            {
+                throw new MapImportException(
+                [
+                    new MapInterchangeDiagnostic(MapPackageDiagnostic.BuildingLayer, ex.Message),
+                ]);
+            }
+
+            var vertexCount = chunk.Segments.Sum(s => s.Vertices.Count);
+            var indexCount = chunk.Segments.Sum(s => s.Indices.Count);
+
+            if (chunk.Segments.Count != meshEntry.SegmentCount
+                || vertexCount != meshEntry.VertexCount
+                || indexCount != meshEntry.IndexCount)
+            {
+                throw new MapImportException(
+                [
+                    new MapInterchangeDiagnostic(
+                        MapPackageDiagnostic.BuildingLayer,
+                        $"Building mesh chunk ({meshEntry.ChunkX}, {meshEntry.ChunkY}) payload counts do not match its manifest entry."),
+                ]);
+            }
+
+            meshChunks.Add(chunk);
+        }
+
+        return new BuildingLayerSet(buildings, meshChunks);
     }
 }

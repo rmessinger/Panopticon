@@ -112,6 +112,30 @@ public static class MapPackageChunkFileReader
         return new(bytes, []);
     }
 
+    public static MapPackageChunkReadResult<byte[]> ReadBuildingMetadata(string packageRoot, MapPackageBuildingsEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        if (!TryReadVerifiedBytes(packageRoot, entry.Path, entry.ByteLength, entry.Sha256, out var bytes, out var readError))
+        {
+            return Fail<byte[]>(readError);
+        }
+
+        return new(bytes, []);
+    }
+
+    public static MapPackageChunkReadResult<byte[]> ReadBuildingMesh(string packageRoot, MapPackageBuildingMeshEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        if (!TryReadVerifiedBytes(packageRoot, entry.Path, entry.ByteLength, entry.Sha256, out var bytes, out var readError))
+        {
+            return Fail<byte[]>(readError);
+        }
+
+        return new(bytes, []);
+    }
+
     private static bool RequireKindAndEncoding(
         MapPackageLayerEntry entry,
         string expectedKind,

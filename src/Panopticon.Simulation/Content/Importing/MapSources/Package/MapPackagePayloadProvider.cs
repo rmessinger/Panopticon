@@ -29,4 +29,10 @@ public interface IMapPackagePayloadProvider
 
     /// <summary>Canonical UTF-8 JSON bytes for the vector layer entry.</summary>
     byte[] GetVectorLayer(MapPackageVectorLayerEntry entry) => [];
+
+    /// <summary>Canonical UTF-8 JSON bytes for the building metadata entry.</summary>
+    byte[] GetBuildingMetadata(MapPackageBuildingsEntry entry) => [];
+
+    /// <summary>PBM1 binary bytes for one building mesh chunk entry.</summary>
+    byte[] GetBuildingMesh(MapPackageBuildingMeshEntry entry) => [];
 }
