@@ -5,10 +5,13 @@ namespace Panopticon.Tools.WorldBuilder.Core;
 
 /// <summary>
 /// Paints a large texture tile (2×2 or 4×4 cells) starting from the cursor position.
+/// Each left-button drag stroke is a single undo entry.
 /// </summary>
 public sealed class PaintLargeTileTool : IEditorTool
 {
     private const int HorizontalScale = 10;
+
+    private readonly Dictionary<(int X, int Y), ushort> _beforeByCell = new();
 
     public string Name => "Paint Large Tile";
 
@@ -25,6 +28,7 @@ public sealed class PaintLargeTileTool : IEditorTool
             return;
         }
 
+        _beforeByCell.Clear();
         PaintAt(e.WorldPosition.Value, map);
         map.MarkDirty();
     }
@@ -39,7 +43,20 @@ public sealed class PaintLargeTileTool : IEditorTool
         PaintAt(e.WorldPosition.Value, map);
     }
 
-    public void OnPointerUp(ViewportPointerEvent e, EditorMap map) { }
+    public void OnPointerUp(ViewportPointerEvent e, EditorMap map)
+    {
+        if (_beforeByCell.Count == 0)
+        {
+            return;
+        }
+
+        var edit = BlendTileEdit.FromTouchedCells(map.MapFile.BlendTileData, _beforeByCell, "Paint Tile");
+        _beforeByCell.Clear();
+        if (edit is not null)
+        {
+            map.UndoStack.Push(edit);
+        }
+    }
 
     public object? GetPropertiesViewModel() => null;
 
@@ -58,7 +75,6 @@ public sealed class PaintLargeTileTool : IEditorTool
         int w = tiles.GetLength(0);
         int h = tiles.GetLength(1);
 
-        var edits = new List<IMapEdit>();
         for (int dy = 0; dy < TileSize; dy++)
         {
             for (int dx = 0; dx < TileSize; dx++)
@@ -67,16 +83,9 @@ public sealed class PaintLargeTileTool : IEditorTool
                 int ey = ty + dy;
                 if (ex >= 0 && ey >= 0 && ex < w && ey < h)
                 {
-                    edits.Add(BlendTileEdit.CreateSingle(blendTileData, ex, ey, SelectedTileIndex));
+                    _beforeByCell.TryAdd((ex, ey), tiles[ex, ey]);
+                    tiles[ex, ey] = SelectedTileIndex;
                 }
-            }
-        }
-
-        if (edits.Count > 0)
-        {
-            foreach (var edit in edits)
-            {
-                map.UndoStack.Push(edit);
             }
         }
     }
