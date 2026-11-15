@@ -56,6 +56,39 @@ public sealed class TerrainPatch : RenderObject
         MaterialPass = new MaterialPass(material, null);
     }
 
+    internal TerrainPatch(
+        TerrainPatchGeometryResult geometry,
+        Rectangle patchBounds,
+        GraphicsDevice graphicsDevice,
+        Material material)
+    {
+        DebugName = $"Terrain_{patchBounds}";
+
+        Bounds = patchBounds;
+
+        _numIndices = (uint)geometry.Indices.Length;
+
+        _indexBuffer = AddDisposable(graphicsDevice.CreateStaticBuffer(geometry.Indices, BufferUsage.IndexBuffer));
+
+        var vertices = new TerrainShaderResources.TerrainVertex[geometry.Positions.Length];
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] = new TerrainShaderResources.TerrainVertex
+            {
+                Position = geometry.Positions[i],
+                Normal = geometry.Normals[i],
+                UV = geometry.UVs[i]
+            };
+        }
+
+        _vertexBuffer = AddDisposable(graphicsDevice.CreateStaticBuffer(vertices, BufferUsage.VertexBuffer));
+
+        BoundingBox = geometry.BoundingBox;
+        Triangles = geometry.Triangles;
+
+        MaterialPass = new MaterialPass(material, null);
+    }
+
     private static DeviceBuffer CreateVertexBuffer(
        GraphicsDevice graphicsDevice,
        HeightMap heightMap,

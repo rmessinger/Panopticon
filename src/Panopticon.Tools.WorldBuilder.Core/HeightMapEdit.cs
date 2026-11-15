@@ -63,6 +63,23 @@ public sealed class HeightMapEdit : IMapEdit
         return new HeightMapEdit(heightMapData, startX, startY, before, after, description);
     }
 
+    /// <summary>
+    /// Creates a HeightMapEdit from caller-supplied patches without reading or writing the grid.
+    /// </summary>
+    public static HeightMapEdit FromPatches(HeightMapData heightMapData,
+        int startX, int startY, ushort[,] before, ushort[,] after, string description)
+    {
+        ArgumentNullException.ThrowIfNull(heightMapData);
+        ArgumentNullException.ThrowIfNull(before);
+        ArgumentNullException.ThrowIfNull(after);
+        if (before.GetLength(0) != after.GetLength(0) || before.GetLength(1) != after.GetLength(1))
+        {
+            throw new ArgumentException("Before and after patches must have the same extents.", nameof(after));
+        }
+
+        return new HeightMapEdit(heightMapData, startX, startY, before, after, description);
+    }
+
     public void Apply()
     {
         CopyPatch(_after);

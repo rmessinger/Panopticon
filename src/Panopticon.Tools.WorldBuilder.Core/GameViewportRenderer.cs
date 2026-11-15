@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Panopticon;
 using Panopticon.Data;
@@ -37,6 +38,12 @@ public sealed class GameViewportRenderer : IDisposable
     public required GameInstallation? Installation { get; set; }
 
     /// <summary>
+    /// Seed for the 3D preview boot. <see langword="null"/> boots with a tick-count seed.
+    /// Applies to the next <see cref="LoadMap"/>.
+    /// </summary>
+    public int? BootSeed { get; set; }
+
+    /// <summary>
     /// The currently active editor tool. Pointer events are forwarded to this tool
     /// after terrain picking resolves the world position.
     /// </summary>
@@ -65,6 +72,35 @@ public sealed class GameViewportRenderer : IDisposable
         _game?.Panel.Framebuffer.ColorTargets[0].Target;
 
     public Veldrid.GraphicsDevice? GraphicsDevice => _game?.GraphicsDevice;
+
+    /// <summary>
+    /// Per-frame render-path counters from the booted game (B5). Null before
+    /// <see cref="Initialize"/> or before a map is loaded.
+    /// </summary>
+    public RenderStatistics? RenderStatistics => _game?.Graphics.RenderStatistics;
+
+    /// <summary>Game objects in the booted scene; 0 before a map is loaded.</summary>
+    public int LoadedGameObjectCount => _game?.Scene3D?.GameObjects.Objects.Count() ?? 0;
+
+    /// <summary>Terrain patches resident in the streamer; 0 before a map is loaded.</summary>
+    public int StreamedTerrainPatchCount => _game?.Scene3D?.Terrain.StreamedPatchCount ?? 0;
+
+    /// <summary>Vertex bytes resident in the terrain streamer; 0 before a map is loaded.</summary>
+    public long StreamedTerrainVertexBytes => _game?.Scene3D?.Terrain.StreamedVertexBytes ?? 0;
+
+    /// <summary>Logic frame of the loaded map; 0 before a map is loaded.</summary>
+    public uint CurrentLogicFrame =>
+        _game?.Scene3D is null
+            ? 0
+            : (uint)(_game.MapTime.TotalTime.TotalMilliseconds / _game.GameEngine.MsPerLogicFrame);
+
+    /// <summary>
+    /// Advances the map timer one logic frame per update. No-op before <see cref="Initialize"/>.
+    /// </summary>
+    public void EnableFixedLogicTimestep()
+    {
+        _game?.EnableFixedLogicTimestep();
+    }
 
     /// <summary>
     /// Creates the offscreen game. Frames render into the panel framebuffer;
@@ -259,6 +295,19 @@ public sealed class GameViewportRenderer : IDisposable
     /// </summary>
     public event Action<string>? LoadStatus;
 
+    /// <summary>
+    /// Determines whether a map is admitted for 3D preview.
+    /// Maps are admitted if they exist within the game installation file system
+    /// or if they represent a valid directory package on disk.
+    /// </summary>
+    /// <param name="hasMapEntry">Whether the map path resolves to an entry in the game content manager.</param>
+    /// <param name="isDirectoryPackage">Whether the map path is a validated directory package.</param>
+    /// <returns><see langword="true"/> if the map can be loaded in the 3D preview; otherwise, <see langword="false"/>.</returns>
+    public static bool AdmitsForPreview(bool hasMapEntry, bool isDirectoryPackage)
+    {
+        return hasMapEntry || isDirectoryPackage;
+    }
+
     private void LoadMapCore(EditorMap map)
     {
         if (_game == null || map.MapFile.HeightMapData == null || map.MapFile.SidesList == null || map.MapFile.GlobalLighting == null)
@@ -271,11 +320,24 @@ public sealed class GameViewportRenderer : IDisposable
         // StartGame sequence (sides setup, scene construction, seeded randoms,
         // network buffer, camera framing, culling) that the render pipeline
         // expects. Maps outside the game file system are refused for the 3D
-        // preview rather than constructed ad hoc, which crashes GPU drivers;
+        // preview unless they represent a validated directory package;
         // mounting editor maps into a composite file system is follow-up work.
-        if (map.FilePath is { } mapPath && _game.ContentManager.GetMapEntry(mapPath) != null)
+        var mapPath = map.FilePath;
+        var entry = mapPath != null ? _game.ContentManager.GetMapEntry(mapPath) : null;
+        var hasMapEntry = entry != null;
+        var isDirectoryPackage = mapPath != null && Game.IsDirectoryPackagePath(mapPath, entry);
+
+        if (mapPath != null && AdmitsForPreview(hasMapEntry, isDirectoryPackage))
         {
-            _game.StartSinglePlayerGame(mapPath);
+            if (BootSeed is { } seed)
+            {
+                _game.StartSinglePlayerGame(mapPath, seed);
+            }
+            else
+            {
+                _game.StartSinglePlayerGame(mapPath);
+            }
+
             FrameCameraOnMap(map);
             LoadStatus?.Invoke($"3D preview: {Path.GetFileName(mapPath)}");
         }

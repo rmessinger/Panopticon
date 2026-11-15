@@ -1,0 +1,20 @@
+{
+  "Name": "capture-b4a-streaming-4096",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 5,
+  "SettleFrames": 5,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" }
+  ],
+  "Actors": [],
+  "Scorches": [],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 1000, "Y": 1000, "Z": 0 },
+    "Height": 600
+  },
+  "Commands": [],
+  "Expectations": []
+}

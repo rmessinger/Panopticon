@@ -943,6 +943,27 @@ public sealed class Game : DisposableBase, IGame
         return false;
     }
 
+    /// <summary>
+    /// Checks whether the specified map path identifies a directory package.
+    /// </summary>
+    /// <param name="mapPath">The path to validate.</param>
+    /// <returns><see langword="true"/> if the path is a valid directory package; otherwise, <see langword="false"/>.</returns>
+    public static bool IsDirectoryPackagePath(string? mapPath)
+    {
+        return !string.IsNullOrEmpty(mapPath) && IsDirectoryPackage(mapPath, null, out _);
+    }
+
+    /// <summary>
+    /// Checks whether the specified map path identifies a directory package.
+    /// </summary>
+    /// <param name="mapPath">The path to validate.</param>
+    /// <param name="entry">Optional file system entry associated with the map path.</param>
+    /// <returns><see langword="true"/> if the path is a valid directory package; otherwise, <see langword="false"/>.</returns>
+    public static bool IsDirectoryPackagePath(string? mapPath, FileSystemEntry? entry)
+    {
+        return !string.IsNullOrEmpty(mapPath) && IsDirectoryPackage(mapPath, entry, out _);
+    }
+
 #nullable restore
 
     public Window LoadWindow(string wndFileName)
@@ -1098,12 +1119,17 @@ public sealed class Game : DisposableBase, IGame
 
     public void StartSinglePlayerGame(string mapFileName)
     {
+        StartSinglePlayerGame(mapFileName, Environment.TickCount);
+    }
+
+    public void StartSinglePlayerGame(string mapFileName, int seed)
+    {
         StartGame(
             mapFileName,
             new EchoConnection(),
             null,
             GameType.SinglePlayer,
-            seed: Environment.TickCount);
+            seed);
     }
 
     public void EndGame()
