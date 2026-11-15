@@ -250,8 +250,7 @@ WI-B4a-05 (`PaintSingleTileTool`, `PaintLargeTileTool`, `SpillPaintTool`, `MeshM
 ## Chunk contract (proposed)
 
 B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract. The rationale is in
-[§5.1a](r-real-world-terrain.md#51a-chunk-layout). No `RuntimeTerrainChunkStore` exists in the tree; the
-name in the diagrams is the proposed B4a-5 type. The layout is already encoded in the interchange model
+[§5.1a](r-real-world-terrain.md#51a-chunk-layout). `RuntimeTerrainChunkStore` now exists in the tree as an additive store (bounded residency over chunk sources, dirty-protected eviction), but no whole-grid consumer uses it: the terrain streamer and resident materialization do not, so the binding described below remains proposed. The layout is already encoded in the interchange model
 `MapInterchange` (`src/Panopticon.Simulation/Content/Importing/Maps/MapInterchange.cs:10`) through the
 constants in `MapChunkGeometry` (`src/Panopticon.Simulation/Content/Importing/Maps/MapChunkGeometry.cs:8-18`).
 
@@ -393,7 +392,7 @@ Future acceptance tests (planned, not written):
 - Multiple dirty seams and partial edge chunks.
 - Repeated flush, and flush with no dirty chunks.
 - Unsupported source fails with dirty state intact.
-- Deterministic payload-fault injection: prior package unchanged and dirty flags preserved; a retry without the fault succeeds.
+- Deterministic payload-fault injection: prior package unchanged and dirty flags preserved; a retry without the fault succeeds. Deterministic commit-phase (rename) fault injection is also planned and has no existing test: a failed commit restores the prior package with dirty flags preserved, or reports `RecoveryRequired` with both copies kept when restore fails.
 - Digests unchanged for untouched entries.
 - Residency cap and LRU regression.
 
