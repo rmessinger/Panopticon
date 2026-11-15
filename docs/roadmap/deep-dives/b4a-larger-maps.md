@@ -379,6 +379,8 @@ One chunk covers 8 by 8 level-0 patches. Selection and GPU residency count patch
 - Coverage: the selection is always a cut of the quadtree. A visible node leaves the selection only by splitting into children or merging into its parent, so capacity stops refinement without any visible region losing coverage. Culled nodes are absent.
 - Output is sorted by `(Level, Y, X)`. Each entry carries `MorphFactor` and `CdlodEdges` flags for neighbours one level coarser. A capacity below the root node count is rejected at construction.
 
+Implementation (WI-B4a-08): `CdlodQuadtree` in `src/Panopticon.Simulation/Terrain/Cdlod/` follows this section. Greedy splitting runs first, then the one-level rule is restored by splitting the coarser node when capacity allows, otherwise collapsing the finer node into its parent. A camera inside a node's world box gives infinite screen error, so the camera path refines to leaves within capacity. Tests: `test/Panopticon.Simulation.Tests/Terrain/CdlodSelectionTests.cs`.
+
 ### Planned types (binding for WI-B4a-08 and WI-B4a-09)
 
 | Type | Shape | Notes |
@@ -425,7 +427,7 @@ B4a closeout cannot claim whole-world memory boundedness from patch streaming al
 | B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
 | B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Height brush strokes (WI-B4a-04) and tile paint strokes (WI-B4a-05) use region deltas; mesh mold pushes per stamp (R13 open); `BlendLayerEdit` covers Blends, Impassability, and Buildability with no UI tool; other `BlendTileData` arrays not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
 | B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Presets, 16-bit default for large presets, and resident memory estimate in place ([WI-B4a-06](#wizard-presets-wi-b4a-06)); package round-trip of 16-bit elevation not covered |
-| B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Design in [CDLOD streaming design](#cdlod-streaming-design-wi-b4a-07); implementation not started |
+| B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Pure selection in [WI-B4a-08](#selection-wi-b4a-08) implemented; patch residency and rendering pending WI-B4a-09 |
 | B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |
 | B4a-6. Round-trip and play validation | Validate large maps through WorldBuilder save, reload, engine load, and play. | Not started |
 | B4a-7. Large-population scenario authoring | Scale object placement, selection, multi-object edit/undo, and editor rendering for large populations. | Not started |
