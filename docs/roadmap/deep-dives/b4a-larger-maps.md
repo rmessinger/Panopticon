@@ -179,6 +179,67 @@ is not changed here. The fix belongs to WI-B4a-04 with the region-delta contract
 - Not measured: `Terrain` construction, GPU memory, render cost, C5 structures, chunk-store paging, and engine load of any map larger than 32 x 32.
 - Growth beyond 4096 is not measured. No OOM or process death was observed.
 
+## Region-delta edit contract (WI-B4a-03)
+
+Normative rules for WorldBuilder undo entries. Rules R1 to R13 are referenced by the compliance table.
+Behaviour that holds today is pinned by [`RegionDeltaContractTests.cs`](../../../test/Panopticon.Tools.WorldBuilder.Core.Tests/RegionDeltaContractTests.cs).
+
+### Shape
+
+- `R1` One edit is one rectangle (`startX`, `startY`, `width`, `height`, in lattice cells) plus, per edited layer, a `before` and an `after` array with the rectangle's extents. One edit may carry several layers over the same rectangle. `HeightMapEdit` holds this pair (`src/Panopticon.Tools.WorldBuilder.Core/HeightMapEdit.cs:13-14`). `BlendTileEdit` holds it for the Tiles layer (`BlendTileEdit.cs:13-14`).
+- `R2` Layer element types, from `BlendTileData` (`src/Panopticon.Simulation/Data/Map/BlendTileData.cs:18-53`) and `HeightMapData.Elevations` (`src/Panopticon.Simulation/Data/Map/HeightMapData.cs:30`):
+
+  | Layer | Element type | Source |
+  |---|---|---|
+  | Height | `ushort` | `HeightMapData.cs:30` |
+  | Tiles | `ushort` | `BlendTileData.cs:18` |
+  | Blends, ThreeWayBlends, CliffTextures | `uint` | `BlendTileData.cs:19-21` |
+  | Impassability, ImpassabilityToPlayers, PassageWidths, Taintability, ExtraPassability, Visibility, ImpassabilityToAirUnits, Buildability, TiberiumGrowability | `bool` | `BlendTileData.cs:23-50` |
+  | Flammability | `TileFlammability` (enum, `int` underlying type) | `BlendTileData.cs:38`, `:447` |
+  | DynamicShrubberyDensity | `byte` | `BlendTileData.cs:53` |
+
+- `R3` Each layer's representation is chosen by the implementing work package, which states the choice. Let `R` be the rectangle and `T` the set of cells the stroke wrote or read. A dense form stores every cell of `R`. A sparse form stores ordered `(cell index, before, after)` entries for exactly `T`. Storage cost is O(|R|) for dense and O(|T|) for sparse, never O(grid). A sparse form that stores any cell outside `T` is non-compliant. The rectangle of a single Mound or Dig stamp is `(2r + 3)` square (`HeightBrushTool.cs:95-100`). No sparse form exists in the tree.
+- `R4` Object edits are not region deltas. `ObjectPlacementEdit` holds an `ObjectsList` and a `MapObject` reference, not a rectangle (`src/Panopticon.Tools.WorldBuilder.Core/ObjectPlacementEdit.cs:8-12`). R1 to R3 and R6 to R7 do not apply to it. R8 and R13 do.
+- `R5` A stroke allocates no array sized to the full grid, so its cost scales with rectangle area. `HeightBrushTool` violates this with two full-grid clones (`HeightBrushTool.cs:43`, `:87`).
+
+### Capture order
+
+- `R6` Before values are read before the first mutation of each cell, and after values are read after the stroke's last mutation. `HeightMapEdit.Capture` reads before at `HeightMapEdit.cs:38-48`, runs the action at `:50`, and reads after at `:52-61`. A stroke whose rectangle grows while dragging stores each cell's before value on first touch, before writing it, in a stroke-local buffer.
+- `R7` Capture from a grid already mutated in place is prohibited. `HeightBrushTool` writes the live grid on pointer down and move (`HeightBrushTool.cs:49`, `:67`), then captures with a no-op action (`:115-122`), so before equals after and Undo does nothing. The G7 probe measured a centre sample of 110 after Undo, against 10 before the stroke ([Baseline audit](#baseline-audit-wi-b4a-02)).
+
+### Single application owner
+
+- `R8` `UndoRedoStack.Push` is the only caller that applies a new edit (`src/Panopticon.Tools.WorldBuilder.Core/UndoRedoStack.cs:16-22`). Tools do not call `Apply`, and do not mutate the grid outside the `applyAction` passed to `Capture`, which runs once between the two reads. `MeshMoldTool` calls `edit.Apply()` before `Push` (`MeshMoldTool.cs:96-97`), so the after arrays are written twice. The writes are idempotent, so the grid is correct, but the rule is broken.
+
+### Apply and Revert
+
+- `R9` `Apply` writes the after arrays and `Revert` writes the before arrays (`HeightMapEdit.cs:66-74`, `BlendTileEdit.cs:46-48`). Both go through `CopyPatch`, which writes only cells inside the grid (`HeightMapEdit.cs:76-93`, bounds test at `:87`; `BlendTileEdit.cs:50-67`, bounds test at `:61`).
+- `R10` Cells outside the grid are never written. `Capture` records an out-of-bounds sample as 0 (`HeightMapEdit.cs:46`, `:59`; `BlendTileEdit.cs:40`). That 0 is a capture-side artifact, and Apply and Revert must not write it back.
+- `R11` Undo and redo are exact and repeatable. `Undo` calls `Revert` (`UndoRedoStack.cs:24-35`) and `Redo` calls `Apply` (`:37-48`), so repeated cycles return the same arrays. Pinned by `RegionDeltaContractTests` and by `UndoRedoEditApplicationTests` (`BlendEditPushAppliesOnce_AndReverts`, `HeightEditPushKeepsCapturedAfterState_AndCycles`).
+
+### Rectangle boundaries
+
+- `R12` A stroke's rectangle is the bounding box of its stamp centres (`HeightBrushTool.cs:175-182`), expanded by `RadiusCells + 1` on each side and clipped to the grid (`HeightBrushTool.cs:95-100`). The extra cell covers smoothing, because `ComputeSmoothed` reads the 3x3 neighbourhood of each written cell (`HeightBrushTool.cs:191-203`). The rectangle must cover every cell the stroke wrote or read.
+
+### Coalescing
+
+- `R13` One pointer stroke (down, moves, up) produces exactly one undo entry covering the whole stroke rectangle. Moves update the pending edit or stroke-local buffer and never push to the undo stack. `HeightBrushTool` pushes once at pointer up (`HeightBrushTool.cs:124`) but violates R5 to R7. Tools that push per call, per tile, or per move violate this rule: `PaintLargeTileTool` pushes `TileSize * TileSize` entries per call (`PaintLargeTileTool.cs:61-81`), `PaintSingleTileTool` pushes on every pointer event (`PaintSingleTileTool.cs:24`, `:35`, `:54-55`), `SpillPaintTool` pushes per visited tile (`SpillPaintTool.cs:86-87`), and `MeshMoldTool` pushes per stamp (`MeshMoldTool.cs:30`, `:41`, `:97`). Object tools push once per click (`PlaceObjectTool.cs:38`, `DeleteTool.cs:40`, `WaypointTool.cs:37`) and comply.
+
+### Viewport seam
+
+Tools take `ViewportPointerEvent` (`src/Panopticon.Tools.WorldBuilder.Core/ViewportEvents.cs:8`) and `EditorMap` and use no UI types, so the contract runs headless. The only viewport coupling is the terrain reload flag, set on pointer up (`GameViewportRenderer.cs:186-189`). That flag is outside this contract.
+
+### Compliance
+
+| Component | Rules violated | Work package |
+|---|---|---|
+| `HeightMapEdit`, `BlendTileEdit` | none | n/a |
+| `HeightBrushTool` | R5, R7, R8 (in-place mutation before capture) | WI-B4a-04 (WP354) |
+| `MeshMoldTool` | R8 (Apply before Push), R13 (push per stamp) | Unassigned |
+| `PaintLargeTileTool`, `PaintSingleTileTool`, `SpillPaintTool` | R13 | Unassigned |
+| Object edits and object tools | none | n/a |
+| Layers other than Height and Tiles | no edit type exists | WI-B4a-05 (WP355) |
+
 ## Chunk contract (proposed)
 
 B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract. The rationale is in
@@ -282,7 +343,7 @@ Western Front is a later capacity problem and must page by region rather than re
 | Phase | Goal | Status |
 |---|---|---|
 | B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Measured to 4096 playable; see [Baseline audit](#baseline-audit-wi-b4a-02) |
-| B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Not started |
+| B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Not started; contract in [Region-delta edit contract](#region-delta-edit-contract-wi-b4a-03) |
 | B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Not started |
 | B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
 | B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |
