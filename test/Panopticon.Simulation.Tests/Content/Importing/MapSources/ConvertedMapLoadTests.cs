@@ -339,6 +339,116 @@ public sealed class ConvertedMapLoadTests
         }
     }
 
+    [Fact]
+    public void AbsentSidesListSection_DefaultSurvivesSkirmishSideSetup()
+    {
+        Platform.Start();
+
+        try
+        {
+            var installation = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals);
+            if (installation == null)
+            {
+                _output.WriteLine("No Generals installation found; skipped.");
+                return;
+            }
+
+            var mapFile = MapFile.CreateEmpty(16, 16, 1, 10);
+            var interchange = new LegacyMapReader(mapFile).Read();
+            Assert.Contains(interchange.RetainedSections, s => s.SectionName == SidesList.AssetName);
+
+            var strippedInterchange = interchange with
+            {
+                RetainedSections = interchange.RetainedSections
+                    .Where(s => s.SectionName != SidesList.AssetName)
+                    .ToArray(),
+            };
+
+            var loaded = MapFile.FromInterchange(strippedInterchange);
+
+            // Absence synthesizes the new-map default: neutral player plus the civilian
+            // entry the skirmish loader resolves second, with every nested list initialized.
+            Assert.NotNull(loaded.SidesList);
+            Assert.Equal(2, loaded.SidesList.Players.Count);
+            Assert.Equal("", loaded.SidesList.Players[0].Name);
+            Assert.Equal("FactionCivilian", loaded.SidesList.Players[1].Faction);
+            Assert.NotNull(loaded.SidesList.Teams);
+            Assert.NotNull(loaded.GetTeams());
+            Assert.NotEmpty(loaded.GetPlayerScriptsList().ToArray());
+
+            // The skirmish side-setup path (GameType != SinglePlayer) must run without NRE.
+            using var game = new Game(installation, null, new Configuration { NoAudio = true }, null);
+            SidesListUtility.SetupGameSides(
+                game,
+                loaded,
+                [],
+                GameType.Skirmish,
+                out var mapPlayers,
+                out var mapTeams,
+                out var mapScriptLists);
+
+            Assert.Equal(3, mapPlayers.Length); // neutral, civilian, replay observer
+            Assert.NotNull(mapPlayers[1]);
+            Assert.Equal("FactionCivilian", mapPlayers[1].Faction);
+            Assert.Equal("ReplayObserver", mapPlayers[2].Name);
+            Assert.Equal(3, mapTeams.Length);
+            Assert.Equal(3, mapScriptLists.Length);
+        }
+        finally
+        {
+            Platform.Stop();
+        }
+    }
+
+    [Fact]
+    public void PresentSidesListSection_PreservesParsedContent()
+    {
+        const int width = 65;
+        const int height = 65;
+        var heights = new ushort[width, height];
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                heights[x, y] = 100;
+            }
+        }
+
+        var originalMap = MapFile.CreateFromHeights(heights, 6);
+        var interchange = new LegacyMapReader(originalMap).Read();
+
+        var loaded = MapFile.FromInterchange(interchange);
+
+        // A retained SidesList keeps its parsed content; absence is the only default case.
+        Assert.NotNull(loaded.SidesList);
+        Assert.Equal(originalMap.SidesList.Players.Select(p => (p.Name, p.Faction, p.IsHuman)),
+            loaded.SidesList.Players.Select(p => (p.Name, p.Faction, p.IsHuman)));
+        Assert.Equal(originalMap.SidesList.Teams.Select(t => (t.Name, t.Owner, t.IsSingleton)),
+            loaded.SidesList.Teams.Select(t => (t.Name, t.Owner, t.IsSingleton)));
+    }
+
+    [Fact]
+    public void CorruptSidesListSection_StillFailsWithoutSilentDefault()
+    {
+        var mapFile = MapFile.CreateEmpty(16, 16, 1, 10);
+        var interchange = new LegacyMapReader(mapFile).Read();
+
+        // Valid header (version 3, data size 4) but a payload too short for the players
+        // count and teams count the parser reads: the retained-section reader must fail.
+        var corruptBytes = new byte[] { 0x03, 0x00, 0x04, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF };
+        var sha = Convert.ToHexStringLower(SHA256.HashData(corruptBytes));
+        var corruptSides = new RetainedSection(SidesList.AssetName, 3, corruptBytes, sha);
+
+        var tamperedInterchange = interchange with
+        {
+            RetainedSections = interchange.RetainedSections
+                .Select(s => s.SectionName == SidesList.AssetName ? corruptSides : s)
+                .ToArray(),
+        };
+
+        Assert.Throws<EndOfStreamException>(() => MapFile.FromInterchange(tamperedInterchange));
+    }
+
     private static string NewTempRoot()
     {
         var tempRoot = Path.Combine(Path.GetTempPath(), "PanopticonConvertedMapLoad", Guid.NewGuid().ToString("N"));
