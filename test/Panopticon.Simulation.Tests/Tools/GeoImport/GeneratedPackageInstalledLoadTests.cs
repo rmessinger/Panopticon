@@ -22,8 +22,6 @@ namespace Panopticon.Tests.Tools.GeoImport;
 [Collection("SerialGameTests")]
 public sealed class GeneratedPackageInstalledLoadTests
 {
-    private const string SedanPayloadPath = "/mnt/pit2/panopticon/geo-proof/r2-03-footprints-payload-v2";
-
     private const int SedanBuildingCount = 1676;
 
     private const string DiagnosticPrefix = "diagnostic: ";
@@ -109,10 +107,10 @@ public sealed class GeneratedPackageInstalledLoadTests
         }
     }
 
-    [GameFact(SageGame.CncGenerals)]
+    [SedanOperatorFixtureFact(SageGame.CncGenerals)]
     public void SedanRawV3Payload_ConvertsAndLoadsWithFullBuildingLayer()
     {
-        Assert.True(Directory.Exists(SedanPayloadPath), $"The Sedan payload is missing: {SedanPayloadPath}");
+        Assert.True(Directory.Exists(SedanOperatorFixtureFactAttribute.OperatorFixturePath), $"The Sedan payload is missing: {SedanOperatorFixtureFactAttribute.OperatorFixturePath}");
 
         var scratchRoot = NewScratchRoot();
 
@@ -121,7 +119,7 @@ public sealed class GeneratedPackageInstalledLoadTests
             var packageDir = Path.Combine(scratchRoot, "package");
             var userRoot = Path.Combine(scratchRoot, "user");
 
-            var output = RunCli(["package", "--payload", SedanPayloadPath, "--out", packageDir]);
+            var output = RunCli(["package", "--payload", SedanOperatorFixtureFactAttribute.OperatorFixturePath, "--out", packageDir]);
 
             var diagnosticCodes = output
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
