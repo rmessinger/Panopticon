@@ -8,6 +8,7 @@ using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources.Package;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
+using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
 using Xunit;
 using GeneratedFeature = Panopticon.Geospatial.Features.GeneratedFeature;
@@ -17,10 +18,6 @@ namespace Panopticon.Geospatial.Preview.Tests;
 public sealed class GeneratedBuildingBuilderTests
 {
     private const string MapName = "building-map";
-
-    private const double OriginX = 500000d;
-
-    private const double OriginY = 6000000d;
 
     [Fact]
     public void SedanShapedTwoEmissionPartYieldsOneBuildingWithOnePart()
@@ -301,6 +298,70 @@ public sealed class GeneratedBuildingBuilderTests
     }
 
     [Fact]
+    public void SupportSamplesFollowEachBuildingsGameUnitPosition()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var attributes = BuildingAttributes(hauteur: 12d, usage: "residential");
+        var features = new[]
+        {
+            BuildingRegion(GeneratedFeatureKind.Annotation, "seat-near", "seat-near#0", GameSquare(100d, 100d, 200d, 200d), attributes),
+            BuildingRegion(GeneratedFeatureKind.Annotation, "seat-far", "seat-far#0", GameSquare(500d, 300d, 560d, 360d), attributes),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var byFeature = result.Model!.Buildings!.Buildings.ToDictionary(building => building.FeatureId);
+
+        // Far footprint (500..560, 300..360) samples lattice points (49..57, 29..37).
+        Assert.Equal(PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(9, 9)), byFeature["seat-near"].SupportMinZ);
+        Assert.Equal(PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(21, 21)), byFeature["seat-near"].SupportMaxZ);
+        Assert.Equal(PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(49, 29)), byFeature["seat-far"].SupportMinZ);
+        Assert.Equal(PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(57, 37)), byFeature["seat-far"].SupportMaxZ);
+        Assert.NotEqual(byFeature["seat-near"].SupportMinZ, byFeature["seat-far"].SupportMinZ);
+    }
+
+    [Fact]
+    public void MeshSegmentsStayWithinFootprintAndMapExtentInGameUnits()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            BuildingRegion(
+                GeneratedFeatureKind.Annotation,
+                "bounds-0",
+                "bounds#0",
+                GameSquare(1200d, 100d, 1260d, 160d),
+                BuildingAttributes(hauteur: 12d, usage: "residential")),
+        }.ToList();
+        var metadata = PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var mapExtent = metadata.Grid.ChunksX * (double)ChunkLayout.ChunkSpanGameUnits;
+        const double tolerance = 1e-9;
+        var segments = result.Model!.Buildings!.MeshChunks.SelectMany(chunk => chunk.Segments).ToArray();
+        Assert.NotEmpty(segments);
+
+        foreach (var segment in segments)
+        {
+            foreach (var vertex in segment.Vertices)
+            {
+                Assert.InRange(vertex.X, 1200d - tolerance, 1260d + tolerance);
+                Assert.InRange(vertex.Y, 100d - tolerance, 160d + tolerance);
+                Assert.InRange(vertex.X, 0d, mapExtent);
+                Assert.InRange(vertex.Y, 0d, mapExtent);
+            }
+        }
+    }
+
+    [Fact]
     public void SquareWallsFaceAwayFromFootprint()
     {
         using var scratch = new PreviewPayloadFixture.ScratchRoot();
@@ -472,32 +533,32 @@ public sealed class GeneratedBuildingBuilderTests
     }
 
     private static GeoPolygon GameSquare(double x0, double y0, double x1, double y1) =>
-        new(Ring((OriginX + x0, OriginY + y0), (OriginX + x1, OriginY + y0), (OriginX + x1, OriginY + y1), (OriginX + x0, OriginY + y1), (OriginX + x0, OriginY + y0)));
+        new(Ring((x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)));
 
     private static GeoPolygon GameLShape(double offsetX, double offsetY) =>
         new(Ring(
-            (OriginX + offsetX, OriginY + offsetY),
-            (OriginX + offsetX + 100d, OriginY + offsetY),
-            (OriginX + offsetX + 100d, OriginY + offsetY + 40d),
-            (OriginX + offsetX + 60d, OriginY + offsetY + 40d),
-            (OriginX + offsetX + 60d, OriginY + offsetY + 100d),
-            (OriginX + offsetX, OriginY + offsetY + 100d),
-            (OriginX + offsetX, OriginY + offsetY)));
+            (offsetX, offsetY),
+            (offsetX + 100d, offsetY),
+            (offsetX + 100d, offsetY + 40d),
+            (offsetX + 60d, offsetY + 40d),
+            (offsetX + 60d, offsetY + 100d),
+            (offsetX, offsetY + 100d),
+            (offsetX, offsetY)));
 
     private static GeoPolygon GameHoledSquare(double offsetX, double offsetY)
     {
         var outer = Ring(
-            (OriginX + offsetX, OriginY + offsetY),
-            (OriginX + offsetX + 100d, OriginY + offsetY),
-            (OriginX + offsetX + 100d, OriginY + offsetY + 100d),
-            (OriginX + offsetX, OriginY + offsetY + 100d),
-            (OriginX + offsetX, OriginY + offsetY));
+            (offsetX, offsetY),
+            (offsetX + 100d, offsetY),
+            (offsetX + 100d, offsetY + 100d),
+            (offsetX, offsetY + 100d),
+            (offsetX, offsetY));
         var hole = Ring(
-            (OriginX + offsetX + 20d, OriginY + offsetY + 20d),
-            (OriginX + offsetX + 80d, OriginY + offsetY + 20d),
-            (OriginX + offsetX + 80d, OriginY + offsetY + 80d),
-            (OriginX + offsetX + 20d, OriginY + offsetY + 80d),
-            (OriginX + offsetX + 20d, OriginY + offsetY + 20d));
+            (offsetX + 20d, offsetY + 20d),
+            (offsetX + 80d, offsetY + 20d),
+            (offsetX + 80d, offsetY + 80d),
+            (offsetX + 20d, offsetY + 80d),
+            (offsetX + 20d, offsetY + 20d));
 
         return new GeoPolygon(outer, [hole]);
     }

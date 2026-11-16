@@ -98,7 +98,7 @@ public static class GeneratedBuildingBuilder
 
             var localParts = building.Parts
                 .OrderBy(part => part.StableId, StringComparer.Ordinal)
-                .Select(part => new LocalPart(part.StableId, part.Geometry, LocalPolygons(part.Geometry, transform)))
+                .Select(part => new LocalPart(part.StableId, part.Geometry, LocalPolygons(part.Geometry)))
                 .ToArray();
 
             SeatBuilding(building, localParts, latticeWidth, latticeHeight, grid.ChunksX, grid.ChunksY, chunkLookup, conflicts);
@@ -489,44 +489,43 @@ public static class GeneratedBuildingBuilder
         building.SupportMaxZ = supportMax;
     }
 
-    private static IReadOnlyList<LocalPolygon> LocalPolygons(GeoGeometry geometry, GeospatialMapTransform transform)
+    // Feature geometry is already in game units; no origin or scale applies.
+    private static IReadOnlyList<LocalPolygon> LocalPolygons(GeoGeometry geometry)
     {
         var polygons = new List<LocalPolygon>();
-        CollectPolygons(geometry, transform, polygons);
+        CollectPolygons(geometry, polygons);
         return polygons;
     }
 
-    private static void CollectPolygons(GeoGeometry geometry, GeospatialMapTransform transform, List<LocalPolygon> polygons)
+    private static void CollectPolygons(GeoGeometry geometry, List<LocalPolygon> polygons)
     {
         switch (geometry)
         {
             case GeoPolygon polygon:
-                polygons.Add(ToLocalPolygon(polygon, transform));
+                polygons.Add(ToLocalPolygon(polygon));
                 break;
             case GeoMultiGeometry multi:
                 foreach (var child in multi.Geometries)
                 {
-                    CollectPolygons(child, transform, polygons);
+                    CollectPolygons(child, polygons);
                 }
 
                 break;
         }
     }
 
-    private static LocalPolygon ToLocalPolygon(GeoPolygon polygon, GeospatialMapTransform transform) =>
+    private static LocalPolygon ToLocalPolygon(GeoPolygon polygon) =>
         new(
-            ToLocalRing(polygon.OuterRing, transform),
-            polygon.InnerRings.Select(ring => ToLocalRing(ring, transform)).ToArray());
+            ToLocalRing(polygon.OuterRing),
+            polygon.InnerRings.Select(ToLocalRing).ToArray());
 
-    private static LocalRing ToLocalRing(GeoRing ring, GeospatialMapTransform transform)
+    private static LocalRing ToLocalRing(GeoRing ring)
     {
-        var origin = transform.OriginEastingNorthing;
-        var scale = transform.MetersPerGameUnit;
         var points = new List<LocalPoint>(ring.Positions.Count);
 
         foreach (var position in ring.Positions)
         {
-            var point = new LocalPoint((position.Coordinate.X - origin.X) / scale, (position.Coordinate.Y - origin.Y) / scale);
+            var point = new LocalPoint(position.Coordinate.X, position.Coordinate.Y);
 
             if (points.Count > 0 && Same(points[^1], point))
             {
