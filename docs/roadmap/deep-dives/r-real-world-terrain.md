@@ -450,7 +450,106 @@ review. Landmarks such as the Sedan château stay bespoke. Both glTF import (C4)
 Sedan footprints and recommends the R3 layout (merged chunk meshes or per-building objects), roof
 rule, and material list.
 
-Results: pending.
+Route 1 is feasible on the Sedan footprints and is recommended as the R3 representation. Flat roofs
+apply to every footprint and gabled roofs to the 559 convex ones. Merged meshes per terrain chunk
+render at a mean of 3.340 ms against 1.363 ms with buildings off, while one model per building costs
+30.882 ms for all 1,676 buildings. Four CC0 tiling material sets are recommended; Kenney kit details
+are rejected at gameplay camera distance. The prototype stays on its investigation branch and is not
+merged.
+
+##### Results by question
+
+| Question | Result |
+|---|---|
+| 1. Attributes | KML: 1,789 placemarks. `cleabs`, `nature`, and `usage_1` are populated in 100 percent; `hauteur` in 1,774 of 1,789 (99.2 percent); `usage_2` is empty in every placemark. Payload: 1,679 building polygons covering 1,676 unique `cleabs` (2 multi-part). `hauteur` is populated in 1,665 of 1,679 (99.2 percent); the 14 missing values fell back to the `usage_1` median, and none needed the global median. Heights span 1.2 to 49.0 m, median 9.4 m. The 113 KML-only `cleabs` are the GEO-FEA-001 drops outside the map rectangle. Acquisition: 2,425 features acquired, 1,789 kept, 636 dropped below the 20 m2 filter. The payload also retains 27 sub-filter slivers from a later stage. |
+| 2. Roof rule | Flat applies to 1,679 of 1,679 footprints. Gabled along the longest axis applies to 559 of 1,679 (33 percent); the 1,120 failures are concave 1,049, holes 42, too few vertices 19, and tiny area 10. Hipped from the straight skeleton was not implemented. Its convexity gate alone would cover the same 559, and a true skeleton adds headroom on the 1,091 concave or holed footprints. The baked prototype used gabled where applicable with flat fallback (559 gabled, 1,120 flat). |
+| 3. Materials at camera distance | Four ambientCG CC0 tiling sets (two wall, two roof), assigned deterministically per `cleabs`. At overview distance isolated buildings are distinguishable and walls read separately from roofs; the pale plaster and brick wall variants visibly break repetition; brick courses are legible at close range. Roof materials render nearly black under default world lighting, so the two roof variants cannot be told apart and roof tiling could not be judged. Roof tone and lighting evaluation is a follow-up. |
+| 4. Kit details | Kenney Prototype Textures kit (CC0) adds 1,673 doors, 66,172 windows, and 559 chimneys: 141,280 triangles (182,074 total, +346 percent) and 3 materials. At close range faint window patterns modestly improve facade readability, but the detail geometry is low contrast. At overview distance the kit variant is visually indistinguishable (208 of 30,000 sampled pixels differ) while merged render cost rises from 3.34 to 4.83 ms mean (+45 percent). Verdict: not justified as always-on geometry at gameplay camera distance; optional for close-range cinematics if a higher-contrast kit is sourced. |
+| 5. Cost | See the cost table below. |
+| 6. Layout for R3 and H3 | Merged per chunk: 9 models, 3.340 ms render, 1.86 s import. It fits the B4a-5 chunk model and an H3 terrain-payload section. Measured drawback: a single chunk translation cannot follow intra-chunk terrain relief. At the close-up target building the chunk-mean seating floated it about 20 game units (6 m) above local ground (capture published). Per-building identity for selection, damage, and line of sight needs sidecar metadata. Per building: exact seating and natural object semantics, but 1,676 render-list entries cost 30.882 ms render and 10.46 s import at prototype quality, with no instancing, LOD, or culling (Track B5 owns those). |
+
+##### Cost
+
+| Mode | Models | Meshes | Render ms mean (p95) | Import wall s |
+|---|---|---|---|---|
+| Buildings off | - | - | 1.363 (1.643) | - |
+| Merged per chunk | 9 | 36 | 3.340 (3.951) | 1.86 |
+| Per building, 50 buildings | - | - | 1.747 (2.253) | - |
+| Per building, all | 1,676 | 3,352 | 30.882 (32.721) | 10.46 |
+| Merged per chunk with kit details | - | - | 4.833 (7.547) | 2.59 |
+
+Logic ms mean is 0.29 to 0.38 across overview modes (0.28 to 0.41 including closeups), as buildings
+are presentation-only. Dashes mark values omitted from the table rather than unmeasured (the
+metrics JSON records 1.92 s import and 50/100 model/mesh counts for 50 buildings, and 9/63 for
+kit-merged). Counts are render-list entries (BuildRenderList calls per frame: 9 merged, 1,676 per
+building), not GPU draw calls. Measured on this host with the headless harness, fixed timestep,
+static camera, no AI, n=50 or 110 post-warmup frames, one run per mode with an off-overview repeat
+run; the off-mode noise band is about 0.1 ms (1.363 vs 1.265 ms render mean). Memory was not measured.
+
+Without kit details the merged set has 40,794 triangles (walls 27,752, gable ends 1,118, roofs
+11,924). Per chunk: 1,976 to 8,333 triangles and 114 to 315 buildings.
+
+##### Evidence and sources
+
+- Prototype: branch `track-r-r3-1-procedural-buildings-prototype`, commit
+  `8c9467e403a0609f4f6245cffbc721148c031a09` (generator and kit), and scratch scenario commit
+  `fa699fe1b` (not merged). The branch is a permanent reference.
+- Generator: stdlib Python. It reads the WI-R2-03 payload footprints (game-space polygons with BD
+  TOPO attribute tables) and the kept buildings KML, extrudes walls, bakes gabled or flat roofs with
+  world-meter UVs, and writes glTF 2.0 with external textures. Output is 9 merged files (one per
+  terrain chunk) and 1,676 per-building files. Two generator runs are byte-identical.
+- Scratch scenario: TestHarness scenario `R3BuildingPrototype` spawns the glTFs on the Sedan preview
+  map (`maps/r2-03-footprints-payload-v2`) through the glTF importer and the RenderPipeline
+  render-list hook, seats them on terrain, captures PNGs, and records per-frame logic and render
+  timings (mean, median, p95, variance, min, max; warmup discarded).
+- Captures in the screenshot viewer, under the shared temp root with versioned names:
+  `r3-01-buildings-baseline-off-overview-v1.png`, `r3-01-buildings-merged-overview-v1.png`,
+  `r3-01-buildings-perbuilding-overview-v1.png`, `r3-01-buildings-merged-oldtown-closeup-v1.png`,
+  `r3-01-buildings-merged-closeup-chunk-seating-offset-v1.png`,
+  `r3-01-buildings-perbuilding-oldtown-closeup-v1.png`,
+  `r3-01-buildings-kit-details-closeup-v1.png`, and `r3-01-buildings-kit-details-closeup-v2.png`.
+- Per-frame stills and all metrics JSON: `frames/r3-01-v1/`.
+- Pixel check (sampled 30,000 random pixels, per-channel threshold 10): the off and merged
+  overviews differ at 14,184 of 30,000 sampled pixels (PIL re-check 15,204); the merged and
+  per-building overviews differ at ~7,900 of 30,000 sampled pixels (7,906 at threshold 10, 3,705 at
+  threshold 30, not identical; chunk terrain-seating offset explains the difference); kit details
+  differ at 208 of 30,000 sampled pixels (PIL re-check 465, visually indistinguishable). An
+  independent vision agent reviewed the captures qualitatively.
+
+| Source | Used for | Licence | Pin |
+|---|---|---|---|
+| ambientCG Bricks097 | Wall brick | CC0 1.0 | `https://ambientcg.com/get?file=Bricks097_2K_JPG.zip` |
+| ambientCG Plaster001 | Wall plaster | CC0 1.0 | `https://ambientcg.com/get?file=Plaster001_2K_JPG.zip` |
+| ambientCG RoofingTiles003 | Roof slate | CC0 1.0 | `https://ambientcg.com/get?file=RoofingTiles003_2K_JPG.zip` |
+| ambientCG RoofingTiles013A | Roof clay | CC0 1.0 | `https://ambientcg.com/get?file=RoofingTiles013A_2K_JPG.zip` |
+| Kenney Prototype Textures | Door, window, and chimney kit (rejected for gameplay distance) | CC0 (zip `License.txt`: "License: (Creative Commons Zero, CC0)") | Recorded in prototype root `materials/KIT-LICENSE.md` |
+
+The ambientCG zip SHA-256 values are recorded in prototype root `materials/LICENSES.md`.
+
+##### Recommendation
+
+- Layout: merged meshes per terrain chunk as the R3 layout, with per-building records (`cleabs`,
+  height, footprint) carried in the package as metadata for later gameplay promotion. Revisit
+  per-building placement when B5 instancing exists.
+- Roof rule: flat by default, gabled on convex footprints (559 buildings). A straight-skeleton hip
+  stays an optional follow-up if roof variety proves valuable.
+- Materials: the four ambientCG CC0 sets with deterministic per-building assignment. Kenney kit
+  details are rejected for gameplay distance.
+- Follow-up R3 cards implied, not yet carded: building placement into the H2/H3 package (blocked on
+  H2/H3 and B4a-5); roof material tone and lighting evaluation; straight-skeleton hip evaluation; a
+  high-contrast close-range detail kit for cinematics; a bespoke landmark card for the Sedan château.
+
+##### Limitations
+
+- Prototype only; no production code is merged.
+- Single host and single run per mode. Render-list counts are not GPU draw calls, and memory is
+  unmeasured.
+- Roofs are too dark to evaluate tiling.
+- Merged chunk seating approximates intra-chunk relief.
+- The scratch scenario applies an axis permutation and `unitsPerMeter: 1f`, which the measured
+  importer behaviour required. The generator docstring's axis claim is superseded by the scenario's
+  measured contract.
+- glTF base-color textures only. Normal and roughness maps are extracted but not bound.
 
 ## 6. H2/H3 and WorldBuilder boundary
 
