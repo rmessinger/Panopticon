@@ -586,16 +586,32 @@ The vector layer is an optional strict-JSON sidecar at `vectors/vector-features.
 
 ### Generated building layer
 
-The optional building layer is the `buildings/` entry. `buildings/buildings.json` holds 1,676 building records (4,463,275 bytes, SHA-256 `19f59642a1a0405c84b30d662dcd470ce9019d1f904132de5b5aa399803108b8`). `buildings/chunk-0-0.bin` is the only mesh chunk file (`pbm1` encoding, 3,518,724 bytes, 8 segments, 125,658 vertices, 125,658 indices, 41,886 triangles). A package with this layer is version 3.
+The optional building layer is the `buildings/` entry. `buildings/buildings.json` (version 1) holds 1,676 building records (4,419,451 bytes, SHA-256 `f9c525b198de933cb0b0bd05697a194447f2bf91c0b7cbf66458694e0f599d2f`). The mesh is nine chunk files, `buildings/chunk-<x>-<y>.bin` for x and y from 0 to 2, in `pbm1` encoding, with 72 segments, 125,625 vertices, 125,625 indices, and 41,875 triangles in total. A package with this layer is version 3.
 
-Generation from the Sedan payload turns 1,679 source parts into 1,676 buildings. Heights come from source attributes for 1,662 buildings and from the usage median for 14; 0 use the global median. Roofs are 569 gabled and 1,107 flat.
+Generation from the Sedan payload (`r2-03-footprints-payload-v2`) turns 1,679 source parts into 1,676 buildings, reported as GEO-PKG-013. Heights come from source attributes for 1,662 buildings and from the usage median for 14; 0 use the global median. Roofs are 569 gabled and 1,107 flat.
 
-Runtime status: the installed Game does not yet render this layer. Headless `ScenarioCapture` runs (`--headless --built-in-scenario ScenarioCapture`, `CNC_GENERALS_PATH` set, Vulkan offscreen, no display, no overlay) fail in two steps:
+Feature geometry reaches the builder already in game units, because `FeatureClipper` converts through `Grid.ProjectedToGame`. `GeneratedBuildingBuilder` consumes those coordinates directly. The previous build applied the map origin and scale again, which placed mesh coordinates near -2.1e6 game units, gave every building the same seat heights (supportMinZ and supportMaxZ both 20), and produced a single mesh chunk. With the fix, the same payload yields 1,639 distinct seat pairs, nine mesh chunks, and footprints within the 0 to 3,840 game unit map extent.
 
-- `RuntimeBridge.MaterializeHeightMapData` rejects every chunk because the stored float32 heights are not multiples of 0.0390625 (5/128), the runtime's elevation step.
-- With heights rounded to that step in a derived copy (maximum change 0.0195 game units, not committed), `SidesListUtility.SetupSkirmishGameSides` throws `NullReferenceException`, because the package path builds no `SidesList`.
+Load path: packages load through the real `Game.LoadMap` path. `GeneratedPackageInstalledLoadTests` runs the GeoImport `package` command and then loads the result. `SedanRawV3Payload_ConvertsAndLoadsWithFullBuildingLayer` covers the full building layer, and `OffGridPayloadWithoutSides_ConvertsAndLoadsWithQuantizedResidentHeights` covers quantized terrain. Both pass with `ConvertedMapLoadTests` (12 of 12 in the filtered run).
 
-A buildings-off package with identical terrain layers, no building layer, and no vector layer fails at the second step, so the building layer is not the cause. The same harness renders the R2-03 footprints legacy `.map` (exit 0, terrain only), so headless capture works on the host. The capture of the legacy terrain is `r3-g4-buildings-v1-control-legacy-terrain-overview-v1.png` (1,800,356 bytes) under `/mnt/pit2/Network Storage/temp/r3-g4-buildings-v1/`. It is a control, not building evidence. No building-on or building-off frame exists yet.
+Render evidence: the `ScenarioCapture` profiles are render-only, with an empty `Players` list, hidden HUD, an explicit camera, and a 1024 by 768 viewport. Each profile captures frame 0 of its run, at logic frame 31. The on and off pairs use the same camera; their frame 0 view matrix elements differ by at most 0.0031. Pixels are counted as changed when the maximum channel difference exceeds 16.
 
-Per-frame figures are static, derived from the package and `GeneratedBuildingRenderer`, not measured: 41,886 triangles and 16 render items (one opaque and one shadow item per segment, 8 segments). The historical prototype frame time of 3.340 ms is HISTORICAL. It was not reproduced here and sets no threshold.
+| View | Changed pixels, on vs off | Buildings on screen | Changed inside building silhouettes | Changed outside |
+| --- | --- | --- | --- | --- |
+| Overview, look-at (1920, 1920), height 900 | 362,819 of 786,432 (46.1%) | 355 | 76.1% | 1.8% |
+| Close-up, look-at (1700, 1700), height 220 | 684,894 of 786,432 (87.1%) | 121 | 87.6% | 32.4% of 7,250 pixels |
+
+Silhouettes are convex hulls of each footprint projected at base and eave height. The four PNGs are `/mnt/pit2/Network Storage/temp/r3-g4-buildings-v3/r3-g4-buildings-v3-overview-on-v1.png`, `...-overview-off-v1.png`, `...-closeup-on-v1.png`, and `...-closeup-off-v1.png`. The close-up on frame shows roofs and walls over terrain, and the off frame shows terrain only. Per-run numbers are in `~/log/r3-g4-captures-v3/visibility-v3.json`. The camera view differs between frames 0 and 1 of one run by up to 17.1 matrix units, so frame-to-frame differences are not a noise baseline; the comparison uses frame 0 of each pair.
+
+Timing: the time of the `game.Render()` call is measured in a throwaway probe that was not committed. Each run renders 205 frames, the first 20 samples are discarded as warmup, and 186 samples per run are measured. Two runs per package alternate, giving 372 measured samples per package. Packages with buildings have a median of 0.855 ms (mean 0.859 ms). Packages without buildings have a median of 0.501 ms (mean 0.507 ms). The probe brackets the CPU call and does not wait for GPU completion. The historical prototype frame time of 3.340 ms is HISTORICAL. It was not reproduced here and sets no threshold.
+
+Off package: the same payload with the `cleabs` attribute removed from the building attribute tables, so the converter emits no buildings. The 36 layer files, the retained sections, and the vector geometry are byte-identical to the on package. The vector attributes differ for 3,358 features.
+
+Residual limits:
+
+- Terrain heights are quantized to the resident height grid. GEO-PKG-015 reports 154,427 of 154,449 samples quantized, with a maximum error of 0.01953125 game height units.
+- Blend materialization is absent. The package stores palette material names without texture bindings, and GEO-PKG-016 fails conversion when the palette is empty or an entry has no resolvable binding.
+- Buildability features are stored in the vector layer and are not painted into a mask.
+- Global lighting uses the fixed converter defaults, time of day is Morning (following the 1-based `LegacyMapReader` precedent), and the waypoint path set is empty.
+- Render-only captures use an empty `Players` list. Playable sides need WP1024 and are not part of this layer.
 
