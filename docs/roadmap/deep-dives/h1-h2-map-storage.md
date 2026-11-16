@@ -610,7 +610,7 @@ Off package: the same payload with the `cleabs` attribute removed from the build
 Residual limits:
 
 - Terrain heights are quantized to the resident height grid. GEO-PKG-015 reports 154,427 of 154,449 samples quantized, with a maximum error of 0.01953125 game height units.
-- Blend materialization is absent. The package stores palette material names without texture bindings, and GEO-PKG-016 fails conversion when the palette is empty or an entry has no resolvable binding.
+- Blend tiles materialize from the payload palette whenever every palette entry resolves through the texture map: the built-in default map (grass, dirt, rock, sand) when no `--textures` file is given, or the explicit file otherwise. A palette that is empty or has an entry without a resolvable binding fails conversion with GEO-PKG-016 and writes no package. The installed-load tests assert that the `BlendTileData` retained section is present.
 - Buildability features are stored in the vector layer and are not painted into a mask.
 - Global lighting uses the fixed converter defaults, time of day is Morning (following the 1-based `LegacyMapReader` precedent), and the waypoint path set is empty.
 - Render-only captures use an empty `Players` list. Playable sides need WP1024 and are not part of this layer.
