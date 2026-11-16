@@ -19,6 +19,10 @@ public sealed class GeneratedBuildingRenderer : DisposableBase
     private readonly List<Segment> _segments = new();
     private RenderPipeline _pipeline;
 
+    // Test-only observation point: fires once per created segment with every owned handle so
+    // lifecycle tests can verify disposal and inject failures without reflection; null by default.
+    internal static Action<IReadOnlyList<IDisposable>> TestSegmentHandlesCreated;
+
     internal GeneratedBuildingRenderer(GraphicsLoadContext loadContext, BuildingLayerSet buildings)
     {
         try
@@ -158,6 +162,8 @@ public sealed class GeneratedBuildingRenderer : DisposableBase
             renderItemConstantsPS));
 
         var material = CreateForwardMaterial(loadContext, segment.MaterialVariant);
+
+        TestSegmentHandlesCreated?.Invoke([vertexBuffer, texCoordBuffer, indexBuffer, renderItemConstantsVS, renderItemConstantsPS, resourceSet]);
 
         return new Segment(
             $"GeneratedBuilding chunk {chunk.ChunkX},{chunk.ChunkY} variant {segment.MaterialVariant}",
