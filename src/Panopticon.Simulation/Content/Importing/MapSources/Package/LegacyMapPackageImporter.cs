@@ -279,6 +279,20 @@ public sealed class LegacyMapPackageImporter
             sections.Add(Retain(blend, BlendTileData.AssetName, (writer, _) => blend.WriteTo(writer)));
         }
 
+        if (interchange.GlobalLighting is not null
+            && !sections.Exists(section => section.SectionName == GlobalLighting.AssetName)
+            && RuntimeBridge.MaterializeGlobalLighting(interchange) is { } lighting)
+        {
+            sections.Add(Retain(lighting, GlobalLighting.AssetName, (writer, _) => lighting.WriteTo(writer)));
+        }
+
+        if (interchange.WaypointPaths is not null
+            && !sections.Exists(section => section.SectionName == WaypointsList.AssetName)
+            && RuntimeBridge.MaterializeWaypointsList(interchange) is { } waypointsList)
+        {
+            sections.Add(Retain(waypointsList, WaypointsList.AssetName, (writer, _) => waypointsList.WriteTo(writer)));
+        }
+
         return sections;
     }
 

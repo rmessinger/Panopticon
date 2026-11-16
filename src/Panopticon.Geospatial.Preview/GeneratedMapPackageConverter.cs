@@ -151,6 +151,8 @@ public static class GeneratedMapPackageConverter
             BuildImportReport(payloadReport),
             [],
             blendTileData: blendTileData,
+            globalLighting: BuildGeneratedLighting(),
+            waypointPaths: new MapWaypointPathsRecord(0, []),
             vectorLayers: vectorLayers,
             buildings: buildings);
 
@@ -410,6 +412,33 @@ public static class GeneratedMapPackageConverter
         new(metadata.Palette.Names
             .Select((name, index) => new MaterialPaletteEntry((byte)index, name, new AssetReference(TerrainAssetScope, name)))
             .ToArray());
+
+    // Copies GlobalLighting.CreateForGeneratedMap (Simulation Data/Map/GlobalLighting.cs:59), which is internal to Simulation.
+    private static MapGlobalLightingRecord BuildGeneratedLighting()
+    {
+        var sun = new MapGlobalLightRecord(
+            new System.Numerics.Vector3(0.38f, 0.38f, 0.38f),
+            new System.Numerics.Vector3(0.52f, 0.51f, 0.49f),
+            System.Numerics.Vector3.Normalize(new System.Numerics.Vector3(0.50f, 0.35f, -0.79f)));
+        var fill = new MapGlobalLightRecord(
+            new System.Numerics.Vector3(0.04f, 0.04f, 0.04f),
+            new System.Numerics.Vector3(0.08f, 0.08f, 0.08f),
+            System.Numerics.Vector3.Normalize(new System.Numerics.Vector3(-0.55f, -0.40f, -0.73f)));
+        var configuration = new MapLightingConfigurationRecord(sun, fill, null, sun, fill, null, null, null, null);
+
+        // The engine TimeOfDay is 1-based and the typed Time carries that raw value, as LegacyMapReader does.
+        return new MapGlobalLightingRecord(
+            6,
+            (MapTimeOfDay)(uint)Panopticon.Data.Map.TimeOfDay.Morning,
+            new Dictionary<MapTimeOfDay, MapLightingConfigurationRecord>
+            {
+                [MapTimeOfDay.Morning] = configuration,
+                [MapTimeOfDay.Afternoon] = configuration,
+                [MapTimeOfDay.Evening] = configuration,
+                [MapTimeOfDay.Night] = configuration,
+            },
+            0);
+    }
 
     private static MapBlendTileData? BuildBlendTileData(
         GeneratedMapPayloadMetadata metadata,

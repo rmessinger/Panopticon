@@ -985,6 +985,30 @@ public sealed class GeneratedMapPackageConverterTests
     }
 
     [Fact]
+    public void Lighting_NeutralDaylightAndEmptyWaypointPaths_RecoveredByFreshPackageReader()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+
+        var package = new PackageReader(target).Read();
+        var lighting = RuntimeBridge.MaterializeGlobalLighting(package);
+        var waypoints = RuntimeBridge.MaterializeWaypointsList(package);
+
+        Assert.NotNull(lighting);
+        Assert.Equal((ushort)6, lighting!.Version);
+        Assert.Equal(4, lighting.LightingConfigurations.Count);
+        Assert.InRange(lighting.LightingConfigurations.Values.First().TerrainSun.Direction.Length(), 0.999f, 1.001f);
+        Assert.NotNull(waypoints);
+        Assert.Empty(waypoints!.WaypointPaths);
+    }
+
+    [Fact]
     public void BlendTiles_NoncontiguousPaletteIndex_UsesTheOrdinalOfItsTexture()
     {
         using var scratch = new PreviewPayloadFixture.ScratchRoot();
