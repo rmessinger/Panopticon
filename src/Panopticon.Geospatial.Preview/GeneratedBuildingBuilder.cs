@@ -144,7 +144,7 @@ public static class GeneratedBuildingBuilder
 
                 try
                 {
-                    EmitPartTriangles(chunkTriangles, chunkX, chunkY, building, localPart, gabled, baseZ, eaveZ);
+                    AppendPartTriangles(chunkTriangles, chunkX, chunkY, building, localPart, gabled, baseZ, eaveZ);
                 }
                 catch (Exception ex)
                 {
@@ -579,7 +579,7 @@ public static class GeneratedBuildingBuilder
         return null;
     }
 
-    private static void EmitPartTriangles(
+    private static void AppendPartTriangles(
         Dictionary<(int ChunkX, int ChunkY), Dictionary<int, List<MeshTriangle>>> chunkTriangles,
         int chunkX,
         int chunkY,
@@ -600,20 +600,20 @@ public static class GeneratedBuildingBuilder
 
         foreach (var polygon in part.Polygons)
         {
-            EmitWallRings(Bucket(buckets, wallVariant), polygon.Outer, outerRing: true, baseZ, eaveZ);
+            AppendWallRings(Bucket(buckets, wallVariant), polygon.Outer, outerRing: true, baseZ, eaveZ);
 
             foreach (var inner in polygon.Inners)
             {
-                EmitWallRings(Bucket(buckets, wallVariant), inner, outerRing: false, baseZ, eaveZ);
+                AppendWallRings(Bucket(buckets, wallVariant), inner, outerRing: false, baseZ, eaveZ);
             }
 
             if (gabled)
             {
-                EmitGableRoof(Bucket(buckets, roofVariant), Bucket(buckets, wallVariant), polygon, eaveZ);
+                AppendGableRoof(Bucket(buckets, roofVariant), Bucket(buckets, wallVariant), polygon, eaveZ);
             }
             else
             {
-                EmitFlatRoof(Bucket(buckets, roofVariant), polygon, eaveZ);
+                AppendFlatRoof(Bucket(buckets, roofVariant), polygon, eaveZ);
             }
         }
     }
@@ -629,7 +629,7 @@ public static class GeneratedBuildingBuilder
         return triangles;
     }
 
-    private static void EmitWallRings(List<MeshTriangle> triangles, LocalRing ring, bool outerRing, double baseZ, double eaveZ)
+    private static void AppendWallRings(List<MeshTriangle> triangles, LocalRing ring, bool outerRing, double baseZ, double eaveZ)
     {
         var points = OrientRing(ring.Points, counterClockwise: outerRing);
         var count = points.Length;
@@ -663,7 +663,7 @@ public static class GeneratedBuildingBuilder
         }
     }
 
-    private static void EmitFlatRoof(List<MeshTriangle> triangles, LocalPolygon polygon, double eaveZ)
+    private static void AppendFlatRoof(List<MeshTriangle> triangles, LocalPolygon polygon, double eaveZ)
     {
         var factory = GeometryFactory.Default;
         var shell = factory.CreateLinearRing(ClosedCoordinates(polygon.Outer.Points, counterClockwise: true));
@@ -686,7 +686,7 @@ public static class GeneratedBuildingBuilder
                 continue;
             }
 
-            EmitFlatRoofTriangle(
+            AppendFlatRoofTriangle(
                 triangles,
                 coordinates[0].X,
                 coordinates[0].Y,
@@ -698,7 +698,7 @@ public static class GeneratedBuildingBuilder
         }
     }
 
-    private static void EmitFlatRoofTriangle(
+    private static void AppendFlatRoofTriangle(
         List<MeshTriangle> triangles,
         double ax,
         double ay,
@@ -741,7 +741,7 @@ public static class GeneratedBuildingBuilder
         return coordinates;
     }
 
-    private static void EmitGableRoof(
+    private static void AppendGableRoof(
         List<MeshTriangle> roofTriangles,
         List<MeshTriangle> wallTriangles,
         LocalPolygon polygon,
@@ -790,15 +790,15 @@ public static class GeneratedBuildingBuilder
 
             var ridgeP = new LocalPoint(centroid.X + (axis.X * sp), centroid.Y + (axis.Y * sp));
             var ridgeQ = new LocalPoint(centroid.X + (axis.X * sq), centroid.Y + (axis.Y * sq));
-            EmitUpwardTriangle(roofTriangles, At(p, eaveZ), At(q, eaveZ), At(ridgeQ, ridgeZ));
-            EmitUpwardTriangle(roofTriangles, At(p, eaveZ), At(ridgeQ, ridgeZ), At(ridgeP, ridgeZ));
+            AppendUpwardTriangle(roofTriangles, At(p, eaveZ), At(q, eaveZ), At(ridgeQ, ridgeZ));
+            AppendUpwardTriangle(roofTriangles, At(p, eaveZ), At(ridgeQ, ridgeZ), At(ridgeP, ridgeZ));
         }
 
-        EmitGableEndTriangle(wallTriangles, hull, projections, sMin, tolerance, eaveZ, ridgeZ, centroid, axis, new LocalPoint(-axis.X, -axis.Y));
-        EmitGableEndTriangle(wallTriangles, hull, projections, sMax, tolerance, eaveZ, ridgeZ, centroid, axis, axis);
+        AppendGableEndTriangle(wallTriangles, hull, projections, sMin, tolerance, eaveZ, ridgeZ, centroid, axis, new LocalPoint(-axis.X, -axis.Y));
+        AppendGableEndTriangle(wallTriangles, hull, projections, sMax, tolerance, eaveZ, ridgeZ, centroid, axis, axis);
     }
 
-    private static void EmitGableEndTriangle(
+    private static void AppendGableEndTriangle(
         List<MeshTriangle> triangles,
         LocalPoint[] hull,
         double[] projections,
@@ -861,7 +861,7 @@ public static class GeneratedBuildingBuilder
             WithNormal(c, cross.X * scale, cross.Y * scale, cross.Z * scale)));
     }
 
-    private static void EmitUpwardTriangle(List<MeshTriangle> triangles, BuildingVertex a, BuildingVertex b, BuildingVertex c)
+    private static void AppendUpwardTriangle(List<MeshTriangle> triangles, BuildingVertex a, BuildingVertex b, BuildingVertex c)
     {
         var cross = Cross3(a, b, c);
         var lengthSquared = (cross.X * cross.X) + (cross.Y * cross.Y) + (cross.Z * cross.Z);
