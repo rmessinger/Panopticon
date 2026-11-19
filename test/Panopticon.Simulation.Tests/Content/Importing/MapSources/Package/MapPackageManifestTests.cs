@@ -57,7 +57,7 @@ public sealed class MapPackageManifestTests
     [Fact]
     public void WrongPackageVersionFails()
     {
-        var manifest = BuildValidManifest() with { PackageVersion = MapPackageFormat.CurrentPackageVersion + 1 };
+        var manifest = BuildValidManifest() with { PackageVersion = MapPackageFormat.VectorPackageVersion + 1 };
         AssertOnlyCode(manifest, MapPackageDiagnostic.PackageVersion);
     }
 

@@ -169,9 +169,23 @@ public sealed class LegacyMapPackageImporter
                 digest));
         }
 
+        MapPackageVectorLayerEntry? vectorEntry = null;
+        byte[]? vectorBytes = null;
+
+        if (interchange.VectorLayers is { Features.Count: > 0 } vectorLayers)
+        {
+            vectorBytes = MapPackageVectorCodec.Serialize(vectorLayers);
+            vectorEntry = new MapPackageVectorLayerEntry(
+                MapPackageFormat.VectorLayerPath,
+                MapPackageFormat.EncodingJson,
+                vectorBytes.Length,
+                ComputeSha256Hex(vectorBytes),
+                vectorLayers.Features.Count);
+        }
+
         var manifest = new MapPackageManifest(
             MapPackageFormat.PackageFormatName,
-            MapPackageFormat.CurrentPackageVersion,
+            vectorEntry is null ? MapPackageFormat.CurrentPackageVersion : MapPackageFormat.VectorPackageVersion,
             interchange.SchemaVersion,
             identity,
             layout,
@@ -181,9 +195,10 @@ public sealed class LegacyMapPackageImporter
             provenance,
             layers,
             retainedEntries,
-            companions);
+            companions,
+            vectorEntry);
 
-        var payloadProvider = new InterchangePayloadProvider(chunkLookup, retainedLookup, companionPayloads);
+        var payloadProvider = new InterchangePayloadProvider(chunkLookup, retainedLookup, companionPayloads, vectorBytes);
 
         return MapPackageDirectoryWriter.Write(targetPackageRoot, manifest, payloadProvider);
     }
@@ -196,15 +211,18 @@ public sealed class LegacyMapPackageImporter
         private readonly Dictionary<(int X, int Y), Chunk> _chunks;
         private readonly Dictionary<string, RetainedSection> _retained;
         private readonly IReadOnlyDictionary<string, byte[]>? _companions;
+        private readonly byte[]? _vectorLayer;
 
         public InterchangePayloadProvider(
             Dictionary<(int X, int Y), Chunk> chunks,
             Dictionary<string, RetainedSection> retained,
-            IReadOnlyDictionary<string, byte[]>? companions = null)
+            IReadOnlyDictionary<string, byte[]>? companions = null,
+            byte[]? vectorLayer = null)
         {
             _chunks = chunks;
             _retained = retained;
             _companions = companions;
+            _vectorLayer = vectorLayer;
         }
 
         public float[] GetHeights(MapPackageLayerEntry entry)
@@ -246,5 +264,7 @@ public sealed class LegacyMapPackageImporter
 
             return [];
         }
+
+        public byte[] GetVectorLayer(MapPackageVectorLayerEntry entry) => _vectorLayer ?? [];
     }
 }

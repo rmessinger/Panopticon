@@ -377,7 +377,8 @@ Every item in the B4b payload ([`r-real-world-terrain.md`](r-real-world-terrain.
 | `payload.json` `GeospatialMapTransform`, transform fields | `TerrainLayout.GeospatialTransform` and `Provenance.SourceRecord` | Per section 4 field units | Coordinate systems go to `SourceRecord`; metersPerGameUnit, origin, vertical fields stay in the transform |
 | `payload.json` chunk layout | `TerrainLayout` core, apron, and chunk grid | `GameUnit` per section 5.1a | Chunk geometry section below |
 | `payload.json` material palette | `BlendModel.MaterialPalette` | Palette indices | Index semantics in the masks and palette section |
-| `payload.json` generated features | `Provenance.GeneratedFeature` | Source coordinates and attributes | Stable IDs retained per section 5.3 |
+| `payload.json` generated features | `Provenance.GeneratedFeature` | Source coordinates and attributes | Stable IDs retained per section 5.3. Provenance keeps one entry per source part |
+| Generated line, polygon, and multi features | `VectorLayerSet` (`VectorFeature` entries) | Source coordinates and attributes | One entry per rule emission, keyed `(SourceStableId, Kind, RuleIndex)`, carrying passability, buildability, coverage, and attributes. Point features are not emitted. Package sidecar in the H3 section |
 | `payload.json` provenance with SHA-256 hashes | `Provenance.SourceRecord` | none | Source-level digests; per-file digests are written by H3 |
 | `terrain/<cx>_<cy>.bin`, 131 x 131 `float32` | `Chunk.HeightLayer` | `GameUnit`, chunk-local Z | Apron included |
 | `imagery/<cx>_<cy>.png`, RGBA8 | `Chunk.ImageryLayer` | Pixels, chunk aligned | Optional; consistency rules in Validation and error behavior |
@@ -502,6 +503,8 @@ Source digests are verified by the reader before the model is built, as part of 
 
 Failure policy: any failed check returns typed diagnostics and publishes no model content. Failed imports publish no partial content, per [`h2a-unit-content-import.md`](h2a-unit-content-import.md).
 
+Package publication: the directory writer stages all files, verifies them, then replaces the target by two renames (existing target moved to a backup, staged directory moved into place). This is not an atomic exchange and gives no power-loss guarantee. A failed rename restores the backup; if restoration fails, both copies are preserved and `recovery-required` is reported.
+
 ### Runtime bridge responsibilities
 
 `RuntimeBridge` (`src/Panopticon.Simulation/Content/Importing/MapSources/RuntimeBridge.cs`) materializes resident terrain, masks, and objects from a validated `MapInterchange`. Typed fields are populated by the adapter and reconstructed exactly by the materializer:
@@ -578,4 +581,6 @@ classDiagram
 ```
 
 The H3 map package format defines a loose directory container in version 1 with a root `manifest.json` document and manifest-controlled relative POSIX paths only. Three independent versions are tracked without conflation: package format version, interchange schema version, and source payload version. Every quantity-carrying field declares both unit and frame, with `GameUnit` and `Meters` both valid and never reinterpreted. Stored heights are preserved exactly in float32 little-endian format with byte lengths and SHA-256 digests. Retained sections are preserved as opaque binaries with declared section versions, byte lengths, and SHA-256 digests. Details live in the [H1-H3 map storage implementation plan](../implementation/track-h-h1-h3-map-storage.md).
+
+The vector layer is an optional strict-JSON sidecar at `vectors/vector-features.json`. The manifest `vectorLayer` entry records its path, encoding (`json`), byte length, SHA-256, and feature count. The staged writer verifies the sidecar before publication, and the reader verifies it on read. Package version 2 is written only when a non-empty vector layer is present. The `vectorLayer` property is omitted when null, so vector-free packages stay at version 1 and serialize without it. Readers accept versions 1 and 2. A vector entry under version 1, an unsupported package version, unknown manifest or sidecar fields, digest, byte-length, or feature-count mismatches, and unsafe paths fail with typed diagnostics and publish or read nothing.
 

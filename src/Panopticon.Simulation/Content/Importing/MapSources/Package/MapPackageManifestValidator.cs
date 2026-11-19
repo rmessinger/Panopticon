@@ -41,6 +41,7 @@ public static class MapPackageManifestValidator
         ValidateProvenance(manifest, stableIds, diagnostics);
         ValidateRetainedSections(manifest, diagnostics);
         ValidateCompanions(manifest, diagnostics);
+        ValidateVectorLayer(manifest.VectorLayer, diagnostics);
 
         if (diagnostics.Count > 100)
         {
@@ -63,11 +64,18 @@ public static class MapPackageManifestValidator
                 $"Package format '{manifest.Format}' is not the expected format '{MapPackageFormat.PackageFormatName}'."));
         }
 
-        if (manifest.PackageVersion != MapPackageFormat.CurrentPackageVersion)
+        if (manifest.PackageVersion is not (MapPackageFormat.CurrentPackageVersion or MapPackageFormat.VectorPackageVersion))
         {
             diagnostics.Add(new MapPackageDiagnostic(
                 MapPackageDiagnostic.PackageVersion,
-                $"Package version {manifest.PackageVersion} is not supported; expected version {MapPackageFormat.CurrentPackageVersion}."));
+                $"Package version {manifest.PackageVersion} is not supported; expected version {MapPackageFormat.CurrentPackageVersion} or {MapPackageFormat.VectorPackageVersion}."));
+        }
+
+        if (manifest.VectorLayer is not null && manifest.PackageVersion != MapPackageFormat.VectorPackageVersion)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.PackageVersion,
+                $"Package version {manifest.PackageVersion} carries a vector layer; a vector layer requires version {MapPackageFormat.VectorPackageVersion}."));
         }
 
         if (manifest.SchemaVersion != MapInterchange.CurrentSchemaVersion)
@@ -792,6 +800,49 @@ public static class MapPackageManifestValidator
                     }
                 }
             }
+        }
+    }
+
+    private static void ValidateVectorLayer(MapPackageVectorLayerEntry? entry, List<MapPackageDiagnostic> diagnostics)
+    {
+        if (entry is null)
+        {
+            return;
+        }
+
+        if (!MapPackagePath.TryValidatePath(entry.Path, out var pathReason))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.VectorLayer,
+                $"Vector layer path is invalid: {pathReason}"));
+        }
+
+        if (!string.Equals(entry.Encoding, MapPackageFormat.EncodingJson, StringComparison.Ordinal))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.VectorLayer,
+                $"Vector layer encoding '{entry.Encoding}' must be '{MapPackageFormat.EncodingJson}'."));
+        }
+
+        if (entry.ByteLength <= 0)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.VectorLayer,
+                $"Vector layer declares non-positive byte length {entry.ByteLength}."));
+        }
+
+        if (!MapPackagePath.IsValidSha256(entry.Sha256))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.DigestInvalid,
+                $"Vector layer SHA-256 '{entry.Sha256}' must be 64 lowercase hex characters."));
+        }
+
+        if (entry.FeatureCount <= 0)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.VectorLayer,
+                $"Vector layer declares non-positive feature count {entry.FeatureCount}."));
         }
     }
 

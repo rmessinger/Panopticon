@@ -182,6 +182,41 @@ public sealed class PackageReader : IMapReader
                 retainedEntry.Sha256));
         }
 
+        VectorLayerSet? vectorLayers = null;
+
+        if (manifest.VectorLayer is { } vectorEntry)
+        {
+            var vectorResult = MapPackageChunkFileReader.ReadVectorLayer(_packageRoot, vectorEntry);
+
+            if (!vectorResult.Success)
+            {
+                throw new MapImportException(
+                    vectorResult.Diagnostics.Select(d => new MapInterchangeDiagnostic(d.Code, d.Message)).ToArray());
+            }
+
+            try
+            {
+                vectorLayers = MapPackageVectorCodec.Deserialize(vectorResult.Payload!);
+            }
+            catch (FormatException ex)
+            {
+                throw new MapImportException(
+                [
+                    new MapInterchangeDiagnostic(MapPackageDiagnostic.VectorLayer, ex.Message),
+                ]);
+            }
+
+            if (vectorLayers.Features.Count != vectorEntry.FeatureCount)
+            {
+                throw new MapImportException(
+                [
+                    new MapInterchangeDiagnostic(
+                        MapPackageDiagnostic.VectorLayer,
+                        $"Vector layer declares {vectorEntry.FeatureCount} features; the payload holds {vectorLayers.Features.Count}."),
+                ]);
+            }
+        }
+
         if (!manifest.Layout.SampleSpacing.TryToMapQuantity(out var sampleSpacing))
         {
             throw new MapImportException(
@@ -247,7 +282,8 @@ public sealed class PackageReader : IMapReader
             waypoints,
             provenance,
             report,
-            retainedSections);
+            retainedSections,
+            vectorLayers: vectorLayers);
 
         var validationDiagnostics = MapInterchangeValidator.Validate(model);
 

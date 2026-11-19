@@ -100,6 +100,18 @@ public static class MapPackageChunkFileReader
         return new(MapPackageChunkCodec.DecodeRetained(bytes), []);
     }
 
+    public static MapPackageChunkReadResult<byte[]> ReadVectorLayer(string packageRoot, MapPackageVectorLayerEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        if (!TryReadVerifiedBytes(packageRoot, entry.Path, entry.ByteLength, entry.Sha256, out var bytes, out var readError))
+        {
+            return Fail<byte[]>(readError);
+        }
+
+        return new(bytes, []);
+    }
+
     private static bool RequireKindAndEncoding(
         MapPackageLayerEntry entry,
         string expectedKind,

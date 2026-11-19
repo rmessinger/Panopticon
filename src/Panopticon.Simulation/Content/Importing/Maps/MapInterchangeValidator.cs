@@ -43,6 +43,8 @@ public static class MapInterchangeValidator
 
     private const int MaxPaletteEntries = 256;
 
+    private const int MaxVectorGeometryDepth = 16;
+
     public static IReadOnlyList<MapInterchangeDiagnostic> Validate(MapInterchange map)
     {
         ArgumentNullException.ThrowIfNull(map);
@@ -68,6 +70,7 @@ public static class MapInterchangeValidator
         ValidatePlacements(map, stableIds, diagnostics);
         ValidateWaypoints(map, stableIds, diagnostics);
         ValidateProvenance(map, stableIds, diagnostics);
+        ValidateVectorLayers(map, diagnostics);
         ValidateRetainedSections(map, diagnostics);
         return diagnostics;
     }
@@ -810,6 +813,222 @@ public static class MapInterchangeValidator
         diagnostics.Add(new MapInterchangeDiagnostic(
             MapInterchangeDiagnostic.StableIdDuplicate,
             $"StableId '{stableId}' is used by more than one placed object, waypoint, or generated feature."));
+    }
+
+    private static void ValidateVectorLayers(MapInterchange map, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        var layers = map.VectorLayers;
+
+        if (layers is null)
+        {
+            return;
+        }
+
+        if (layers.Features is null)
+        {
+            AddNullComponent(diagnostics, "VectorLayerSet.Features");
+            return;
+        }
+
+        var seen = new HashSet<(string SourceStableId, string Kind, int RuleIndex)>();
+
+        foreach (var feature in layers.Features)
+        {
+            if (feature is null)
+            {
+                AddNullComponent(diagnostics, "VectorLayerSet.Features entry");
+                continue;
+            }
+
+            var subject = $"VectorFeature '{feature.SourceStableId}' (Kind '{feature.Kind}', RuleIndex {feature.RuleIndex})";
+
+            if (string.IsNullOrWhiteSpace(feature.SourceStableId) || string.IsNullOrWhiteSpace(feature.SourceId) || string.IsNullOrWhiteSpace(feature.Kind))
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.VectorLayer,
+                    $"{subject} carries an empty SourceStableId, SourceId, or Kind; all three are required."));
+            }
+
+            if (feature.RuleIndex < -1)
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.VectorLayer,
+                    $"{subject} declares RuleIndex {feature.RuleIndex}; RuleIndex is -1 or a non-negative rule index."));
+            }
+
+            if (!seen.Add((feature.SourceStableId, feature.Kind, feature.RuleIndex)))
+            {
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.VectorFeatureDuplicate,
+                    $"{subject} repeats the emission tuple (SourceStableId, Kind, RuleIndex) of an earlier feature."));
+            }
+
+            if (feature.Geometry is null)
+            {
+                AddNullComponent(diagnostics, $"{subject} Geometry");
+                continue;
+            }
+
+            ValidateVectorGeometry(feature.Geometry, subject, 0, diagnostics);
+        }
+    }
+
+    private static void ValidateVectorGeometry(VectorGeometry geometry, string subject, int depth, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (depth >= MaxVectorGeometryDepth)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.VectorLayer,
+                $"{subject} geometry nesting exceeds the maximum depth {MaxVectorGeometryDepth}."));
+            return;
+        }
+
+        switch (geometry)
+        {
+            case VectorPointGeometry point:
+                ValidateVectorPosition(point.Position, subject, diagnostics);
+                break;
+            case VectorLineStringGeometry line:
+                if (line.Positions is null)
+                {
+                    AddNullComponent(diagnostics, $"{subject} LineString Positions");
+                    break;
+                }
+
+                if (line.Positions.Count < 2)
+                {
+                    diagnostics.Add(new MapInterchangeDiagnostic(
+                        MapInterchangeDiagnostic.VectorLayer,
+                        $"{subject} line string holds {line.Positions.Count} position(s); at least two are required."));
+                    break;
+                }
+
+                ValidateVectorPositions(line.Positions, subject, diagnostics);
+                break;
+            case VectorPolygonGeometry polygon:
+                ValidateVectorRing(polygon.OuterRing, $"{subject} outer ring", diagnostics);
+
+                if (polygon.InnerRings is null)
+                {
+                    AddNullComponent(diagnostics, $"{subject} Polygon InnerRings");
+                    break;
+                }
+
+                for (var index = 0; index < polygon.InnerRings.Count; index++)
+                {
+                    ValidateVectorRing(polygon.InnerRings[index], $"{subject} inner ring {index}", diagnostics);
+                }
+
+                break;
+            case VectorMultiGeometry multi:
+                if (multi.Geometries is null)
+                {
+                    AddNullComponent(diagnostics, $"{subject} Multi Geometries");
+                    break;
+                }
+
+                if (multi.Geometries.Count < 1)
+                {
+                    diagnostics.Add(new MapInterchangeDiagnostic(
+                        MapInterchangeDiagnostic.VectorLayer,
+                        $"{subject} multi-geometry holds no child geometries; at least one is required."));
+                    break;
+                }
+
+                for (var index = 0; index < multi.Geometries.Count; index++)
+                {
+                    var child = multi.Geometries[index];
+
+                    if (child is null)
+                    {
+                        AddNullComponent(diagnostics, $"{subject} multi-geometry child {index}");
+                        continue;
+                    }
+
+                    ValidateVectorGeometry(child, $"{subject} child {index}", depth + 1, diagnostics);
+                }
+
+                break;
+            default:
+                diagnostics.Add(new MapInterchangeDiagnostic(
+                    MapInterchangeDiagnostic.VectorLayer,
+                    $"{subject} carries an unknown geometry subtype {geometry.GetType().Name}."));
+                break;
+        }
+    }
+
+    private static void ValidateVectorRing(VectorRing? ring, string subject, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (ring is null)
+        {
+            AddNullComponent(diagnostics, $"{subject} ring");
+            return;
+        }
+
+        var positions = ring.Positions;
+
+        if (positions is null)
+        {
+            AddNullComponent(diagnostics, $"{subject} ring Positions");
+            return;
+        }
+
+        if (positions.Count < 4)
+        {
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.VectorLayer,
+                $"{subject} holds {positions.Count} position(s); a closed ring requires at least four."));
+            return;
+        }
+
+        if (!ValidateVectorPositions(positions, subject, diagnostics))
+        {
+            return;
+        }
+
+        var first = positions[0];
+        var last = positions[positions.Count - 1];
+
+        if (first.X == last.X && first.Y == last.Y && first.AltitudeMeters == last.AltitudeMeters)
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.VectorLayer,
+            $"{subject} starts at ({first.X}, {first.Y}, {first.AltitudeMeters}) and ends at ({last.X}, {last.Y}, {last.AltitudeMeters}); the first and last positions must match exactly."));
+    }
+
+    private static bool ValidateVectorPositions(IReadOnlyList<VectorPosition> positions, string subject, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        for (var index = 0; index < positions.Count; index++)
+        {
+            var position = positions[index];
+
+            if (double.IsFinite(position.X) && double.IsFinite(position.Y) && (position.AltitudeMeters is not { } altitude || double.IsFinite(altitude)))
+            {
+                continue;
+            }
+
+            diagnostics.Add(new MapInterchangeDiagnostic(
+                MapInterchangeDiagnostic.VectorLayer,
+                $"{subject} position {index} is not finite."));
+            return false;
+        }
+
+        return true;
+    }
+
+    private static void ValidateVectorPosition(VectorPosition position, string subject, List<MapInterchangeDiagnostic> diagnostics)
+    {
+        if (double.IsFinite(position.X) && double.IsFinite(position.Y) && (position.AltitudeMeters is not { } altitude || double.IsFinite(altitude)))
+        {
+            return;
+        }
+
+        diagnostics.Add(new MapInterchangeDiagnostic(
+            MapInterchangeDiagnostic.VectorLayer,
+            $"{subject} point position ({position.X}, {position.Y}, {position.AltitudeMeters}) is not finite."));
     }
 
     private static void RequireQuantity(MapQuantity quantity, string field, List<MapInterchangeDiagnostic> diagnostics)

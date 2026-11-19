@@ -11,6 +11,7 @@ using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Generation;
 using Panopticon.Geospatial.Grid;
+using Panopticon.Geospatial.Interchange;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Xunit;
@@ -217,7 +218,7 @@ public sealed class GeneratedMapPackageConverterTests
         Assert.Equal("LineString(500000 6000000, 500010 600010)", annotationEntry.Attributes["geometry"]);
 
         Assert.NotEmpty(result.Limitations);
-        Assert.Contains(result.Limitations, limitation => limitation.Contains("provenance attribute text", StringComparison.Ordinal));
+        Assert.Contains(result.Limitations, limitation => limitation.Contains("package vector layer", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -446,9 +447,8 @@ public sealed class GeneratedMapPackageConverterTests
     [Fact]
     public void GeneratedMapPackageMaskFlagsParticipateInIdentityKey()
     {
-        // Same stable id, identical geometry, rule index, and attributes, differing only in
-        // the mask flag: the emissions must not classify as identical duplicates, so the
-        // same-part merge handles them and its diagnostic text pins that classification.
+        // Same vector emission tuple (stable id, kind, rule index) with the passable flag differing:
+        // the vector layer cannot hold two emissions under one tuple, so the conversion fails.
         using var scratch = new PreviewPayloadFixture.ScratchRoot();
         var features = new[]
         {
@@ -461,15 +461,215 @@ public sealed class GeneratedMapPackageConverterTests
 
         var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
 
+        Assert.False(result.Success);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.VectorFeatureConflict + ":", StringComparison.Ordinal)
+                && diagnostic.Contains("zone-0/vectors/zone-0#0", StringComparison.Ordinal));
+        Assert.Null(result.Model);
+        Assert.Null(result.PackageRoot);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void GeneratedMapPackageSamePartMaskPairLandsBothVectorFeatures()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Passability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 0),
+            PreviewPayloadFixture.MaskRegion(GeneratedFeatureKind.Buildability, "BATIMENT-0", "sedan-proof-buildings/BATIMENT-0#0", flag: false, ruleIndex: 1),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
-        var diagnostic = Assert.Single(result.Diagnostics);
-        Assert.Contains("same source part", diagnostic, StringComparison.Ordinal);
-        Assert.DoesNotContain("identical duplicate", diagnostic, StringComparison.Ordinal);
+        var model = new PackageReader(target).Read();
+
+        Assert.NotNull(model.VectorLayers);
+        Assert.Equal(2, model.VectorLayers!.Features.Count);
+
+        var passability = model.VectorLayers.Features[0];
+        Assert.Equal("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", passability.SourceStableId);
+        Assert.Equal("Passability", passability.Kind);
+        Assert.Equal(0, passability.RuleIndex);
+        Assert.Equal<bool?>(false, passability.Passable);
+        Assert.Null(passability.Buildable);
+
+        var buildability = model.VectorLayers.Features[1];
+        Assert.Equal("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", buildability.SourceStableId);
+        Assert.Equal("Buildability", buildability.Kind);
+        Assert.Equal(1, buildability.RuleIndex);
+        Assert.Equal<bool?>(false, buildability.Buildable);
+        Assert.Null(buildability.Passable);
+
+        var entry = Assert.Single(model.Provenance.GeneratedFeatures);
+        Assert.Equal("BATIMENT-0/sedan-proof-buildings/BATIMENT-0#0", entry.StableId);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageVectorGeometryRoundTripsExactly()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var road = new GeoLineString(
+        [
+            new GeoPosition(new Vector2d(500010.5d, 6000020.25d), 5.5d),
+            new GeoPosition(new Vector2d(500040d, 6000020.25d), 7.25d),
+            new GeoPosition(new Vector2d(500040d, 6000050d)),
+        ]);
+        var outer = new GeoRing(
+        [
+            new GeoPosition(new Vector2d(500000d, 6000000d), 1d),
+            new GeoPosition(new Vector2d(500000d, 6000100d)),
+            new GeoPosition(new Vector2d(500100d, 6000100d), 2.5d),
+            new GeoPosition(new Vector2d(500100d, 6000000d)),
+            new GeoPosition(new Vector2d(500000d, 6000000d), 1d),
+        ]);
+        var hole = new GeoRing(
+        [
+            new GeoPosition(new Vector2d(500020d, 6000020d)),
+            new GeoPosition(new Vector2d(500080d, 6000020d)),
+            new GeoPosition(new Vector2d(500080d, 6000080d)),
+            new GeoPosition(new Vector2d(500020d, 6000080d)),
+            new GeoPosition(new Vector2d(500020d, 6000020d)),
+        ]);
+        var multiLine = new GeoLineString(
+        [
+            new GeoPosition(new Vector2d(500200d, 6000200d), 3d),
+            new GeoPosition(new Vector2d(500210d, 6000210d), 4d),
+        ]);
+        var multiPoint = new GeoPointGeometry(new GeoPosition(new Vector2d(500300d, 6000300d), 9d));
+        var multiSquare = new GeoRing(
+        [
+            new GeoPosition(new Vector2d(500400d, 6000400d)),
+            new GeoPosition(new Vector2d(500420d, 6000400d)),
+            new GeoPosition(new Vector2d(500420d, 6000420d)),
+            new GeoPosition(new Vector2d(500400d, 6000420d)),
+            new GeoPosition(new Vector2d(500400d, 6000400d)),
+        ]);
+        var multi = new GeoMultiGeometry([multiLine, multiPoint, new GeoPolygon(multiSquare)]);
+        var features = new[]
+        {
+            PreviewPayloadFixture.Annotation("road-0", road),
+            PreviewPayloadFixture.PassabilityPolygon("zone-hole", new GeoPolygon(outer, [hole]), ruleIndex: 0, passable: false),
+            PreviewPayloadFixture.Annotation("multi-0", multi),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+        Assert.NotNull(model.VectorLayers);
+        var vectors = model.VectorLayers!.Features;
+        Assert.Equal(3, vectors.Count);
+
+        var roadLine = Assert.IsType<VectorLineStringGeometry>(vectors[0].Geometry);
+        Assert.Equal(PositionKeys(road.Positions.Select(ToVectorPosition)), PositionKeys(roadLine.Positions));
+
+        Assert.Equal("Passability", vectors[1].Kind);
+        Assert.Equal<bool?>(false, vectors[1].Passable);
+        var zone = Assert.IsType<VectorPolygonGeometry>(vectors[1].Geometry);
+        Assert.Equal(PositionKeys(outer.Positions.Select(ToVectorPosition)), PositionKeys(zone.OuterRing.Positions));
+        Assert.True(SignedArea(zone.OuterRing.Positions) < 0d);
+        Assert.Equal(PositionKeys(hole.Positions.Select(ToVectorPosition)), PositionKeys(Assert.Single(zone.InnerRings).Positions));
+
+        var collection = Assert.IsType<VectorMultiGeometry>(vectors[2].Geometry);
+        Assert.Equal(3, collection.Geometries.Count);
+        Assert.Equal(PositionKeys(multiLine.Positions.Select(ToVectorPosition)), PositionKeys(Assert.IsType<VectorLineStringGeometry>(collection.Geometries[0]).Positions));
+        Assert.Equal(PositionKeys([ToVectorPosition(multiPoint.Position)]), PositionKeys([Assert.IsType<VectorPointGeometry>(collection.Geometries[1]).Position]));
+        var child = Assert.IsType<VectorPolygonGeometry>(collection.Geometries[2]);
+        Assert.Equal(PositionKeys(multiSquare.Positions.Select(ToVectorPosition)), PositionKeys(child.OuterRing.Positions));
+    }
+
+    [Fact]
+    public void GeneratedMapPackageCollapsesIdenticalDuplicateVectorEmission()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var line = PreviewPayloadFixture.AnnotationLine();
+        var features = new[]
+        {
+            PreviewPayloadFixture.Waypoint("wp-alpha", 640d, 1280d, 1100d, "alpha"),
+            line,
+            line,
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.NotEmpty(result.Diagnostics);
+        Assert.All(result.Diagnostics, diagnostic => Assert.StartsWith(GeneratedMapPackageDiagnosticCodes.StableIdDeduplicated + ":", diagnostic, StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("identical duplicate vector emissions were collapsed", StringComparison.Ordinal));
 
         var model = new PackageReader(target).Read();
-        var entry = Assert.Single(model.Provenance.GeneratedFeatures);
-        Assert.Equal("Passability", entry.Kind);
-        Assert.Equal("0", entry.Attributes["ruleIndex"]);
+        var vector = Assert.Single(model.VectorLayers!.Features);
+        Assert.Equal("note-0/vectors/note-0#0", vector.SourceStableId);
+        Assert.Equal(2, model.Provenance.GeneratedFeatures.Count);
+    }
+
+    [Fact]
+    public void GeneratedMapPackageConflictingVectorEmissionFailsWithoutPackage()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.AnnotationLine(),
+            PreviewPayloadFixture.Annotation(
+                "note-0",
+                new GeoLineString(
+                [
+                    new GeoPosition(new Vector2d(500000d, 6000000d)),
+                    new GeoPosition(new Vector2d(500020d, 6000020d)),
+                ])),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.False(result.Success);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.VectorFeatureConflict + ":", StringComparison.Ordinal)
+                && diagnostic.Contains("note-0/vectors/note-0#0", StringComparison.Ordinal));
+        Assert.Null(result.Model);
+        Assert.Null(result.PackageRoot);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void GeneratedMapPackageWithoutVectorFeaturesWritesVersionOnePackage()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.Waypoint("wp-alpha", 640d, 1280d, 1100d, "alpha"),
+            PreviewPayloadFixture.Landmark("landmark-0", 300d, 300d),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.Null(result.Model!.VectorLayers);
+
+        var (manifest, diagnostics) = MapPackageManifestJson.ParseAndValidate(File.ReadAllText(Path.Combine(target, MapPackageFormat.ManifestFileName)));
+        Assert.Empty(diagnostics);
+        Assert.Equal(MapPackageFormat.CurrentPackageVersion, manifest!.PackageVersion);
+        Assert.Null(manifest.VectorLayer);
+        Assert.False(File.Exists(Path.Combine(target, MapPackageFormat.VectorLayerPath)));
+        Assert.Null(new PackageReader(target).Read().VectorLayers);
     }
 
     [Fact]
@@ -570,6 +770,28 @@ public sealed class GeneratedMapPackageConverterTests
         Assert.True(diagnostics.HasErrors);
         Assert.Contains(diagnostics.Items, diagnostic => diagnostic.Message.Contains(PayloadChunkPaths.Terrain(0, 0), StringComparison.Ordinal));
         Assert.False(File.Exists(Path.Combine(target, MapPackageFormat.ManifestFileName)));
+    }
+
+    private static VectorPosition ToVectorPosition(GeoPosition position) =>
+        new(position.Coordinate.X, position.Coordinate.Y, position.AltitudeMeters);
+
+    // Bit patterns, not decimal text, so the comparison is exact for every coordinate and altitude.
+    private static string[] PositionKeys(IEnumerable<VectorPosition> positions) =>
+        positions.Select(position => string.Create(
+            CultureInfo.InvariantCulture,
+            $"{BitConverter.DoubleToInt64Bits(position.X):x16} {BitConverter.DoubleToInt64Bits(position.Y):x16} {(position.AltitudeMeters is { } altitude ? BitConverter.DoubleToInt64Bits(altitude).ToString("x16", CultureInfo.InvariantCulture) : "none")}"))
+            .ToArray();
+
+    private static double SignedArea(IReadOnlyList<VectorPosition> ring)
+    {
+        var sum = 0d;
+
+        for (var index = 0; index < ring.Count - 1; index++)
+        {
+            sum += (ring[index].X * ring[index + 1].Y) - (ring[index + 1].X * ring[index].Y);
+        }
+
+        return sum / 2d;
     }
 
     private static IEnumerable<(int ChunkX, int ChunkY)> ChunkCoordinates(int chunksX, int chunksY)
