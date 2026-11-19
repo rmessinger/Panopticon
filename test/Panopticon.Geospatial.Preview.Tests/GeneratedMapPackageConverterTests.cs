@@ -1082,6 +1082,170 @@ public sealed class GeneratedMapPackageConverterTests
         Assert.Equal(before, PackageFileDigests(payloadRoot));
     }
 
+    [Fact]
+    public void SkirmishSlots_WritePlayableSidesAndPlayerStartsAtDeclaredPositions()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var slots = new[]
+        {
+            new GeneratedMapSkirmishSlot("FactionAmerica", 100d, 100d),
+            new GeneratedMapSkirmishSlot("FactionGLA", 300d, 300d),
+        };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), slots);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var diagnosticCodes = result.Diagnostics.Select(diagnostic => diagnostic.Split(':')[0]).ToArray();
+        Assert.Contains(GeneratedMapPackageDiagnosticCodes.SkirmishSynthesized, diagnosticCodes);
+        Assert.Contains(GeneratedMapPackageDiagnosticCodes.HeightQuantizationSummary, diagnosticCodes);
+
+        var model = new PackageReader(target).Read();
+
+        // The retained SidesList section carries the playable sides; its parsed content is
+        // asserted against the backend readers in the Simulation test project, which owns
+        // the internal section reader.
+        var sidesSection = Assert.Single(model.RetainedSections, section => section.SectionName == "SidesList");
+        Assert.Equal(3, (int)sidesSection.SectionVersion);
+
+        // One player start PlacedObject per slot: the starred waypoint type name, the declared
+        // map-local position, and the properties the runtime waypoint scanner reads.
+        var objects = model.Objects!.Objects;
+        var start1 = Assert.Single(objects, placed => placed.StableId == "Player_1_Start");
+        var start2 = Assert.Single(objects, placed => placed.StableId == "Player_2_Start");
+
+        foreach (var (placed, slot, waypointId) in new[] { (start1, slots[0], 1), (start2, slots[1], 2) })
+        {
+            Assert.Equal("*Waypoints/Waypoint", placed.Type.Name);
+            Assert.Equal(slot.X, placed.X.Value);
+            Assert.Equal(slot.Y, placed.Y.Value);
+            Assert.Equal(0d, placed.OrientationRadians);
+            Assert.Equal(waypointId, Assert.IsType<MapPropertyValue.IntegerValue>(placed.LegacyProperties["waypointID"]).Value);
+            Assert.Equal(placed.StableId, Assert.IsType<MapPropertyValue.AsciiStringValue>(placed.LegacyProperties["waypointName"]).Value);
+        }
+
+        // Z is sampled from the written quantized terrain at the slot's lattice point.
+        var expectedZ1 = PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(10, 10));
+        var expectedZ2 = PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(30, 30));
+        Assert.Equal(expectedZ1, start1.Z.Value);
+        Assert.Equal(expectedZ2, start2.Z.Value);
+    }
+
+    [Fact]
+    public void SkirmishSlots_AreByteIdenticalAcrossIndependentRuns()
+    {
+        using var firstScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(firstScratch.Root);
+        using var secondScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(secondScratch.Root);
+        var slots = new[]
+        {
+            new GeneratedMapSkirmishSlot("FactionAmerica", 100d, 100d),
+            new GeneratedMapSkirmishSlot("FactionGLA", 300d, 300d),
+        };
+
+        using (var firstReader = PreviewPayloadFixture.OpenPayload(firstScratch.Root))
+        {
+            var firstResult = GeneratedMapPackageConverter.Convert(
+                firstReader, MapName, Path.Combine(firstScratch.Root, "package"), PreviewPayloadFixture.DefaultTextureMap(), slots);
+            Assert.True(firstResult.Success, string.Join("; ", firstResult.Diagnostics));
+        }
+
+        using (var secondReader = PreviewPayloadFixture.OpenPayload(secondScratch.Root))
+        {
+            var secondResult = GeneratedMapPackageConverter.Convert(
+                secondReader, MapName, Path.Combine(secondScratch.Root, "package"), PreviewPayloadFixture.DefaultTextureMap(), slots);
+            Assert.True(secondResult.Success, string.Join("; ", secondResult.Diagnostics));
+        }
+
+        Assert.Equal(PackageFileDigests(Path.Combine(firstScratch.Root, "package")), PackageFileDigests(Path.Combine(secondScratch.Root, "package")));
+    }
+
+    [Fact]
+    public void WithoutSkirmishSlots_WritesNoSidesListAndNoStartWaypoints()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+
+        var model = new PackageReader(target).Read();
+        Assert.DoesNotContain(model.RetainedSections, section => section.SectionName == "SidesList");
+        Assert.DoesNotContain(model.Objects?.Objects ?? [], placed => placed.StableId.StartsWith("Player_", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void SkirmishSlotBeyondTheMapExtent_FailsBeforePublishing()
+    {
+        // The 2x2-chunk fixture extent is 2560 game units; slot 2 lies outside it.
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var slots = new[]
+        {
+            new GeneratedMapSkirmishSlot("FactionAmerica", 100d, 100d),
+            new GeneratedMapSkirmishSlot("FactionGLA", 5000d, 500d),
+        };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), slots);
+
+        Assert.False(result.Success);
+        Assert.StartsWith(
+            GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration + ": Skirmish slot 2 declares the start position (5000, 500), which is outside the map extent",
+            Assert.Single(result.Diagnostics),
+            StringComparison.Ordinal);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void SkirmishSlotWithUnknownFaction_FailsBeforePublishing()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(
+            reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), [new GeneratedMapSkirmishSlot("FactionMars", 100d, 100d)]);
+
+        Assert.False(result.Success);
+        Assert.StartsWith(
+            GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration + ": Skirmish slot 1 declares faction 'FactionMars', which is not a known player template",
+            Assert.Single(result.Diagnostics),
+            StringComparison.Ordinal);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void SkirmishSlotWithDuplicatePosition_FailsBeforePublishing()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var slots = new[]
+        {
+            new GeneratedMapSkirmishSlot("FactionAmerica", 100d, 100d),
+            new GeneratedMapSkirmishSlot("FactionGLA", 100d, 100d),
+        };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), slots);
+
+        Assert.False(result.Success);
+        Assert.StartsWith(
+            GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration + ": Skirmish slot 2 repeats the start position (100, 100) of an earlier slot",
+            Assert.Single(result.Diagnostics),
+            StringComparison.Ordinal);
+        Assert.False(Directory.Exists(target));
+    }
+
     private static byte NoncontiguousMaterial(long x, long y) => (x + (3 * y)) % 3 == 0 ? (byte)0 : (byte)2;
 
     private static IEnumerable<string> NonHeightDiagnostics(GeneratedMapPackageResult result)

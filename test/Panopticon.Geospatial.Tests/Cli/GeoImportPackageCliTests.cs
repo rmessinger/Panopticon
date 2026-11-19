@@ -10,13 +10,14 @@ using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Generation;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
-using Panopticon.Geospatial.Preview;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
+using Panopticon.Geospatial.Preview;
 using Panopticon.Geospatial.Tests.Payload;
 using Panopticon.Geospatial.Tests.Pipeline;
 using Panopticon.Tools.GeoImport;
 using Xunit;
+using MapPropertyValue = Panopticon.Content.Importing.Maps.MapPropertyValue;
 
 namespace Panopticon.Geospatial.Tests.Cli;
 
@@ -170,6 +171,126 @@ public class GeoImportPackageCliTests
         Assert.Contains(
             lines,
             line => line.StartsWith("diagnostic: ", StringComparison.Ordinal) && line.Contains("GEO-PKG-008", StringComparison.Ordinal) && line.Contains(stableId, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Package_SkirmishSlots_WriteTheSidesSectionAndThePlayerStarts()
+    {
+        using var project = ImportProjectFixture.Create();
+        var payload = ImportPayload(project);
+        var package = project.OutputPath("package");
+        using var standardOut = new StringWriter();
+        using var errorOut = new StringWriter();
+
+        var exitCode = GeoImportCli.Run(
+            ["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package, "--skirmish", "FactionAmerica:100,100;FactionGLA:300,300"],
+            standardOut,
+            errorOut,
+            CancellationToken.None, KnownCatalog);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(string.Empty, errorOut.ToString());
+
+        var lines = Lines(standardOut);
+        Assert.Contains(
+            lines,
+            line => line.StartsWith("diagnostic: ", StringComparison.Ordinal) && line.Contains("GEO-PKG-018", StringComparison.Ordinal) && line.Contains("Player_1_Start", StringComparison.Ordinal));
+
+        var interchange = new PackageReader(package).Read();
+
+        var sidesSection = Assert.Single(interchange.RetainedSections, section => section.SectionName == "SidesList");
+        Assert.Equal(3, (int)sidesSection.SectionVersion);
+
+        var objects = interchange.Objects!.Objects;
+        var start1 = Assert.Single(objects, placed => placed.StableId == "Player_1_Start");
+        var start2 = Assert.Single(objects, placed => placed.StableId == "Player_2_Start");
+        Assert.Equal("*Waypoints/Waypoint", start1.Type.Name);
+        Assert.Equal("*Waypoints/Waypoint", start2.Type.Name);
+        Assert.Equal(100d, start1.X.Value);
+        Assert.Equal(100d, start1.Y.Value);
+        Assert.Equal(300d, start2.X.Value);
+        Assert.Equal(300d, start2.Y.Value);
+        Assert.Equal(1, Assert.IsType<MapPropertyValue.IntegerValue>(start1.LegacyProperties["waypointID"]).Value);
+        Assert.Equal(2, Assert.IsType<MapPropertyValue.IntegerValue>(start2.LegacyProperties["waypointID"]).Value);
+    }
+
+    [Fact]
+    public void Package_SkirmishWithUnknownFaction_FailsWithTheTypedDiagnosticBeforePublishing()
+    {
+        using var project = ImportProjectFixture.Create();
+        var payload = ImportPayload(project);
+        var package = project.OutputPath("package");
+        using var standardOut = new StringWriter();
+        using var errorOut = new StringWriter();
+
+        var exitCode = GeoImportCli.Run(
+            ["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package, "--skirmish", "FactionAmerica:100,100;FactionMars:300,300"],
+            standardOut,
+            errorOut,
+            CancellationToken.None, KnownCatalog);
+
+        Assert.Equal(1, exitCode);
+        Assert.Equal(string.Empty, standardOut.ToString());
+        Assert.False(Directory.Exists(package));
+        Assert.Contains(
+            Lines(errorOut),
+            line => line.StartsWith("GEO-PKG-017:", StringComparison.Ordinal) && line.Contains("FactionMars", StringComparison.Ordinal) && line.Contains("FactionAmerica, FactionChina, FactionGLA", StringComparison.Ordinal));
+        Assert.Contains(Lines(errorOut), line => line.StartsWith("package failed: ", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Package_SkirmishBeyondTheMapExtent_FailsWithTheTypedDiagnosticBeforePublishing()
+    {
+        // The single-chunk fixture extent is 1280 game units; slot 2 lies outside it.
+        using var project = ImportProjectFixture.Create();
+        var payload = ImportPayload(project);
+        var package = project.OutputPath("package");
+        using var standardOut = new StringWriter();
+        using var errorOut = new StringWriter();
+
+        var exitCode = GeoImportCli.Run(
+            ["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package, "--skirmish", "FactionAmerica:100,100;FactionGLA:5000,500"],
+            standardOut,
+            errorOut,
+            CancellationToken.None, KnownCatalog);
+
+        Assert.Equal(1, exitCode);
+        Assert.Equal(string.Empty, standardOut.ToString());
+        Assert.False(Directory.Exists(package));
+        Assert.Contains(
+            Lines(errorOut),
+            line => line.StartsWith("GEO-PKG-017:", StringComparison.Ordinal) && line.Contains("outside the map extent", StringComparison.Ordinal));
+        Assert.Contains(Lines(errorOut), line => line.StartsWith("package failed: ", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(";;")]
+    [InlineData("FactionAmerica")]
+    [InlineData("FactionAmerica:100")]
+    [InlineData("FactionAmerica:abc,5")]
+    [InlineData("FactionAmerica:nan,5")]
+    [InlineData("FactionAmerica:-5,5")]
+    [InlineData("FactionAmerica:0,0;FactionGLA:0,0")]
+    public void Package_SkirmishWithMalformedValue_FailsWithTheTypedDiagnosticBeforePublishing(string skirmish)
+    {
+        using var project = ImportProjectFixture.Create();
+        var payload = ImportPayload(project);
+        var package = project.OutputPath("package");
+        using var standardOut = new StringWriter();
+        using var errorOut = new StringWriter();
+
+        var exitCode = GeoImportCli.Run(
+            ["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package, "--skirmish", skirmish],
+            standardOut,
+            errorOut,
+            CancellationToken.None, KnownCatalog);
+
+        Assert.Equal(1, exitCode);
+        Assert.Equal(string.Empty, standardOut.ToString());
+        Assert.False(Directory.Exists(package));
+        Assert.Contains(Lines(errorOut), line => line.StartsWith("GEO-PKG-017:", StringComparison.Ordinal));
+        Assert.Contains(Lines(errorOut), line => line.StartsWith("package failed: ", StringComparison.Ordinal));
     }
 
     private static void StageSamePartPayload(string root, out string stableId)

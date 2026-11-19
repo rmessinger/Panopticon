@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -46,7 +47,8 @@ public static class GeneratedMapPackageConverter
         IGeneratedMapPayloadReader reader,
         string mapName,
         string targetPackageRoot,
-        PreviewTextureMap? textureMap = null)
+        PreviewTextureMap? textureMap = null,
+        IReadOnlyList<GeneratedMapSkirmishSlot>? skirmishSlots = null)
     {
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentException.ThrowIfNullOrWhiteSpace(mapName);
@@ -140,16 +142,37 @@ public static class GeneratedMapPackageConverter
             return Failed(blendDiagnostics);
         }
 
+        // The skirmish opt-in is absent by default: no synthesis, no extra waypoints, and the
+        // written package stays byte-for-byte the one the pre-skirmish converter produced.
+        var skirmishWaypoints = new List<PlacedObject>();
+        var retainedSections = new List<RetainedSection>();
+        var skirmishDiagnostics = new List<string>();
+
+        if (skirmishSlots is { Count: > 0 })
+        {
+            var factions = new List<string>(skirmishSlots.Count);
+
+            if (!TryBuildSkirmishStarts(skirmishSlots, chunks, latticeWidth, latticeHeight, skirmishWaypoints, factions, skirmishDiagnostics))
+            {
+                return Failed(skirmishDiagnostics);
+            }
+
+            retainedSections.Add(LegacyMapPackageImporter.CreateSkirmishSidesSection(factions));
+            skirmishDiagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.SkirmishSynthesized,
+                $"Synthesized the retained SidesList section with the factions {string.Join(", ", factions)} and the player start waypoints {StartListText(skirmishWaypoints)}."));
+        }
+
         var interchange = new MapInterchange(
             MapInterchange.CurrentSchemaVersion,
             new MapIdentity(mapName, MapSourceKind.Generated, null),
             BuildLayout(grid, chunks, latticeWidth, latticeHeight, (uint)mapArea),
             BuildBlend(metadata),
-            BuildObjects(features),
+            BuildObjects(features, skirmishWaypoints),
             BuildWaypoints(features),
             BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
-            [],
+            retainedSections,
             blendTileData: blendTileData,
             globalLighting: BuildGeneratedLighting(),
             waypointPaths: new MapWaypointPathsRecord(0, []),
@@ -182,7 +205,7 @@ public static class GeneratedMapPackageConverter
             limitations = [.. Limitations, HeightQuantizationLimitation];
         }
 
-        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).Concat(heightDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, limitations);
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).Concat(skirmishDiagnostics).Concat(heightDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, limitations);
     }
 
     private sealed class HeightQuantizer
@@ -853,7 +876,7 @@ public static class GeneratedMapPackageConverter
         _ => GeometryText(geometry),
     };
 
-    private static PlacedObjectSet? BuildObjects(IReadOnlyList<GeneratedFeature> features)
+    private static PlacedObjectSet? BuildObjects(IReadOnlyList<GeneratedFeature> features, IReadOnlyList<PlacedObject> skirmishWaypoints)
     {
         var objects = new List<PlacedObject>();
 
@@ -877,8 +900,97 @@ public static class GeneratedMapPackageConverter
                 new Dictionary<string, MapPropertyValue>()));
         }
 
+        objects.AddRange(skirmishWaypoints);
+
         return objects.Count == 0 ? null : new PlacedObjectSet(objects);
     }
+
+    // The engine's player starts are MapObjects with the starred waypoint type name whose
+    // waypointID/waypointName properties the runtime waypoint scanner reads (Waypoint.CreateWaypointMapObject,
+    // Scripting/Waypoints.cs); Scene3D resolves Player_{N}_Start 1-based. Z is sampled from the
+    // quantized chunk heights this converter writes, the same heights the resident height map carries.
+    private static bool TryBuildSkirmishStarts(
+        IReadOnlyList<GeneratedMapSkirmishSlot> slots,
+        IReadOnlyList<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        List<PlacedObject> waypoints,
+        List<string> factions,
+        List<string> diagnostics)
+    {
+        var extentX = (double)(latticeWidth - 1) * ChunkLayout.SampleSpacingGameUnits;
+        var extentY = (double)(latticeHeight - 1) * ChunkLayout.SampleSpacingGameUnits;
+        var seen = new HashSet<(double X, double Y)>();
+
+        for (var index = 0; index < slots.Count; index++)
+        {
+            var slot = slots[index];
+            var faction = slot.FactionTemplateName;
+
+            if (!GeneratedMapSkirmishConfiguration.FactionTemplateNames.Contains(faction))
+            {
+                diagnostics.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration,
+                    $"Skirmish slot {index + 1} declares faction '{faction}', which is not a known player template; known factions: {string.Join(", ", GeneratedMapSkirmishConfiguration.FactionTemplateNames)}; no package was written."));
+                return false;
+            }
+
+            if (!double.IsFinite(slot.X) || !double.IsFinite(slot.Y) || slot.X < 0 || slot.Y < 0 || slot.X > extentX || slot.Y > extentY)
+            {
+                diagnostics.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration,
+                    $"Skirmish slot {index + 1} declares the start position ({CoordinateText(slot.X)}, {CoordinateText(slot.Y)}), which is outside the map extent 0..{CoordinateText(extentX)} x 0..{CoordinateText(extentY)} game units; no package was written."));
+                return false;
+            }
+
+            if (!seen.Add((slot.X, slot.Y)))
+            {
+                diagnostics.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration,
+                    $"Skirmish slot {index + 1} repeats the start position ({CoordinateText(slot.X)}, {CoordinateText(slot.Y)}) of an earlier slot; every slot needs its own start position; no package was written."));
+                return false;
+            }
+
+            var name = $"Player_{index + 1}_Start";
+            waypoints.Add(new PlacedObject(
+                name,
+                GameXy(slot.X),
+                GameXy(slot.Y),
+                GameZ(SampleLatticeHeight(chunks, latticeWidth, latticeHeight, slot.X, slot.Y)),
+                0d,
+                new AssetReference(LegacyAssetScope, Panopticon.Scripting.Waypoint.ObjectTypeName),
+                0u,
+                new Dictionary<string, MapPropertyValue>
+                {
+                    ["waypointID"] = new MapPropertyValue.IntegerValue(index + 1),
+                    ["waypointName"] = new MapPropertyValue.AsciiStringValue(name),
+                }));
+            factions.Add(faction);
+        }
+
+        return true;
+    }
+
+    private static float SampleLatticeHeight(IReadOnlyList<Chunk> chunks, int latticeWidth, int latticeHeight, double x, double y)
+    {
+        var latticeX = Math.Clamp((int)Math.Round(x / ChunkLayout.SampleSpacingGameUnits), 0, latticeWidth - 1);
+        var latticeY = Math.Clamp((int)Math.Round(y / ChunkLayout.SampleSpacingGameUnits), 0, latticeHeight - 1);
+        var cx = latticeX / ChunkLayout.IntervalsPerChunk;
+        var cy = latticeY / ChunkLayout.IntervalsPerChunk;
+        var chunk = chunks.Single(candidate => candidate.Key.Cx == cx && candidate.Key.Cy == cy);
+        var originX = cx * ChunkLayout.IntervalsPerChunk;
+        var originY = cy * ChunkLayout.IntervalsPerChunk;
+        var coreWidth = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeWidth - originX);
+        var column = latticeX - originX + 1;
+        var row = latticeY - originY + 1;
+
+        return chunk.Heights.Samples[(row * (coreWidth + 2)) + column];
+    }
+
+    private static string StartListText(IReadOnlyList<PlacedObject> waypoints) =>
+        string.Join(", ", waypoints.Select(waypoint => $"{waypoint.StableId} ({CoordinateText(waypoint.X.Value)}, {CoordinateText(waypoint.Y.Value)})"));
+
+    private static string CoordinateText(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
     private static WaypointSet? BuildWaypoints(IReadOnlyList<GeneratedFeature> features)
     {
@@ -1027,4 +1139,93 @@ public static class GeneratedMapPackageConverter
 
     private static GeneratedMapPackageResult Failed(IEnumerable<string> diagnostics) =>
         new(false, diagnostics.ToArray(), null, null, 0, []);
+}
+
+/// <summary>One operator-declared skirmish slot: the faction player template name and the map-local start position in game units.</summary>
+public sealed record GeneratedMapSkirmishSlot(string FactionTemplateName, double X, double Y);
+
+/// <summary>
+/// Parser for the package verb's skirmish opt-in (<c>"FactionAmerica:100,100;FactionGLA:300,300"</c>).
+/// Slots are 1-based by declaration order: slot N becomes the player start waypoint
+/// <c>Player_{N}_Start</c> for the Nth listed faction. Syntax, faction names, coordinate
+/// signs, and duplicate start positions fail here with one actionable message; the
+/// beyond-map bound is enforced by the converter, which owns the terrain extent.
+/// </summary>
+public static class GeneratedMapSkirmishConfiguration
+{
+    /// <summary>The base-faction PlayerTemplate block names of C&amp;C Generals; skirmish players are looked up by these names.</summary>
+    public static readonly IReadOnlyList<string> FactionTemplateNames = ["FactionAmerica", "FactionChina", "FactionGLA"];
+
+    public static bool TryParse(string? text, out IReadOnlyList<GeneratedMapSkirmishSlot> slots, [NotNullWhen(false)] out string? error)
+    {
+        slots = [];
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            error = EmptyMessage;
+            return false;
+        }
+
+        var parsed = new List<GeneratedMapSkirmishSlot>();
+        var seen = new HashSet<(double X, double Y)>();
+
+        foreach (var rawSlot in text.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var separator = rawSlot.IndexOf(':');
+
+            if (separator <= 0)
+            {
+                error = $"the skirmish slot '{rawSlot}' is not faction:x,y; declare slots as faction:x,y separated by semicolons (for example {Example})";
+                return false;
+            }
+
+            var faction = rawSlot[..separator].Trim();
+
+            if (!FactionTemplateNames.Contains(faction))
+            {
+                error = $"the skirmish slot '{rawSlot}' declares faction '{faction}', which is not a known player template; known factions: {string.Join(", ", FactionTemplateNames)}";
+                return false;
+            }
+
+            var coordinates = rawSlot[(separator + 1)..].Split(',');
+
+            if (coordinates.Length != 2
+                || !double.TryParse(coordinates[0].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
+                || !double.TryParse(coordinates[1].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var y))
+            {
+                error = $"the skirmish slot '{rawSlot}' does not carry two finite invariant-culture game-unit coordinates; declare slots as faction:x,y (for example {Example})";
+                return false;
+            }
+
+            if (x < 0 || y < 0)
+            {
+                error = $"the skirmish slot '{rawSlot}' declares a negative coordinate ({FormatValue(x)}, {FormatValue(y)}); start positions are non-negative game units";
+                return false;
+            }
+
+            if (!seen.Add((x, y)))
+            {
+                error = $"the skirmish slot '{rawSlot}' repeats the start position ({FormatValue(x)}, {FormatValue(y)}) of an earlier slot; every slot needs its own start position";
+                return false;
+            }
+
+            parsed.Add(new GeneratedMapSkirmishSlot(faction, x, y));
+        }
+
+        if (parsed.Count == 0)
+        {
+            error = EmptyMessage;
+            return false;
+        }
+
+        slots = parsed;
+        return true;
+    }
+
+    private const string Example = "FactionAmerica:100,100;FactionGLA:300,300";
+
+    private const string EmptyMessage = "the skirmish configuration is empty; declare at least one slot as faction:x,y (for example " + Example + ")";
+
+    private static string FormatValue(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 }
