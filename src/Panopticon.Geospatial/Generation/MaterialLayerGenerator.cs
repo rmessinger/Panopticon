@@ -31,6 +31,8 @@ public sealed class MaterialLayerGenerator
     /// <summary>
     /// Generates one chunk using nearest-neighbour categorical samples and bounded
     /// polygon painting. Rejections add diagnostics and return null; cancellation throws.
+    /// Line-corridor rules paint between the classification pass and the polygon pass and
+    /// are entirely dormant while the list is empty.
     /// </summary>
     public MaterialChunk? Generate(
         LocalMapGrid grid,
@@ -45,7 +47,8 @@ public sealed class MaterialLayerGenerator
         SamplingStats? stats = null,
         GeoDiagnosticBag? diagnostics = null,
         GeospatialImportLimits? limits = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<LineMaterialRule>? lineRules = null)
     {
         ArgumentNullException.ThrowIfNull(grid);
         ArgumentNullException.ThrowIfNull(palette);
@@ -144,6 +147,23 @@ public sealed class MaterialLayerGenerator
             {
                 return null;
             }
+        }
+
+        if (!TryPaintLineCorridors(
+                grid,
+                palette,
+                clippedFeatures,
+                lineRules,
+                cx,
+                cy,
+                indices,
+                baseSampleX,
+                baseSampleY,
+                limits,
+                diagnostics,
+                cancellationToken))
+        {
+            return null;
         }
 
         if (!TryPaintPolygons(
@@ -433,6 +453,296 @@ public sealed class MaterialLayerGenerator
             && value == Math.Floor(value)
             && value >= int.MinValue
             && value <= int.MaxValue;
+    }
+
+    /// <summary>
+    /// Paints line corridors in manifest order between the classification pass and the
+    /// polygon pass, so raster &lt; line &lt; polygon holds for the combined evaluation.
+    /// Later rules override earlier ones where corridors overlap; each chunk generates
+    /// independently against the map-clipped features, and cells outside the chunk or the
+    /// map are simply never written.
+    /// </summary>
+    private static bool TryPaintLineCorridors(
+        LocalMapGrid grid,
+        MaterialPalette palette,
+        IReadOnlyList<LocalFeature>? clippedFeatures,
+        IReadOnlyList<LineMaterialRule>? rules,
+        int cx,
+        int cy,
+        byte[] indices,
+        int baseSampleX,
+        int baseSampleY,
+        GeospatialImportLimits limits,
+        GeoDiagnosticBag diagnostics,
+        CancellationToken cancellationToken)
+    {
+        if (rules is null || rules.Count == 0)
+        {
+            // Opt-in dormancy: no line rules, no validation work, no behavior change.
+            return true;
+        }
+
+        // Rule forms are validated against the explicit palette even without features.
+        var resolved = new List<(LineMaterialRule Rule, byte Index)>(rules.Count);
+        for (var i = 0; i < rules.Count; i++)
+        {
+            var rule = rules[i];
+            ArgumentNullException.ThrowIfNull(rule);
+            if (!palette.TryGetIndex(rule.Material, out var index))
+            {
+                AddNameError(
+                    diagnostics,
+                    cx,
+                    cy,
+                    $"lineMaterialRules[{i.ToString(CultureInfo.InvariantCulture)}] entry for source '{rule.SourceId}'",
+                    rule.Material);
+
+                return false;
+            }
+
+            resolved.Add((rule, index));
+        }
+
+        if (clippedFeatures is not { Count: > 0 })
+        {
+            return true;
+        }
+
+        var context = new PaintContext(cx, cy, diagnostics, limits, cancellationToken);
+        var metersPerGameUnit = grid.Transform.MetersPerGameUnit;
+        var spacing = (double)ChunkLayout.SampleSpacingGameUnits;
+        var lastSampleX = baseSampleX + ChunkLayout.IntervalsPerChunk;
+        var lastSampleY = baseSampleY + ChunkLayout.IntervalsPerChunk;
+        var points = ChunkLayout.PointsPerChunkAxis;
+
+        for (var r = 0; r < resolved.Count && !context.Stopped; r++)
+        {
+            var (rule, index) = resolved[r];
+
+            for (var f = 0; f < clippedFeatures.Count && !context.Stopped; f++)
+            {
+                var feature = clippedFeatures[f];
+                if (feature is null || feature.Geometry is not GeoLineString line)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(rule.SourceId, feature.SourceFeature.SourceId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                context.CurrentPartId = feature.PartId;
+                if (!TryResolveCorridorWidth(rule, feature, r, cx, cy, diagnostics, out var widthMeters))
+                {
+                    return false;
+                }
+
+                var halfWidthGameUnits = widthMeters / metersPerGameUnit / 2d;
+                if (!double.IsFinite(halfWidthGameUnits) || halfWidthGameUnits <= 0d)
+                {
+                    context.FailFeature(
+                        $"Chunk ({cx}, {cy}): the resolved corridor width {Format(widthMeters)} m of line rule "
+                        + $"{r.ToString(CultureInfo.InvariantCulture)} for feature part '{feature.PartId}' "
+                        + "does not convert to a positive finite game-unit half-width.");
+
+                    return false;
+                }
+
+                TryPaintLine(
+                    line,
+                    index,
+                    halfWidthGameUnits,
+                    indices,
+                    baseSampleX,
+                    baseSampleY,
+                    lastSampleX,
+                    lastSampleY,
+                    spacing,
+                    points,
+                    context);
+            }
+        }
+
+        return !context.Stopped;
+    }
+
+    /// <summary>
+    /// Resolves the corridor width in source metres per feature: explicit width attribute,
+    /// lanes attribute times per-lane metres, class widths keyed by a class attribute
+    /// value, then the rule default. A feature none of the declared paths resolves fails
+    /// the chunk with a typed error; widths are never guessed.
+    /// </summary>
+    private static bool TryResolveCorridorWidth(
+        LineMaterialRule rule,
+        LocalFeature feature,
+        int ruleIndex,
+        int cx,
+        int cy,
+        GeoDiagnosticBag diagnostics,
+        out double widthMeters)
+    {
+        var attributes = feature.SourceFeature.Attributes;
+
+        if (rule.WidthAttribute is { } widthAttribute
+            && attributes.TryGetValue(widthAttribute, out var widthText)
+            && double.TryParse(widthText, NumberStyles.Float, CultureInfo.InvariantCulture, out var explicitWidth)
+            && IsPositiveWidth(explicitWidth))
+        {
+            widthMeters = explicitWidth;
+            return true;
+        }
+
+        if (rule.LanesAttribute is { } lanesAttribute
+            && rule.MetersPerLane is { } metersPerLane
+            && attributes.TryGetValue(lanesAttribute, out var lanesText)
+            && double.TryParse(lanesText, NumberStyles.Float, CultureInfo.InvariantCulture, out var lanes)
+            && IsPositiveWidth(lanes)
+            && IsPositiveWidth(lanes * metersPerLane))
+        {
+            widthMeters = lanes * metersPerLane;
+            return true;
+        }
+
+        if (rule.ClassAttribute is { } classAttribute
+            && rule.ClassWidthsMeters is { } classWidths
+            && attributes.TryGetValue(classAttribute, out var classValue)
+            && classWidths.TryGetValue(classValue, out var classWidth)
+            && IsPositiveWidth(classWidth))
+        {
+            widthMeters = classWidth;
+            return true;
+        }
+
+        if (rule.DefaultWidthMeters is { } defaultWidth && IsPositiveWidth(defaultWidth))
+        {
+            widthMeters = defaultWidth;
+            return true;
+        }
+
+        widthMeters = 0d;
+        diagnostics.Add(new GeoDiagnostic(
+            GeoDiagnosticCodes.GenerateFailure,
+            GeoStage.Generate,
+            GeoSeverity.Error,
+            $"Chunk ({cx}, {cy}): lineMaterialRules[{ruleIndex.ToString(CultureInfo.InvariantCulture)}] cannot resolve a "
+            + $"corridor width in metres for feature part '{feature.PartId}' of source '{feature.SourceFeature.SourceId}'; "
+            + "the feature attributes satisfy none of the declared width paths (widthAttribute, lanesAttribute with "
+            + "metersPerLane, classAttribute with classWidthsMeters) and the rule declares no defaultWidthMeters."));
+
+        return false;
+
+        static bool IsPositiveWidth(double value) => double.IsFinite(value) && value > 0d;
+    }
+
+    /// <summary>
+    /// Rasterizes one line into the chunk: every segment charges its vertex and one unit
+    /// per candidate cell, and a cell is painted when its lattice centre's distance to the
+    /// segment is at most the corridor half-width. The candidate range comes from the
+    /// segment's half-width-expanded bbox clamped to this chunk, so edge cells of adjacent
+    /// chunks evaluate their shared global centre bit-identically.
+    /// </summary>
+    private static void TryPaintLine(
+        GeoLineString line,
+        byte index,
+        double halfWidth,
+        byte[] indices,
+        int baseSampleX,
+        int baseSampleY,
+        int lastSampleX,
+        int lastSampleY,
+        double spacing,
+        int points,
+        PaintContext context)
+    {
+        var positions = line.Positions;
+
+        for (var i = 0; i + 1 < positions.Count && !context.Stopped; i++)
+        {
+            if (!context.TryCharge(1))
+            {
+                return;
+            }
+
+            var ax = positions[i].Coordinate.X;
+            var ay = positions[i].Coordinate.Y;
+            var bx = positions[i + 1].Coordinate.X;
+            var by = positions[i + 1].Coordinate.Y;
+            if (!double.IsFinite(ax) || !double.IsFinite(ay) || !double.IsFinite(bx) || !double.IsFinite(by))
+            {
+                context.FailFeature(
+                    $"Chunk ({context.ChunkX}, {context.ChunkY}): the corridor of feature part "
+                    + $"'{context.CurrentPartId}' has a non-finite vertex.");
+
+                return;
+            }
+
+            var minX = Math.Min(ax, bx) - halfWidth;
+            var minY = Math.Min(ay, by) - halfWidth;
+            var maxX = Math.Max(ax, bx) + halfWidth;
+            var maxY = Math.Max(ay, by) + halfWidth;
+            if (!IsFiniteQuad(minX, minY, maxX, maxY))
+            {
+                context.FailFeature(
+                    $"Chunk ({context.ChunkX}, {context.ChunkY}): the corridor bbox of feature part "
+                    + $"'{context.CurrentPartId}' is not finite.");
+
+                return;
+            }
+
+            var minGx = Math.Ceiling(minX / spacing);
+            var maxGx = Math.Floor(maxX / spacing);
+            var minGy = Math.Ceiling(minY / spacing);
+            var maxGy = Math.Floor(maxY / spacing);
+            if (minGx > maxGx || minGy > maxGy)
+            {
+                continue;
+            }
+
+            var gxMin = (int)Math.Clamp(minGx, baseSampleX, lastSampleX);
+            var gxMax = (int)Math.Clamp(maxGx, baseSampleX, lastSampleX);
+            var gyMin = (int)Math.Clamp(minGy, baseSampleY, lastSampleY);
+            var gyMax = (int)Math.Clamp(maxGy, baseSampleY, lastSampleY);
+
+            var dx = bx - ax;
+            var dy = by - ay;
+            var lengthSquared = (dx * dx) + (dy * dy);
+            var halfWidthSquared = halfWidth * halfWidth;
+
+            for (var gy = gyMin; gy <= gyMax && !context.Stopped; gy++)
+            {
+                var py = gy * spacing;
+                var rowOffset = (gy - baseSampleY) * points;
+
+                for (var gx = gxMin; gx <= gxMax && !context.Stopped; gx++)
+                {
+                    if (!context.TryCharge(1))
+                    {
+                        return;
+                    }
+
+                    var px = gx * spacing;
+                    var t = lengthSquared == 0d
+                        ? 0d
+                        : (((px - ax) * dx) + ((py - ay) * dy)) / lengthSquared;
+                    if (t < 0d)
+                    {
+                        t = 0d;
+                    }
+                    else if (t > 1d)
+                    {
+                        t = 1d;
+                    }
+
+                    var ex = px - (ax + (t * dx));
+                    var ey = py - (ay + (t * dy));
+                    if (((ex * ex) + (ey * ey)) <= halfWidthSquared)
+                    {
+                        indices[rowOffset + (gx - baseSampleX)] = index;
+                    }
+                }
+            }
+        }
     }
 
     private static bool TryPaintPolygons(
