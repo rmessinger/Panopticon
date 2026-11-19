@@ -135,7 +135,7 @@ Ticket results are recorded as an OpenProject completion comment (`op_add_work_p
 ## PR Guidelines
 
 - All changes via PR; each commit must build
-- PR descriptions use atomic bullets, not prose paragraphs: one fact per bullet; one top-level bullet per card or change area; a short Validation list at the end
+- PR descriptions follow the section format in `CONTRIBUTING.md` (Pull Requests): `Intent`, per-change-area sections with a reason sub-bullet per change, `Not in this PR`, `Reviewer focus`, `Evidence`, `Validation`
 - Split semicolon chains and multi-sentence blobs into separate bullets or nested sub-lists (total verbosity stays roughly the same as paragraph text)
 - "Rebase and Merge" is the default merge strategy
 - Do not mix unrelated changes in one PR
