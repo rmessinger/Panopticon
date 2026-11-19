@@ -39,6 +39,7 @@ internal static class ManifestValidator
             materialRules,
             featureMappings,
             dto.DefaultMaterial);
+        var bridgeRules = ValidateBridgeRules(context, dto.BridgeRules, sources);
         var slopePolicy = ValidateSlopePolicy(context, dto.SlopePolicy);
         var controlPoints = ValidateControlPoints(context, dto.ControlPoints, sources);
 
@@ -59,6 +60,7 @@ internal static class ManifestValidator
             Tolerances = tolerances,
             MaterialRules = materialRules.AsReadOnly(),
             LineMaterialRules = lineMaterialRules.AsReadOnly(),
+            BridgeRules = bridgeRules.AsReadOnly(),
             FeatureMappings = featureMappings.AsReadOnly(),
             SlopePolicy = slopePolicy,
             ControlPoints = controlPoints.AsReadOnly(),
@@ -765,6 +767,86 @@ internal static class ManifestValidator
         {
             context.ValueInvalid($"{field} must be a non-empty attribute name.");
         }
+    }
+
+    /// <summary>
+    /// Bridge rules must reference a declared vector or extent source and a bridge template
+    /// of the installed game; value predicates require their attribute.
+    /// </summary>
+    private static List<BridgeRule> ValidateBridgeRules(
+        ValidationContext context,
+        IReadOnlyList<BridgeRuleDto?>? dto,
+        SourceSummary sources)
+    {
+        var rules = new List<BridgeRule>();
+        if (dto is null)
+        {
+            return rules;
+        }
+
+        var verified = new HashSet<string>(BridgeRule.VerifiedTemplateNames, StringComparer.Ordinal);
+
+        for (var i = 0; i < dto.Count; i++)
+        {
+            var rule = dto[i];
+            if (rule is null)
+            {
+                context.MissingRequired($"bridgeRules[{i}] is null.");
+                continue;
+            }
+
+            var field = $"bridgeRules[{i}]";
+            var sourceId = RequiredText(context, rule.SourceId, $"{field}.sourceId");
+            if (sourceId is not null)
+            {
+                if (!sources.RolesById.TryGetValue(sourceId, out var role))
+                {
+                    context.ValueInvalid($"{field}.sourceId '{sourceId}' does not match any declared source.");
+                }
+                else if (role != ManifestSourceRole.Vector && role != ManifestSourceRole.Extent)
+                {
+                    context.ValueInvalid($"{field}.sourceId '{sourceId}' must reference a source with role 'vector' or 'extent'.");
+                }
+            }
+
+            // An omitted bridgeTemplate means the default; a present-but-empty one is rejected.
+            string template;
+            if (rule.BridgeTemplate is null)
+            {
+                template = BridgeRule.DefaultBridgeTemplate;
+            }
+            else if (string.IsNullOrWhiteSpace(rule.BridgeTemplate))
+            {
+                context.ValueInvalid($"{field}.bridgeTemplate must be a non-empty bridge template name when present.");
+                template = string.Empty;
+            }
+            else
+            {
+                template = rule.BridgeTemplate.Trim();
+                if (!verified.Contains(template))
+                {
+                    context.ValueInvalid(
+                        $"{field}.bridgeTemplate '{template}' is not a bridge template of the installed game; known templates: "
+                        + $"{string.Join(", ", BridgeRule.VerifiedTemplateNames)}.");
+                }
+            }
+
+            ValidateAttributeName(context, rule.FeatureAttribute, $"{field}.featureAttribute");
+
+            if (rule.FeatureValue is not null && rule.FeatureAttribute is null)
+            {
+                context.ValueInvalid(
+                    $"{field}.featureValue requires {field}.featureAttribute; a value can only match through an attribute.");
+            }
+
+            rules.Add(new BridgeRule(
+                sourceId ?? string.Empty,
+                template,
+                NormalizeOptional(rule.FeatureAttribute),
+                NormalizeOptional(rule.FeatureValue)));
+        }
+
+        return rules;
     }
 
     private static IReadOnlyDictionary<string, double>? ValidateClassWidths(

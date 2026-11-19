@@ -54,6 +54,12 @@ internal sealed record LineMaterialRuleDto(
     string? ClassAttribute = null,
     IReadOnlyDictionary<string, double>? ClassWidthsMeters = null);
 
+internal sealed record BridgeRuleDto(
+    string? SourceId = null,
+    string? BridgeTemplate = null,
+    string? FeatureAttribute = null,
+    string? FeatureValue = null);
+
 internal sealed record FeatureMappingDto(
     string? SourceId = null,
     ManifestFeatureTarget? Target = null,
@@ -96,6 +102,7 @@ internal sealed record ManifestDto(
     ToleranceDto? Tolerances = null,
     IReadOnlyList<MaterialRuleDto?>? MaterialRules = null,
     IReadOnlyList<LineMaterialRuleDto?>? LineMaterialRules = null,
+    IReadOnlyList<BridgeRuleDto?>? BridgeRules = null,
     IReadOnlyList<FeatureMappingDto?>? FeatureMappings = null,
     SlopePolicyDto? SlopePolicy = null,
     IReadOnlyList<ControlPointDto?>? ControlPoints = null,

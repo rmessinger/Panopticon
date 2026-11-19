@@ -441,6 +441,18 @@ Deferred to R3, where placed objects enter the map package:
   layers, which are stubbed today.
 - Building heights from source attributes, for line of sight and visuals.
 
+Bridge rules place engine bridges from vector lines: a `bridgeRules` manifest entry names a
+vector source, an optional feature attribute and value predicate, and a bridge template.
+Template names must be `Bridge` blocks of the installed game's Roads.ini (the verified set
+lives in `BridgeRule`); `Concrete` (model CBBridgeSt) applies when the entry omits the
+template, chosen because its model is present in the installed W3D.big with the
+BRIDGE_LEFT/BRIDGE_SPAN/BRIDGE_RIGHT sub-objects the renderer requires. Each matched straight
+two-point line emits one adjacent BridgeStart/BridgeEnd placed-object pair, with endpoint
+positions from the line and Z from the quantized terrain heights; the engine renders the
+bridge model between the endpoints. Polyline, multi-segment, and non-line features are
+skipped with a diagnostic; zero-length lines fail the conversion. Placement is visual only:
+the engine traversal layers are stubbed, so bridges carry no passability or pathfinding.
+
 #### 5.4.1 Candidate content sources
 
 Structures avoid one bespoke model per building. Candidate routes, combinable:
