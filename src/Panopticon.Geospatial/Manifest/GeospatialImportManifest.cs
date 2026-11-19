@@ -22,6 +22,12 @@ public sealed record GeospatialImportManifest
 
     public IReadOnlyList<MaterialRule> MaterialRules { get; init; } = [];
 
+    /// <summary>
+    /// Opt-in line-corridor rules painted between classification samples and polygon
+    /// rules; the whole line pass is dormant while this list is empty.
+    /// </summary>
+    public IReadOnlyList<LineMaterialRule> LineMaterialRules { get; init; } = [];
+
     public IReadOnlyList<FeatureMappingRule> FeatureMappings { get; init; } = [];
 
     public SlopePolicy SlopePolicy { get; init; } = new();

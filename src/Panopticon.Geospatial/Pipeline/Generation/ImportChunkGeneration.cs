@@ -196,7 +196,8 @@ internal static class ImportChunkGeneration
                     classificationStats,
                     diagnostics,
                     limits,
-                    cancellationToken);
+                    cancellationToken,
+                    manifest.LineMaterialRules);
 
                 if (materialChunk is null)
                 {
