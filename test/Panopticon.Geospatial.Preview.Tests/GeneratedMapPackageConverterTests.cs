@@ -7,14 +7,17 @@ using System.Security.Cryptography;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Content.Importing.MapSources;
 using Panopticon.Content.Importing.MapSources.Package;
+using Panopticon.Data.Map;
 using Panopticon.Geospatial;
 using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Generation;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Manifest;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Xunit;
+using GeneratedFeature = Panopticon.Geospatial.Features.GeneratedFeature;
 
 namespace Panopticon.Geospatial.Preview.Tests;
 
@@ -1276,6 +1279,450 @@ public sealed class GeneratedMapPackageConverterTests
             Assert.Single(result.Diagnostics),
             StringComparison.Ordinal);
         Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void BridgeRules_EmitAdjacentStartEndPairsAtLineEndpoints()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.Waypoint("wp-alpha", 640d, 1280d, 1100d, "alpha"),
+            PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)),
+            PreviewPayloadFixture.Annotation("bridge-b", BridgeLine(1500d, 500d, 2100d, 700d)),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var rules = new[] { new BridgeRule("vectors", "ConcreteOneLane") };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgePairsEmitted + ": Emitted", StringComparison.Ordinal)
+                && diagnostic.Contains("2 bridge pair(s) (4 placed objects)", StringComparison.Ordinal));
+        Assert.Contains(result.Limitations, limitation => limitation.Contains("Bridges are placed visually", StringComparison.Ordinal));
+
+        var model = new PackageReader(target).Read();
+        Assert.NotNull(model.Objects);
+        var objects = model.Objects!.Objects;
+        Assert.Equal(4, objects.Count);
+
+        // Scene3D pairs the BridgeStart object at index i with the BridgeEnd object at
+        // index i+1; each emitted pair is adjacent and pairs stay contiguous.
+        foreach (var (start, end, featureId, (startX, startY), (endX, endY)) in new[]
+                 {
+                     (objects[0], objects[1], "Bridge_1", (200d, 640d), (900d, 640d)),
+                     (objects[2], objects[3], "Bridge_2", (1500d, 500d), (2100d, 700d)),
+                 })
+        {
+            Assert.Equal((uint)RoadType.BridgeStart, start.RoadType);
+            Assert.Equal((uint)RoadType.BridgeEnd, end.RoadType);
+            Assert.Equal("ConcreteOneLane", start.Type.Name);
+            Assert.Equal("ConcreteOneLane", end.Type.Name);
+            Assert.Equal("legacy", start.Type.Scope);
+            Assert.Equal($"{featureId}_Start", start.StableId);
+            Assert.Equal($"{featureId}_End", end.StableId);
+            Assert.Equal(startX, start.X.Value);
+            Assert.Equal(startY, start.Y.Value);
+            Assert.Equal(endX, end.X.Value);
+            Assert.Equal(endY, end.Y.Value);
+            Assert.Equal(MapQuantityFrame.MapLocalXy, start.X.Frame);
+            Assert.Equal(MapQuantityFrame.MapLocalZ, start.Z.Frame);
+            Assert.Empty(start.LegacyProperties);
+
+            // Orientation is the planar bearing from the line start to its end, stored
+            // exactly as the float32 angle the resident format keeps; Z comes from the
+            // quantized terrain heights at each endpoint's lattice point.
+            Assert.Equal((double)(float)Math.Atan2(endY - startY, endX - startX), start.OrientationRadians, 12);
+            Assert.Equal(end.OrientationRadians, start.OrientationRadians);
+            var expectedStartZ = PreviewPayloadFixture.ResidentGridHeight(
+                PreviewPayloadFixture.GlobalHeight((long)Math.Round(startX / 10), (long)Math.Round(startY / 10)));
+            var expectedEndZ = PreviewPayloadFixture.ResidentGridHeight(
+                PreviewPayloadFixture.GlobalHeight((long)Math.Round(endX / 10), (long)Math.Round(endY / 10)));
+            Assert.Equal(expectedStartZ, start.Z.Value);
+            Assert.Equal(expectedEndZ, end.Z.Value);
+        }
+    }
+
+    [Fact]
+    public void BridgeRules_ThreeBridgesStayAdjacentAroundOtherPlacedObjects()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[]
+        {
+            PreviewPayloadFixture.ObjectCandidate("tree-0", 512d, 768d, 1050d, "TreeOak", 90d),
+            PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)),
+            PreviewPayloadFixture.Annotation("bridge-b", BridgeLine(1500d, 500d, 2100d, 700d)),
+            PreviewPayloadFixture.Annotation("bridge-c", BridgeLine(300d, 2000d, 300d, 1200d)),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var rules = new[] { new BridgeRule("vectors") };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+        var objects = model.Objects!.Objects;
+        Assert.Equal(7, objects.Count);
+
+        // The object candidate stays first; every bridge pair follows as adjacent
+        // (BridgeStart, BridgeEnd) neighbours in emission order.
+        Assert.Equal("tree-0", objects[0].StableId);
+        Assert.Equal(0u, objects[0].RoadType);
+        Assert.Equal((uint)RoadType.BridgeStart, objects[1].RoadType);
+        Assert.Equal((uint)RoadType.BridgeEnd, objects[2].RoadType);
+        Assert.Equal((uint)RoadType.BridgeStart, objects[3].RoadType);
+        Assert.Equal((uint)RoadType.BridgeEnd, objects[4].RoadType);
+        Assert.Equal((uint)RoadType.BridgeStart, objects[5].RoadType);
+        Assert.Equal((uint)RoadType.BridgeEnd, objects[6].RoadType);
+        Assert.Equal("Concrete", objects[1].Type.Name);
+        Assert.Equal("Bridge_1_Start", objects[1].StableId);
+        Assert.Equal("Bridge_2_End", objects[4].StableId);
+        Assert.Equal("Bridge_3_Start", objects[5].StableId);
+        Assert.Equal("Bridge_3_End", objects[6].StableId);
+    }
+
+    [Fact]
+    public void BridgeRules_SkipPolylineMultiAndNonLineFeaturesWithDiagnostic()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var polygon = new GeoPolygon(new GeoRing(
+        [
+            new GeoPosition(new Vector2d(300d, 300d)),
+            new GeoPosition(new Vector2d(400d, 300d)),
+            new GeoPosition(new Vector2d(400d, 400d)),
+            new GeoPosition(new Vector2d(300d, 400d)),
+            new GeoPosition(new Vector2d(300d, 300d)),
+        ]));
+        var multi = new GeoMultiGeometry([BridgeLine(100d, 100d, 200d, 200d)]);
+        var features = new[]
+        {
+            PreviewPayloadFixture.Annotation("polyline-0", BridgeLine(300d, 640d, 400d, 640d, 500d, 640d)),
+            PreviewPayloadFixture.Annotation("polygon-0", polygon),
+            PreviewPayloadFixture.Annotation("multi-0", multi),
+            new GeneratedFeature(
+                GeneratedFeatureKind.Annotation,
+                new GeoPointGeometry(new GeoPosition(new Vector2d(400d, 400d))),
+                "vectors",
+                "point-0",
+                "vectors/point-0#0",
+                -1,
+                null,
+                new GamePosition(400d, 400d, 1050f)),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(
+            reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: [new BridgeRule("vectors")]);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var skipped = Assert.Single(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeFeaturesSkipped + ":", StringComparison.Ordinal));
+        Assert.Contains("4 bridge-matched feature(s)", skipped, StringComparison.Ordinal);
+        Assert.Contains("polyline-0/vectors/polyline-0#0 (3-point line)", skipped, StringComparison.Ordinal);
+        Assert.Contains("polygon-0/vectors/polygon-0#0 (GeoPolygon geometry)", skipped, StringComparison.Ordinal);
+        Assert.Contains("multi-0/vectors/multi-0#0 (GeoMultiGeometry geometry)", skipped, StringComparison.Ordinal);
+        Assert.Contains("point-0/vectors/point-0#0 (GeoPointGeometry geometry)", skipped, StringComparison.Ordinal);
+        Assert.Null(new PackageReader(target).Read().Objects);
+    }
+
+    [Fact]
+    public void BridgeRules_ZeroLengthLine_FailsBeforePublishing()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[] { PreviewPayloadFixture.Annotation("bridge-degenerate", BridgeLine(500d, 640d, 500d, 640d)) }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(
+            reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: [new BridgeRule("vectors")]);
+
+        Assert.False(result.Success);
+        Assert.StartsWith(
+            GeneratedMapPackageDiagnosticCodes.BridgeLineDegenerate + ": Bridge feature 'bridge-degenerate/vectors/bridge-degenerate#0' is a zero-length line",
+            Assert.Single(result.Diagnostics),
+            StringComparison.Ordinal);
+        Assert.Null(result.Model);
+        Assert.Null(result.PackageRoot);
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void BridgeRules_AttributePredicateSelectsMatchingFeaturesOnly()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var matching = new GeneratedFeature(
+            GeneratedFeatureKind.Annotation,
+            BridgeLine(200d, 640d, 900d, 640d),
+            "vectors",
+            "bridge-a",
+            "vectors/bridge-a#0",
+            -1,
+            new Dictionary<string, string> { ["type"] = "bridge" });
+        var wrongValue = new GeneratedFeature(
+            GeneratedFeatureKind.Annotation,
+            BridgeLine(1500d, 500d, 2100d, 700d),
+            "vectors",
+            "bridge-b",
+            "vectors/bridge-b#0",
+            -1,
+            new Dictionary<string, string> { ["type"] = "pipeline" });
+        var noAttribute = PreviewPayloadFixture.Annotation("bridge-c", BridgeLine(300d, 2000d, 300d, 1200d));
+        var features = new[] { matching, wrongValue, noAttribute }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(
+            reader,
+            MapName,
+            target,
+            PreviewPayloadFixture.DefaultTextureMap(),
+            bridgeRules: [new BridgeRule("vectors", FeatureAttribute: "type", FeatureValue: "bridge")]);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        var model = new PackageReader(target).Read();
+        var objects = model.Objects!.Objects;
+        Assert.Equal(2, objects.Count);
+        Assert.Equal("Bridge_1_Start", objects[0].StableId);
+        Assert.Equal(200d, objects[0].X.Value);
+        Assert.Equal("Bridge_1_End", objects[1].StableId);
+        Assert.Equal(900d, objects[1].X.Value);
+
+        // Non-matching features are not bridge-matched: nothing is reported as skipped.
+        Assert.DoesNotContain(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeFeaturesSkipped + ":", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void BridgeRules_DeduplicateOverlappingRuleEmissionsToOnePairPerSourcePart()
+    {
+        // Auditor MUSTFIX (WP1022): a bridge line matched by several feature mappings
+        // (here the auditor's road-authoring plus passability-region shape) arrives as two
+        // GeneratedFeatures with the same SourceId/FeatureId/PartId. Today's FeatureMapper
+        // emits at most one authoring feature per part and passability regions are
+        // polygon-only, so this shape is staged directly as the defensive invariant: the
+        // bridge pass must keep the first emission per source identity and place exactly
+        // one bridge per source part, counting the duplicate.
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var geometry = BridgeLine(200d, 640d, 900d, 640d);
+        var road = new GeneratedFeature(GeneratedFeatureKind.Road, geometry, "vectors", "bridge-0", "vectors/bridge-0#0", 0);
+        var passability = new GeneratedFeature(
+            GeneratedFeatureKind.Passability,
+            geometry,
+            "vectors",
+            "bridge-0",
+            "vectors/bridge-0#0",
+            1,
+            passable: false);
+        var features = new[]
+        {
+            road,
+            passability,
+            PreviewPayloadFixture.Annotation("bridge-1", BridgeLine(1500d, 500d, 2100d, 700d)),
+        }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(
+            reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: [new BridgeRule("vectors")]);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeDuplicatesIgnored + ": Ignored", StringComparison.Ordinal)
+                && diagnostic.Contains("1 duplicate bridge emission(s)", StringComparison.Ordinal)
+                && diagnostic.Contains("bridge-0/vectors/bridge-0#0", StringComparison.Ordinal));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgePairsEmitted + ": Emitted", StringComparison.Ordinal)
+                && diagnostic.Contains("2 bridge pair(s) (4 placed objects)", StringComparison.Ordinal));
+
+        var model = new PackageReader(target).Read();
+        var objects = model.Objects!.Objects;
+        Assert.Equal(4, objects.Count);
+        Assert.Equal((uint)RoadType.BridgeStart, objects[0].RoadType);
+        Assert.Equal((uint)RoadType.BridgeEnd, objects[1].RoadType);
+        Assert.Equal(200d, objects[0].X.Value);
+        Assert.Equal(640d, objects[0].Y.Value);
+        Assert.Equal(900d, objects[1].X.Value);
+        Assert.Equal(640d, objects[1].Y.Value);
+        Assert.Equal((uint)RoadType.BridgeStart, objects[2].RoadType);
+        Assert.Equal((uint)RoadType.BridgeEnd, objects[3].RoadType);
+        Assert.Equal(1500d, objects[2].X.Value);
+        Assert.Equal(500d, objects[2].Y.Value);
+        Assert.Equal(2100d, objects[3].X.Value);
+        Assert.Equal(700d, objects[3].Y.Value);
+    }
+
+    [Fact]
+    public void BridgeRules_AreByteIdenticalAcrossIndependentRuns()
+    {
+        using var firstScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(firstScratch.Root, features: BridgeFeatures());
+        using var secondScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(secondScratch.Root, features: BridgeFeatures());
+        var rules = new[] { new BridgeRule("vectors") };
+
+        using (var firstReader = PreviewPayloadFixture.OpenPayload(firstScratch.Root))
+        {
+            var firstResult = GeneratedMapPackageConverter.Convert(
+                firstReader, MapName, Path.Combine(firstScratch.Root, "package"), PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+            Assert.True(firstResult.Success, string.Join("; ", firstResult.Diagnostics));
+        }
+
+        using (var secondReader = PreviewPayloadFixture.OpenPayload(secondScratch.Root))
+        {
+            var secondResult = GeneratedMapPackageConverter.Convert(
+                secondReader, MapName, Path.Combine(secondScratch.Root, "package"), PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+            Assert.True(secondResult.Success, string.Join("; ", secondResult.Diagnostics));
+        }
+
+        Assert.Equal(
+            PackageFileDigests(Path.Combine(firstScratch.Root, "package")),
+            PackageFileDigests(Path.Combine(secondScratch.Root, "package")));
+    }
+
+    [Fact]
+    public void WithoutBridgeRules_NoBridgesAreEmittedAndOutputIsByteIdenticalAcrossRuns()
+    {
+        // Opt-in dormancy guard (WP1022): the payload carries bridge-shaped lines, but the
+        // bridge rule list is absent, so no bridge objects may appear and two independently
+        // staged payload plus package runs produce identical package bytes.
+        using var firstScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(firstScratch.Root, features: BridgeFeatures());
+        using var secondScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(secondScratch.Root, features: BridgeFeatures());
+
+        var firstPackage = ConvertWithoutBridgeRules(firstScratch.Root, "package-a");
+        var secondPackage = ConvertWithoutBridgeRules(secondScratch.Root, "package-b");
+
+        Assert.DoesNotContain(
+            new PackageReader(firstPackage).Read().Objects?.Objects ?? [],
+            placed => placed.StableId.StartsWith("Bridge_", StringComparison.Ordinal));
+        Assert.Equal(PackageFileDigests(firstPackage), PackageFileDigests(secondPackage));
+
+        static string ConvertWithoutBridgeRules(string scratchRoot, string packageName)
+        {
+            var target = Path.Combine(scratchRoot, packageName);
+            using var reader = PreviewPayloadFixture.OpenPayload(scratchRoot);
+            var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+            Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+            Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.StartsWith("GEO-PKG-019", StringComparison.Ordinal));
+
+            return target;
+        }
+    }
+
+    [Fact]
+    public void ManifestBridgeRules_ValidateSourcesTemplatesAndAttributePredicates()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        Directory.CreateDirectory(scratch.Root);
+        const string head = """
+            {
+              "sources": [
+                { "id": "extent", "kind": "kml", "path": "area.kml", "role": "extent" },
+                { "id": "dem", "kind": "geotiff", "path": "dem/dem.tif", "role": "elevation", "verticalDatum": "EGM96", "verticalAccuracyMeters": 1.5 },
+                { "id": "vectors", "kind": "kml", "path": "features.kml", "role": "vector" }
+              ],
+              "targetCoordinateSystem": { "type": "utm", "zone": 31, "hemisphere": "north" },
+              "metersPerGameUnit": 1,
+              "defaultMaterial": "grass",
+              "bridgeRules": [
+            """;
+        const string tail = """
+              ]
+            }
+            """;
+
+        var valid = Load(scratch.Root, head + """
+                { "sourceId": "vectors" },
+                { "sourceId": "extent", "bridgeTemplate": "ConcreteFourLane", "featureAttribute": " type ", "featureValue": " bridge " }
+            """ + tail);
+        Assert.NotNull(valid);
+        Assert.Equal(2, valid!.BridgeRules.Count);
+        Assert.Equal("vectors", valid.BridgeRules[0].SourceId);
+        Assert.Equal("Concrete", valid.BridgeRules[0].BridgeTemplate);
+        Assert.Null(valid.BridgeRules[0].FeatureAttribute);
+        Assert.Null(valid.BridgeRules[0].FeatureValue);
+        Assert.Equal("ConcreteFourLane", valid.BridgeRules[1].BridgeTemplate);
+        Assert.Equal("type", valid.BridgeRules[1].FeatureAttribute);
+        Assert.Equal("bridge", valid.BridgeRules[1].FeatureValue);
+        Assert.Contains("Concrete", BridgeRule.VerifiedTemplateNames);
+        Assert.Equal(24, BridgeRule.VerifiedTemplateNames.Distinct().Count());
+
+        Assert.Null(Load(scratch.Root, head + """
+                { "sourceId": "missing" }
+            """ + tail));
+        AssertRejects("bridgeRules[0].sourceId 'missing' does not match any declared source.");
+
+        Assert.Null(Load(scratch.Root, head + """
+                { "sourceId": "dem" }
+            """ + tail));
+        AssertRejects("bridgeRules[0].sourceId 'dem' must reference a source with role 'vector' or 'extent'.");
+
+        Assert.Null(Load(scratch.Root, head + """
+                { "sourceId": "vectors", "bridgeTemplate": "NotABridge" }
+            """ + tail));
+        AssertRejects("bridgeRules[0].bridgeTemplate 'NotABridge' is not a bridge template of the installed game");
+
+        Assert.Null(Load(scratch.Root, head + """
+                { "sourceId": "vectors", "bridgeTemplate": " " }
+            """ + tail));
+        AssertRejects("bridgeRules[0].bridgeTemplate must be a non-empty bridge template name when present.");
+
+        Assert.Null(Load(scratch.Root, head + """
+                { "sourceId": "vectors", "featureValue": "bridge" }
+            """ + tail));
+        AssertRejects("bridgeRules[0].featureValue requires bridgeRules[0].featureAttribute; a value can only match through an attribute.");
+
+        GeoDiagnosticBag bag = new();
+
+        GeospatialImportManifest? Load(string directory, string rulesJson)
+        {
+            var path = Path.Combine(directory, "manifest.json");
+            File.WriteAllText(path, rulesJson);
+            bag = new GeoDiagnosticBag();
+
+            return ManifestLoader.Load(path, bag);
+        }
+
+        void AssertRejects(string message) => Assert.Contains(bag.Items, diagnostic => diagnostic.Message.Contains(message, StringComparison.Ordinal));
+    }
+
+    private static List<GeneratedFeature> BridgeFeatures()
+    {
+        return
+        [
+            PreviewPayloadFixture.Waypoint("wp-alpha", 640d, 1280d, 1100d, "alpha"),
+            PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)),
+            PreviewPayloadFixture.Annotation("bridge-b", BridgeLine(1500d, 500d, 2100d, 700d)),
+        ];
+    }
+
+    private static GeoLineString BridgeLine(params double[] coordinates)
+    {
+        var positions = new List<GeoPosition>();
+
+        for (var index = 0; index + 1 < coordinates.Length; index += 2)
+        {
+            positions.Add(new GeoPosition(new Vector2d(coordinates[index], coordinates[index + 1])));
+        }
+
+        return new GeoLineString(positions);
     }
 
     private static byte NoncontiguousMaterial(long x, long y) => (x + (3 * y)) % 3 == 0 ? (byte)0 : (byte)2;
