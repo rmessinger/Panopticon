@@ -169,6 +169,38 @@ public sealed class GeneratedMapPreviewBuilderTests
     }
 
     [Fact]
+    public void Border_PaintedTilesAndImpassability_MatchFormulaAcrossFullArray()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(scratch.Root);
+
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var options = new PreviewBuildOptions { BorderWidth = 2 };
+        var result = GeneratedMapPreviewBuilder.Build(reader, PreviewPayloadFixture.DefaultTextureMap(), options: options);
+
+        Assert.True(result.Success, FormatDiagnostics(result));
+        var blend = result.MapFile!.BlendTileData;
+        const int core = 257;
+        const int border = 2;
+        const int stored = core + (2 * border);
+        Assert.Equal(stored, blend.Tiles.GetLength(0));
+        Assert.Equal(stored, blend.Tiles.GetLength(1));
+
+        for (var y = 0; y < stored; y++)
+        {
+            for (var x = 0; x < stored; x++)
+            {
+                var coreX = Math.Clamp(x - border, 0, core - 1);
+                var coreY = Math.Clamp(y - border, 0, core - 1);
+                var inCore = x >= border && x < border + core && y >= border && y < border + core;
+
+                Assert.Equal(ExpectedTileValue(coreX, coreY), blend.Tiles[x, y]);
+                Assert.Equal(inCore && coreX % 3 == 0, blend.Impassability[x, y]);
+            }
+        }
+    }
+
+    [Fact]
     public void OversizedCrop_FailsWithTypedDiagnostic_NeverAutoCrops()
     {
         using var scratch = new PreviewPayloadFixture.ScratchRoot();

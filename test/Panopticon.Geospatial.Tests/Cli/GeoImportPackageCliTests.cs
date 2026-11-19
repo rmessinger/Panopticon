@@ -10,6 +10,7 @@ using Panopticon.Geospatial.Features;
 using Panopticon.Geospatial.Generation;
 using Panopticon.Geospatial.Grid;
 using Panopticon.Geospatial.Interchange;
+using Panopticon.Geospatial.Preview;
 using Panopticon.Geospatial.Payload;
 using Panopticon.Geospatial.Payload.Models;
 using Panopticon.Geospatial.Tests.Payload;
@@ -25,6 +26,11 @@ namespace Panopticon.Geospatial.Tests.Cli;
 /// </summary>
 public class GeoImportPackageCliTests
 {
+    private static readonly GeoImportCliOptions KnownCatalog = new()
+    {
+        TerrainTextureCatalogResolver = () => new FixedTerrainTextureCatalog(["GrassType1", "DirtMediumType1", "RockType1", "SandType1"]),
+    };
+
     [Fact]
     public void Package_ImportedPayload_WritesThePackageNamedAfterThePayloadAndExitsZero()
     {
@@ -34,7 +40,7 @@ public class GeoImportPackageCliTests
         using var standardOut = new StringWriter();
         using var errorOut = new StringWriter();
 
-        var exitCode = GeoImportCli.Run(["package", "--payload", payload, "--out", package], standardOut, errorOut, CancellationToken.None);
+        var exitCode = GeoImportCli.Run(["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package], standardOut, errorOut, CancellationToken.None, KnownCatalog);
 
         Assert.Equal(0, exitCode);
         Assert.Equal(string.Empty, errorOut.ToString());
@@ -44,7 +50,7 @@ public class GeoImportPackageCliTests
 
         Assert.Contains(lines, line => line.StartsWith("package: ", StringComparison.Ordinal));
         Assert.Contains(lines, line => line == "chunks: 1");
-        Assert.Equal(5, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
+        Assert.Equal(6, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
 
         var interchange = new PackageReader(package).Read();
 
@@ -60,10 +66,10 @@ public class GeoImportPackageCliTests
         var package = project.OutputPath("package");
 
         var exitCode = GeoImportCli.Run(
-            ["package", "--payload", payload, "--out", package, "--name", "Custom Map"],
+            ["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package, "--name", "Custom Map"],
             new StringWriter(),
             new StringWriter(),
-            CancellationToken.None);
+            CancellationToken.None, KnownCatalog);
 
         Assert.Equal(0, exitCode);
         Assert.Equal("Custom Map", new PackageReader(package).Read().Identity.Name);
@@ -81,7 +87,7 @@ public class GeoImportPackageCliTests
             ["package", "--payload", Path.Combine(project.Root, "missing"), "--out", package],
             standardOut,
             errorOut,
-            CancellationToken.None);
+            CancellationToken.None, KnownCatalog);
 
         Assert.Equal(1, exitCode);
         Assert.False(Directory.Exists(package));
@@ -100,7 +106,7 @@ public class GeoImportPackageCliTests
         using var standardOut = new StringWriter();
         using var errorOut = new StringWriter();
 
-        var exitCode = GeoImportCli.Run(["package", "--payload", payload, "--out", package], standardOut, errorOut, CancellationToken.None);
+        var exitCode = GeoImportCli.Run(["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package], standardOut, errorOut, CancellationToken.None, KnownCatalog);
 
         Assert.Equal(1, exitCode);
         Assert.Equal(string.Empty, standardOut.ToString());
@@ -123,10 +129,10 @@ public class GeoImportPackageCliTests
         using var errorOut = new StringWriter();
 
         var exitCode = GeoImportCli.Run(
-            ["package", "--payload", payload, "--out", package, "--force"],
+            ["package", "--payload", payload, "--textures", ShrubTextures(project), "--out", package, "--force"],
             standardOut,
             errorOut,
-            CancellationToken.None);
+            CancellationToken.None, KnownCatalog);
 
         Assert.Equal(0, exitCode);
         Assert.Equal(string.Empty, errorOut.ToString());
@@ -150,7 +156,7 @@ public class GeoImportPackageCliTests
             ["package", "--payload", Path.Combine(scratch.Root, "payload"), "--out", package, "--name", "dup-part"],
             standardOut,
             errorOut,
-            CancellationToken.None);
+            CancellationToken.None, KnownCatalog);
 
         Assert.Equal(0, exitCode);
         Assert.Equal(string.Empty, errorOut.ToString());
@@ -160,7 +166,7 @@ public class GeoImportPackageCliTests
 
         Assert.Contains(lines, line => line.StartsWith("package: ", StringComparison.Ordinal));
         Assert.Contains(lines, line => line == "chunks: 1");
-        Assert.Equal(5, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
+        Assert.Equal(6, lines.Count(line => line.StartsWith("limitation: ", StringComparison.Ordinal)));
         Assert.Contains(
             lines,
             line => line.StartsWith("diagnostic: ", StringComparison.Ordinal) && line.Contains("GEO-PKG-008", StringComparison.Ordinal) && line.Contains(stableId, StringComparison.Ordinal));
@@ -219,6 +225,13 @@ public class GeoImportPackageCliTests
         return new GeoRing(ring);
     }
 
+    private static string ShrubTextures(ImportProjectFixture project)
+    {
+        var path = project.OutputPath("textures.json");
+        File.WriteAllText(path, "{\"grass\":\"GrassType1\",\"dirt\":\"DirtMediumType1\",\"rock\":\"RockType1\",\"shrub\":\"GrassType1\"}");
+        return path;
+    }
+
     private static string ImportPayload(ImportProjectFixture project)
     {
         var payload = project.OutputPath("payload");
@@ -226,10 +239,15 @@ public class GeoImportPackageCliTests
             ["import", "--manifest", project.ManifestPath, "--out", payload],
             new StringWriter(),
             new StringWriter(),
-            CancellationToken.None);
+            CancellationToken.None, KnownCatalog);
 
         Assert.Equal(0, exitCode);
         return payload;
+    }
+
+    private sealed class FixedTerrainTextureCatalog(string[] names) : ITerrainTextureCatalog
+    {
+        public IReadOnlyCollection<string> TerrainTextureNames => names;
     }
 
     private static string[] Lines(StringWriter writer)

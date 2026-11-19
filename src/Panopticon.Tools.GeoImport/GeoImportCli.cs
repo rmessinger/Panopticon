@@ -35,6 +35,9 @@ public static class GeoImportCli
 
     private const int TexturesBlockBytes = 64 * 1024;
 
+    private const string DefaultPackageTexturesJson =
+        """{"grass":"GrassType1","dirt":"DirtMediumType1","rock":"RockType1","sand":"SandType1"}""";
+
     /// <summary>CLI-private encoded UTF-8 bound on the textures file, enforced while streaming (card 24 decision 12).</summary>
     internal const int MaxTexturesBytes = 1024 * 1024;
 
@@ -64,7 +67,7 @@ public static class GeoImportCli
                 (ImportOptions importOptions) => RunImport(importOptions, standardOut, errorOut, cancellationToken),
                 (ReportOptions reportOptions) => RunReport(reportOptions, standardOut, errorOut, cancellationToken),
                 (PreviewOptions previewOptions) => RunPreview(previewOptions, options, standardOut, errorOut, cancellationToken),
-                (PackageOptions packageOptions) => RunPackage(packageOptions, standardOut, errorOut, cancellationToken),
+                (PackageOptions packageOptions) => RunPackage(packageOptions, options, standardOut, errorOut, cancellationToken),
                 _ => UsageFailure(errorOut));
     }
 
@@ -245,7 +248,12 @@ public static class GeoImportCli
     /// --force is set, because the package writer replaces it. Conversion is not cancellable,
     /// so cancellation only applies while the payload is opened.
     /// </summary>
-    private static int RunPackage(PackageOptions options, TextWriter standardOut, TextWriter errorOut, CancellationToken cancellationToken)
+    private static int RunPackage(
+        PackageOptions options,
+        GeoImportCliOptions? cliOptions,
+        TextWriter standardOut,
+        TextWriter errorOut,
+        CancellationToken cancellationToken)
     {
         var mapName = string.IsNullOrWhiteSpace(options.MapName)
             ? Path.GetFileName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(options.PayloadDirectory)))
@@ -270,6 +278,17 @@ public static class GeoImportCli
         try
         {
             var diagnostics = new GeoDiagnosticBag();
+            var textureMap = TryResolvePackageTextureMap(options.TexturesPath, cliOptions, diagnostics, cancellationToken);
+
+            if (textureMap is null)
+            {
+                WriteDiagnostics(diagnostics.Items, standardOut, errorOut);
+                errorOut.WriteLine(
+                    NormalizeWhitespace(
+                        $"package failed: the published payload at {options.PayloadDirectory} is unchanged"));
+                return OperationalFailureExit;
+            }
+
             var reader = GeneratedMapPayloadReader.Open(options.PayloadDirectory, diagnostics, cancellationToken: cancellationToken);
 
             if (reader is null)
@@ -283,7 +302,7 @@ public static class GeoImportCli
 
             using (reader)
             {
-                var result = GeneratedMapPackageConverter.Convert(reader, mapName, options.OutputDirectory);
+                var result = GeneratedMapPackageConverter.Convert(reader, mapName, options.OutputDirectory, textureMap);
 
                 if (!result.Success || result.PackageRoot is null)
                 {
@@ -332,6 +351,26 @@ public static class GeoImportCli
             NormalizeWhitespace(
                 $"preview failed: the published payload at {payloadRoot} is unchanged"));
         return OperationalFailureExit;
+    }
+
+    private static PreviewTextureMap? TryResolvePackageTextureMap(
+        string? texturesPath,
+        GeoImportCliOptions? cliOptions,
+        GeoDiagnosticBag diagnostics,
+        CancellationToken cancellationToken)
+    {
+        var json = texturesPath is null
+            ? DefaultPackageTexturesJson
+            : TryReadTextures(texturesPath, diagnostics, cancellationToken);
+
+        if (json is null)
+        {
+            return null;
+        }
+
+        var catalog = TryResolveCatalog(cliOptions, diagnostics);
+
+        return catalog is null ? null : PreviewTextureMap.FromJson(json, catalog, diagnostics);
     }
 
     private static ITerrainTextureCatalog? TryResolveCatalog(GeoImportCliOptions? cliOptions, GeoDiagnosticBag diagnostics)
@@ -523,7 +562,7 @@ public static class GeoImportCli
                 "usage: geoimport import --manifest <path> --out <dir> [--force]; "
                 + "geoimport report --payload <dir>; "
                 + "geoimport preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir>; "
-                + "geoimport package --payload <dir> --out <package dir> [--name <map name>] [--force]"));
+                + "geoimport package --payload <dir> --out <package dir> [--textures <map.json>] [--name <map name>] [--force]"));
         return UsageExit;
     }
 
@@ -580,5 +619,8 @@ public static class GeoImportCli
 
         [Option('f', "force", HelpText = "Replace an existing output directory.")]
         public bool Force { get; set; }
+
+        [Option('t', "textures", HelpText = "Palette-to-texture JSON map; defaults to the built-in grass, dirt, rock, and sand bindings.")]
+        public string? TexturesPath { get; set; }
     }
 }

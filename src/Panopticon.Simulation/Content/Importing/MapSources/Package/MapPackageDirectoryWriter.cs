@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace Panopticon.Content.Importing.MapSources.Package;
@@ -143,6 +144,17 @@ public static class MapPackageDirectoryWriter
                 if (vectorFailure is not null)
                 {
                     diagnostics.Add(vectorFailure);
+                    return new MapPackageWriteResult(false, diagnostics);
+                }
+            }
+
+            if (manifest.Buildings is not null)
+            {
+                var buildingFailure = StageBuildingFiles(stage, manifest.Buildings, payloads);
+
+                if (buildingFailure is not null)
+                {
+                    diagnostics.Add(buildingFailure);
                     return new MapPackageWriteResult(false, diagnostics);
                 }
             }
@@ -323,6 +335,54 @@ public static class MapPackageDirectoryWriter
         return WriteStagedFile(stage, entry.Path, encoded);
     }
 
+    private static MapPackageDiagnostic? StageBuildingFiles(string stage, MapPackageBuildingsEntry entry, IMapPackagePayloadProvider payloads)
+    {
+        byte[] metadata;
+
+        try
+        {
+            metadata = payloads.GetBuildingMetadata(entry);
+        }
+        catch (Exception ex)
+        {
+            return new MapPackageDiagnostic(
+                MapPackageChunkDiagnostic.PayloadProviderFailed,
+                $"Staging payload data for the building metadata failed: {ex.Message}");
+        }
+
+        var failure = WriteStagedFile(stage, entry.Path, metadata);
+
+        if (failure is not null)
+        {
+            return failure;
+        }
+
+        foreach (var mesh in entry.MeshChunks)
+        {
+            byte[] encoded;
+
+            try
+            {
+                encoded = payloads.GetBuildingMesh(mesh);
+            }
+            catch (Exception ex)
+            {
+                return new MapPackageDiagnostic(
+                    MapPackageChunkDiagnostic.PayloadProviderFailed,
+                    $"Staging payload data for building mesh '{mesh.Path}' failed: {ex.Message}");
+            }
+
+            failure = WriteStagedFile(stage, mesh.Path, encoded);
+
+            if (failure is not null)
+            {
+                return failure;
+            }
+        }
+
+        return null;
+    }
+
     private static MapPackageDiagnostic? StageManifest(string stage, MapPackageManifest manifest)
     {
         try
@@ -458,6 +518,26 @@ public static class MapPackageDirectoryWriter
             if (vectorFailure is not null)
             {
                 return vectorFailure;
+            }
+        }
+
+        if (manifest.Buildings is not null)
+        {
+            var buildingFailure = VerifyStagedFile(stage, manifest.Buildings.Path, manifest.Buildings.ByteLength, manifest.Buildings.Sha256);
+
+            if (buildingFailure is not null)
+            {
+                return buildingFailure;
+            }
+
+            foreach (var mesh in manifest.Buildings.MeshChunks)
+            {
+                var meshFailure = VerifyStagedFile(stage, mesh.Path, mesh.ByteLength, mesh.Sha256);
+
+                if (meshFailure is not null)
+                {
+                    return meshFailure;
+                }
             }
         }
 
@@ -662,6 +742,27 @@ public static class MapPackageDirectoryWriter
                     diagnostics.Add(new MapPackageDiagnostic(
                         MapPackageDiagnostic.PathInvalid,
                         $"Multiple package entries resolve to the same relative path '{entry.Path}'."));
+                    return false;
+                }
+            }
+        }
+
+        if (manifest.Buildings is not null)
+        {
+            var buildingPaths = new List<string> { manifest.Buildings.Path };
+
+            if (manifest.Buildings.MeshChunks is not null)
+            {
+                buildingPaths.AddRange(manifest.Buildings.MeshChunks.Select(mesh => mesh.Path));
+            }
+
+            foreach (var path in buildingPaths)
+            {
+                if (!seenRelativePaths.Add(NormalizeRelativePath(path)))
+                {
+                    diagnostics.Add(new MapPackageDiagnostic(
+                        MapPackageDiagnostic.PathInvalid,
+                        $"Multiple package entries resolve to the same relative path '{path}'."));
                     return false;
                 }
             }

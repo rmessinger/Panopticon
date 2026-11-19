@@ -42,6 +42,7 @@ public static class MapPackageManifestValidator
         ValidateRetainedSections(manifest, diagnostics);
         ValidateCompanions(manifest, diagnostics);
         ValidateVectorLayer(manifest.VectorLayer, diagnostics);
+        ValidateBuildings(manifest.Buildings, diagnostics);
 
         if (diagnostics.Count > 100)
         {
@@ -64,18 +65,25 @@ public static class MapPackageManifestValidator
                 $"Package format '{manifest.Format}' is not the expected format '{MapPackageFormat.PackageFormatName}'."));
         }
 
-        if (manifest.PackageVersion is not (MapPackageFormat.CurrentPackageVersion or MapPackageFormat.VectorPackageVersion))
+        if (manifest.PackageVersion is not (MapPackageFormat.CurrentPackageVersion or MapPackageFormat.VectorPackageVersion or MapPackageFormat.BuildingPackageVersion))
         {
             diagnostics.Add(new MapPackageDiagnostic(
                 MapPackageDiagnostic.PackageVersion,
-                $"Package version {manifest.PackageVersion} is not supported; expected version {MapPackageFormat.CurrentPackageVersion} or {MapPackageFormat.VectorPackageVersion}."));
+                $"Package version {manifest.PackageVersion} is not supported; expected version {MapPackageFormat.CurrentPackageVersion}, {MapPackageFormat.VectorPackageVersion}, or {MapPackageFormat.BuildingPackageVersion}."));
         }
 
-        if (manifest.VectorLayer is not null && manifest.PackageVersion != MapPackageFormat.VectorPackageVersion)
+        if (manifest.VectorLayer is not null && manifest.PackageVersion is not (MapPackageFormat.VectorPackageVersion or MapPackageFormat.BuildingPackageVersion))
         {
             diagnostics.Add(new MapPackageDiagnostic(
                 MapPackageDiagnostic.PackageVersion,
-                $"Package version {manifest.PackageVersion} carries a vector layer; a vector layer requires version {MapPackageFormat.VectorPackageVersion}."));
+                $"Package version {manifest.PackageVersion} carries a vector layer; a vector layer requires version {MapPackageFormat.VectorPackageVersion} or {MapPackageFormat.BuildingPackageVersion}."));
+        }
+
+        if (manifest.Buildings is not null && manifest.PackageVersion != MapPackageFormat.BuildingPackageVersion)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.PackageVersion,
+                $"Package version {manifest.PackageVersion} carries a building layer; a building layer requires version {MapPackageFormat.BuildingPackageVersion}."));
         }
 
         if (manifest.SchemaVersion != MapInterchange.CurrentSchemaVersion)
@@ -843,6 +851,127 @@ public static class MapPackageManifestValidator
             diagnostics.Add(new MapPackageDiagnostic(
                 MapPackageDiagnostic.VectorLayer,
                 $"Vector layer declares non-positive feature count {entry.FeatureCount}."));
+        }
+    }
+
+    private static void ValidateBuildings(MapPackageBuildingsEntry? entry, List<MapPackageDiagnostic> diagnostics)
+    {
+        if (entry is null)
+        {
+            return;
+        }
+
+        if (!string.Equals(entry.Path, MapPackageFormat.BuildingsMetadataPath, StringComparison.Ordinal))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building metadata path '{entry.Path}' must be '{MapPackageFormat.BuildingsMetadataPath}'."));
+        }
+
+        if (!string.Equals(entry.Encoding, MapPackageFormat.EncodingJson, StringComparison.Ordinal))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building metadata encoding '{entry.Encoding}' must be '{MapPackageFormat.EncodingJson}'."));
+        }
+
+        if (entry.ByteLength <= 0 || entry.ByteLength > MapPackageFormat.MaxPackageFileBytes)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building metadata declares byte length {entry.ByteLength}; expected 1 to {MapPackageFormat.MaxPackageFileBytes}."));
+        }
+
+        if (!MapPackagePath.IsValidSha256(entry.Sha256))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.DigestInvalid,
+                $"Building metadata SHA-256 '{entry.Sha256}' must be 64 lowercase hex characters."));
+        }
+
+        if (entry.BuildingCount < 0)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building layer declares negative building count {entry.BuildingCount}."));
+        }
+
+        if (entry.MeshChunks is null)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                "Building layer has no mesh chunk list."));
+            return;
+        }
+
+        var seenChunks = new HashSet<(int X, int Y)>();
+        foreach (var mesh in entry.MeshChunks)
+        {
+            ValidateBuildingMesh(mesh, seenChunks, diagnostics);
+        }
+    }
+
+    private static void ValidateBuildingMesh(
+        MapPackageBuildingMeshEntry mesh,
+        HashSet<(int X, int Y)> seenChunks,
+        List<MapPackageDiagnostic> diagnostics)
+    {
+        var expectedPath = MapPackageFormat.BuildingMeshPath(mesh.ChunkX, mesh.ChunkY);
+
+        if (!string.Equals(mesh.Path, expectedPath, StringComparison.Ordinal))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh path '{mesh.Path}' must be '{expectedPath}' for chunk ({mesh.ChunkX}, {mesh.ChunkY})."));
+        }
+
+        if (!seenChunks.Add((mesh.ChunkX, mesh.ChunkY)))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh chunk ({mesh.ChunkX}, {mesh.ChunkY}) is listed more than once."));
+        }
+
+        if (!string.Equals(mesh.Encoding, MapPackageFormat.EncodingPbm1, StringComparison.Ordinal))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh encoding '{mesh.Encoding}' must be '{MapPackageFormat.EncodingPbm1}'."));
+        }
+
+        if (mesh.ByteLength <= 0 || mesh.ByteLength > MapPackageFormat.MaxPackageFileBytes)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh chunk ({mesh.ChunkX}, {mesh.ChunkY}) declares byte length {mesh.ByteLength}."));
+        }
+
+        if (!MapPackagePath.IsValidSha256(mesh.Sha256))
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.DigestInvalid,
+                $"Building mesh SHA-256 '{mesh.Sha256}' must be 64 lowercase hex characters."));
+        }
+
+        if (mesh.SegmentCount is < 1 or > MapPackageBuildingCodec.MaxSegmentsPerChunk)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh chunk ({mesh.ChunkX}, {mesh.ChunkY}) declares {mesh.SegmentCount} segments; expected 1 to {MapPackageBuildingCodec.MaxSegmentsPerChunk}."));
+        }
+
+        if (mesh.VertexCount is < 1 or > MapPackageBuildingCodec.MaxVerticesPerChunk)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh chunk ({mesh.ChunkX}, {mesh.ChunkY}) declares {mesh.VertexCount} vertices; expected 1 to {MapPackageBuildingCodec.MaxVerticesPerChunk}."));
+        }
+
+        if (mesh.IndexCount is < 3 or > MapPackageBuildingCodec.MaxIndicesPerChunk || mesh.IndexCount % 3 != 0)
+        {
+            diagnostics.Add(new MapPackageDiagnostic(
+                MapPackageDiagnostic.BuildingLayer,
+                $"Building mesh chunk ({mesh.ChunkX}, {mesh.ChunkY}) declares {mesh.IndexCount} indices; expected a multiple of 3 from 3 to {MapPackageBuildingCodec.MaxIndicesPerChunk}."));
         }
     }
 

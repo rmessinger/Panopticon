@@ -73,5 +73,7 @@ public sealed record MapPackageDiagnostic(string Code, string Message)
 
     public const string VectorLayer = "vector-layer";
 
+    public const string BuildingLayer = "building-layer";
+
     public override string ToString() => $"{Code}: {Message}";
 }

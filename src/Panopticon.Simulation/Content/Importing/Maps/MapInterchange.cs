@@ -30,7 +30,8 @@ public sealed record MapInterchange
         MapGlobalWaterSettingsRecord? globalWaterSettings = null,
         MapPolygonTriggersRecord? polygonTriggers = null,
         MapWaypointPathsRecord? waypointPaths = null,
-        VectorLayerSet? vectorLayers = null)
+        VectorLayerSet? vectorLayers = null,
+        BuildingLayerSet? buildings = null)
     {
         ArgumentNullException.ThrowIfNull(retainedSections);
         SchemaVersion = schemaVersion;
@@ -52,6 +53,7 @@ public sealed record MapInterchange
         PolygonTriggers = polygonTriggers;
         WaypointPaths = waypointPaths;
         VectorLayers = vectorLayers;
+        Buildings = buildings;
     }
 
     public int SchemaVersion { get; init; }
@@ -91,4 +93,6 @@ public sealed record MapInterchange
     public MapWaypointPathsRecord? WaypointPaths { get; init; }
 
     public VectorLayerSet? VectorLayers { get; init; }
+
+    public BuildingLayerSet? Buildings { get; init; }
 }

@@ -28,6 +28,8 @@ public static class GeneratedMapPackageConverter
     private const string LegacyAssetScope = "legacy";
     private const string ControlPointCategory = "control-point";
     private const int HeightSectionVersion = 5;
+    private const string HeightQuantizationLimitation =
+        "Terrain heights are quantized to the resident height grid (0.0390625 game height units per step, round half to even); stored heights differ from the payload by at most half a step where the payload is off-grid.";
 
     private static readonly DecoderOptions DecodeOptions = new() { SkipMetadata = true };
 
@@ -40,7 +42,11 @@ public static class GeneratedMapPackageConverter
         "The import report is an import result, not package content; a reloaded package carries an empty import-report placeholder by design.",
     ];
 
-    public static GeneratedMapPackageResult Convert(IGeneratedMapPayloadReader reader, string mapName, string targetPackageRoot)
+    public static GeneratedMapPackageResult Convert(
+        IGeneratedMapPayloadReader reader,
+        string mapName,
+        string targetPackageRoot,
+        PreviewTextureMap? textureMap = null)
     {
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentException.ThrowIfNullOrWhiteSpace(mapName);
@@ -78,12 +84,13 @@ public static class GeneratedMapPackageConverter
 
         var diagnostics = new List<string>();
         var chunks = new List<Chunk>();
+        var heightQuantizer = new HeightQuantizer();
 
         for (var chunkY = 0; chunkY < grid.ChunksY; chunkY++)
         {
             for (var chunkX = 0; chunkX < grid.ChunksX; chunkX++)
             {
-                var chunk = ReadChunk(reader, grid.ImageryPixelsPerSample is not null, chunkX, chunkY, diagnostics);
+                var chunk = ReadChunk(reader, grid.ImageryPixelsPerSample is not null, chunkX, chunkY, heightQuantizer, diagnostics);
 
                 if (chunk is null)
                 {
@@ -94,6 +101,13 @@ public static class GeneratedMapPackageConverter
             }
         }
 
+        if (heightQuantizer.RejectedCount > 0)
+        {
+            return Failed([Format(
+                GeneratedMapPackageDiagnosticCodes.HeightQuantization,
+                $"{heightQuantizer.RejectedCount} of {heightQuantizer.SampleCount} terrain samples are non-finite or outside the range the resident height grid represents; no package was written.")]);
+        }
+
         var (vectorLayers, vectorConflicts, vectorDiagnostics) = BuildVectorLayers(metadata.Features);
 
         if (vectorConflicts.Count > 0)
@@ -101,11 +115,29 @@ public static class GeneratedMapPackageConverter
             return Failed(vectorConflicts);
         }
 
+        // Buildings consume the same original emissions as BuildVectorLayers, before
+        // provenance dedupe, so one source part mapped into several mask features still
+        // yields one building part.
+        var (buildings, buildingDiagnostics, buildingConflicts) = GeneratedBuildingBuilder.Build(metadata.Features, grid, chunks);
+
+        if (buildingConflicts.Count > 0)
+        {
+            return Failed(buildingConflicts);
+        }
+
         var (features, provenanceFeatures, dedupeDiagnostics, sourceConflicts) = DedupeFeatures(metadata.Features);
 
         if (sourceConflicts.Count > 0)
         {
             return Failed(sourceConflicts);
+        }
+
+        var blendDiagnostics = new List<string>();
+        var blendTileData = BuildBlendTileData(metadata, chunks, textureMap, latticeWidth, latticeHeight, blendDiagnostics);
+
+        if (blendTileData is null)
+        {
+            return Failed(blendDiagnostics);
         }
 
         var interchange = new MapInterchange(
@@ -118,7 +150,11 @@ public static class GeneratedMapPackageConverter
             BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
             [],
-            vectorLayers: vectorLayers);
+            blendTileData: blendTileData,
+            globalLighting: BuildGeneratedLighting(),
+            waypointPaths: new MapWaypointPathsRecord(0, []),
+            vectorLayers: vectorLayers,
+            buildings: buildings);
 
         var validation = MapInterchangeValidator.Validate(interchange);
 
@@ -134,7 +170,65 @@ public static class GeneratedMapPackageConverter
             return Failed(write.Diagnostics.Select(diagnostic => Format(diagnostic.Code, diagnostic.Message)));
         }
 
-        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, Limitations);
+        var heightDiagnostics = new List<string>();
+        var limitations = Limitations;
+
+        if (heightQuantizer.ChangedCount > 0)
+        {
+            var maxError = heightQuantizer.MaxError.ToString("R", CultureInfo.InvariantCulture);
+            heightDiagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.HeightQuantizationSummary,
+                $"Quantized {heightQuantizer.ChangedCount} of {heightQuantizer.SampleCount} terrain samples to the resident height grid (step 0.0390625 game height units); max error {maxError} game height units, bound 0.01953125."));
+            limitations = [.. Limitations, HeightQuantizationLimitation];
+        }
+
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).Concat(heightDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, limitations);
+    }
+
+    private sealed class HeightQuantizer
+    {
+        private const double Step = 0.0390625d;
+        private const double LowestAcceptedQuotient = -0.5d;
+        private const double HighestRejectedQuotient = 65535.5d;
+
+        public long SampleCount { get; private set; }
+
+        public long RejectedCount { get; private set; }
+
+        public long ChangedCount { get; private set; }
+
+        public double MaxError { get; private set; }
+
+        public float[] Quantize(ReadOnlySpan<float> source)
+        {
+            var quantized = new float[source.Length];
+
+            for (var index = 0; index < source.Length; index++)
+            {
+                var value = source[index];
+                var quotient = (double)value / Step;
+                SampleCount++;
+
+                if (!double.IsFinite(quotient) || quotient < LowestAcceptedQuotient || quotient >= HighestRejectedQuotient)
+                {
+                    RejectedCount++;
+                    quantized[index] = value;
+                    continue;
+                }
+
+                var elevation = (ushort)Math.Round(quotient, MidpointRounding.ToEven);
+                var result = (float)(elevation * Step);
+                quantized[index] = result;
+
+                if (result != value)
+                {
+                    ChangedCount++;
+                    MaxError = Math.Max(MaxError, Math.Abs((double)result - value));
+                }
+            }
+
+            return quantized;
+        }
     }
 
     private static Chunk? ReadChunk(
@@ -142,6 +236,7 @@ public static class GeneratedMapPackageConverter
         bool hasImagery,
         int chunkX,
         int chunkY,
+        HeightQuantizer heightQuantizer,
         List<string> diagnostics)
     {
         var terrain = ReadLayer(bag => reader.ReadTerrain(chunkX, chunkY, bag), "terrain", chunkX, chunkY, diagnostics);
@@ -186,7 +281,7 @@ public static class GeneratedMapPackageConverter
 
         return new Chunk(
             new ChunkKey(chunkX, chunkY),
-            new HeightLayer(terrain.Heights.ToArray()),
+            new HeightLayer(heightQuantizer.Quantize(terrain.Heights.Span)),
             new MaterialLayer(materials.Indices.ToArray()),
             new MaskLayer(masks.Flags.ToArray()),
             imagery);
@@ -318,6 +413,135 @@ public static class GeneratedMapPackageConverter
             .Select((name, index) => new MaterialPaletteEntry((byte)index, name, new AssetReference(TerrainAssetScope, name)))
             .ToArray());
 
+    // Copies GlobalLighting.CreateForGeneratedMap (Simulation Data/Map/GlobalLighting.cs:59), which is internal to Simulation.
+    private static MapGlobalLightingRecord BuildGeneratedLighting()
+    {
+        var sun = new MapGlobalLightRecord(
+            new System.Numerics.Vector3(0.38f, 0.38f, 0.38f),
+            new System.Numerics.Vector3(0.52f, 0.51f, 0.49f),
+            System.Numerics.Vector3.Normalize(new System.Numerics.Vector3(0.50f, 0.35f, -0.79f)));
+        var fill = new MapGlobalLightRecord(
+            new System.Numerics.Vector3(0.04f, 0.04f, 0.04f),
+            new System.Numerics.Vector3(0.08f, 0.08f, 0.08f),
+            System.Numerics.Vector3.Normalize(new System.Numerics.Vector3(-0.55f, -0.40f, -0.73f)));
+        var configuration = new MapLightingConfigurationRecord(sun, fill, null, sun, fill, null, null, null, null);
+
+        // The engine TimeOfDay is 1-based and the typed Time carries that raw value, as LegacyMapReader does.
+        return new MapGlobalLightingRecord(
+            6,
+            (MapTimeOfDay)(uint)Panopticon.Data.Map.TimeOfDay.Morning,
+            new Dictionary<MapTimeOfDay, MapLightingConfigurationRecord>
+            {
+                [MapTimeOfDay.Morning] = configuration,
+                [MapTimeOfDay.Afternoon] = configuration,
+                [MapTimeOfDay.Evening] = configuration,
+                [MapTimeOfDay.Night] = configuration,
+            },
+            0);
+    }
+
+    private static MapBlendTileData? BuildBlendTileData(
+        GeneratedMapPayloadMetadata metadata,
+        IReadOnlyList<Chunk> chunks,
+        PreviewTextureMap? textureMap,
+        int latticeWidth,
+        int latticeHeight,
+        List<string> diagnostics)
+    {
+        var palette = metadata.Palette;
+
+        if (palette.Count == 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BlendTextureUnresolved,
+                "The payload palette is empty; no terrain texture can be materialized; no package was written."));
+            return null;
+        }
+
+        var canonicalByIndex = new string[palette.Count];
+        var unresolved = new List<string>();
+
+        for (var index = 0; index < palette.Count; index++)
+        {
+            var name = palette.Names[index];
+            string? canonical = null;
+            var resolution = textureMap is null
+                ? PreviewTextureResolution.MissingBinding
+                : textureMap.TryResolve(name, out canonical);
+
+            if (resolution == PreviewTextureResolution.Resolved)
+            {
+                canonicalByIndex[index] = canonical!;
+            }
+            else
+            {
+                unresolved.Add(name);
+            }
+        }
+
+        if (unresolved.Count > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BlendTextureUnresolved,
+                $"Palette entries without a resolvable texture binding: {string.Join(", ", unresolved)}; no package was written."));
+            return null;
+        }
+
+        var table = GeneratedPaletteBlend.FromCanonicalNames(canonicalByIndex);
+        var materialIndices = new byte[latticeWidth, latticeHeight];
+        var maskFlags = new TerrainMaskFlags[latticeWidth, latticeHeight];
+
+        foreach (var chunk in chunks)
+        {
+            var originX = chunk.Key.Cx * ChunkLayout.IntervalsPerChunk;
+            var originY = chunk.Key.Cy * ChunkLayout.IntervalsPerChunk;
+            var coreWidth = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeWidth - originX);
+            var coreHeight = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeHeight - originY);
+            var materials = chunk.Materials!.Indices;
+            var masks = chunk.Masks!.Flags;
+
+            for (var y = 0; y < coreHeight; y++)
+            {
+                for (var x = 0; x < coreWidth; x++)
+                {
+                    materialIndices[originX + x, originY + y] = materials[(y * coreWidth) + x];
+                    maskFlags[originX + x, originY + y] = (TerrainMaskFlags)masks[(y * coreWidth) + x];
+                }
+            }
+        }
+
+        var tiles = new ushort[latticeWidth, latticeHeight];
+        var impassability = new bool[latticeWidth, latticeHeight];
+
+        GeneratedPaletteBlend.PaintTiles(
+            tiles,
+            impassability,
+            table,
+            materialIndices,
+            maskFlags,
+            0,
+            latticeWidth,
+            latticeHeight,
+            out _,
+            out _);
+
+        return new MapBlendTileData(
+            Version: 8,
+            NumTiles: (uint)((long)latticeWidth * latticeHeight),
+            Tiles: tiles,
+            Blends: new uint[latticeWidth, latticeHeight],
+            ThreeWayBlends: new uint[latticeWidth, latticeHeight],
+            CliffTextures: new uint[latticeWidth, latticeHeight],
+            Impassability: impassability,
+            TextureCellCount: 16,
+            Textures: table.Textures.Select(name => new MapBlendTextureRecord(name, 0, 16, 4, 0)).ToArray(),
+            MagicValue1: 0,
+            MagicValue2: 0,
+            BlendDescriptions: [],
+            ParsedCliffTextureMappingsCount: 0,
+            CliffTextureMappings: []);
+    }
+
     // One source feature can be staged twice by overlapping mappings, and one source part can
     // be mapped into several mask features (for example passability plus buildability); the
     // interchange validator rejects every repeated stable id. Exact duplicates collapse to one
@@ -438,7 +662,7 @@ public static class GeneratedMapPackageConverter
         return (kept, provenanceFeatures, diagnostics, sourceConflicts);
     }
 
-    private static string StableIdOf(GeneratedFeature feature) => $"{feature.FeatureId}/{feature.PartId}";
+    internal static string StableIdOf(GeneratedFeature feature) => $"{feature.FeatureId}/{feature.PartId}";
 
     private static bool EmitsPlacedFeature(GeneratedFeature feature) =>
         (feature.Kind == GeneratedFeatureKind.ObjectCandidate && feature.Position is not null && feature.ObjectPlacement is not null)
@@ -470,7 +694,7 @@ public static class GeneratedMapPackageConverter
             feature.Coverage);
     }
 
-    private static bool SameAttributes(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
+    internal static bool SameAttributes(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
     {
         if (left.Count != right.Count)
         {
@@ -574,7 +798,7 @@ public static class GeneratedMapPackageConverter
         return (new VectorLayerSet(vectorFeatures), conflicts, diagnostics);
     }
 
-    private static VectorGeometry? ConvertVectorGeometry(GeoGeometry geometry, List<string> conflicts)
+    internal static VectorGeometry? ConvertVectorGeometry(GeoGeometry geometry, List<string> conflicts)
     {
         switch (geometry)
         {
@@ -623,7 +847,7 @@ public static class GeneratedMapPackageConverter
     // type name, which would make distinct same-tuple multis look identical and collapse
     // instead of conflicting, so multis render their children recursively. Line, polygon,
     // and point texts stay identical to GeometryText.
-    private static string VectorGeometryText(GeoGeometry geometry) => geometry switch
+    internal static string VectorGeometryText(GeoGeometry geometry) => geometry switch
     {
         GeoMultiGeometry multi => "Multi(" + string.Join(", ", multi.Geometries.Select(VectorGeometryText)) + ")",
         _ => GeometryText(geometry),
@@ -747,7 +971,7 @@ public static class GeneratedMapPackageConverter
     private static string FormatCheck(PayloadValidationCheck check) =>
         $"{check.Name}: {check.Status}" + (check.Message is null ? string.Empty : $": {check.Message}");
 
-    private static string GeometryText(GeoGeometry geometry) => geometry switch
+    internal static string GeometryText(GeoGeometry geometry) => geometry switch
     {
         GeoPointGeometry point => $"Point({PositionText(point.Position)})",
         GeoLineString line => "LineString(" + string.Join(", ", line.Positions.Select(PositionText)) + ")",
@@ -755,9 +979,9 @@ public static class GeneratedMapPackageConverter
         _ => geometry.GetType().Name,
     };
 
-    private static string RingText(GeoRing ring) => "(" + string.Join(", ", ring.Positions.Select(PositionText)) + ")";
+    internal static string RingText(GeoRing ring) => "(" + string.Join(", ", ring.Positions.Select(PositionText)) + ")";
 
-    private static string PositionText(GeoPosition position)
+    internal static string PositionText(GeoPosition position)
     {
         var coordinate = position.Coordinate;
 

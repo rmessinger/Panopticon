@@ -462,6 +462,8 @@ public sealed class Game : DisposableBase, IGame
 
     public Scene2D Scene2D { get; }
 
+    private GeneratedBuildingRenderer _generatedBuildingRenderer;
+
     private IScene3D _scene3D;
     public IScene3D Scene3D
     {
@@ -853,28 +855,44 @@ public sealed class Game : DisposableBase, IGame
             effectivePath = packageDirectory;
         }
 
-        SidesListUtility.SetupGameSides(
-            this,
-            mapFile,
-            playerSettings,
-            gameType,
-            out var mapPlayers,
-            out var mapTeams,
-            out var mapScriptLists);
+        RemoveAndDispose(ref _generatedBuildingRenderer);
 
-        TerrainLogic.SetHeightMapData(mapFile.HeightMapData);
+        if (model.Buildings is { } buildingLayer && buildingLayer.Buildings.Count > 0)
+        {
+            _generatedBuildingRenderer = AddDisposable(new GeneratedBuildingRenderer(GraphicsLoadContext, buildingLayer));
+            _generatedBuildingRenderer.Attach(Graphics.RenderPipeline);
+        }
 
-        new Scene3D(
-            this,
-            mapFile,
-            effectivePath,
-            mapPlayers,
-            mapTeams,
-            mapScriptLists,
-            gameType,
-            playerSettings,
-            mapObjects,
-            useMaskFeed ? maskFeed : null);
+        try
+        {
+            SidesListUtility.SetupGameSides(
+                this,
+                mapFile,
+                playerSettings,
+                gameType,
+                out var mapPlayers,
+                out var mapTeams,
+                out var mapScriptLists);
+
+            TerrainLogic.SetHeightMapData(mapFile.HeightMapData);
+
+            new Scene3D(
+                this,
+                mapFile,
+                effectivePath,
+                mapPlayers,
+                mapTeams,
+                mapScriptLists,
+                gameType,
+                playerSettings,
+                mapObjects,
+                useMaskFeed ? maskFeed : null);
+        }
+        catch
+        {
+            RemoveAndDispose(ref _generatedBuildingRenderer);
+            throw;
+        }
     }
 
     // Both helpers use nullable entry parameters; scope the annotations to these members
@@ -1141,6 +1159,7 @@ public sealed class Game : DisposableBase, IGame
 
         Scene3D.Dispose();
         Scene3D = null;
+        RemoveAndDispose(ref _generatedBuildingRenderer);
 
         NetworkMessageBuffer.Dispose();
         NetworkMessageBuffer = null;

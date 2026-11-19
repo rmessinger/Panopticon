@@ -231,9 +231,14 @@ public class MapFile
             globalVersion = new GlobalVersion { Version = (ushort)interchange.Identity.LegacyGlobalVersion.Value };
         }
 
+        // A generated/converted package may carry no SidesList at all; skirmish setup
+        // dereferences SidesList.Players unconditionally, so absence synthesizes the
+        // new-map default (neutral player plus the civilian entry the skirmish loader
+        // resolves second). A present section keeps its parsed content, and a corrupt
+        // one still fails through the reader above.
         SidesList? sidesList = retainedLookup.TryGetValue(SidesList.AssetName, out var sidesSec)
             ? MapBackendReaders.ReadSidesList(sidesSec, mapHasAssetList)
-            : null;
+            : SidesList.CreateSkirmish([]);
 
         Teams? teams = retainedLookup.TryGetValue(Teams.AssetName, out var teamsSec)
             ? MapBackendReaders.ReadTeams(teamsSec)

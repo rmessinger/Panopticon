@@ -22,4 +22,19 @@ public static class GeneratedMapPackageDiagnosticCodes
     public const string StableIdSourceConflict = "GEO-PKG-009";
 
     public const string VectorFeatureConflict = "GEO-PKG-010";
+
+    public const string BuildingConflict = "GEO-PKG-011";
+
+    public const string BuildingHeightUnresolved = "GEO-PKG-012";
+
+    public const string BuildingGenerated = "GEO-PKG-013";
+
+    /// <summary>Fatal: terrain samples are non-finite or outside the resident height grid range; no package is written.</summary>
+    public const string HeightQuantization = "GEO-PKG-014";
+
+    /// <summary>Informational: count and maximum error of terrain samples quantized to the resident height grid.</summary>
+    public const string HeightQuantizationSummary = "GEO-PKG-015";
+
+    /// <summary>Fatal: the palette is empty or a palette entry has no resolvable texture binding; no package is written.</summary>
+    public const string BlendTextureUnresolved = "GEO-PKG-016";
 }

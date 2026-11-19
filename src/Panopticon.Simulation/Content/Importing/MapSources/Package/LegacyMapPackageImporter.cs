@@ -2,9 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using Panopticon.Content.Importing.Maps;
+using Panopticon.Data.Map;
 
 namespace Panopticon.Content.Importing.MapSources.Package;
 
@@ -153,10 +156,11 @@ public sealed class LegacyMapPackageImporter
             }
         }
 
-        var retainedLookup = new Dictionary<string, RetainedSection>(interchange.RetainedSections.Count, StringComparer.Ordinal);
-        var retainedEntries = new List<MapPackageRetainedEntry>(interchange.RetainedSections.Count);
+        var retainedSections = ResolveRetainedSections(interchange);
+        var retainedLookup = new Dictionary<string, RetainedSection>(retainedSections.Count, StringComparer.Ordinal);
+        var retainedEntries = new List<MapPackageRetainedEntry>(retainedSections.Count);
 
-        foreach (var section in interchange.RetainedSections)
+        foreach (var section in retainedSections)
         {
             retainedLookup[section.SectionName] = section;
             var digest = ComputeSha256Hex(section.Bytes.ToArray());
@@ -183,9 +187,57 @@ public sealed class LegacyMapPackageImporter
                 vectorLayers.Features.Count);
         }
 
+        MapPackageBuildingsEntry? buildingsEntry = null;
+        byte[]? buildingMetadataBytes = null;
+        var buildingMeshBytes = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
+        if (interchange.Buildings is { } buildingLayer && (buildingLayer.Buildings.Count > 0 || buildingLayer.MeshChunks.Count > 0))
+        {
+            try
+            {
+                buildingMetadataBytes = MapPackageBuildingCodec.SerializeMetadata(buildingLayer.Buildings);
+                var meshEntries = new List<MapPackageBuildingMeshEntry>(buildingLayer.MeshChunks.Count);
+
+                foreach (var meshChunk in buildingLayer.MeshChunks)
+                {
+                    var meshBytes = MapPackageBuildingCodec.EncodeMesh(meshChunk);
+                    var meshPath = MapPackageFormat.BuildingMeshPath(meshChunk.ChunkX, meshChunk.ChunkY);
+                    buildingMeshBytes[meshPath] = meshBytes;
+                    meshEntries.Add(new MapPackageBuildingMeshEntry(
+                        meshChunk.ChunkX,
+                        meshChunk.ChunkY,
+                        meshPath,
+                        MapPackageFormat.EncodingPbm1,
+                        meshBytes.Length,
+                        ComputeSha256Hex(meshBytes),
+                        meshChunk.Segments.Count,
+                        meshChunk.Segments.Sum(s => s.Vertices.Count),
+                        meshChunk.Segments.Sum(s => s.Indices.Count)));
+                }
+
+                buildingsEntry = new MapPackageBuildingsEntry(
+                    MapPackageFormat.BuildingsMetadataPath,
+                    MapPackageFormat.EncodingJson,
+                    buildingMetadataBytes.Length,
+                    ComputeSha256Hex(buildingMetadataBytes),
+                    buildingLayer.Buildings.Count,
+                    meshEntries);
+            }
+            catch (FormatException ex)
+            {
+                return new MapPackageWriteResult(
+                    false,
+                    [new MapPackageDiagnostic(MapPackageDiagnostic.BuildingLayer, ex.Message)]);
+            }
+        }
+
+        var packageVersion = buildingsEntry is not null
+            ? MapPackageFormat.BuildingPackageVersion
+            : vectorEntry is null ? MapPackageFormat.CurrentPackageVersion : MapPackageFormat.VectorPackageVersion;
+
         var manifest = new MapPackageManifest(
             MapPackageFormat.PackageFormatName,
-            vectorEntry is null ? MapPackageFormat.CurrentPackageVersion : MapPackageFormat.VectorPackageVersion,
+            packageVersion,
             interchange.SchemaVersion,
             identity,
             layout,
@@ -196,9 +248,16 @@ public sealed class LegacyMapPackageImporter
             layers,
             retainedEntries,
             companions,
-            vectorEntry);
+            vectorEntry,
+            buildingsEntry);
 
-        var payloadProvider = new InterchangePayloadProvider(chunkLookup, retainedLookup, companionPayloads, vectorBytes);
+        var payloadProvider = new InterchangePayloadProvider(
+            chunkLookup,
+            retainedLookup,
+            companionPayloads,
+            vectorBytes,
+            buildingMetadataBytes,
+            buildingMeshBytes);
 
         return MapPackageDirectoryWriter.Write(targetPackageRoot, manifest, payloadProvider);
     }
@@ -206,23 +265,75 @@ public sealed class LegacyMapPackageImporter
     private static string ComputeSha256Hex(byte[] bytes) =>
         Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 
+    // A typed component without a same-name retained section is serialized into one, so the
+    // package reader recovers it. Existing retained sections, including legacy-sourced ones,
+    // are kept as authored.
+    private static IReadOnlyList<RetainedSection> ResolveRetainedSections(MapInterchange interchange)
+    {
+        var sections = new List<RetainedSection>(interchange.RetainedSections);
+
+        if (interchange.BlendTileData is not null
+            && !sections.Exists(section => section.SectionName == BlendTileData.AssetName)
+            && RuntimeBridge.MaterializeBlendTileData(interchange) is { } blend)
+        {
+            sections.Add(Retain(blend, BlendTileData.AssetName, (writer, _) => blend.WriteTo(writer)));
+        }
+
+        if (interchange.GlobalLighting is not null
+            && !sections.Exists(section => section.SectionName == GlobalLighting.AssetName)
+            && RuntimeBridge.MaterializeGlobalLighting(interchange) is { } lighting)
+        {
+            sections.Add(Retain(lighting, GlobalLighting.AssetName, (writer, _) => lighting.WriteTo(writer)));
+        }
+
+        if (interchange.WaypointPaths is not null
+            && !sections.Exists(section => section.SectionName == WaypointsList.AssetName)
+            && RuntimeBridge.MaterializeWaypointsList(interchange) is { } waypointsList)
+        {
+            sections.Add(Retain(waypointsList, WaypointsList.AssetName, (writer, _) => waypointsList.WriteTo(writer)));
+        }
+
+        return sections;
+    }
+
+    /// <summary>Serializes one section the way the legacy writer frames it: a fresh name table, the payload, and the section version.</summary>
+    private static RetainedSection Retain(Asset section, string sectionName, Action<BinaryWriter, AssetNameCollection> writeTo)
+    {
+        using var stream = new MemoryStream();
+
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+        {
+            writeTo(writer, new AssetNameCollection());
+        }
+
+        var bytes = stream.ToArray();
+
+        return new RetainedSection(sectionName, section.Version, bytes, Convert.ToHexStringLower(SHA256.HashData(bytes)));
+    }
+
     private sealed class InterchangePayloadProvider : IMapPackagePayloadProvider
     {
         private readonly Dictionary<(int X, int Y), Chunk> _chunks;
         private readonly Dictionary<string, RetainedSection> _retained;
         private readonly IReadOnlyDictionary<string, byte[]>? _companions;
         private readonly byte[]? _vectorLayer;
+        private readonly byte[]? _buildingMetadata;
+        private readonly IReadOnlyDictionary<string, byte[]> _buildingMeshes;
 
         public InterchangePayloadProvider(
             Dictionary<(int X, int Y), Chunk> chunks,
             Dictionary<string, RetainedSection> retained,
             IReadOnlyDictionary<string, byte[]>? companions = null,
-            byte[]? vectorLayer = null)
+            byte[]? vectorLayer = null,
+            byte[]? buildingMetadata = null,
+            IReadOnlyDictionary<string, byte[]>? buildingMeshes = null)
         {
             _chunks = chunks;
             _retained = retained;
             _companions = companions;
             _vectorLayer = vectorLayer;
+            _buildingMetadata = buildingMetadata;
+            _buildingMeshes = buildingMeshes ?? new Dictionary<string, byte[]>(StringComparer.Ordinal);
         }
 
         public float[] GetHeights(MapPackageLayerEntry entry)
@@ -266,5 +377,10 @@ public sealed class LegacyMapPackageImporter
         }
 
         public byte[] GetVectorLayer(MapPackageVectorLayerEntry entry) => _vectorLayer ?? [];
+
+        public byte[] GetBuildingMetadata(MapPackageBuildingsEntry entry) => _buildingMetadata ?? [];
+
+        public byte[] GetBuildingMesh(MapPackageBuildingMeshEntry entry) =>
+            _buildingMeshes.TryGetValue(entry.Path, out var bytes) ? bytes : [];
     }
 }
