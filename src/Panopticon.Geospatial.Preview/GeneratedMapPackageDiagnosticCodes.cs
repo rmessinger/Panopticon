@@ -37,4 +37,10 @@ public static class GeneratedMapPackageDiagnosticCodes
 
     /// <summary>Fatal: the palette is empty or a palette entry has no resolvable texture binding; no package is written.</summary>
     public const string BlendTextureUnresolved = "GEO-PKG-016";
+
+    /// <summary>Fatal: the skirmish configuration is invalid (unknown faction, malformed or out-of-map coordinates, duplicate start positions, or no slots); no package is written.</summary>
+    public const string SkirmishConfiguration = "GEO-PKG-017";
+
+    /// <summary>Informational: the retained SidesList section and the player start waypoints synthesized from the skirmish configuration.</summary>
+    public const string SkirmishSynthesized = "GEO-PKG-018";
 }

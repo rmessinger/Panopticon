@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Panopticon.Content.Importing.Maps;
 using Panopticon.Data.Map;
+using Panopticon.Logic.Map;
 
 namespace Panopticon.Content.Importing.MapSources.Package;
 
@@ -34,6 +35,28 @@ public sealed class LegacyMapPackageImporter
 
     public static MapPackageWriteResult Write(MapInterchange interchange, string targetPackageRoot) =>
         Import(interchange, targetPackageRoot, null, null);
+
+    /// <summary>
+    /// Serializes the skirmish sides list (neutral player, civilian player, then one player per
+    /// faction PlayerTemplate name) as a retained SidesList section for generated packages. The
+    /// write and the interchange read (MapBackendReaders.ReadSidesList through MapFile.FromInterchange)
+    /// share mapHasAssetList=false: a generated package carries no AssetList section, so the reader
+    /// reconstructs the same flag. The section version is the SidesList new-map stamp (3).
+    /// </summary>
+    public static RetainedSection CreateSkirmishSidesSection(IReadOnlyList<string> factionTemplateNames)
+    {
+        ArgumentNullException.ThrowIfNull(factionTemplateNames);
+
+        if (factionTemplateNames.Count == 0)
+        {
+            throw new ArgumentException(
+                "The faction template names are empty; express the absence of skirmish sides by not adding a section.",
+                nameof(factionTemplateNames));
+        }
+
+        var sidesList = SidesList.CreateSkirmish(factionTemplateNames);
+        return Retain(sidesList, SidesList.AssetName, (writer, assetNames) => sidesList.WriteTo(writer, assetNames, mapHasAssetList: false));
+    }
 
     public static MapPackageWriteResult Write(
         MapInterchange interchange,

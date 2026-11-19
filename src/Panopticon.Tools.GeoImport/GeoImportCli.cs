@@ -20,9 +20,10 @@ namespace Panopticon.Tools.GeoImport;
 /// `import --manifest &lt;path&gt; --out &lt;dir&gt; [--force]`, `report --payload &lt;dir&gt;`,
 /// `preview --payload &lt;dir&gt; --textures &lt;map.json&gt; [--crop cx0,cy0,cx1,cy1]
 /// [--force] --out &lt;maps dir&gt;`, and `package --payload &lt;dir&gt; --out &lt;package dir&gt;
-/// [--name &lt;map name&gt;] [--force]`. Exit codes: 0 success, 1 operational or input failure,
+/// [--name &lt;map name&gt;] [--textures &lt;map.json&gt;] [--skirmish "faction:x,y[;...]"] [--force]`. Exit codes: 0 success, 1 operational or input failure,
 /// 2 usage error. Every diagnostic prints as one line `severity code stage message` with
-/// whitespace normalized, so messages containing newlines cannot break the line protocol.
+/// whitespace normalized, so messages containing newlines cannot break the line protocol. An
+/// invalid `--skirmish` value is an operational failure carrying the typed GEO-PKG-017 diagnostic.
 /// Cancellation propagates through the token and never misreports a published payload.
 /// </summary>
 public static class GeoImportCli
@@ -245,8 +246,10 @@ public static class GeoImportCli
     /// <summary>
     /// The package verb: converts a published payload into an H3 map package directory. The
     /// payload is an unmodified read input. An existing output directory is refused unless
-    /// --force is set, because the package writer replaces it. Conversion is not cancellable,
-    /// so cancellation only applies while the payload is opened.
+    /// --force is set, because the package writer replaces it. With --skirmish, the package
+    /// additionally carries a playable SidesList section and one player start waypoint per
+    /// slot; without it, the output is identical to the pre-skirmish converter's. Conversion
+    /// is not cancellable, so cancellation only applies while the payload is opened.
     /// </summary>
     private static int RunPackage(
         PackageOptions options,
@@ -272,6 +275,20 @@ public static class GeoImportCli
             errorOut.WriteLine(
                 NormalizeWhitespace(
                     $"package failed: the output {options.OutputDirectory} already exists; pass --force to replace it"));
+            return OperationalFailureExit;
+        }
+
+        // The skirmish opt-in is parsed before the payload is opened: an invalid value is a typed
+        // converter diagnostic (GEO-PKG-017) and the payload stays untouched.
+        IReadOnlyList<GeneratedMapSkirmishSlot>? skirmishSlots = null;
+
+        if (options.Skirmish is not null
+            && !GeneratedMapSkirmishConfiguration.TryParse(options.Skirmish, out skirmishSlots, out var skirmishError))
+        {
+            errorOut.WriteLine(NormalizeWhitespace($"{GeneratedMapPackageDiagnosticCodes.SkirmishConfiguration}: {skirmishError}"));
+            errorOut.WriteLine(
+                NormalizeWhitespace(
+                    $"package failed: the published payload at {options.PayloadDirectory} is unchanged"));
             return OperationalFailureExit;
         }
 
@@ -302,7 +319,7 @@ public static class GeoImportCli
 
             using (reader)
             {
-                var result = GeneratedMapPackageConverter.Convert(reader, mapName, options.OutputDirectory, textureMap);
+                var result = GeneratedMapPackageConverter.Convert(reader, mapName, options.OutputDirectory, textureMap, skirmishSlots);
 
                 if (!result.Success || result.PackageRoot is null)
                 {
@@ -562,7 +579,7 @@ public static class GeoImportCli
                 "usage: geoimport import --manifest <path> --out <dir> [--force]; "
                 + "geoimport report --payload <dir>; "
                 + "geoimport preview --payload <dir> --textures <map.json> [--crop cx0,cy0,cx1,cy1] [--force] --out <maps dir>; "
-                + "geoimport package --payload <dir> --out <package dir> [--textures <map.json>] [--name <map name>] [--force]"));
+                + "geoimport package --payload <dir> --out <package dir> [--textures <map.json>] [--name <map name>] [--skirmish \"faction:x,y[;...]\"] [--force]"));
         return UsageExit;
     }
 
@@ -622,5 +639,8 @@ public static class GeoImportCli
 
         [Option('t', "textures", HelpText = "Palette-to-texture JSON map; defaults to the built-in grass, dirt, rock, and sand bindings.")]
         public string? TexturesPath { get; set; }
+
+        [Option('s', "skirmish", HelpText = "Playable skirmish slots as semicolon-separated faction:x,y pairs in game units, e.g. \"FactionAmerica:100,100;FactionGLA:300,300\"; slot N becomes the player start Player_{N}_Start of the Nth faction.")]
+        public string? Skirmish { get; set; }
     }
 }
