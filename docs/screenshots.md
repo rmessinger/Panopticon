@@ -23,6 +23,18 @@ Layout:
 cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
 ```
 
+### Publication acceptance checklist
+
+Before reporting a capture as published:
+
+- Final stills and GIFs sit at the top level of `/mnt/pit2/Network Storage/temp/`. Subdirectories are storage and provenance, not viewer display. Frame sequences stay under `frames/<topic-version>/`.
+- The filename is unique and versioned; no existing entry was overwritten.
+- The file is readable and nonzero in size.
+- If a live viewer listing is available, the file appears there.
+- If no viewer is available, report exactly `published; viewer visibility unverified`.
+
+Filesystem placement alone does not count as seen. Naming and layout rules: see [Sharing with the user](#sharing-with-the-user).
+
 ## Model height comparisons
 
 `StandaloneModelCapture.CaptureGroundedPair` grounds both bind-pose meshes at world Z = 0,
