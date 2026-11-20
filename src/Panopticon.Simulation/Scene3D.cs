@@ -164,6 +164,20 @@ public sealed class Scene3D : DisposableBase, IScene3D
         Waypoints = waypoints;
         Cameras = cameras;
 
+        // Bridge roadway surfaces (WP1029): one registration per bridge replaces the
+        // previous map's list, so ground-height queries ride the deck of the loaded map.
+        Game.TerrainLogic.ClearBridgeSurfaces();
+
+        foreach (var bridge in bridges)
+        {
+            if (bridge.CreateSurface() is { } surface)
+            {
+                Game.TerrainLogic.RegisterBridgeSurface(surface);
+            }
+        }
+
+        AddDisposeAction(() => Game.TerrainLogic.ClearBridgeSurfaces());
+
         PlayerScripts = new PlayerScriptsList
         {
             ScriptLists = mapScriptLists

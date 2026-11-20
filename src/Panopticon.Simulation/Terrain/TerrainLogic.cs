@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Data.Map;
 using Panopticon.Logic.Object;
@@ -7,9 +9,46 @@ namespace Panopticon.Terrain;
 
 public sealed class TerrainLogic : IPersistableObject
 {
-    public HeightMap HeightMap { get; private set; }
+    private readonly List<BridgeSurface> _bridgeSurfaces = [];
 
     private int _activeBoundary = 0;
+
+    public HeightMap HeightMap { get; private set; }
+
+    /// <summary>
+    /// Registers a bridge roadway surface for ground-height queries (WP1029). Scene3D
+    /// registers one surface per bridge after the map loads; the list is replaced on
+    /// reload and cleared on dispose.
+    /// </summary>
+    public void RegisterBridgeSurface(BridgeSurface surface)
+    {
+        ArgumentNullException.ThrowIfNull(surface);
+        _bridgeSurfaces.Add(surface);
+    }
+
+    public void ClearBridgeSurfaces()
+    {
+        _bridgeSurfaces.Clear();
+    }
+
+    /// <summary>
+    /// Highest roadway surface Z at the XY point across every registered bridge, or null
+    /// when no bridge roadway covers the point.
+    /// </summary>
+    public float? GetBridgeSurfaceZ(float x, float y)
+    {
+        float? topmost = null;
+
+        foreach (var surface in _bridgeSurfaces)
+        {
+            if (surface.GetSurfaceZ(x, y) is { } z && (topmost is null || z > topmost.Value))
+            {
+                topmost = z;
+            }
+        }
+
+        return topmost;
+    }
 
     public void SetHeightMapData(HeightMapData heightMapData)
     {
@@ -44,11 +83,22 @@ public sealed class TerrainLogic : IPersistableObject
     public float GetGroundHeight(float x, float y, out Vector3 normal)
     {
         normal = HeightMap.GetNormal(x, y);
+
+        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
+        {
+            return bridgeZ;
+        }
+
         return HeightMap.GetHeight(x, y);
     }
 
     public float GetGroundHeight(float x, float y)
     {
+        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
+        {
+            return bridgeZ;
+        }
+
         return HeightMap.GetHeight(x, y);
     }
 
@@ -74,13 +124,24 @@ public sealed class TerrainLogic : IPersistableObject
     // TODO(Port): Implement this.
     public float GetLayerHeight(float x, float y, PathfindLayerType layer, out Vector3 normal, bool clip = true)
     {
-        normal = Vector3.UnitZ;
+        normal = HeightMap.GetNormal(x, y);
+
+        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
+        {
+            return bridgeZ;
+        }
+
         return HeightMap.GetHeight(x, y);
     }
 
     // TODO(Port): Implement this.
     public float GetLayerHeight(float x, float y, PathfindLayerType layer)
     {
+        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
+        {
+            return bridgeZ;
+        }
+
         return HeightMap.GetHeight(x, y);
     }
 

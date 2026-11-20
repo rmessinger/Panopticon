@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Content;
+using Panopticon.Content.Importing;
+using Panopticon.Content.Importing.W3d;
+using Panopticon.Content.Loaders;
 using Panopticon.Data.Map;
 using Panopticon.Graphics;
 using Panopticon.Graphics.Cameras;
@@ -13,10 +17,15 @@ namespace Panopticon.Terrain;
 
 public sealed class Bridge : DisposableBase
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     private readonly GameObject _bridgeObject;
     private readonly Model _model;
     private readonly ModelInstance _modelInstance;
     private readonly List<Tuple<ModelSubObject, Matrix4x4>> _meshes;
+    private readonly Vector3 _startPositionWithHeight;
+    private readonly Vector3 _endPositionWithHeight;
+    private readonly AssetLoadContext _assetLoadContext;
 
     internal Bridge(
         IGameEngine gameEngine,
@@ -39,6 +48,8 @@ public sealed class Bridge : DisposableBase
         // TODO: Cache this.
         var genericBridgeDefinition = gameEngine.AssetLoadContext.AssetStore.ObjectDefinitions.GetByName("GenericBridge");
 
+        _assetLoadContext = gameEngine.AssetLoadContext;
+
         _bridgeObject = gameEngine.GameLogic.CreateObject(genericBridgeDefinition, null);
         _bridgeObject.SetMapObjectProperties(mapObject);
 
@@ -54,7 +65,65 @@ public sealed class Bridge : DisposableBase
             startPosition,
             endPosition,
             _model,
-            _modelInstance);
+            _modelInstance,
+            out _startPositionWithHeight,
+            out _endPositionWithHeight);
+    }
+
+    /// <summary>
+    /// World-transformed mesh pieces of this bridge in layout order (left, spans, right).
+    /// Exposed for the roadway surface extraction; diagnostics read the same pairs.
+    /// </summary>
+    internal IReadOnlyList<Tuple<ModelSubObject, Matrix4x4>> Meshes => _meshes;
+
+    internal Vector3 StartPositionWithHeight => _startPositionWithHeight;
+
+    internal Vector3 EndPositionWithHeight => _endPositionWithHeight;
+
+    /// <summary>
+    /// Extracts the drivable roadway triangles of this bridge into a queryable surface, or
+    /// null when the model has no CPU-importable roadway (imports are best-effort; bridge
+    /// traversal then keeps the raw terrain behavior).
+    /// </summary>
+    internal BridgeSurface CreateSurface()
+    {
+        if (_meshes is null || _model is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var importer = new W3dModelImporter(PathResolvers.W3d);
+            var imported = importer.ImportModel(
+                _model.Name,
+                new AssetImportContext(_assetLoadContext.FileSystem, _assetLoadContext.Language));
+
+            if (imported is null)
+            {
+                return null;
+            }
+
+            // The materializer preserves imported sub-object order, so the imported meshes
+            // align with Model.SubObjects by index; multiple laid-out pieces share one mesh.
+            var meshesBySubObject = new Dictionary<ModelSubObject, ImportedMesh>();
+            var aligned = Math.Min(imported.SubObjects.Count, _model.SubObjects.Length);
+
+            for (var index = 0; index < aligned; index++)
+            {
+                if (imported.SubObjects[index].RenderObject is ImportedMesh importedMesh)
+                {
+                    meshesBySubObject[_model.SubObjects[index]] = importedMesh;
+                }
+            }
+
+            return BridgeSurface.Create(_meshes, subObject => meshesBySubObject.GetValueOrDefault(subObject), _startPositionWithHeight, _endPositionWithHeight);
+        }
+        catch (Exception exception)
+        {
+            Logger.Warn(exception, $"Bridge roadway surface extraction failed for model {_model.Name}; terrain height queries keep the raw heightmap.");
+            return null;
+        }
     }
 
     private List<Tuple<ModelSubObject, Matrix4x4>> CreateMeshes(
@@ -63,7 +132,9 @@ public sealed class Bridge : DisposableBase
         in Vector3 startPosition,
         in Vector3 endPosition,
         Model model,
-        ModelInstance modelInstance)
+        ModelInstance modelInstance,
+        out Vector3 startAnchor,
+        out Vector3 endAnchor)
     {
         const float heightBias = 1f;
 
@@ -151,6 +222,9 @@ public sealed class Bridge : DisposableBase
             totalLength / template.BridgeScale,
             transformedLeftBounds.Max.Y,
             rotationAroundZ);
+
+        startAnchor = startPositionWithHeight;
+        endAnchor = endPositionWithHeight;
 
         return meshes;
     }

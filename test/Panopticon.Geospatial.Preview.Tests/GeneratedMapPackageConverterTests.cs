@@ -1703,6 +1703,193 @@ public sealed class GeneratedMapPackageConverterTests
         void AssertRejects(string message) => Assert.Contains(bag.Items, diagnostic => diagnostic.Message.Contains(message, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void BridgeRules_GradeLandingTerrainTowardDeck_AndReloadGraded()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[] { PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)) }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var rules = new[] { new BridgeRule("vectors", "ConcreteOneLane") };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeLandingGrading + ":", StringComparison.Ordinal));
+
+        // Fresh reload through PackageReader: landing heights come from the written package.
+        var latticeWidth = (reader.Metadata.Grid.ChunksX * ChunkLayout.IntervalsPerChunk) + 1;
+        var latticeHeight = (reader.Metadata.Grid.ChunksY * ChunkLayout.IntervalsPerChunk) + 1;
+        var model = new PackageReader(target).Read();
+
+        // Deck target: endpoint terrain + the measured road-bed offset; the ramp tops one
+        // unit below it. Axis points outward from each endpoint (start: -X, end: +X).
+        var startDeckZ = PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(20, 64)) + 6.5d;
+        var endDeckZ = PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(90, 64)) + 6.5d;
+
+        foreach (var (latticeX, latticeY) in LandingSampleCells())
+        {
+            var expected = LandingExpectedHeight(latticeX, latticeY, 200d, 640d, -1d, 0d, startDeckZ);
+
+            Assert.Equal(expected, ReloadedLatticeHeight(model, latticeWidth, latticeX, latticeY));
+        }
+
+        // Endpoint lattice cells keep their height (the runtime bridge anchors there), and
+        // inward cells stay untouched: the graded cells are strictly outward of (20, 64).
+        Assert.Equal(
+            PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(20, 64)),
+            ReloadedLatticeHeight(model, latticeWidth, 20, 64));
+        Assert.Equal(
+            PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(21, 64)),
+            ReloadedLatticeHeight(model, latticeWidth, 21, 64));
+
+        // The far landing grades symmetrically around (90, 64).
+        Assert.NotEqual(
+            PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(91, 64)),
+            ReloadedLatticeHeight(model, latticeWidth, 91, 64));
+        Assert.Equal(
+            LandingExpectedHeight(91, 64, 900d, 640d, 1d, 0d, endDeckZ),
+            ReloadedLatticeHeight(model, latticeWidth, 91, 64));
+
+        // Grading is local: cells beyond the ramp distance or outside the cross-width band
+        // keep their quantized payload heights.
+        Assert.Equal(
+            PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(15, 64)),
+            ReloadedLatticeHeight(model, latticeWidth, 15, 64));
+        Assert.Equal(
+            PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(19, 58)),
+            ReloadedLatticeHeight(model, latticeWidth, 19, 58));
+        Assert.Equal(
+            PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(19, 70)),
+            ReloadedLatticeHeight(model, latticeWidth, 19, 70));
+    }
+
+    [Fact]
+    public void BridgeLandingGrading_IsDeterministicAcrossConversions()
+    {
+        var digests = new List<IReadOnlyList<string>>();
+
+        for (var run = 0; run < 2; run++)
+        {
+            using var scratch = new PreviewPayloadFixture.ScratchRoot();
+            var features = new[] { PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)) }.ToList();
+            PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+            using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+            var target = Path.Combine(scratch.Root, "package");
+
+            var result = GeneratedMapPackageConverter.Convert(
+                reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: [new BridgeRule("vectors", "ConcreteOneLane")]);
+
+            Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+            digests.Add(PackageFileDigests(target));
+        }
+
+        Assert.Equal(digests[0], digests[1]);
+    }
+
+    [Fact]
+    public void BridgeRules_Absent_LeavesLandingTerrainUntouched()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[] { PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)) }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.DoesNotContain(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeLandingGrading + ":", StringComparison.Ordinal));
+
+        var latticeWidth = (reader.Metadata.Grid.ChunksX * ChunkLayout.IntervalsPerChunk) + 1;
+        var model = new PackageReader(target).Read();
+
+        // Dormant without bridge rules: every landing-adjacent cell keeps the quantized
+        // payload height, so the package is byte-identical to the pre-bridge output.
+        foreach (var (latticeX, latticeY) in LandingSampleCells())
+        {
+            Assert.Equal(
+                PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(latticeX, latticeY)),
+                ReloadedLatticeHeight(model, latticeWidth, latticeX, latticeY));
+        }
+    }
+
+    /// <summary>
+    /// Spec mirror of the landing grading: smoothstep blend from the quantized payload
+    /// height toward (deck - 1) over 40 game units outward, clamped into the
+    /// [current, deck] band, cross-width ±30, endpoint cell untouched.
+    /// </summary>
+    private static float LandingExpectedHeight(
+        int latticeX,
+        int latticeY,
+        double endpointX,
+        double endpointY,
+        double axisX,
+        double axisY,
+        double deckZ)
+    {
+        var x = latticeX * ChunkLayout.SampleSpacingGameUnits;
+        var y = latticeY * ChunkLayout.SampleSpacingGameUnits;
+        var current = (double)PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(latticeX, latticeY));
+        var along = ((x - endpointX) * axisX) + ((y - endpointY) * axisY);
+
+        if (along <= 0d || along > 40d)
+        {
+            return (float)current;
+        }
+
+        var across = Math.Abs(((x - endpointX) * -axisY) + ((y - endpointY) * axisX));
+
+        if (across > 30d)
+        {
+            return (float)current;
+        }
+
+        var rampT = 1d - (along / 40d);
+        var weight = (rampT * rampT) * (3d - (2d * rampT));
+        var target = deckZ - 1d;
+        var graded = current + ((target - current) * weight);
+        graded = Math.Clamp(graded, Math.Min(current, deckZ), Math.Max(current, deckZ));
+
+        return PreviewPayloadFixture.ResidentGridHeight((float)graded);
+    }
+
+    /// <summary>Cells sampled around the start landing of the (200,640) → (900,640) bridge line.</summary>
+    private static IEnumerable<(int LatticeX, int LatticeY)> LandingSampleCells()
+    {
+        // Ramp cells at 10/20/30 game units outward on the axis, plus the ramp edge (40)
+        // which keeps its height, and cross-width edges at ±30 and beyond.
+        return new[]
+        {
+            (19, 64),
+            (18, 64),
+            (17, 64),
+            (16, 64),
+            (15, 64),
+            (19, 61),
+            (19, 67),
+            (19, 60),
+            (19, 70),
+        };
+    }
+
+    private static float ReloadedLatticeHeight(MapInterchange model, int latticeWidth, int latticeX, int latticeY)
+    {
+        var cx = latticeX / ChunkLayout.IntervalsPerChunk;
+        var cy = latticeY / ChunkLayout.IntervalsPerChunk;
+        var chunk = Assert.Single(model.Layout.Chunks, candidate => candidate.Key.Cx == cx && candidate.Key.Cy == cy);
+        var originX = cx * ChunkLayout.IntervalsPerChunk;
+        var originY = cy * ChunkLayout.IntervalsPerChunk;
+        var coreWidth = Math.Min(ChunkLayout.PointsPerChunkAxis, model.Layout.LatticeWidth - originX);
+
+        return chunk.Heights.Samples[((latticeY - originY + 1) * (coreWidth + 2)) + (latticeX - originX + 1)];
+    }
+
     private static List<GeneratedFeature> BridgeFeatures()
     {
         return

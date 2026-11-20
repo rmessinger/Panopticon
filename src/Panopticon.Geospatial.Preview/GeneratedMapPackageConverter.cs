@@ -35,6 +35,27 @@ public static class GeneratedMapPackageConverter
     private const string BridgeVisualOnlyLimitation =
         "Bridges are placed visually from two-point bridge lines; the engine traversal layers are stubbed, so bridges carry no passability or pathfinding.";
 
+    private const string BridgeLandingGradingLimitation =
+        "Bridge landings are graded: terrain within the landing ramp bands ramps to each bridge deck, so landing heights differ from the payload.";
+
+    /// <summary>Measured road-bed offset above terrain at a bridge line endpoint (G7 witness data).</summary>
+    private const double LandingApproachDeckOffset = 6.5d;
+
+    /// <summary>Ramp length outward from each bridge endpoint along the bridge axis, in game units.</summary>
+    private const double LandingRampDistance = 40d;
+
+    /// <summary>Half-width of the graded band either side of the bridge axis, in game units.</summary>
+    private const double LandingCrossWidth = 30d;
+
+    /// <summary>The ramp tops out one game unit below the deck so vehicles step up onto it.</summary>
+    private const double LandingRampTopClearance = 1.0d;
+
+    private const double HeightQuantizationStep = 0.0390625d;
+
+    private const double HeightQuantizationLowestQuotient = -0.5d;
+
+    private const double HeightQuantizationHighestRejectedQuotient = 65535.5d;
+
     private static readonly DecoderOptions DecodeOptions = new() { SkipMetadata = true };
 
     private static readonly IReadOnlyList<string> Limitations =
@@ -167,20 +188,25 @@ public static class GeneratedMapPackageConverter
                 $"Synthesized the retained SidesList section with the factions {string.Join(", ", factions)} and the player start waypoints {StartListText(skirmishWaypoints)}."));
         }
 
-        // The bridge opt-in is absent by default: no bridge pairs are emitted and the written
-        // package stays byte-for-byte the one the pre-bridge converter produced.
+        // The bridge opt-in is absent by default: no bridge pairs are emitted, no landing
+        // grading runs, and the written package stays byte-for-byte the one the pre-bridge
+        // converter produced.
         var bridgeObjects = new List<PlacedObject>();
         var bridgeDiagnostics = new List<string>();
         var emittedBridges = false;
+        var gradedLandingCells = 0;
 
         if (bridgeRules is { Count: > 0 })
         {
+            var landingGradingCells = GradeBridgeLandings(chunks, latticeWidth, latticeHeight, metadata.Features, bridgeRules, bridgeDiagnostics);
+
             if (!TryBuildBridgePairs(metadata.Features, bridgeRules, chunks, latticeWidth, latticeHeight, bridgeObjects, bridgeDiagnostics))
             {
                 return Failed(bridgeDiagnostics);
             }
 
             emittedBridges = bridgeObjects.Count > 0;
+            gradedLandingCells = landingGradingCells;
         }
 
         var interchange = new MapInterchange(
@@ -221,6 +247,11 @@ public static class GeneratedMapPackageConverter
             limitations = [.. limitations, BridgeVisualOnlyLimitation];
         }
 
+        if (gradedLandingCells > 0)
+        {
+            limitations = [.. limitations, BridgeLandingGradingLimitation];
+        }
+
         if (heightQuantizer.ChangedCount > 0)
         {
             var maxError = heightQuantizer.MaxError.ToString("R", CultureInfo.InvariantCulture);
@@ -235,10 +266,6 @@ public static class GeneratedMapPackageConverter
 
     private sealed class HeightQuantizer
     {
-        private const double Step = 0.0390625d;
-        private const double LowestAcceptedQuotient = -0.5d;
-        private const double HighestRejectedQuotient = 65535.5d;
-
         public long SampleCount { get; private set; }
 
         public long RejectedCount { get; private set; }
@@ -254,10 +281,10 @@ public static class GeneratedMapPackageConverter
             for (var index = 0; index < source.Length; index++)
             {
                 var value = source[index];
-                var quotient = (double)value / Step;
+                var quotient = (double)value / HeightQuantizationStep;
                 SampleCount++;
 
-                if (!double.IsFinite(quotient) || quotient < LowestAcceptedQuotient || quotient >= HighestRejectedQuotient)
+                if (!double.IsFinite(quotient) || quotient < HeightQuantizationLowestQuotient || quotient >= HeightQuantizationHighestRejectedQuotient)
                 {
                     RejectedCount++;
                     quantized[index] = value;
@@ -265,7 +292,7 @@ public static class GeneratedMapPackageConverter
                 }
 
                 var elevation = (ushort)Math.Round(quotient, MidpointRounding.ToEven);
-                var result = (float)(elevation * Step);
+                var result = (float)(elevation * HeightQuantizationStep);
                 quantized[index] = result;
 
                 if (result != value)
@@ -934,6 +961,214 @@ public static class GeneratedMapPackageConverter
         return objects.Count == 0 ? null : new PlacedObjectSet(objects);
     }
 
+    // Landing grading (WP1029): the engine bridge deck rides the terrain height at the line
+    // endpoints (Bridge re-samples the heightmap and adds a fixed bias), so generated maps
+    // need the terrain to ramp to the deck at each landing; otherwise ground vehicles drive
+    // off an abrupt step into the gorge. When bridge rules are present, lattice cells within
+    // the ramp distance outward from each endpoint and within the cross-width band blend
+    // from their quantized height toward (deck - 1) with a smoothstep curve; the band
+    // [original height, deck] keeps grading from raising cliffs or digging pits. The
+    // endpoint lattice cells keep their height because the runtime bridge anchors there.
+    private static int GradeBridgeLandings(
+        List<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        IReadOnlyList<GeneratedFeature> features,
+        IReadOnlyList<BridgeRule> rules,
+        List<string> diagnostics)
+    {
+        var pending = new List<(int LatticeX, int LatticeY, double Height)>();
+
+        foreach (var feature in features)
+        {
+            if (MatchBridgeRule(rules, feature) is null
+                || feature.Geometry is not GeoLineString line
+                || line.Positions.Count != 2)
+            {
+                continue;
+            }
+
+            var start = line.Positions[0].Coordinate;
+            var end = line.Positions[1].Coordinate;
+
+            if (start.X == end.X && start.Y == end.Y)
+            {
+                // Degenerate lines fail conversion in the pair pass; leave terrain untouched.
+                continue;
+            }
+
+            // Both deck targets come from the pre-grading terrain, so landings closer than
+            // two ramp distances apart grade toward stable heights.
+            var startDeckZ = SampleLatticeHeightBilinear(chunks, latticeWidth, latticeHeight, start.X, start.Y) + LandingApproachDeckOffset;
+            var endDeckZ = SampleLatticeHeightBilinear(chunks, latticeWidth, latticeHeight, end.X, end.Y) + LandingApproachDeckOffset;
+
+            GradeLanding(pending, chunks, latticeWidth, latticeHeight, start.X, start.Y, end.X, end.Y, startDeckZ);
+            GradeLanding(pending, chunks, latticeWidth, latticeHeight, end.X, end.Y, start.X, start.Y, endDeckZ);
+        }
+
+        var changed = 0;
+
+        foreach (var (latticeX, latticeY, height) in pending)
+        {
+            if (WriteLatticeHeight(chunks, latticeWidth, latticeHeight, latticeX, latticeY, height))
+            {
+                changed++;
+            }
+        }
+
+        if (changed > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BridgeLandingGrading,
+                $"Graded {changed} lattice cell(s) at bridge landings toward the bridge decks (ramp {LandingRampDistance.ToString(CultureInfo.InvariantCulture)} game units, cross-width ±{LandingCrossWidth.ToString(CultureInfo.InvariantCulture)}, deck offset {LandingApproachDeckOffset.ToString(CultureInfo.InvariantCulture)})."));
+        }
+
+        return changed;
+    }
+
+    // Buffered per landing; the caller writes once after every bridge line is graded so the
+    // endpoints' deck heights always come from the pre-grading terrain.
+    private static void GradeLanding(
+        List<(int LatticeX, int LatticeY, double Height)> pending,
+        IReadOnlyList<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        double endpointX,
+        double endpointY,
+        double inwardX,
+        double inwardY,
+        double deckZ)
+    {
+        var outwardX = endpointX - inwardX;
+        var outwardY = endpointY - inwardY;
+        var length = Math.Sqrt((outwardX * outwardX) + (outwardY * outwardY));
+
+        if (length <= 0d)
+        {
+            return;
+        }
+
+        var axisX = outwardX / length;
+        var axisY = outwardY / length;
+
+        // Any graded cell lies within sqrt(ramp^2 + crossWidth^2) of the endpoint.
+        var centerLatticeX = (int)Math.Round(endpointX / ChunkLayout.SampleSpacingGameUnits);
+        var centerLatticeY = (int)Math.Round(endpointY / ChunkLayout.SampleSpacingGameUnits);
+        var window = (int)Math.Ceiling(Math.Sqrt((LandingRampDistance * LandingRampDistance) + (LandingCrossWidth * LandingCrossWidth)) / ChunkLayout.SampleSpacingGameUnits);
+
+        for (var latticeY = Math.Max(0, centerLatticeY - window); latticeY <= Math.Min(latticeHeight - 1, centerLatticeY + window); latticeY++)
+        {
+            for (var latticeX = Math.Max(0, centerLatticeX - window); latticeX <= Math.Min(latticeWidth - 1, centerLatticeX + window); latticeX++)
+            {
+                var x = latticeX * (double)ChunkLayout.SampleSpacingGameUnits;
+                var y = latticeY * (double)ChunkLayout.SampleSpacingGameUnits;
+                var along = ((x - endpointX) * axisX) + ((y - endpointY) * axisY);
+
+                // Strictly outward of the endpoint: the endpoint cell keeps its height (the
+                // runtime bridge anchors there), inward cells stay under the bridge.
+                if (along <= 0d || along > LandingRampDistance)
+                {
+                    continue;
+                }
+
+                var across = Math.Abs(((x - endpointX) * -axisY) + ((y - endpointY) * axisX));
+
+                if (across > LandingCrossWidth)
+                {
+                    continue;
+                }
+
+                var current = (double)SampleLatticeHeight(chunks, latticeWidth, latticeHeight, latticeX, latticeY);
+                var rampT = 1d - (along / LandingRampDistance);
+                var weight = (rampT * rampT) * (3d - (2d * rampT));
+                var target = deckZ - LandingRampTopClearance;
+                var graded = current + ((target - current) * weight);
+
+                graded = Math.Clamp(graded, Math.Min(current, deckZ), Math.Max(current, deckZ));
+                pending.Add((latticeX, latticeY, graded));
+            }
+        }
+    }
+
+    private static double SampleLatticeHeightBilinear(
+        IReadOnlyList<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        double x,
+        double y)
+    {
+        var latticeX = x / ChunkLayout.SampleSpacingGameUnits;
+        var latticeY = y / ChunkLayout.SampleSpacingGameUnits;
+        var x0 = Math.Clamp((int)Math.Floor(latticeX), 0, latticeWidth - 1);
+        var y0 = Math.Clamp((int)Math.Floor(latticeY), 0, latticeHeight - 1);
+        var x1 = Math.Min(x0 + 1, latticeWidth - 1);
+        var y1 = Math.Min(y0 + 1, latticeHeight - 1);
+        var fractionX = Math.Clamp(latticeX - x0, 0d, 1d);
+        var fractionY = Math.Clamp(latticeY - y0, 0d, 1d);
+
+        var h00 = (double)SampleLatticeHeight(chunks, latticeWidth, latticeHeight, x0, y0);
+        var h10 = (double)SampleLatticeHeight(chunks, latticeWidth, latticeHeight, x1, y0);
+        var h01 = (double)SampleLatticeHeight(chunks, latticeWidth, latticeHeight, x0, y1);
+        var h11 = (double)SampleLatticeHeight(chunks, latticeWidth, latticeHeight, x1, y1);
+
+        var low = (h10 * fractionX) + (h00 * (1d - fractionX));
+        var high = (h11 * fractionX) + (h01 * (1d - fractionX));
+
+        return (high * fractionY) + (low * (1d - fractionY));
+    }
+
+    private static bool WriteLatticeHeight(
+        List<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        int latticeX,
+        int latticeY,
+        double value)
+    {
+        var quotient = value / HeightQuantizationStep;
+
+        // Off-grid-range targets keep the original height instead of poisoning conversion.
+        if (!double.IsFinite(quotient) || quotient < HeightQuantizationLowestQuotient || quotient >= HeightQuantizationHighestRejectedQuotient)
+        {
+            return false;
+        }
+
+        var quantized = (float)(Math.Round(quotient, MidpointRounding.ToEven) * HeightQuantizationStep);
+
+        var changed = false;
+
+        // Core copies and the neighbouring chunks' apron copies all carry this lattice point.
+        for (var chunkIndex = 0; chunkIndex < chunks.Count; chunkIndex++)
+        {
+            var chunk = chunks[chunkIndex];
+            var originX = chunk.Key.Cx * ChunkLayout.IntervalsPerChunk;
+            var originY = chunk.Key.Cy * ChunkLayout.IntervalsPerChunk;
+            var coreWidth = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeWidth - originX);
+            var coreHeight = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeHeight - originY);
+            var column = latticeX - originX + 1;
+            var row = latticeY - originY + 1;
+
+            if (column < 0 || column > coreWidth + 1 || row < 0 || row > coreHeight + 1)
+            {
+                continue;
+            }
+
+            var index = (row * (coreWidth + 2)) + column;
+
+            if (chunk.Heights.Samples[index] == quantized)
+            {
+                continue;
+            }
+
+            var samples = chunk.Heights.Samples.ToArray();
+            samples[index] = quantized;
+            chunks[chunkIndex] = chunk with { Heights = new HeightLayer(samples) };
+            changed = true;
+        }
+
+        return changed;
+    }
+
     // Bridge emission keeps the Scene3D pairing contract (Scene3D.LoadObjects pairs the
     // BridgeStart object at index i with the BridgeEnd object at index i+1): every pair is
     // appended adjacently and pairs are emitted contiguously, so no feature or skirmish
@@ -1142,6 +1377,12 @@ public static class GeneratedMapPackageConverter
     {
         var latticeX = Math.Clamp((int)Math.Round(x / ChunkLayout.SampleSpacingGameUnits), 0, latticeWidth - 1);
         var latticeY = Math.Clamp((int)Math.Round(y / ChunkLayout.SampleSpacingGameUnits), 0, latticeHeight - 1);
+
+        return SampleLatticeHeight(chunks, latticeWidth, latticeHeight, latticeX, latticeY);
+    }
+
+    private static float SampleLatticeHeight(IReadOnlyList<Chunk> chunks, int latticeWidth, int latticeHeight, int latticeX, int latticeY)
+    {
         var cx = latticeX / ChunkLayout.IntervalsPerChunk;
         var cy = latticeY / ChunkLayout.IntervalsPerChunk;
         var chunk = chunks.Single(candidate => candidate.Key.Cx == cx && candidate.Key.Cy == cy);
