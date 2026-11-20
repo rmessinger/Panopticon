@@ -164,13 +164,15 @@ public sealed class Scene3D : DisposableBase, IScene3D
         Waypoints = waypoints;
         Cameras = cameras;
 
-        // Bridge roadway surfaces (WP1029): one registration per bridge replaces the
-        // previous map's list, so ground-height queries ride the deck of the loaded map.
+        // Generated-bridge roadway surfaces (WP1029): one registration per generated
+        // bridge replaces the previous map's list, so the movement query rides the deck
+        // of the loaded map. Legacy bridges carry no provenance marker and register
+        // nothing, keeping raw ground behavior on legacy maps.
         Game.TerrainLogic.ClearBridgeSurfaces();
 
         foreach (var bridge in bridges)
         {
-            if (bridge.CreateSurface() is { } surface)
+            if (bridge.IsGeneratedBridge && bridge.CreateSurface() is { } surface)
             {
                 Game.TerrainLogic.RegisterBridgeSurface(surface);
             }

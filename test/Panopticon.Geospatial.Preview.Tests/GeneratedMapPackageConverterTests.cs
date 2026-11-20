@@ -1331,7 +1331,16 @@ public sealed class GeneratedMapPackageConverterTests
             Assert.Equal(endY, end.Y.Value);
             Assert.Equal(MapQuantityFrame.MapLocalXy, start.X.Frame);
             Assert.Equal(MapQuantityFrame.MapLocalZ, start.Z.Frame);
-            Assert.Empty(start.LegacyProperties);
+
+            // The generated-provenance property scopes the runtime roadway surface to
+            // generated bridges (WP1029 rework); it is the only legacy property.
+            Assert.Equal(1, start.LegacyProperties.Count);
+            Assert.Equal(
+                Panopticon.Terrain.Bridge.GeneratedProvenanceValue,
+                Assert.IsType<MapPropertyValue.AsciiStringValue>(start.LegacyProperties[Panopticon.Terrain.Bridge.GeneratedProvenanceKey]).Value);
+            Assert.Equal(
+                Panopticon.Terrain.Bridge.GeneratedProvenanceValue,
+                Assert.IsType<MapPropertyValue.AsciiStringValue>(end.LegacyProperties[Panopticon.Terrain.Bridge.GeneratedProvenanceKey]).Value);
 
             // Orientation is the planar bearing from the line start to its end, stored
             // exactly as the float32 angle the resident format keeps; Z comes from the

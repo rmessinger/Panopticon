@@ -51,6 +51,50 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     private bool _orientToVelocityRequested;
 
     /// <summary>
+    /// Whether this body is currently riding a generated bridge roadway (WP1029). The
+    /// ground clamp engages only when the body's XY is inside the roadway extent and its
+    /// current Z is within snap margin of the nearest roadway level; while engaged,
+    /// coverage gaps and multi-level switches inside the extent hold the current height
+    /// instead of dropping the body toward raw terrain. A body that never engaged —
+    /// below the deck in a gorge, flying above — never snaps.
+    /// </summary>
+    private bool _onGeneratedBridgeSurface;
+
+    /// <summary>
+    /// Snap margin for the generated-bridge movement surface (WP1029): mirrors the
+    /// locomotor's gate so both agree on when a vehicle rides the deck.
+    /// </summary>
+    private const float GeneratedBridgeSnapMargin = 15f;
+
+    /// <summary>
+    /// Resolves the effective ground height at the XY point: raw terrain, or the nearest
+    /// generated-bridge roadway level when the body is engaged with it (WP1029). Null
+    /// bridge results fall through to raw terrain exactly as before.
+    /// </summary>
+    private float? ResolveGeneratedBridgeDeckZ(float x, float y, float currentZ)
+    {
+        var terrainLogic = GameEngine.Game.TerrainLogic;
+        var deckZ = terrainLogic.GetGeneratedBridgeSurfaceHeight(x, y, currentZ);
+
+        if (deckZ is { } z)
+        {
+            if (MathF.Abs(currentZ - z) < GeneratedBridgeSnapMargin)
+            {
+                _onGeneratedBridgeSurface = true;
+                return z;
+            }
+        }
+
+        if (_onGeneratedBridgeSurface && terrainLogic.IsWithinGeneratedBridgeExtent(x, y))
+        {
+            return currentZ;
+        }
+
+        _onGeneratedBridgeSurface = false;
+        return null;
+    }
+
+    /// <summary>
     /// The legacy backend body holding this module's integration state
     /// (velocity, acceleration, rotation rates).
     /// </summary>
@@ -444,6 +488,16 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             if (obj.TestStatus(ObjectStatus.DeckHeightOffset))
             {
                 groundZ += obj.CarrierDeckHeight;
+            }
+
+            // Generated-bridge roadway (WP1029): when the body is engaged with a generated
+            // bridge's roadway (inside the extent, within snap margin of the nearest
+            // level), the deck is the floor; a body below the deck in a gorge or flying
+            // above it never engages and clamps to raw terrain exactly as before.
+            if (ResolveGeneratedBridgeDeckZ(mtx.GetXTranslation(), mtx.GetYTranslation(), mtx.GetZTranslation())
+                is { } generatedBridgeDeckZ)
+            {
+                groundZ = MathF.Max(groundZ, generatedBridgeDeckZ);
             }
 
             gotBounceForce = HandleBounce(oldPosZ, mtx.GetZTranslation(), groundZ, ref bounceForce);

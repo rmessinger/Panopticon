@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using Panopticon.Content.Importing;
 using Panopticon.Graphics;
+using Panopticon.Mathematics;
 
 namespace Panopticon.Terrain;
 
@@ -75,6 +76,225 @@ public sealed class BridgeSurface
     /// the roadway band around the line between the two anchor positions. Returns null when
     /// no roadway triangle survives; every input must already be in model piece order.
     /// </summary>
+    /// <summary>
+    /// Measures the authored roadway pitch of a laid-out bridge at zero placement pitch
+    /// (WP1029 rework part 2): replicates the Bridge.cs piece layout with no rotation
+    /// around Y, extracts the roadway triangles with the same filter as the movement
+    /// surface, and returns atan of the median per-triangle slope along the span axis
+    /// (each triangle's longest edge projected onto the span axis). Deterministic; null
+    /// when fewer than three finite slopes survive (no correction can be derived).
+    /// Robustness: the median ignores outlier triangles (walls, pylons) that slip past
+    /// the horizontal filter.
+    /// </summary>
+    public static float? MeasureIntrinsicGradeRadians(
+        IReadOnlyList<(ModelSubObject SubObject, ImportedMesh Mesh)> pieces,
+        Func<ModelSubObject, Matrix4x4> scaledBoneTransform,
+        Vector3 anchorStart,
+        Vector3 anchorEnd)
+    {
+        ArgumentNullException.ThrowIfNull(pieces);
+        ArgumentNullException.ThrowIfNull(scaledBoneTransform);
+
+        if (pieces.Count < 3)
+        {
+            return null;
+        }
+
+        // Piece lengths from the bone-transformed render bounds, replicating Bridge.cs.
+        var lengths = new float[pieces.Count];
+
+        for (var index = 0; index < pieces.Count; index++)
+        {
+            var bounds = AxisAlignedBoundingBox.Transform(pieces[index].SubObject.RenderObject.BoundingBox, scaledBoneTransform(pieces[index].SubObject));
+            lengths[index] = bounds.Max.X - bounds.Min.X;
+        }
+
+        if (lengths.Any(length => !float.IsFinite(length) || length <= 1f))
+        {
+            return null;
+        }
+
+        var distance = Vector3.Distance(anchorStart, anchorEnd);
+        var lengthSpan = lengths[1];
+        var spanLength = distance - lengths[0] - lengths[^1];
+
+        if (lengthSpan <= 1f)
+        {
+            return null;
+        }
+
+        var numSpans = (int)(spanLength / lengthSpan);
+        var totalLength = lengths[0] + (lengthSpan * numSpans) + lengths[^1];
+
+        if (totalLength <= 1f)
+        {
+            return null;
+        }
+
+        var scaleX = distance / totalLength;
+
+        // Axis alignment including the height difference: the minimal rotation from +X to
+        // the anchor direction embeds the site pitch, exactly like Bridge.cs's
+        // rotationAroundZ. The measurement happens AFTER this alignment and BEFORE the
+        // Y-rotation, so it captures the roadway pitch the placement transform produces.
+        var axisDirection = Vector3.Normalize(anchorEnd - anchorStart);
+
+        if (axisDirection.Length() <= float.Epsilon || MathF.Abs(axisDirection.Y) <= float.Epsilon && MathF.Abs(axisDirection.Z) > 0.9f)
+        {
+            return null;
+        }
+
+        var alignmentAxis = Vector3.Cross(Vector3.UnitX, axisDirection);
+        Quaternion rotationAroundZ;
+
+        if (alignmentAxis == Vector3.Zero)
+        {
+            // +X already aligned (or opposed): pure yaw about Z from the planar heading.
+            rotationAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.Atan2(axisDirection.Y, axisDirection.X));
+        }
+        else
+        {
+            var angle = MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.UnitX, axisDirection), -1f, 1f));
+            rotationAroundZ = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(Vector3.Normalize(alignmentAxis), angle));
+        }
+
+        var spanAxis = Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitX, Matrix4x4.CreateFromQuaternion(rotationAroundZ)));
+        var bandCeiling = 10f + (1.5f * (anchorEnd.Z - anchorStart.Z));
+        var bandFloor = -15f;
+        var worldZeroPitch = Matrix4x4.CreateScale(scaleX, 1, 1) * Matrix4x4.CreateFromQuaternion(rotationAroundZ) * Matrix4x4.CreateTranslation(anchorStart);
+
+        var centroidPoints = new List<(float T, float Z)>();
+        var currentOffset = 0f;
+
+        for (var pieceIndex = 0; pieceIndex < pieces.Count; pieceIndex++)
+        {
+            var (subObject, mesh) = pieces[pieceIndex];
+            var bone = scaledBoneTransform(subObject);
+
+            // Layout contract: [0] = left landing (x1), [1] = span (repeated to fill), [^1] = right landing (x1).
+            var copies = pieceIndex == 1 ? numSpans : 1;
+
+            var localCorners = mesh.Vertices.Select(v => Vector3.Transform(v.Position, bone)).ToArray();
+            var pieceMinX = localCorners.Min(c => c.X);
+
+            for (var copy = 0; copy < copies; copy++)
+            {
+                var pieceMatrix =
+                    bone *
+                    Matrix4x4.CreateTranslation(new Vector3(currentOffset, 0, 0)) *
+                    Matrix4x4.CreateTranslation(new Vector3(-pieceMinX, 0, 0)) *
+                    worldZeroPitch;
+
+                var verts = mesh.Vertices;
+                var indices = mesh.Indices;
+
+                for (var index = 0; index + 2 < indices.Count; index += 3)
+                {
+                    var a = Vector3.Transform(verts[indices[index]].Position, pieceMatrix);
+                    var b = Vector3.Transform(verts[indices[index + 1]].Position, pieceMatrix);
+                    var c = Vector3.Transform(verts[indices[index + 2]].Position, pieceMatrix);
+
+                    var geometricNormal = Vector3.Cross(b - a, c - a);
+                    var geometricLength = geometricNormal.Length();
+
+                    if (geometricLength <= float.Epsilon || MathF.Abs(geometricNormal.Z / geometricLength) <= 0.5f)
+                    {
+                        continue;
+                    }
+
+                    var centroidZ = (a.Z + b.Z + c.Z) / 3f;
+
+                    if (centroidZ - anchorStart.Z < bandFloor || centroidZ - anchorStart.Z > bandCeiling)
+                    {
+                        continue;
+                    }
+
+                    // Longest edge; slope = dZ per unit of span-axis projection.
+                    var (p, q) = LongestEdge(a, b, c);
+                    var spanDelta = MathF.Abs(Vector3.Dot(q - p, spanAxis));
+
+                    if (spanDelta < 1f)
+                    {
+                        continue;
+                    }
+
+                    // Magnitude only: triangle winding flips the sign, and the roadway
+                    // pitch correction needs the grade magnitude, not its direction.
+                    var centroid = (a + b + c) / 3f;
+                    centroidPoints.Add((Vector3.Dot(centroid - anchorStart, spanAxis), centroid.Z));
+                }
+
+                currentOffset += lengths[pieceIndex];
+            }
+        }
+
+        System.IO.File.AppendAllText("/tmp/opencode/gd3.txt", $"n={centroidPoints.Count} pitchDeg=0.00\n");
+        if (centroidPoints.Count < 6)
+        {
+            return null;
+        }
+
+        // The rideable pitch comes from the TOP roadway surface: bucket the roadway
+        // centroids along the span and take each bucket's maximum Z (the upper envelope).
+        // This rejects the buried camber roadway and arch tops that sit below the deck,
+        // which would otherwise drag a plain centroid fit toward their own (lower) pitch.
+        var envelope = new SortedDictionary<int, float>();
+
+        foreach (var point in centroidPoints)
+        {
+            var bucket = (int)MathF.Floor(point.T / 25f);
+
+            if (!envelope.TryGetValue(bucket, out var current) || point.Z > current)
+            {
+                envelope[bucket] = point.Z;
+            }
+        }
+
+        if (envelope.Count < 6)
+        {
+            return null;
+        }
+
+        var pitch = FitPitch(envelope.Select(pair => ((pair.Key * 25f) + 12.5f, pair.Value)).ToList());
+
+        if (!float.IsFinite(pitch))
+        {
+            return null;
+        }
+
+        return MathF.Atan(pitch);
+    }
+
+    private static float FitPitch(IReadOnlyList<(float T, float Z)> points)
+    {
+        var meanT = points.Average(p => p.T);
+        var meanZ = points.Average(p => p.Z);
+        var covariance = 0f;
+        var variance = 0f;
+
+        foreach (var point in points)
+        {
+            covariance += (point.T - meanT) * (point.Z - meanZ);
+            variance += (point.T - meanT) * (point.T - meanT);
+        }
+
+        return variance > float.Epsilon ? covariance / variance : float.NaN;
+    }
+
+    private static (Vector3 P, Vector3 Q) LongestEdge(Vector3 a, Vector3 b, Vector3 c)
+    {
+        var ab = Vector3.Distance(a, b);
+        var bc = Vector3.Distance(b, c);
+        var ca = Vector3.Distance(c, a);
+
+        if (ab >= bc && ab >= ca)
+        {
+            return (a, b);
+        }
+
+        return bc >= ca ? (b, c) : (c, a);
+    }
+
     public static BridgeSurface? Create(
         IReadOnlyList<Tuple<ModelSubObject, Matrix4x4>> pieces,
         Func<ModelSubObject, ImportedMesh?> importedMesh,

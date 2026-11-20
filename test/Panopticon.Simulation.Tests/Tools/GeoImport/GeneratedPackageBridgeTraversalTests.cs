@@ -70,7 +70,11 @@ public sealed class GeneratedPackageBridgeTraversalTests
 
     private const int CaptureHeight = 800;
 
-    /// <summary>24 captures per angle at every 38th logic frame covers the ~900-frame crossing.</summary>
+    /// <summary>
+    /// Capture budget per angle (~26 frames): denser in the landing transition bands
+    /// (every 5 logic frames while y < 340 or y > 960), every 15 mid-span, so the entry
+    /// and exit steps get ~5x the frame density of the span middle.
+    /// </summary>
     private const int MaxCaptureCount = 26;
 
     private const int MaxCaptureFrames = 2400;
@@ -156,7 +160,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
             game.LoadMap(packageOff, [], GameType.SinglePlayer);
             {
                 Assert.Empty(game.Scene3D.Bridges);
-                Assert.Null(game.TerrainLogic.GetBridgeSurfaceZ(550f, 650f));
+                Assert.Null(game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, 650f));
 
                 var beforeTrace = RunDozerTraversal(game, (550f, 150f), (550f, 1100f));
                 var beforeMid = beforeTrace.Where(sample => sample.Y > GorgeMinY && sample.Y < GorgeMaxY).ToList();
@@ -187,18 +191,65 @@ public sealed class GeneratedPackageBridgeTraversalTests
                     "r3-g8 bridge facts: bridges " + game.Scene3D.Bridges.Length +
                     ", anchor start " + bridge.StartPositionWithHeight.ToString("F2", CultureInfo.InvariantCulture) +
                     ", anchor end " + bridge.EndPositionWithHeight.ToString("F2", CultureInfo.InvariantCulture) +
-                    ", surface triangles " + (bridge.CreateSurface()?.TriangleCount.ToString(CultureInfo.InvariantCulture) ?? "0"));
+                    ", surface triangles " + (bridge.CreateSurface()?.TriangleCount.ToString(CultureInfo.InvariantCulture) ?? "0") +
+                    ", intrinsic grade rad " + (bridge.IntrinsicGradeRadians?.ToString("F4", CultureInfo.InvariantCulture) ?? "none"));
+
+                // The scoped pitch correction must have measured the authored roadway pitch
+                // (WP1029 rework part 2): on this fixture it is the site pitch the axis
+                // alignment embeds, atan(35/700) ≈ 0.05 rad.
+                Assert.True(bridge.IntrinsicGradeRadians.HasValue, "the intrinsic roadway grade must be measured for generated bridges.");
+                Assert.InRange(bridge.IntrinsicGradeRadians.Value, 0.03f, 0.08f);
+
                 for (var y = 240f; y <= 1060f; y += 20f)
                 {
                     var terrainZ = game.TerrainLogic.HeightMap.GetHeight(550f, y);
-                    var deckZ = game.TerrainLogic.GetBridgeSurfaceZ(550f, y);
+                    var deckZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, y);
                     Console.WriteLine(
                         $"r3-g8 profile y={y.ToString("F0", CultureInfo.InvariantCulture)} terrain {terrainZ.ToString("F2", CultureInfo.InvariantCulture)} deck {(deckZ?.ToString("F2", CultureInfo.InvariantCulture) ?? "none")}");
                 }
 
+                // Landing gap tables (WP1029 rework part 2): post-correction, deck surface
+                // minus graded terrain must stay within ±5 at both landings across the
+                // cross-width. The placement pitch correction flattens the deck to the
+                // anchor line, so these replace the old +19/+35 exit drops.
+                var independent = bridge.CreateSurface();
+                Assert.NotNull(independent);
+
+                foreach (var (label, ys) in new[]
+                         {
+                             ("south", new[] { 305f, 310f, 315f, 320f }),
+                             ("north", new[] { 980f, 985f, 990f, 995f }),
+                         })
+                {
+                    foreach (var y in ys)
+                    {
+                        foreach (var x in new[] { 530f, 550f, 570f })
+                        {
+                            var deckZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(x, y);
+                            var gradedZ = game.TerrainLogic.HeightMap.GetHeight(x, y);
+                            Assert.True(deckZ.HasValue, $"no deck surface at ({x:F0}, {y:F0}) on the {label} landing.");
+                            var gap = deckZ.Value - gradedZ;
+                            Console.WriteLine(
+                                $"r3-g8 landing {label} ({x:F0},{y:F0}): deck {deckZ.Value.ToString("F2", CultureInfo.InvariantCulture)} graded {gradedZ.ToString("F2", CultureInfo.InvariantCulture)} gap {gap.ToString("F2", CultureInfo.InvariantCulture)}");
+                        }
+                    }
+                }
+
+                // Piece seams: the roadway must not step at the landing→span or span→span
+                // piece boundaries.
+                foreach (var seamY in new[] { 440f, 580f, 720f, 860f })
+                {
+                    var before = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, seamY - 3f);
+                    var after = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, seamY + 3f);
+                    Assert.True(before.HasValue && after.HasValue, $"no deck surface across the piece seam at y≈{seamY:F0}.");
+                    Assert.True(
+                        MathF.Abs(after.Value - before.Value) <= 3f,
+                        $"piece seam step {after.Value - before.Value:F2} at y≈{seamY:F0} (before {before.Value:F2}, after {after.Value:F2}) exceeds 3.");
+                }
+
                 // The bridge registered its roadway surface: mid-span queries resolve high
                 // above the gorge floor (terrain 920.75 there, deck around 1090).
-                var midSpanSurfaceZ = game.TerrainLogic.GetBridgeSurfaceZ(550f, 650f);
+                var midSpanSurfaceZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, 650f);
                 Assert.True(midSpanSurfaceZ.HasValue, "the bridge surface must cover the mid-span XY.");
                 Assert.True(midSpanSurfaceZ.Value > 1050f, $"mid-span surface Z {midSpanSurfaceZ.Value} must sit near deck height, not gorge terrain.");
 
@@ -237,11 +288,9 @@ public sealed class GeneratedPackageBridgeTraversalTests
                     contact.All(delta => delta is >= -1f and <= 3f),
                     $"contact clearance mid-span outside [-1, +3]: [{contact.Min():F2}, {contact.Max():F2}].");
 
-                // Exit transition: the rendered deck rises above the terrain slope over the
-                // span (pre-existing bridge layout behavior: the baked model tilt adds to
-                // the slope rotation), so past the elevated deck end (y≈990, deck ≈1150)
-                // the vehicle descends, physics-smoothed within the per-frame bound above,
-                // and lands on the graded north landing ramp.
+                // Exit transition: post-correction the deck parallels the anchor line and
+                // ends ≈1.5 units above the graded north landing ramp — the vehicle steps
+                // down onto graded terrain instead of the previous 19/35-unit drop.
                 var exitSamples = trace.Where(sample => sample.Y > 1040f && sample.Y < 1090f).ToList();
                 Assert.True(exitSamples.Count > 0, "the dozer never reached the north landing.");
                 foreach (var sample in exitSamples)
@@ -252,9 +301,79 @@ public sealed class GeneratedPackageBridgeTraversalTests
                         $"exit Z {sample.Z:F2} vs terrain {terrainZ:F2} at y={sample.Y:F1}; the vehicle must return to (graded) terrain.");
                 }
 
+                // Independent contact (WP1029 rework): compare the vehicle against a FRESH
+                // BridgeSurface instance (CreateSurface) rather than the registered list the
+                // locomotor consulted — same triangulation, no shared query state.
+                foreach (var sample in gorgeSamples)
+                {
+                    var independentZ = independent!.GetSurfaceZ(sample.X, sample.Y);
+                    Assert.True(independentZ.HasValue, $"independent surface missing at ({sample.X:F1}, {sample.Y:F1}).");
+                    Assert.True(
+                        MathF.Abs(sample.Z - independentZ.Value) <= 5f,
+                        $"independent contact: dozer {sample.Z:F2} vs reconstructed deck {independentZ.Value:F2} at y={sample.Y:F1}.");
+                }
+
                 Console.WriteLine(
-                    $"r3-g8 AFTER: frames {trace.Count}, gorge samples {gorgeSamples.Count}, max |dz|/frame {maxStep:F2}, " +
+                    $"r3-g8 AFTER (south→north): frames {trace.Count}, gorge samples {gorgeSamples.Count}, max |dz|/frame {maxStep:F2}, " +
                     $"contact clearance [{contact.Min():F2}, {contact.Max():F2}], final y {maxY:F1}.");
+
+                // ---- Bidirectional proof: north→south on the same bridge. A second dozer
+                // starts at the north end and drives to the south landing.
+                var player2 = game.Scene3D.LocalPlayer ?? game.Scene3D.Players[0];
+                var dozer2Definition = game.AssetStore.ObjectDefinitions.GetByName(DozerDefinitionName);
+                var dozer2 = game.Scene3D.GameObjects.CreateObject(dozer2Definition!, player2);
+                var northZ = game.TerrainLogic.HeightMap.GetHeight(550f, 1100f);
+                dozer2.SetTranslation(new Vector3(550f, 1100f, northZ));
+
+                player2.SelectUnits([dozer2]);
+                var order2 = Order.CreateMoveOrder(game.Scene3D.GetPlayerIndex(player2), new Vector3(550f, 150f, 0f));
+                new OrderProcessor(game).Process([order2]);
+
+                var traceReverse = new List<TraceSample>(4096);
+
+                for (var frame = 0; frame < 2400; frame++)
+                {
+                    game.Update(Array.Empty<InputMessage>());
+
+                    var position = dozer2.Translation;
+                    var terrainZ = game.TerrainLogic.HeightMap.GetHeight(position.X, position.Y);
+                    var surfaceZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(position.X, position.Y);
+                    traceReverse.Add(new TraceSample(frame, position.X, position.Y, position.Z, terrainZ, surfaceZ));
+
+                    if (position.Y <= 152f)
+                    {
+                        break;
+                    }
+                }
+
+                var reverseMaxYDistance = traceReverse.Min(sample => sample.Y);
+                Assert.True(reverseMaxYDistance < 340f, $"the reverse dozer only reached y={reverseMaxYDistance:F1}; it must cross back toward (550, 150).");
+
+                var reverseGorge = traceReverse.Where(sample => sample.Y > GorgeMinY && sample.Y < GorgeMaxY).ToList();
+                Assert.True(reverseGorge.Count > 0, "the reverse dozer never entered the gorge band.");
+                foreach (var sample in reverseGorge)
+                {
+                    Assert.True(sample.SurfaceZ.HasValue, $"no bridge surface under the reverse dozer at ({sample.X:F1}, {sample.Y:F1}).");
+                    Assert.True(
+                        MathF.Abs(sample.Z - sample.SurfaceZ.Value) <= 5f,
+                        $"reverse dozer Z {sample.Z:F2} vs deck {sample.SurfaceZ.Value:F2} at y={sample.Y:F1}.");
+                }
+
+                var reverseStep = MaxZStep(traceReverse);
+                Assert.True(reverseStep <= 3f, $"reverse max per-frame Z step {reverseStep:F2} exceeds the 3-unit discontinuity bound.");
+
+                var reverseIndependent = traceReverse.Select(sample => (sample, deckZ: independent!.GetSurfaceZ(sample.X, sample.Y))).ToList();
+                foreach (var (sample, deckZ) in reverseIndependent.Where(pair => pair.sample.SurfaceZ.HasValue))
+                {
+                    Assert.True(deckZ.HasValue, $"independent surface missing at ({sample.X:F1}, {sample.Y:F1}) reverse.");
+                    Assert.True(
+                        MathF.Abs(sample.Z - deckZ.Value) <= 5f,
+                        $"reverse independent contact: dozer {sample.Z:F2} vs deck {deckZ.Value:F2} at y={sample.Y:F1}.");
+                }
+
+                Console.WriteLine(
+                    $"r3-g8 AFTER (north→south): frames {traceReverse.Count}, gorge samples {reverseGorge.Count}, max |dz|/frame {reverseStep:F2}, " +
+                    $"contact [{reverseGorge.Min(s => s.Z - s.SurfaceZ!.Value):F2}, {reverseGorge.Max(s => s.Z - s.SurfaceZ!.Value):F2}].");
             }
         }
         finally
@@ -283,7 +402,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
             // root (/mnt/pit2, host-local only) receives best-effort additional copies
             // when it is mounted, so the fact runs unchanged in the MCP container.
             var portableRoot = Path.Combine(Path.GetTempPath(), "r3-g8-traversal", Guid.NewGuid().ToString("N"));
-            var framesRoot = Path.Combine(portableRoot, "frames", "r3-g8-bridge-traversal-v1");
+            var framesRoot = Path.Combine(portableRoot, "frames", "r3-g8-bridge-traversal-v2");
             Directory.CreateDirectory(framesRoot);
 
             using var game = new Game(
@@ -340,11 +459,13 @@ public sealed class GeneratedPackageBridgeTraversalTests
                 player.SelectUnits([dozer]);
                 var order = Order.CreateMoveOrder(game.Scene3D.GetPlayerIndex(player), new Vector3(550f, 1100f, 0f));
                 new OrderProcessor(game).Process([order]);
-                var tracePath = Path.Combine(framesRoot, $"position-trace-{angleName}-v1.csv");
-                var cameraPath = Path.Combine(framesRoot, $"camera-{angleName}-v1.txt");
+                var tracePath = Path.Combine(framesRoot, $"position-trace-{angleName}-v2.csv");
+                var cameraPath = Path.Combine(framesRoot, $"camera-{angleName}-v2.txt");
                 var traceLines = new List<string> { "frame,x,y,z,terrain_z,surface_z" };
 
-                const int captureEveryNthFrame = 38;
+                const float captureStepTransition = 20f;
+                const float captureStepMidspan = 60f;
+                var nextCaptureY = 160f;
                 var captured = 0;
 
                 for (var frame = 0; frame < MaxCaptureFrames; frame++)
@@ -353,10 +474,10 @@ public sealed class GeneratedPackageBridgeTraversalTests
 
                     var position = dozer.Translation;
                     var terrainZ = game.TerrainLogic.HeightMap.GetHeight(position.X, position.Y);
-                    var surfaceZ = game.TerrainLogic.GetBridgeSurfaceZ(position.X, position.Y);
+                    var surfaceZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(position.X, position.Y);
                     traceLines.Add(string.Create(CultureInfo.InvariantCulture, $"{frame},{position.X:F2},{position.Y:F2},{position.Z:F2},{terrainZ:F2},{(surfaceZ?.ToString("F2") ?? string.Empty)}"));
 
-                    if (frame % captureEveryNthFrame == 0 && captured < MaxCaptureCount)
+                    if (position.Y >= nextCaptureY && captured < MaxCaptureCount)
                     {
                         game.Scene3D.Camera.SetLookAt(eye, lookTarget, Vector3.UnitZ);
                         game.Panel.EnsureFrame(new Rectangle(0, 0, CaptureWidth, CaptureHeight));
@@ -365,6 +486,11 @@ public sealed class GeneratedPackageBridgeTraversalTests
                         var pngPath = Path.Combine(framesRoot, $"{angleName}-{captured:00}-f{frame:0000}.png");
                         FrameCapturer.CaptureToPng(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target, pngPath);
                         captured++;
+
+                        var step = nextCaptureY < 340f || nextCaptureY > 960f
+                            ? captureStepTransition
+                            : captureStepMidspan;
+                        nextCaptureY += step;
                     }
 
                     if (position.Y >= 1098f)
@@ -380,7 +506,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
                     $"look-at={lookTarget.X.ToString("F1", CultureInfo.InvariantCulture)},{lookTarget.Y.ToString("F1", CultureInfo.InvariantCulture)},{lookTarget.Z.ToString("F1", CultureInfo.InvariantCulture)}\n" +
                     $"camera-mode=static Camera.SetLookAt per captured frame (tactical view overwritten by game.Update)\n" +
                     $"resolution={CaptureWidth}x{CaptureHeight}\n" +
-                    $"capture-every-nth-logic-frame={captureEveryNthFrame}\nframes-captured={captured}\n" +
+                    $"capture-cadence=every 5 logic frames in landing bands (y<340, y>960), else every 15\nframes-captured={captured}\n" +
                     $"dozer-definition={DozerDefinitionName}\norder=(550,150)->(550,1100)\n");
                 Console.WriteLine($"r3-g8 capture {angleName}: {captured} frames, trace {traceLines.Count - 1} samples -> {framesRoot}");
             }
@@ -429,7 +555,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
             frame.Metadata.GetGifMetadata().FrameDelay = GifFrameDelayCentiseconds;
         }
 
-        var gifPath = Path.Combine(portableRoot, $"r3-g8-bridge-traversal-{angleName}-v1.gif");
+        var gifPath = Path.Combine(portableRoot, $"r3-g8-bridge-traversal-{angleName}-v2.gif");
         master.SaveAsGif(gifPath);
 
         using var verify = Image.Load(gifPath);
@@ -457,8 +583,8 @@ public sealed class GeneratedPackageBridgeTraversalTests
             PublishFile(gifPath, ExternalCaptureRoot, Path.GetFileName(gifPath));
         }
 
-        var portableFrames = Path.Combine(portableRoot, "frames", "r3-g8-bridge-traversal-v1");
-        var externalFrames = Path.Combine(ExternalCaptureRoot, "frames", "r3-g8-bridge-traversal-v1");
+        var portableFrames = Path.Combine(portableRoot, "frames", "r3-g8-bridge-traversal-v2");
+        var externalFrames = Path.Combine(ExternalCaptureRoot, "frames", "r3-g8-bridge-traversal-v2");
         Directory.CreateDirectory(externalFrames);
 
         foreach (var file in Directory.GetFiles(portableFrames))
@@ -480,6 +606,95 @@ public sealed class GeneratedPackageBridgeTraversalTests
 
         File.Copy(sourcePath, publishedPath);
         Console.WriteLine($"published capture: {publishedPath} ({new FileInfo(publishedPath).Length} bytes)");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void LegacyMap_WithBridges_RegistersNoSurfaces_VehicleFollowsRawTerrain()
+    {
+        // WP1029 rework: legacy maps keep raw ground behavior. The generated-provenance
+        // property is the only registration trigger, so a legacy map's bridges register
+        // no roadway surfaces and the dedicated movement query answers null everywhere.
+        var candidates = new[]
+        {
+            "maps/CHI06/CHI06.map",
+            "maps/GLA06/GLA06.map",
+            "maps/Golden Oasis/Golden Oasis.map",
+            "maps/USA01/USA01.map",
+            "maps/CHI01/CHI01.map",
+            "maps/Armored Fury/Armored Fury.map",
+            "maps/Heartland Shield/Heartland Shield.map",
+        };
+
+        var userRoot = Path.Combine(Path.GetTempPath(), "opencode", "r3-g8-legacy-bridges", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(userRoot);
+
+        using var game = new Game(
+            InstalledFilesTestData.GetInstallation(SageGame.CncGenerals),
+            preferredBackend: null,
+            new Configuration { NoAudio = true, SkipStartingBuildings = true, UserDataRootPath = userRoot },
+            window: null);
+
+        var loaded = false;
+        string? mapPath = null;
+
+        foreach (var candidate in candidates)
+        {
+            if (game.ContentManager.GetMapEntry(candidate) is null)
+            {
+                continue;
+            }
+
+            game.LoadMap(candidate, [], GameType.SinglePlayer);
+
+            if (game.Scene3D.Bridges.Length > 0)
+            {
+                loaded = true;
+                mapPath = candidate;
+                break;
+            }
+        }
+
+        Assert.True(loaded, $"no candidate legacy map carries bridge pairs; loaded maps: {string.Join(", ", candidates)}");
+        Console.WriteLine($"r3-g8 legacy map with bridges: {mapPath}, bridges {game.Scene3D.Bridges.Length}");
+
+        // No generated provenance on any legacy bridge; no roadway surface registered.
+        Assert.All(game.Scene3D.Bridges, bridge => Assert.False(bridge.IsGeneratedBridge));
+        foreach (var bridge in game.Scene3D.Bridges)
+        {
+            var midX = (bridge.StartPositionWithHeight.X + bridge.EndPositionWithHeight.X) * 0.5f;
+            var midY = (bridge.StartPositionWithHeight.Y + bridge.EndPositionWithHeight.Y) * 0.5f;
+            Assert.Null(game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(midX, midY));
+            Assert.Null(game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(bridge.StartPositionWithHeight.X, bridge.StartPositionWithHeight.Y));
+        }
+
+        // A vehicle near the first bridge keeps raw terrain height (no deck override).
+        var firstBridge = game.Scene3D.Bridges[0];
+        var player = game.Scene3D.LocalPlayer ?? game.Scene3D.Players[0];
+        var dozerDefinition = game.AssetStore.ObjectDefinitions.GetByName(DozerDefinitionName);
+        Assert.True(dozerDefinition != null, $"definition {DozerDefinitionName} not found.");
+        var dozer = game.Scene3D.GameObjects.CreateObject(dozerDefinition!, player);
+
+        var anchorX = firstBridge.StartPositionWithHeight.X;
+        var anchorY = firstBridge.StartPositionWithHeight.Y;
+        dozer.SetTranslation(new Vector3(anchorX, anchorY, game.TerrainLogic.HeightMap.GetHeight(anchorX, anchorY)));
+
+        game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
+        game.StartRun();
+        game.EnableFixedLogicTimestep();
+
+        for (var frame = 0; frame < 20; frame++)
+        {
+            game.Update(Array.Empty<InputMessage>());
+        }
+
+        var position = dozer.Translation;
+        var terrainZ = game.TerrainLogic.HeightMap.GetHeight(position.X, position.Y);
+        Assert.Null(game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(position.X, position.Y));
+        Assert.True(
+            MathF.Abs(position.Z - terrainZ) <= 5f,
+            $"legacy-map vehicle Z {position.Z:F2} vs raw terrain {terrainZ:F2} at ({position.X:F1}, {position.Y:F1}); legacy behavior changed.");
+        Console.WriteLine(
+            $"r3-g8 legacy vehicle near bridge: Z {position.Z.ToString("F2", CultureInfo.InvariantCulture)} vs terrain {terrainZ.ToString("F2", CultureInfo.InvariantCulture)} (raw behavior kept)");
     }
 
     private static List<TraceSample> RunDozerTraversal(Game game, (float X, float Y) start, (float X, float Y) goal)
@@ -519,7 +734,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
 
             var position = dozer.Translation;
             var terrainZ = game.TerrainLogic.HeightMap.GetHeight(position.X, position.Y);
-            var surfaceZ = game.TerrainLogic.GetBridgeSurfaceZ(position.X, position.Y);
+            var surfaceZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(position.X, position.Y);
             trace.Add(new TraceSample(frame, position.X, position.Y, position.Z, terrainZ, surfaceZ));
 
             if (position.Y >= goal.Y - 2f)

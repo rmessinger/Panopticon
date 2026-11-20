@@ -1237,6 +1237,17 @@ public static class GeneratedMapPackageConverter
             var orientation = (double)(float)Math.Atan2(end.Y - start.Y, end.X - start.X);
             var pairIndex = pairs + 1;
 
+            // The generated-provenance property is the runtime marker that scopes bridge
+            // roadway surfaces to generated bridges: RuntimeBridge copies LegacyProperties
+            // onto the MapObject, and Scene3D registers surfaces only for marked bridges.
+            // The marker constants live on Panopticon.Terrain.Bridge, which this project
+            // references (Preview → Simulation).
+            var provenance = new Dictionary<string, MapPropertyValue>
+            {
+                [Panopticon.Terrain.Bridge.GeneratedProvenanceKey] =
+                    new MapPropertyValue.AsciiStringValue(Panopticon.Terrain.Bridge.GeneratedProvenanceValue),
+            };
+
             objects.Add(new PlacedObject(
                 $"Bridge_{pairIndex}_Start",
                 GameXy(start.X),
@@ -1245,7 +1256,7 @@ public static class GeneratedMapPackageConverter
                 orientation,
                 new AssetReference(LegacyAssetScope, rule.BridgeTemplate),
                 (uint)Panopticon.Data.Map.RoadType.BridgeStart,
-                new Dictionary<string, MapPropertyValue>()));
+                provenance));
             objects.Add(new PlacedObject(
                 $"Bridge_{pairIndex}_End",
                 GameXy(end.X),
@@ -1254,7 +1265,7 @@ public static class GeneratedMapPackageConverter
                 orientation,
                 new AssetReference(LegacyAssetScope, rule.BridgeTemplate),
                 (uint)Panopticon.Data.Map.RoadType.BridgeEnd,
-                new Dictionary<string, MapPropertyValue>()));
+                provenance));
             pairs++;
         }
 

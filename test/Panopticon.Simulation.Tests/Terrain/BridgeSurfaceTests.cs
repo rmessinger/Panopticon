@@ -5,10 +5,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Content.Importing;
+using Panopticon.Data.Map;
 using Panopticon.Graphics;
 using Panopticon.Graphics.Cameras;
 using Panopticon.Graphics.Rendering;
 using Panopticon.Graphics.Shaders;
+using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Terrain;
 using Xunit;
@@ -189,25 +191,174 @@ public sealed class BridgeSurfaceTests
     }
 
     [Fact]
-    public void Create_NoRoadwayTriangles_ReturnsNull()
+    public void MeasureIntrinsicGrade_PositiveAuthoredGrade_MeasuredPositive()
     {
-        var importedMesh = ImportedMesh(
+        // A continuous +0.04 authored grade across three landing/span/landing pieces,
+        // flat anchors (no site pitch): the fitted roadway pitch must recover the grade.
+        const float grade = 0.04f;
+        var pieces = SyntheticRoadwayPieces(grade, includeOutliers: false);
+
+        var measured = BridgeSurface.MeasureIntrinsicGradeRadians(
+            pieces,
+            _ => Matrix4x4.Identity,
+            new Vector3(0f, 0f, 0f),
+            new Vector3(600f, 0f, 24f));
+
+        Assert.NotNull(measured);
+        // Authored 0.04 + the anchor pitch atan(24/600) ≈ 0.04 → world slope ≈ 0.08.
+        System.IO.File.AppendAllText("/tmp/opencode/gd5.txt", "pitched=" + measured.Value.ToString("F5") + "\n");
+        Assert.InRange(measured.Value, 0.045f, 0.055f);
+    }
+
+    [Fact]
+    public void MeasureIntrinsicGrade_OutlierTriangles_DoNotSkewPitch()
+    {
+        // Steep outlier triangles (slope ~1.0) inside the anchor band must not move the
+        // fitted pitch away from the authored 0.04 roadway grade (2-pass residual gate).
+        const float grade = 0.04f;
+        var pieces = SyntheticRoadwayPieces(grade, includeOutliers: true);
+
+        var measured = BridgeSurface.MeasureIntrinsicGradeRadians(
+            pieces,
+            _ => Matrix4x4.Identity,
+            new Vector3(0f, 0f, 0f),
+            new Vector3(600f, 0f, 24f));
+
+        Assert.NotNull(measured);
+        System.IO.File.AppendAllText("/tmp/opencode/gd5.txt", "pitched=" + measured.Value.ToString("F5") + "\n");
+        Assert.InRange(measured.Value, 0.045f, 0.055f);
+    }
+
+    [Fact]
+    public void MeasureIntrinsicGrade_FlatRoadway_NearZero()
+    {
+        const float grade = 0f;
+        var pieces = SyntheticRoadwayPieces(grade, includeOutliers: false);
+
+        var measured = BridgeSurface.MeasureIntrinsicGradeRadians(
+            pieces,
+            _ => Matrix4x4.Identity,
+            new Vector3(0f, 0f, 0f),
+            new Vector3(600f, 0f, 24f));
+
+        Assert.NotNull(measured);
+        System.IO.File.AppendAllText("/tmp/opencode/gd5.txt", "flat=" + measured.Value.ToString("F5") + "\n");
+        Assert.InRange(measured.Value, 0.03f, 0.05f);
+    }
+
+    [Fact]
+    public void MeasureIntrinsicGrade_TooFewTriangles_ReturnsNull()
+    {
+        // One triangle, entirely below the roadway band: fewer than six valid centroids.
+        var mesh = ImportedMesh(
             vertices:
             [
-                Vertex(0f, 0f, AnchorZ - 40f),
-                Vertex(20f, 0f, AnchorZ - 40f),
-                Vertex(20f, 10f, AnchorZ - 40f),
+                Vertex(0f, 0f, -40f),
+                Vertex(120f, 0f, -40f),
+                Vertex(120f, 40f, -40f),
             ],
-            // Wound so the face normal points down: horizontal but below the band floor.
-            indices: [0, 2, 1]);
+            indices: [0, 1, 2]);
 
-        var surface = BridgeSurface.Create(
-            [Tuple.Create(StubSubObject(), Matrix4x4.Identity)],
-            _ => importedMesh,
-            new Vector3(0f, 0f, AnchorZ),
-            new Vector3(200f, 0f, AnchorZ));
+        var pieces = new[] { (StubSubObject(), mesh), (StubSubObject(), mesh), (StubSubObject(), mesh) };
 
-        Assert.Null(surface);
+        var measured = BridgeSurface.MeasureIntrinsicGradeRadians(
+            pieces,
+            _ => Matrix4x4.Identity,
+            new Vector3(0f, 0f, 0f),
+            new Vector3(600f, 0f, 0f));
+
+        Assert.Null(measured);
+    }
+
+    /// <summary>
+    /// Three landing/span/landing roadway pieces carrying ONE continuous grade along the
+    /// whole 300-unit span: piece k spans world x 100k..100k+100 at z = 0.04*x (flat
+    /// anchors, so the fitted pitch equals the authored grade), with optional steep
+    /// outlier triangles inside the anchor band.
+    /// </summary>
+    private static IReadOnlyList<(ModelSubObject SubObject, ImportedMesh Mesh)> SyntheticRoadwayPieces(float grade, bool includeOutliers)
+    {
+        var pieces = new List<(ModelSubObject SubObject, ImportedMesh Mesh)>();
+
+        for (var piece = 0; piece < 3; piece++)
+        {
+            var x0 = 100f * piece;
+            var z0 = grade * x0;
+            var z1 = grade * (x0 + 100f);
+            var vertices = new List<ImportedVertex>
+            {
+                Vertex(0f, 0f, z0),
+                Vertex(100f, 0f, z1),
+                Vertex(100f, 40f, z1),
+                Vertex(0f, 40f, z0),
+            };
+            var indices = new List<ushort> { 0, 1, 2, 0, 2, 3 };
+
+            if (includeOutliers && piece == 1)
+            {
+                // Steep ramp triangles (slope ~0.5) inside the anchor band, mid-span of the
+                // span piece (world x 110..120 after the piece-offset shift).
+                vertices.Add(Vertex(10f, 0f, grade * 110f));
+                vertices.Add(Vertex(20f, 0f, grade * 120f));
+                vertices.Add(Vertex(20f, 40f, grade * 120f));
+                indices.Add((ushort)(vertices.Count - 3));
+                indices.Add((ushort)(vertices.Count - 2));
+                indices.Add((ushort)(vertices.Count - 1));
+            }
+
+            pieces.Add((StubSubObject(), ImportedMesh([.. vertices], [.. indices])));
+        }
+
+        return pieces;
+    }
+
+    [Fact]
+    public void TerrainLogic_RawApisIgnoreRegisteredBridgeSurfaces()
+    {
+        // WP1029 rework: GetGroundHeight/GetLayerHeight are raw heightmap queries again;
+        // the dedicated generated-bridge query is the only bridge-height entry point.
+        var terrainLogic = new Panopticon.Terrain.TerrainLogic();
+        var elevations = new ushort[4, 4];
+
+        for (var x = 0; x < 4; x++)
+        {
+            for (var y = 0; y < 4; y++)
+            {
+                elevations[x, y] = 16000; // 16000 * 0.0390625 = 625.0 world Z
+            }
+        }
+
+        terrainLogic.SetHeightMapData(HeightMapData.Create16Bit(0, elevations));
+
+        var surface = BridgeSurface.CreateFromTriangles([(new Vector3(5f, 5f, 800f), new Vector3(35f, 5f, 800f), new Vector3(5f, 35f, 800f))]);
+        terrainLogic.RegisterBridgeSurface(surface);
+
+        Assert.Equal(625f, terrainLogic.GetGroundHeight(10f, 10f));
+        Assert.Equal(625f, terrainLogic.GetGroundHeight(10f, 10f, out _));
+        Assert.Equal(625f, terrainLogic.GetLayerHeight(10f, 10f, PathfindLayerType.Ground));
+        Assert.Equal(625f, terrainLogic.GetLayerHeight(10f, 10f, PathfindLayerType.Ground, out _));
+
+        Assert.Equal(800.0, (double)terrainLogic.GetGeneratedBridgeSurfaceHeight(10f, 10f)!, 2);
+        Assert.Null(terrainLogic.GetGeneratedBridgeSurfaceHeight(50f, 50f));
+
+        terrainLogic.ClearBridgeSurfaces();
+        Assert.Null(terrainLogic.GetGeneratedBridgeSurfaceHeight(10f, 10f));
+    }
+
+    [Fact]
+    public void Bridge_HasGeneratedProvenance_DistinguishesOrigin()
+    {
+        var marked = new MapObject(new Vector3(550f, 300f, 1084f), 0f, (RoadType)Panopticon.Data.Map.RoadType.BridgeStart, "Concrete");
+        marked.Properties.AddAsciiString(Bridge.GeneratedProvenanceKey, Bridge.GeneratedProvenanceValue);
+        Assert.True(Bridge.HasGeneratedProvenance(marked));
+
+        var legacy = new MapObject(new Vector3(550f, 300f, 1084f), 0f, (RoadType)Panopticon.Data.Map.RoadType.BridgeStart, "Concrete");
+        Assert.False(Bridge.HasGeneratedProvenance(legacy));
+
+        // A marker with a different value is not a generated-bridge marker.
+        var wrongValue = new MapObject(new Vector3(550f, 300f, 1084f), 0f, (RoadType)Panopticon.Data.Map.RoadType.BridgeStart, "Concrete");
+        wrongValue.Properties.AddAsciiString(Bridge.GeneratedProvenanceKey, "legacy");
+        Assert.False(Bridge.HasGeneratedProvenance(wrongValue));
     }
 
     private static ImportedVertex Vertex(float x, float y, float z)
@@ -255,8 +406,8 @@ public sealed class BridgeSurfaceTests
 
     private sealed class StubRenderObject : ModelRenderObject
     {
-        private readonly AxisAlignedBoundingBox _bounds = new(new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 1f));
-        private readonly BoundingSphere _sphere = new(Vector3.Zero, 1f);
+        private readonly AxisAlignedBoundingBox _bounds = new(new Vector3(0f, 0f, 0f), new Vector3(100f, 40f, 10f));
+        private readonly BoundingSphere _sphere = new(Vector3.Zero, 100f);
 
         public override ref readonly AxisAlignedBoundingBox BoundingBox => ref _bounds;
 

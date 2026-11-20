@@ -16,9 +16,10 @@ public sealed class TerrainLogic : IPersistableObject
     public HeightMap HeightMap { get; private set; }
 
     /// <summary>
-    /// Registers a bridge roadway surface for ground-height queries (WP1029). Scene3D
-    /// registers one surface per bridge after the map loads; the list is replaced on
-    /// reload and cleared on dispose.
+    /// Registers a generated-bridge roadway surface for the dedicated movement query
+    /// (WP1029). Scene3D registers one surface per generated bridge after the map loads;
+    /// the list is replaced on reload and cleared on dispose. Legacy bridges are never
+    /// registered, so every other consumer keeps raw heightmap behavior.
     /// </summary>
     public void RegisterBridgeSurface(BridgeSurface surface)
     {
@@ -32,10 +33,12 @@ public sealed class TerrainLogic : IPersistableObject
     }
 
     /// <summary>
-    /// Highest roadway surface Z at the XY point across every registered bridge, or null
-    /// when no bridge roadway covers the point.
+    /// Movement-only bridge roadway height at the XY point across every registered
+    /// generated bridge, or null when no generated bridge roadway covers the point.
+    /// Multi-level roadways (the Concrete model carries a upper roadway plus buried
+    /// camber surfaces) resolve to the topmost level in this form.
     /// </summary>
-    public float? GetBridgeSurfaceZ(float x, float y)
+    internal float? GetGeneratedBridgeSurfaceHeight(float x, float y)
     {
         float? topmost = null;
 
@@ -48,6 +51,51 @@ public sealed class TerrainLogic : IPersistableObject
         }
 
         return topmost;
+    }
+
+    /// <summary>
+    /// Same query resolved against a reference Z: among every roadway surface covering
+    /// the XY point, returns the level closest to <paramref name="referenceZ"/>. The
+    /// locomotor passes the vehicle's current Z so a multi-level roadway resolves to the
+    /// level the vehicle is actually on, which the snap-margin gate then verifies.
+    /// </summary>
+    internal float? GetGeneratedBridgeSurfaceHeight(float x, float y, float referenceZ)
+    {
+        float? closest = null;
+        var closestDistance = float.MaxValue;
+
+        foreach (var surface in _bridgeSurfaces)
+        {
+            if (surface.GetSurfaceZ(x, y) is { } z)
+            {
+                var distance = MathF.Abs(z - referenceZ);
+
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = z;
+                }
+            }
+        }
+
+        return closest;
+    }
+
+    /// <summary>
+    /// True when the XY point is inside any registered generated bridge's roadway extent
+    /// (extent only, regardless of whether a roadway triangle covers the exact point).
+    /// </summary>
+    internal bool IsWithinGeneratedBridgeExtent(float x, float y)
+    {
+        foreach (var surface in _bridgeSurfaces)
+        {
+            if (surface.Contains(x, y))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void SetHeightMapData(HeightMapData heightMapData)
@@ -83,22 +131,11 @@ public sealed class TerrainLogic : IPersistableObject
     public float GetGroundHeight(float x, float y, out Vector3 normal)
     {
         normal = HeightMap.GetNormal(x, y);
-
-        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
-        {
-            return bridgeZ;
-        }
-
         return HeightMap.GetHeight(x, y);
     }
 
     public float GetGroundHeight(float x, float y)
     {
-        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
-        {
-            return bridgeZ;
-        }
-
         return HeightMap.GetHeight(x, y);
     }
 
@@ -124,24 +161,13 @@ public sealed class TerrainLogic : IPersistableObject
     // TODO(Port): Implement this.
     public float GetLayerHeight(float x, float y, PathfindLayerType layer, out Vector3 normal, bool clip = true)
     {
-        normal = HeightMap.GetNormal(x, y);
-
-        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
-        {
-            return bridgeZ;
-        }
-
+        normal = Vector3.UnitZ;
         return HeightMap.GetHeight(x, y);
     }
 
     // TODO(Port): Implement this.
     public float GetLayerHeight(float x, float y, PathfindLayerType layer)
     {
-        if (GetBridgeSurfaceZ(x, y) is { } bridgeZ)
-        {
-            return bridgeZ;
-        }
-
         return HeightMap.GetHeight(x, y);
     }
 
