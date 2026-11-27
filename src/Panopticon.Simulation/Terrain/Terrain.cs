@@ -348,9 +348,11 @@ public sealed class Terrain : DisposableBase
     }
 
     /// <summary>
-    /// Disposes of terrain patches within the bounding area and replaces them with new patches.
+    /// Rebuilds terrain patches, decals, and streaming data within the bounding area
+    /// after heights change outside gameplay (bridge clearance cuts). Internal so
+    /// Scene3D can notify after the generated-bridge load-time cut.
     /// </summary>
-    private void OnHeightMapChanged(in RectangleF bounds)
+    internal void OnHeightMapChanged(in RectangleF bounds)
     {
         _decalRenderer?.Invalidate(bounds);
         if (_streaming)

@@ -35,6 +35,15 @@ public static class GeneratedMapPackageConverter
     private const string BridgeVisualOnlyLimitation =
         "Bridges are placed visually from two-point bridge lines; the engine traversal layers are stubbed, so bridges carry no passability or pathfinding.";
 
+    private const string BridgeLandingGradingLimitation =
+        "Bridge landings are graded: terrain within the landing ramp bands ramps to each bridge deck, so landing heights differ from the payload.";
+
+    private const double HeightQuantizationStep = 0.0390625d;
+
+    private const double HeightQuantizationLowestQuotient = -0.5d;
+
+    private const double HeightQuantizationHighestRejectedQuotient = 65535.5d;
+
     private static readonly DecoderOptions DecodeOptions = new() { SkipMetadata = true };
 
     private static readonly IReadOnlyList<string> Limitations =
@@ -167,20 +176,25 @@ public static class GeneratedMapPackageConverter
                 $"Synthesized the retained SidesList section with the factions {string.Join(", ", factions)} and the player start waypoints {StartListText(skirmishWaypoints)}."));
         }
 
-        // The bridge opt-in is absent by default: no bridge pairs are emitted and the written
-        // package stays byte-for-byte the one the pre-bridge converter produced.
+        // The bridge opt-in is absent by default: no bridge pairs are emitted, no landing
+        // grading runs, and the written package stays byte-for-byte the one the pre-bridge
+        // converter produced.
         var bridgeObjects = new List<PlacedObject>();
         var bridgeDiagnostics = new List<string>();
         var emittedBridges = false;
+        var gradedLandingCells = 0;
 
         if (bridgeRules is { Count: > 0 })
         {
+            var landingGradingCells = GradeBridgeLandings(chunks, latticeWidth, latticeHeight, metadata.Features, bridgeRules, bridgeDiagnostics);
+
             if (!TryBuildBridgePairs(metadata.Features, bridgeRules, chunks, latticeWidth, latticeHeight, bridgeObjects, bridgeDiagnostics))
             {
                 return Failed(bridgeDiagnostics);
             }
 
             emittedBridges = bridgeObjects.Count > 0;
+            gradedLandingCells = landingGradingCells;
         }
 
         var interchange = new MapInterchange(
@@ -221,6 +235,11 @@ public static class GeneratedMapPackageConverter
             limitations = [.. limitations, BridgeVisualOnlyLimitation];
         }
 
+        if (gradedLandingCells > 0)
+        {
+            limitations = [.. limitations, BridgeLandingGradingLimitation];
+        }
+
         if (heightQuantizer.ChangedCount > 0)
         {
             var maxError = heightQuantizer.MaxError.ToString("R", CultureInfo.InvariantCulture);
@@ -235,10 +254,6 @@ public static class GeneratedMapPackageConverter
 
     private sealed class HeightQuantizer
     {
-        private const double Step = 0.0390625d;
-        private const double LowestAcceptedQuotient = -0.5d;
-        private const double HighestRejectedQuotient = 65535.5d;
-
         public long SampleCount { get; private set; }
 
         public long RejectedCount { get; private set; }
@@ -254,10 +269,10 @@ public static class GeneratedMapPackageConverter
             for (var index = 0; index < source.Length; index++)
             {
                 var value = source[index];
-                var quotient = (double)value / Step;
+                var quotient = (double)value / HeightQuantizationStep;
                 SampleCount++;
 
-                if (!double.IsFinite(quotient) || quotient < LowestAcceptedQuotient || quotient >= HighestRejectedQuotient)
+                if (!double.IsFinite(quotient) || quotient < HeightQuantizationLowestQuotient || quotient >= HeightQuantizationHighestRejectedQuotient)
                 {
                     RejectedCount++;
                     quantized[index] = value;
@@ -265,7 +280,7 @@ public static class GeneratedMapPackageConverter
                 }
 
                 var elevation = (ushort)Math.Round(quotient, MidpointRounding.ToEven);
-                var result = (float)(elevation * Step);
+                var result = (float)(elevation * HeightQuantizationStep);
                 quantized[index] = result;
 
                 if (result != value)
@@ -934,6 +949,125 @@ public static class GeneratedMapPackageConverter
         return objects.Count == 0 ? null : new PlacedObjectSet(objects);
     }
 
+    // Landing grading (WP1029): the engine bridge deck rides the terrain height at the line
+    // endpoints, so generated maps need the terrain to ramp to the deck at each landing;
+    // otherwise ground vehicles drive off an abrupt step into the gorge. The band rule is
+    // the shared Panopticon.Terrain.BridgeLandingBand: this pass collects the matched
+    // bridge lines (rules on the runtime path plan excluded), applies the planned targets
+    // in order, and counts the cells whose written height changed; the last write per
+    // cell wins. The supported bridge template's approach corridor is planned at runtime
+    // from pristine heights, so bridge lines matching that template skip grading entirely.
+    private static int GradeBridgeLandings(
+        List<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        IReadOnlyList<GeneratedFeature> features,
+        IReadOnlyList<BridgeRule> rules,
+        List<string> diagnostics)
+    {
+        var lines = new List<(double StartX, double StartY, double EndX, double EndY)>();
+
+        foreach (var feature in features)
+        {
+            if (MatchBridgeRule(rules, feature) is not { } rule
+                || UsesRuntimePathPlan(rule)
+                || feature.Geometry is not GeoLineString line
+                || line.Positions.Count != 2)
+            {
+                continue;
+            }
+
+            var start = line.Positions[0].Coordinate;
+            var end = line.Positions[1].Coordinate;
+
+            if (start.X == end.X && start.Y == end.Y)
+            {
+                // Degenerate lines fail conversion in the pair pass; leave terrain untouched.
+                continue;
+            }
+
+            lines.Add((start.X, start.Y, end.X, end.Y));
+        }
+
+        var targets = Panopticon.Terrain.BridgeLandingBand.Plan(
+            (x, y) => SampleLatticeHeight(chunks, latticeWidth, latticeHeight, x, y),
+            latticeWidth,
+            latticeHeight,
+            ChunkLayout.SampleSpacingGameUnits,
+            lines);
+
+        var changed = 0;
+
+        foreach (var target in targets)
+        {
+            if (WriteLatticeHeight(chunks, latticeWidth, latticeHeight, target.X, target.Y, target.Height))
+            {
+                changed++;
+            }
+        }
+
+        if (changed > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BridgeLandingGrading,
+                $"Graded {changed} lattice cell(s) at bridge landings toward the bridge decks (ramp {Panopticon.Terrain.BridgeLandingBand.RampDistance.ToString(CultureInfo.InvariantCulture)} game units, cross-width ±{Panopticon.Terrain.BridgeLandingBand.CrossWidth.ToString(CultureInfo.InvariantCulture)}, deck offset {Panopticon.Terrain.BridgeLandingBand.ApproachDeckOffset.ToString(CultureInfo.InvariantCulture)})."));
+        }
+
+        return changed;
+    }
+
+    private static bool WriteLatticeHeight(
+        List<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        int latticeX,
+        int latticeY,
+        double value)
+    {
+        var elevation = Panopticon.Terrain.BridgeLandingBand.ToElevation(value);
+
+        // Off-grid-range targets keep the original height instead of poisoning conversion.
+        if (elevation is null)
+        {
+            return false;
+        }
+
+        var quantized = (float)(elevation.Value * Panopticon.Terrain.BridgeLandingBand.ElevationStep);
+
+        var changed = false;
+
+        // Core copies and the neighbouring chunks' apron copies all carry this lattice point.
+        for (var chunkIndex = 0; chunkIndex < chunks.Count; chunkIndex++)
+        {
+            var chunk = chunks[chunkIndex];
+            var originX = chunk.Key.Cx * ChunkLayout.IntervalsPerChunk;
+            var originY = chunk.Key.Cy * ChunkLayout.IntervalsPerChunk;
+            var coreWidth = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeWidth - originX);
+            var coreHeight = Math.Min(ChunkLayout.PointsPerChunkAxis, latticeHeight - originY);
+            var column = latticeX - originX + 1;
+            var row = latticeY - originY + 1;
+
+            if (column < 0 || column > coreWidth + 1 || row < 0 || row > coreHeight + 1)
+            {
+                continue;
+            }
+
+            var index = (row * (coreWidth + 2)) + column;
+
+            if (chunk.Heights.Samples[index] == quantized)
+            {
+                continue;
+            }
+
+            var samples = chunk.Heights.Samples.ToArray();
+            samples[index] = quantized;
+            chunks[chunkIndex] = chunk with { Heights = new HeightLayer(samples) };
+            changed = true;
+        }
+
+        return changed;
+    }
+
     // Bridge emission keeps the Scene3D pairing contract (Scene3D.LoadObjects pairs the
     // BridgeStart object at index i with the BridgeEnd object at index i+1): every pair is
     // appended adjacently and pairs are emitted contiguously, so no feature or skirmish
@@ -949,6 +1083,7 @@ public static class GeneratedMapPackageConverter
         List<string> diagnostics)
     {
         var pairs = 0;
+        var pathPlanPairs = 0;
         var skipped = new List<string>();
         var duplicates = new List<string>();
         // Default tuple equality is ordinal per string member: exactly the identity
@@ -1002,6 +1137,27 @@ public static class GeneratedMapPackageConverter
             var orientation = (double)(float)Math.Atan2(end.Y - start.Y, end.X - start.X);
             var pairIndex = pairs + 1;
 
+            // The generated-provenance property is the runtime marker that scopes bridge
+            // roadway surfaces to generated bridges: RuntimeBridge copies LegacyProperties
+            // onto the MapObject, and Scene3D registers surfaces only for marked bridges.
+            // The marker constants live on Panopticon.Terrain.Bridge, which this project
+            // references (Preview → Simulation).
+            var provenance = new Dictionary<string, MapPropertyValue>
+            {
+                [Panopticon.Terrain.Bridge.GeneratedProvenanceKey] =
+                    new MapPropertyValue.AsciiStringValue(Panopticon.Terrain.Bridge.GeneratedProvenanceValue),
+            };
+
+            // The runtime plans the supported template's approach corridor from pristine
+            // heights, so the pair is marked as a path-plan handoff instead of relying on
+            // graded landing terrain.
+            if (UsesRuntimePathPlan(rule))
+            {
+                provenance[Panopticon.Terrain.GeneratedBridgePathHandoff.Key] =
+                    new MapPropertyValue.IntegerValue(Panopticon.Terrain.GeneratedBridgePathHandoff.Version);
+                pathPlanPairs++;
+            }
+
             objects.Add(new PlacedObject(
                 $"Bridge_{pairIndex}_Start",
                 GameXy(start.X),
@@ -1010,7 +1166,7 @@ public static class GeneratedMapPackageConverter
                 orientation,
                 new AssetReference(LegacyAssetScope, rule.BridgeTemplate),
                 (uint)Panopticon.Data.Map.RoadType.BridgeStart,
-                new Dictionary<string, MapPropertyValue>()));
+                provenance));
             objects.Add(new PlacedObject(
                 $"Bridge_{pairIndex}_End",
                 GameXy(end.X),
@@ -1019,7 +1175,7 @@ public static class GeneratedMapPackageConverter
                 orientation,
                 new AssetReference(LegacyAssetScope, rule.BridgeTemplate),
                 (uint)Panopticon.Data.Map.RoadType.BridgeEnd,
-                new Dictionary<string, MapPropertyValue>()));
+                provenance));
             pairs++;
         }
 
@@ -1028,6 +1184,13 @@ public static class GeneratedMapPackageConverter
             diagnostics.Add(Format(
                 GeneratedMapPackageDiagnosticCodes.BridgePairsEmitted,
                 $"Emitted {pairs} bridge pair(s) ({pairs * 2} placed objects) from the bridge rules."));
+        }
+
+        if (pathPlanPairs > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BridgePathPlanHandoff,
+                $"Left {pathPlanPairs} bridge pair(s) ({pathPlanPairs * 2} placed objects) at their original landing heights for the runtime approach plan."));
         }
 
         if (skipped.Count > 0)
@@ -1070,6 +1233,13 @@ public static class GeneratedMapPackageConverter
         }
 
         return null;
+    }
+
+    // The supported template's approach corridor is planned at runtime from pristine
+    // heights, so the landing band must not grade the terrain under it.
+    private static bool UsesRuntimePathPlan(BridgeRule rule)
+    {
+        return string.Equals(rule.BridgeTemplate, Panopticon.Terrain.BridgeSurface.SupportedTemplateName, StringComparison.OrdinalIgnoreCase);
     }
 
     // The engine's player starts are MapObjects with the starred waypoint type name whose
@@ -1142,6 +1312,12 @@ public static class GeneratedMapPackageConverter
     {
         var latticeX = Math.Clamp((int)Math.Round(x / ChunkLayout.SampleSpacingGameUnits), 0, latticeWidth - 1);
         var latticeY = Math.Clamp((int)Math.Round(y / ChunkLayout.SampleSpacingGameUnits), 0, latticeHeight - 1);
+
+        return SampleLatticeHeight(chunks, latticeWidth, latticeHeight, latticeX, latticeY);
+    }
+
+    private static float SampleLatticeHeight(IReadOnlyList<Chunk> chunks, int latticeWidth, int latticeHeight, int latticeX, int latticeY)
+    {
         var cx = latticeX / ChunkLayout.IntervalsPerChunk;
         var cy = latticeY / ChunkLayout.IntervalsPerChunk;
         var chunk = chunks.Single(candidate => candidate.Key.Cx == cx && candidate.Key.Cy == cy);

@@ -164,6 +164,28 @@ public sealed class Scene3D : DisposableBase, IScene3D
         Waypoints = waypoints;
         Cameras = cameras;
 
+        // Generated-bridge roadway surfaces (WP1029): one registration per generated
+        // bridge replaces the previous map's list, so the movement query rides the deck
+        // of the loaded map. The clearance cut itself already ran inside LoadObjects
+        // (before RoadCollection); legacy bridges carry no provenance marker and register
+        // nothing, keeping raw ground behavior on legacy maps.
+        Game.TerrainLogic.ClearBridgeSurfaces();
+
+        foreach (var bridge in bridges)
+        {
+            if (bridge.IsGeneratedBridge && bridge.CreateSurface() is { } surface)
+            {
+                Game.TerrainLogic.RegisterBridgeSurface(surface);
+            }
+
+            if (bridge.CorridorPlan is { } corridorPlan)
+            {
+                Game.TerrainLogic.RegisterBridgeCorridor(corridorPlan.ToCorridor(GeneratedBridgeCorridorPlanner.PoseBlendDistance));
+            }
+        }
+
+        AddDisposeAction(() => Game.TerrainLogic.ClearBridgeSurfaces());
+
         PlayerScripts = new PlayerScriptsList
         {
             ScriptLists = mapScriptLists
@@ -229,11 +251,18 @@ public sealed class Scene3D : DisposableBase, IScene3D
 
                     var bridgeEnd = mapObjects[++i];
 
-                    bridgesList.Add(AddDisposable(new Bridge(
+                    var bridge = new Bridge(
                         GameEngine,
                         mapObject,
                         mapObject.Position,
-                        bridgeEnd.Position)));
+                        bridgeEnd.Position);
+                    bridgesList.Add(AddDisposable(bridge));
+
+                    // Marked bridges are placed after their paths are decided below.
+                    if (!bridge.HasPathHandoff)
+                    {
+                        bridge.PlaceAuthored();
+                    }
 
                     break;
 
@@ -274,9 +303,142 @@ public sealed class Scene3D : DisposableBase, IScene3D
         }
 
         cameras = new CameraCollection(namedCameras?.Cameras);
+
+        // Every path decision reads the pre-change heights; the decisions are applied together, then each
+        // bridge is placed on its chosen path before the clearance plans below run.
+        var pathDecisions = new List<GeneratedBridgePathDecision>();
+
+        foreach (var bridge in bridgesList)
+        {
+            if (!bridge.IsPlaced)
+            {
+                pathDecisions.Add(GeneratedBridgePathDecision.Decide(bridge, heightMap));
+            }
+        }
+
+        ApplyPathDecisions(heightMap, pathDecisions);
+
+        foreach (var decision in pathDecisions)
+        {
+            if (decision.TakesLevelPath)
+            {
+                decision.Bridge.PlaceLevel(decision.Layout, decision.Corridor);
+                continue;
+            }
+
+            Logger.Warn($"Generated bridge '{decision.Bridge.TypeName}' at {decision.Bridge.StartPoint} takes the authored path: {decision.Reason}");
+            decision.Bridge.PlaceAuthored();
+        }
+
+        // r3-g8 corrective lifecycle: plan every generated supported bridge against the
+        // SAME pre-cut heights, merge to one deterministic per-vertex minimum, apply
+        // once (bounded normals refresh inside), and notify once — before RoadCollection
+        // samples the lattice, so road meshes see the final heights. Bridge anchors were
+        // sampled pre-cut in the Bridge constructor and are not resampled.
+        var clearancePlans = new List<BridgeSurface.TerrainClearancePlan>();
+
+        foreach (var bridge in bridgesList)
+        {
+            if (bridge.TryPlanClearance(heightMap) is { } plan)
+            {
+                clearancePlans.Add(plan);
+            }
+        }
+
+        var (clearanceBounds, changedVertices) = BridgeSurface.TerrainClearancePlan.MergeAndApply(heightMap, clearancePlans);
+
+        if (changedVertices > 0)
+        {
+            Terrain.OnHeightMapChanged(clearanceBounds);
+        }
+
         roads = AddDisposable(new RoadCollection(roadTopology, loadContext, heightMap, RenderScene));
         waypointCollection = new WaypointCollection(waypoints, MapFile.WaypointsList.WaypointPaths);
         bridges = bridgesList.ToArray();
+    }
+
+    /// <summary>
+    /// Writes the landing bands of the fallback paths, then every corridor plan, through one height-map
+    /// write pass; corridors overwrite band values where they overlap, and one notification covers all changes.
+    /// </summary>
+    private void ApplyPathDecisions(HeightMap heightMap, IReadOnlyList<GeneratedBridgePathDecision> decisions)
+    {
+        var border = GeneratedBridgePathDecision.Border(heightMap);
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
+        var changed = false;
+
+        foreach (var decision in decisions)
+        {
+            if (decision.TakesLevelPath)
+            {
+                continue;
+            }
+
+            foreach (var target in decision.LandingBand)
+            {
+                // Off-grid targets are skipped: the converter keeps the original height there.
+                if (BridgeLandingBand.ToElevation(target.Height) is not { } elevation)
+                {
+                    continue;
+                }
+
+                var x = target.X + border;
+                var y = target.Y + border;
+
+                if (heightMap.GetElevation(x, y) == elevation)
+                {
+                    continue;
+                }
+
+                heightMap.SetElevation(x, y, elevation);
+                minX = Math.Min(minX, x);
+                minY = Math.Min(minY, y);
+                maxX = Math.Max(maxX, x);
+                maxY = Math.Max(maxY, y);
+                changed = true;
+            }
+        }
+
+        var corridors = new List<GeneratedBridgeCorridorPlan>();
+
+        foreach (var decision in decisions)
+        {
+            if (decision.TakesLevelPath)
+            {
+                corridors.Add(decision.Corridor);
+            }
+        }
+
+        var applied = GeneratedBridgeCorridorPlanner.Apply(heightMap, corridors);
+
+        if (applied.Changed > 0)
+        {
+            minX = Math.Min(minX, applied.MinX);
+            minY = Math.Min(minY, applied.MinY);
+            maxX = Math.Max(maxX, applied.MaxX);
+            maxY = Math.Max(maxY, applied.MaxY);
+            changed = true;
+        }
+
+        if (!changed)
+        {
+            return;
+        }
+
+        heightMap.RefreshNormalsInBoundedArea(minX, minY, maxX, maxY);
+
+        // Same bounds rectangle as BridgeSurface.TerrainClearancePlan.MergeAndApply reports.
+        var minCorner = heightMap.GetPosition(minX, minY);
+        var maxCorner = heightMap.GetPosition(maxX, maxY);
+        var bounds = new RectangleF(
+            minCorner.X - HeightMap.HorizontalScale,
+            minCorner.Y - HeightMap.HorizontalScale,
+            (maxCorner.X - minCorner.X) + (2f * HeightMap.HorizontalScale),
+            (maxCorner.Y - minCorner.Y) + (2f * HeightMap.HorizontalScale));
+        Terrain.OnHeightMapChanged(bounds);
     }
 
     internal Scene3D(

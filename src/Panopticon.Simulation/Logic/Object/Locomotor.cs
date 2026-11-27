@@ -58,6 +58,50 @@ public sealed class Locomotor : IPersistableObject
     private float _preferredHeightDamping;
 
     /// <summary>
+    /// Snap margin for the generated-bridge movement surface (WP1029): a vehicle whose
+    /// current Z is within this distance of a generated bridge's roadway height rides
+    /// the deck; anything farther below (gorge) or above never snaps.
+    /// </summary>
+    private const float GeneratedBridgeSnapMargin = 15f;
+
+    /// <summary>
+    /// Whether this locomotor's vehicle is currently riding a generated bridge roadway.
+    /// Engagement requires landing proximity (the XY inside the roadway extent and the
+    /// current Z within <see cref="GeneratedBridgeSnapMargin"/> of the nearest roadway
+    /// level); while engaged, coverage gaps and multi-level switches inside the extent
+    /// hold the current height instead of dropping the vehicle toward raw terrain — a
+    /// vehicle that never engaged (below the deck in a gorge, flying above) never snaps.
+    /// </summary>
+    private bool _onGeneratedBridgeSurface;
+
+    private float? ResolveGeneratedBridgeDeckZ(float x, float y, float currentZ)
+    {
+        var terrainLogic = _gameEngine.Game.TerrainLogic;
+        var deckZ = terrainLogic.GetGeneratedBridgeSurfaceHeight(x, y, currentZ);
+
+        if (deckZ is { } z)
+        {
+            if (MathF.Abs(currentZ - z) < GeneratedBridgeSnapMargin)
+            {
+                _onGeneratedBridgeSurface = true;
+                return z;
+            }
+        }
+
+        // Inside the roadway extent without a covering roadway within snap margin: an
+        // engaged vehicle holds its current height across coverage gaps and multi-level
+        // switches (the Concrete roadway captures several levels); an unengaged vehicle
+        // disengages and keeps raw behavior.
+        if (_onGeneratedBridgeSurface && terrainLogic.IsWithinGeneratedBridgeExtent(x, y))
+        {
+            return currentZ;
+        }
+
+        _onGeneratedBridgeSurface = false;
+        return null;
+    }
+
+    /// <summary>
     /// Cap on the THRUST path's orientation slewing, in degrees per logic frame. Null uses the
     /// full template turn rate. Set by missile AI updates that need a gentle pitch-over.
     /// </summary>
@@ -652,6 +696,14 @@ public sealed class Locomotor : IPersistableObject
                     else
                     {
                         pos.Z = _gameEngine.Game.TerrainLogic.GetLayerHeight(pos.X, pos.Y, obj.Layer);
+
+                        // Generated-bridge roadway (WP1029): same gated movement query as
+                        // the other behavior-Z cases, so ground vehicles cross generated
+                        // bridges on the deck.
+                        if (ResolveGeneratedBridgeDeckZ(pos.X, pos.Y, pos.Z) is { } seaLevelBridgeDeckZ)
+                        {
+                            pos.Z = seaLevelBridgeDeckZ;
+                        }
                     }
 
                     obj.SetTranslation(pos);
@@ -680,6 +732,14 @@ public sealed class Locomotor : IPersistableObject
                     var pos = obj.Translation;
                     var surfaceHt = _gameEngine.Game.PartitionCellManager.GetGroundOrStructureHeight(pos.X, pos.Y);
 
+                    // Generated-bridge roadway (WP1029): same gated movement query as the
+                    // other behavior-Z cases, so ground vehicles cross generated bridges
+                    // on the deck.
+                    if (ResolveGeneratedBridgeDeckZ(pos.X, pos.Y, pos.Z) is { } groundBridgeDeckZ)
+                    {
+                        surfaceHt = groundBridgeDeckZ;
+                    }
+
                     pos.Z = _preferredHeight + surfaceHt;
 
                     obj.SetTranslation(pos);
@@ -704,6 +764,15 @@ public sealed class Locomotor : IPersistableObject
 
                         const bool clip = false; // Return the height, even if off the edge of the bridge proper.
                         var surfaceHt = _gameEngine.Game.TerrainLogic.GetLayerHeight(pos.X, pos.Y, layerAtDest, out _, clip);
+
+                        // Generated-bridge roadway (WP1029): movement rides the deck only
+                        // when the XY is inside a generated bridge's roadway extent AND the
+                        // vehicle is already within snap margin of it — a vehicle below the
+                        // deck (in a gorge) or flying above it never snaps.
+                        if (ResolveGeneratedBridgeDeckZ(pos.X, pos.Y, pos.Z) is { } bridgeDeckZ)
+                        {
+                            surfaceHt = bridgeDeckZ;
+                        }
 
                         var preferredHeight = _preferredHeight + surfaceHt;
                         if (GetFlag(LocomotorFlags.PreciseZPosition))
@@ -909,6 +978,15 @@ public sealed class Locomotor : IPersistableObject
             delta.X += pos.X;
             delta.Y += pos.Y;
             delta.Z = _gameEngine.Game.TerrainLogic.GetGroundHeight(delta.X, delta.Y);
+
+            // Generated-bridge roadway (WP1029): same gated movement query as the
+            // behavior-Z path, so climbing locomotors cross generated bridges on the
+            // deck instead of the gorge floor.
+            if (ResolveGeneratedBridgeDeckZ(delta.X, delta.Y, pos.Z) is { } bridgeDeckZ)
+            {
+                delta.Z = bridgeDeckZ;
+            }
+
             if (delta.Z < pos.Z - 0.1f)
             {
                 moveBackwards = true;

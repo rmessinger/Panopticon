@@ -55,4 +55,10 @@ public static class GeneratedMapPackageDiagnosticCodes
 
     /// <summary>Informational: bridge-matched duplicate emissions for source parts already bridged (the first emission kept).</summary>
     public const string BridgeDuplicatesIgnored = "GEO-PKG-022";
+
+    /// <summary>Informational: lattice cells graded so terrain ramps to the bridge deck at each landing (bridge rules opt-in).</summary>
+    public const string BridgeLandingGrading = "GEO-PKG-023";
+
+    /// <summary>Informational: bridge pairs whose landings keep their original heights because the runtime plans the approach corridor (supported bridge template).</summary>
+    public const string BridgePathPlanHandoff = "GEO-PKG-024";
 }
