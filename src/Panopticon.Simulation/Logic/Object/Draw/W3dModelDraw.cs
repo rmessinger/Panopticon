@@ -43,6 +43,9 @@ public class W3dModelDraw : DrawModule
 
     protected ModelInstance ActiveModelInstance => _activeModelDrawConditionState.Model;
 
+    /// <summary>Active model instance, or null before the first condition state is applied.</summary>
+    internal ModelInstance ActiveModelInstanceOrNull => _activeModelDrawConditionState?.Model;
+
     public override IEnumerable<BitArray<ModelConditionFlag>> ModelConditionStates
     {
         get

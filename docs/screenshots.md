@@ -583,6 +583,57 @@ Limitations found by this recipe:
   already-edited package can therefore exceed the range; convert a fresh package for a
   repeat run.
 
+## Recipe: generated bridge deck-end capture (headless, reliable)
+
+Scene facts that mislead captures of a generated bridge (level deck, graded corridor):
+
+- Four towers stand at the deck corners, taller than a vehicle. A side-on or wall-side low
+  camera is blocked at a deck end when the vehicle runs nearer that wall. Views that stay clear
+  through a deck end: behind-left and ahead-left, low, three-quarter (eye `(-48, -58, 17)` look
+  `(0, 2, -3)`; eye `(-62, 70, 24)` look `(0, 3, -3)`, relative to the vehicle translation).
+- Deck ends are nearly straight across with slanted outer corners. The asphalt/grass edge
+  crosses under the vehicle straight, so far-side wheels reach it at the same frames as
+  near-side wheels.
+- The approach terrain is graded flush with the deck and the deck model's end triangles lie in
+  the same plane. The forward pass compares less-or-equal, so terrain shows through those
+  near-coincident surfaces as small grass-coloured specks within a few units of each deck end at
+  close range. Display only: the deck stays the contact surface and wheel gates hold.
+  `src/Veldrid` has no depth bias or polygon offset in any pipeline state, so no render-only fix
+  exists without extending it.
+
+Vehicle setup:
+
+- `GameObjects.CreateObject` plus `SetTranslation` sets no facing. An unordered vehicle stands
+  across the roadway; an ordered one turns over its first 60 logic frames and can run about 15
+  units off the order line. Record heading per frame.
+- For standing stills place the vehicle by the surface it stands on: the larger of terrain
+  height and `TerrainLogic.GetGeneratedBridgeSurfaceHeight(x, y)`. Raw ground height at
+  mid-span is the gorge floor.
+- Create one vehicle and move it. One vehicle per position accumulates overlapping vehicles.
+
+Capture discipline:
+
+- One traversal, several camera rigs rendered at the same logic frame after a single
+  `game.Update`; 960x600; 20 centiseconds per GIF frame (about 50 MB per 147 frames).
+- Dense frames inside every window under judgement (every second logic frame), sparse
+  elsewhere, and never a trimmed departure.
+- A manifest per run: source binding (repository path, HEAD, `git diff HEAD | sha256sum`,
+  capture test SHA-256), boundaries computed from the recorded trace, per-frame tyre extremes,
+  file hashes.
+- Judge occlusion by whether a wheel bottom or the edge is hidden, not by image overlap: a tower
+  behind the vehicle overlaps it without hiding anything.
+
+Test filters:
+
+- Three tests publish into the shared viewer and must never run in a routine suite:
+  `DozerCrossing_CaptureTwoAngles_TraceAndGifFrames`,
+  `BridgePackage_BridgesRenderAtEndpoints_AreAbsentWithoutRules`,
+  `RoadBearingSedanPayload_PaintsCorridors_ConvertsAndLoadsWithVisibleCorridors`. Exclude them
+  by name.
+- In `dotnet test --filter` AND binds before OR: write
+  `Category!=Interactive&(FullyQualifiedName~A|FullyQualifiedName~B)`, or the category clause
+  applies to `A` only.
+
 ## History
 
 Past session transcripts are stored in `~/.local/share/opencode/opencode.db` (SQLite, `part`

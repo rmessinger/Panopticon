@@ -1334,7 +1334,7 @@ public sealed class GeneratedMapPackageConverterTests
 
             // The generated-provenance property scopes the runtime roadway surface to
             // generated bridges (WP1029 rework); it is the only legacy property.
-            Assert.Equal(1, start.LegacyProperties.Count);
+            Assert.Single(start.LegacyProperties);
             Assert.Equal(
                 Panopticon.Terrain.Bridge.GeneratedProvenanceValue,
                 Assert.IsType<MapPropertyValue.AsciiStringValue>(start.LegacyProperties[Panopticon.Terrain.Bridge.GeneratedProvenanceKey]).Value);
@@ -1826,6 +1826,106 @@ public sealed class GeneratedMapPackageConverterTests
                 PreviewPayloadFixture.ResidentGridHeight(PreviewPayloadFixture.GlobalHeight(latticeX, latticeY)),
                 ReloadedLatticeHeight(model, latticeWidth, latticeX, latticeY));
         }
+    }
+
+    [Fact]
+    public void BridgeRules_SupportedTemplate_LeavesLandingTerrainUntouched_AndMarksPathHandoff()
+    {
+        // Two independent staged payloads: the first converts with the supported-template
+        // rules, the second converts without rules as the pristine-height reference.
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        using var pristineScratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[] { PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)) }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        PreviewPayloadFixture.CreatePayload(pristineScratch.Root, features: features);
+        var target = Path.Combine(scratch.Root, "package");
+        var pristineTarget = Path.Combine(pristineScratch.Root, "package");
+        var rules = new[] { new BridgeRule("vectors") };
+        GeneratedMapPackageResult result;
+        GeneratedMapPackageResult pristine;
+
+        using (var payloadReader = PreviewPayloadFixture.OpenPayload(scratch.Root))
+        {
+            result = GeneratedMapPackageConverter.Convert(
+                payloadReader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+        }
+
+        using (var pristinePayloadReader = PreviewPayloadFixture.OpenPayload(pristineScratch.Root))
+        {
+            pristine = GeneratedMapPackageConverter.Convert(
+                pristinePayloadReader, MapName, pristineTarget, PreviewPayloadFixture.DefaultTextureMap());
+        }
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.True(pristine.Success, string.Join("; ", pristine.Diagnostics));
+        Assert.DoesNotContain(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeLandingGrading + ":", StringComparison.Ordinal));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgePathPlanHandoff + ":", StringComparison.Ordinal)
+                && diagnostic.Contains("1 bridge pair(s) (2 placed objects)", StringComparison.Ordinal));
+
+        // The runtime plans the approach corridor, so the lattice keeps its original
+        // heights: every stored sample (interior and ghost border) equals the same
+        // payload converted without rules.
+        var model = new PackageReader(target).Read();
+        var pristineModel = new PackageReader(pristineTarget).Read();
+        Assert.Equal(pristineModel.Layout.Chunks.Count, model.Layout.Chunks.Count);
+
+        foreach (var (chunk, pristineChunk) in model.Layout.Chunks.Zip(pristineModel.Layout.Chunks))
+        {
+            Assert.Equal(pristineChunk.Heights.Samples, chunk.Heights.Samples);
+        }
+
+        // Both placed objects carry the generated provenance and the path-plan handoff
+        // (integer 1) and no other legacy property.
+        Assert.NotNull(model.Objects);
+        var objects = model.Objects!.Objects;
+        Assert.Equal(2, objects.Count);
+        var expectedKeys = new HashSet<string>
+        {
+            Panopticon.Terrain.Bridge.GeneratedProvenanceKey,
+            Panopticon.Terrain.GeneratedBridgePathHandoff.Key,
+        };
+
+        foreach (var (placed, roadType) in new[] { (objects[0], RoadType.BridgeStart), (objects[1], RoadType.BridgeEnd) })
+        {
+            Assert.Equal((uint)roadType, placed.RoadType);
+            Assert.Equal(expectedKeys, new HashSet<string>(placed.LegacyProperties.Keys));
+            Assert.Equal(
+                Panopticon.Terrain.Bridge.GeneratedProvenanceValue,
+                Assert.IsType<MapPropertyValue.AsciiStringValue>(placed.LegacyProperties[Panopticon.Terrain.Bridge.GeneratedProvenanceKey]).Value);
+            Assert.Equal(
+                1,
+                Assert.IsType<MapPropertyValue.IntegerValue>(placed.LegacyProperties[Panopticon.Terrain.GeneratedBridgePathHandoff.Key]).Value);
+        }
+    }
+
+    [Fact]
+    public void BridgeRules_UnsupportedTemplate_KeepsLandingGrading_WithoutPathHandoff()
+    {
+        using var scratch = new PreviewPayloadFixture.ScratchRoot();
+        var features = new[] { PreviewPayloadFixture.Annotation("bridge-a", BridgeLine(200d, 640d, 900d, 640d)) }.ToList();
+        PreviewPayloadFixture.CreatePayload(scratch.Root, features: features);
+        using var reader = PreviewPayloadFixture.OpenPayload(scratch.Root);
+        var target = Path.Combine(scratch.Root, "package");
+        var rules = new[] { new BridgeRule("vectors", "ConcreteOneLane") };
+
+        var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap(), bridgeRules: rules);
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgeLandingGrading + ":", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            result.Diagnostics,
+            diagnostic => diagnostic.StartsWith(GeneratedMapPackageDiagnosticCodes.BridgePathPlanHandoff + ":", StringComparison.Ordinal));
+
+        Assert.NotNull(new PackageReader(target).Read().Objects);
+        Assert.DoesNotContain(
+            new PackageReader(target).Read().Objects!.Objects,
+            placed => placed.LegacyProperties.ContainsKey(Panopticon.Terrain.GeneratedBridgePathHandoff.Key));
     }
 
     /// <summary>

@@ -46,106 +46,115 @@ public sealed class GeneratedPackageBridgeNegativeTests
     [GameFact(SageGame.CncGenerals)]
     public void WithoutCorrection_NorthExitGapReturns_FalsifyingTheFix()
     {
-        var scratchRoot = NewScratchRoot();
-
+        // The authored path is the fallback for marked bridges; the original assertions are the fallback's expected values.
+        Panopticon.Terrain.Bridge.GeneratedPathPlanEnabled = false;
         try
         {
-            var payloadDir = StagePayload(Path.Combine(scratchRoot, "payload"));
-            var packageOn = Path.Combine(scratchRoot, "package-on");
-            Convert(payloadDir, packageOn, withRules: true);
-
-            var userRoot = Path.Combine(scratchRoot, "user");
-            Directory.CreateDirectory(userRoot);
-
-            using var game = new Game(
-                InstalledFilesTestData.GetInstallation(SageGame.CncGenerals),
-                preferredBackend: null,
-                new Configuration { NoAudio = true, SkipStartingBuildings = true, UserDataRootPath = userRoot },
-                window: null);
-
-            // Correction DISABLED: the placement keeps the doubled pitch, so the deck at
-            // the north exit must sit ~19-35 above the graded terrain again.
-            Panopticon.Terrain.Bridge.GeneratedBridgePitchCorrectionEnabled = false;
+            var scratchRoot = NewScratchRoot();
 
             try
             {
-                game.LoadMap(packageOn, [], GameType.SinglePlayer);
-                Assert.NotEmpty(game.Scene3D.Bridges);
+                var payloadDir = StagePayload(Path.Combine(scratchRoot, "payload"));
+                var packageOn = Path.Combine(scratchRoot, "package-on");
+                Convert(payloadDir, packageOn, withRules: true);
 
-                for (var y = 975f; y <= 995f; y += 5f)
+                var userRoot = Path.Combine(scratchRoot, "user");
+                Directory.CreateDirectory(userRoot);
+
+                using var game = new Game(
+                    InstalledFilesTestData.GetInstallation(SageGame.CncGenerals),
+                    preferredBackend: null,
+                    new Configuration { NoAudio = true, SkipStartingBuildings = true, UserDataRootPath = userRoot },
+                    window: null);
+
+                // Correction DISABLED: the placement keeps the doubled pitch, so the deck at
+                // the north exit must sit ~19-35 above the graded terrain again.
+                Panopticon.Terrain.Bridge.GeneratedBridgePitchCorrectionEnabled = false;
+
+                try
                 {
-                    var deckZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, y);
-                    var terrainZ = game.TerrainLogic.HeightMap.GetHeight(550f, y);
-                    Assert.True(deckZ.HasValue, $"no deck at y={y:F0} even uncorrected.");
-                    var gap = deckZ.Value - terrainZ;
+                    game.LoadMap(packageOn, [], GameType.SinglePlayer);
+                    Assert.NotEmpty(game.Scene3D.Bridges);
+
+                    for (var y = 975f; y <= 995f; y += 5f)
+                    {
+                        var deckZ = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(550f, y);
+                        var terrainZ = game.TerrainLogic.HeightMap.GetHeight(550f, y);
+                        Assert.True(deckZ.HasValue, $"no deck at y={y:F0} even uncorrected.");
+                        var gap = deckZ.Value - terrainZ;
+                        Assert.True(
+                            gap >= 15f,
+                            $"uncorrected north exit gap only {gap:F2} at y={y:F0} (deck {deckZ.Value:F2} vs terrain {terrainZ:F2}); the falsification expected the doubled-pitch drop to return.");
+                        Console.WriteLine(
+                            $"r3-g8 falsified (correction off) y={y.ToString("F0", CultureInfo.InvariantCulture)}: deck {deckZ.Value.ToString("F2", CultureInfo.InvariantCulture)} terrain {terrainZ.ToString("F2", CultureInfo.InvariantCulture)} gap {gap.ToString("F2", CultureInfo.InvariantCulture)}");
+                    }
+
+                    // The vehicle confirms the drop: crossing with the correction off, the last
+                    // on-deck Z sits far above the graded terrain it lands on.
+                    var player = game.Scene3D.LocalPlayer ?? game.Scene3D.Players[0];
+                    player.DisableAI();
+
+                    var dozerDefinition = game.AssetStore.ObjectDefinitions.GetByName(DozerDefinitionName);
+                    var dozer = game.Scene3D.GameObjects.CreateObject(dozerDefinition!, player);
+                    dozer.SetTranslation(new Vector3(550f, 150f, game.TerrainLogic.HeightMap.GetHeight(550f, 150f)));
+
+                    game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
+                    game.StartRun();
+                    game.EnableFixedLogicTimestep();
+
+                    player.SelectUnits([dozer]);
+                    var order = Order.CreateMoveOrder(game.Scene3D.GetPlayerIndex(player), new Vector3(550f, 1100f, 0f));
+                    new OrderProcessor(game).Process([order]);
+
+                    float? lastOnDeckGap = null;
+                    var sawExitRegion = false;
+
+                    for (var frame = 0; frame < 2000; frame++)
+                    {
+                        game.Update(Array.Empty<InputMessage>());
+
+                        var position = dozer.Translation;
+                        var onDeck = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(position.X, position.Y);
+                        var terrainZ = game.TerrainLogic.HeightMap.GetHeight(position.X, position.Y);
+
+                        if (onDeck.HasValue)
+                        {
+                            lastOnDeckGap = onDeck.Value - terrainZ;
+                        }
+
+                        if (position.Y > 990f)
+                        {
+                            sawExitRegion = true;
+                        }
+
+                        if (position.Y >= 1098f)
+                        {
+                            break;
+                        }
+                    }
+
+                    Assert.True(sawExitRegion, "the dozer never crossed the north exit region.");
+                    Assert.True(lastOnDeckGap.HasValue, "the dozer never rode the deck with the correction disabled.");
                     Assert.True(
-                        gap >= 15f,
-                        $"uncorrected north exit gap only {gap:F2} at y={y:F0} (deck {deckZ.Value:F2} vs terrain {terrainZ:F2}); the falsification expected the doubled-pitch drop to return.");
+                        lastOnDeckGap.Value >= 15f,
+                        $"uncorrected last on-deck gap only {lastOnDeckGap.Value:F2} above terrain; the falsification expects the doubled-pitch drop.");
                     Console.WriteLine(
-                        $"r3-g8 falsified (correction off) y={y.ToString("F0", CultureInfo.InvariantCulture)}: deck {deckZ.Value.ToString("F2", CultureInfo.InvariantCulture)} terrain {terrainZ.ToString("F2", CultureInfo.InvariantCulture)} gap {gap.ToString("F2", CultureInfo.InvariantCulture)}");
+                        $"r3-g8 falsified (correction off): final on-deck height above terrain {lastOnDeckGap.Value.ToString("F2", CultureInfo.InvariantCulture)} (the corrected run keeps this under 8).");
                 }
-
-                // The vehicle confirms the drop: crossing with the correction off, the last
-                // on-deck Z sits far above the graded terrain it lands on.
-                var player = game.Scene3D.LocalPlayer ?? game.Scene3D.Players[0];
-                player.DisableAI();
-
-                var dozerDefinition = game.AssetStore.ObjectDefinitions.GetByName(DozerDefinitionName);
-                var dozer = game.Scene3D.GameObjects.CreateObject(dozerDefinition!, player);
-                dozer.SetTranslation(new Vector3(550f, 150f, game.TerrainLogic.HeightMap.GetHeight(550f, 150f)));
-
-                game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
-                game.StartRun();
-                game.EnableFixedLogicTimestep();
-
-                player.SelectUnits([dozer]);
-                var order = Order.CreateMoveOrder(game.Scene3D.GetPlayerIndex(player), new Vector3(550f, 1100f, 0f));
-                new OrderProcessor(game).Process([order]);
-
-                float? lastOnDeckGap = null;
-                var sawExitRegion = false;
-
-                for (var frame = 0; frame < 2000; frame++)
+                finally
                 {
-                    game.Update(Array.Empty<InputMessage>());
-
-                    var position = dozer.Translation;
-                    var onDeck = game.TerrainLogic.GetGeneratedBridgeSurfaceHeight(position.X, position.Y);
-                    var terrainZ = game.TerrainLogic.HeightMap.GetHeight(position.X, position.Y);
-
-                    if (onDeck.HasValue)
-                    {
-                        lastOnDeckGap = onDeck.Value - terrainZ;
-                    }
-
-                    if (position.Y > 990f)
-                    {
-                        sawExitRegion = true;
-                    }
-
-                    if (position.Y >= 1098f)
-                    {
-                        break;
-                    }
+                    // Restore the production behavior no matter what the asserts did.
+                    Panopticon.Terrain.Bridge.GeneratedBridgePitchCorrectionEnabled = true;
                 }
-
-                Assert.True(sawExitRegion, "the dozer never crossed the north exit region.");
-                Assert.True(lastOnDeckGap.HasValue, "the dozer never rode the deck with the correction disabled.");
-                Assert.True(
-                    lastOnDeckGap.Value >= 15f,
-                    $"uncorrected last on-deck gap only {lastOnDeckGap.Value:F2} above terrain; the falsification expects the doubled-pitch drop.");
-                Console.WriteLine(
-                    $"r3-g8 falsified (correction off): final on-deck height above terrain {lastOnDeckGap.Value.ToString("F2", CultureInfo.InvariantCulture)} (the corrected run keeps this under 8).");
             }
             finally
             {
-                // Restore the production behavior no matter what the asserts did.
-                Panopticon.Terrain.Bridge.GeneratedBridgePitchCorrectionEnabled = true;
+                // Scratch root preserved for evidence.
             }
         }
         finally
         {
-            // Scratch root preserved for evidence.
+            Panopticon.Terrain.Bridge.GeneratedPathPlanEnabled = true;
         }
     }
 

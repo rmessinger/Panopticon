@@ -11,6 +11,8 @@ public sealed class TerrainLogic : IPersistableObject
 {
     private readonly List<BridgeSurface> _bridgeSurfaces = [];
 
+    private readonly List<BridgeCorridor> _bridgeCorridors = [];
+
     private int _activeBoundary = 0;
 
     public HeightMap HeightMap { get; private set; }
@@ -27,10 +29,41 @@ public sealed class TerrainLogic : IPersistableObject
         _bridgeSurfaces.Add(surface);
     }
 
+    /// <summary>
+    /// Registers a generated-bridge corridor for the tyre pose query. Scene3D registers
+    /// one corridor per generated bridge after the map loads; the list is replaced on
+    /// reload and cleared with the roadway surfaces.
+    /// </summary>
+    public void RegisterBridgeCorridor(BridgeCorridor corridor)
+    {
+        ArgumentNullException.ThrowIfNull(corridor);
+        _bridgeCorridors.Add(corridor);
+    }
+
     public void ClearBridgeSurfaces()
     {
         _bridgeSurfaces.Clear();
+        _bridgeCorridors.Clear();
     }
+
+    /// <summary>
+    /// The tyre-pose weight for one vehicle's tyre contact points: the largest weight
+    /// over the registered corridors, 0 when none is registered.
+    /// </summary>
+    internal float GetBridgeCorridorPoseWeight(ReadOnlySpan<Vector2> samples)
+    {
+        var weight = 0f;
+
+        foreach (var corridor in _bridgeCorridors)
+        {
+            weight = MathF.Max(weight, corridor.PoseWeight(samples));
+        }
+
+        return weight;
+    }
+
+    /// <summary>True when at least one corridor is registered, so maps without generated-bridge corridors skip the client tyre pose work entirely.</summary>
+    internal bool HasBridgeCorridors => _bridgeCorridors.Count > 0;
 
     /// <summary>
     /// Movement-only bridge roadway height at the XY point across every registered

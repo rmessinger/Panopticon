@@ -58,4 +58,7 @@ public static class GeneratedMapPackageDiagnosticCodes
 
     /// <summary>Informational: lattice cells graded so terrain ramps to the bridge deck at each landing (bridge rules opt-in).</summary>
     public const string BridgeLandingGrading = "GEO-PKG-023";
+
+    /// <summary>Informational: bridge pairs whose landings keep their original heights because the runtime plans the approach corridor (supported bridge template).</summary>
+    public const string BridgePathPlanHandoff = "GEO-PKG-024";
 }

@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Threading;
 using Panopticon.Content.Importing.MapSources.Package;
 using Panopticon.Data.Map;
@@ -25,6 +26,7 @@ using Panopticon.Input;
 using Panopticon.Logic;
 using Panopticon.Logic.Orders;
 using Panopticon.Mathematics;
+using Panopticon.Terrain;
 using Panopticon.Tests;
 using Panopticon.Tests.Data;
 using SixLabors.ImageSharp;
@@ -87,7 +89,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
     private const string DozerDefinitionName = "AmericaVehicleDozer";
 
     [Fact]
-    public void GradedPackage_ReloadCarriesGradedLandingHeights()
+    public void UnsupportedTemplatePackage_ReloadCarriesGradedLandingHeights()
     {
         var scratchRoot = NewScratchRoot();
 
@@ -96,7 +98,9 @@ public sealed class GeneratedPackageBridgeTraversalTests
             var payloadDir = StagePayload(Path.Combine(scratchRoot, "payload"));
             var package = Path.Combine(scratchRoot, "package");
 
-            Convert(payloadDir, package, withRules: true);
+            // ConcreteOneLane is not the supported template, so the converter still grades
+            // the landing band and no path-plan handoff marker is written.
+            Convert(payloadDir, package, withRules: true, bridgeTemplate: "ConcreteOneLane");
 
             var model = new PackageReader(package).Read();
             var latticeWidth = model.Layout.LatticeWidth;
@@ -129,6 +133,593 @@ public sealed class GeneratedPackageBridgeTraversalTests
         {
             Directory.Delete(scratchRoot, recursive: true);
         }
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void GeneratedBridge_TerrainClearedUnderFullRoadwayFootprint()
+    {
+        // The authored path is the fallback for marked bridges; the original assertions are the fallback's expected values.
+        Panopticon.Terrain.Bridge.GeneratedPathPlanEnabled = false;
+        try
+        {
+            // WP1029 remedy b (r3-g8): at load time the runtime lowers terrain to the fitted
+            // deck plane minus 1 under the generated bridge's actual roadway footprint (plus
+            // one 10-unit transition ring), eliminating the east-edge deck burial. The gate
+            // is EXACT, not grid-sampled: each terrain cell's two rendered triangles (the
+            // TerrainPatch anti-diagonal (x+1,y)-(x,y+1)) are clipped against the roadway
+            // inlier-triangle XY polygons; deck-plane minus terrain is linear on each clipped
+            // polygon, so the minimum over the clipped vertices is the exact cell minimum.
+            var scratchRoot = NewScratchRoot();
+
+            try
+            {
+                var payloadDir = StagePayload(Path.Combine(scratchRoot, "payload"));
+                var package = Path.Combine(scratchRoot, "package-on");
+
+                Convert(payloadDir, package, withRules: true);
+
+                var packageHashBefore = HashDirectory(package);
+
+                var userRoot = Path.Combine(scratchRoot, "user");
+                Directory.CreateDirectory(userRoot);
+
+                using var game = new Game(
+                    InstalledFilesTestData.GetInstallation(SageGame.CncGenerals),
+                    preferredBackend: null,
+                    new Configuration { NoAudio = true, SkipStartingBuildings = true, UserDataRootPath = userRoot },
+                    window: null);
+
+                game.LoadMap(package, [], GameType.SinglePlayer);
+                Assert.NotEmpty(game.Scene3D.Bridges);
+
+                var bridge = game.Scene3D.Bridges[0];
+
+                // Independent installed oracle (r3-g8 corrective): asset identity from the
+                // verified fingerprint, raw unclassified world faces from the read-only API,
+                // roadway membership from the REVIEWED source face ranges (faces 4-7 per
+                // subobject — the kerb-to-kerb slab), all independent of production fit/envelope
+                // classifier internals.
+                Assert.False(string.IsNullOrEmpty(bridge.GeometryFingerprint), "generated bridge must report a geometry fingerprint.");
+                Assert.True(BridgeSurface.IsSupportedGeometry(bridge.GeometryFingerprint), $"unexpected asset fingerprint {bridge.GeometryFingerprint}.");
+
+                var rawFaces = bridge.GetRawWorldFaces();
+                Assert.Equal(424, rawFaces.Count);
+
+                var anchorStart = bridge.StartPositionWithHeight;
+                var anchorEnd = bridge.EndPositionWithHeight;
+                var oracleRoadway = rawFaces.Where(face => face.SourceFaceIndex is >= 4 and <= 7).ToList();
+                Assert.Equal(24, oracleRoadway.Count);
+
+                // Independent classification accounting over the world candidates.
+                var oracleCandidates = 0;
+                var oracleUnclassified = 0;
+                var oracleReasons = new Dictionary<string, int>();
+                var axis = anchorEnd - anchorStart;
+                var axisLength = axis.Length();
+                var axisDirection = axis / axisLength;
+                var bandMax = (MathF.Abs(anchorEnd.Z - anchorStart.Z) * 1.5f) + 10f;
+
+                foreach (var face in rawFaces)
+                {
+                    var ab = face.B - face.A;
+                    var ac = face.C - face.A;
+                    var normal = Vector3.Cross(ab, ac);
+                    var normalLength = normal.Length();
+
+                    if (normalLength <= float.Epsilon)
+                    {
+                        continue;
+                    }
+
+                    var worldNormalZ = normal.Z / normalLength;
+                    var centroid = (face.A + face.B + face.C) / 3f;
+                    var anchorT = Math.Clamp(Vector3.Dot(centroid - anchorStart, axisDirection) / axisLength, 0f, 1f);
+                    var anchorLineZ = anchorStart.Z + ((anchorEnd.Z - anchorStart.Z) * anchorT);
+                    var anchorRelativeZ = centroid.Z - anchorLineZ;
+
+                    if (MathF.Abs(worldNormalZ) <= 0.5f || anchorRelativeZ <= -15f || anchorRelativeZ >= bandMax)
+                    {
+                        continue;
+                    }
+
+                    oracleCandidates++;
+
+                    if (face.SourceFaceIndex is >= 4 and <= 7)
+                    {
+                        // roadway
+                    }
+                    else if (face.SourceFaceIndex is >= 8 and <= 23)
+                    {
+                        oracleReasons["kerb-rail-strip"] = oracleReasons.GetValueOrDefault("kerb-rail-strip") + 1;
+                    }
+                    else if (face.SourceFaceIndex is >= 24 and <= 51)
+                    {
+                        oracleReasons["arch-understructure"] = oracleReasons.GetValueOrDefault("arch-understructure") + 1;
+                    }
+                    else
+                    {
+                        oracleUnclassified++;
+                    }
+                }
+
+                Assert.Equal(0, oracleUnclassified);
+                Console.WriteLine(
+                    "r3-g8 oracle accounting: rendered " + rawFaces.Count + ", candidates " + oracleCandidates
+                    + ", roadway " + oracleRoadway.Count + ", non-roadway " + string.Join(";", oracleReasons.Select(pair => pair.Key + "=" + pair.Value))
+                    + ", unclassified " + oracleUnclassified);
+
+                // Production envelope must cover exactly the oracle roadway set (count +
+                // projected area + identity hash).
+                var oracleArea = oracleRoadway.Sum(face =>
+                    0.5f * MathF.Abs(((face.B.X - face.A.X) * (face.C.Y - face.A.Y)) - ((face.C.X - face.A.X) * (face.B.Y - face.A.Y))));
+                var oracleHash = FaceIdentityHash(oracleRoadway);
+                var membershipPlan = bridge.TryPlanClearance(game.TerrainLogic.HeightMap);
+                Assert.True(membershipPlan != null, "supported bridge must produce a clearance plan.");
+                Assert.Equal(oracleRoadway.Count, membershipPlan.RoadwayFaceCount);
+                Assert.Equal(oracleArea, membershipPlan.RoadwayProjectedArea, 0.5f);
+                Assert.Equal(oracleHash, membershipPlan.RoadwayFaceIdentityHash);
+                Console.WriteLine(
+                    "r3-g8 oracle coverage: roadway faces " + oracleRoadway.Count + ", projected area " + oracleArea.ToString("F1", CultureInfo.InvariantCulture)
+                    + " sq units, identity hash " + oracleHash[..12] + "..., plan footprint cells " + membershipPlan.FootprintCellCount);
+
+                var heightMap = game.TerrainLogic.HeightMap;
+                var footprint = oracleRoadway
+                    .Select(face => new[]
+                    {
+                        new Vector2(face.A.X, face.A.Y),
+                        new Vector2(face.B.X, face.B.Y),
+                        new Vector2(face.C.X, face.C.Y),
+                    })
+                    .ToList();
+
+                var borderWidth = (int)game.Scene3D.MapFile.HeightMapData.BorderWidth;
+                var lastSampleX = heightMap.Width - 1;
+                var lastSampleY = heightMap.Height - 1;
+                var lastCellX = heightMap.Width - 2;
+                var lastCellY = heightMap.Height - 2;
+
+                // The oracle scans every rendered cell (0..lastCell) — completeness is the
+                // point; SAT rejection is cheap.
+                var cellMinX = 0;
+                var cellMinY = 0;
+                var cellMaxX = lastCellX;
+                var cellMaxY = lastCellY;
+
+                float overallMin = float.MaxValue;
+                var overallArea = 0f;
+                var worst = Vector2.Zero;
+                var zones = new Dictionary<string, (float Min, double Sum, int Count, float Area)>
+                {
+                    ["south-bank"] = (float.MaxValue, 0, 0, 0),
+                    ["north-bank"] = (float.MaxValue, 0, 0, 0),
+                    ["seam-440"] = (float.MaxValue, 0, 0, 0),
+                    ["seam-580"] = (float.MaxValue, 0, 0, 0),
+                    ["seam-720"] = (float.MaxValue, 0, 0, 0),
+                    ["seam-860"] = (float.MaxValue, 0, 0, 0),
+                };
+
+                void RecordZone(string zone, float clearance, float area, Vector2 point, bool negative)
+                {
+                    if (!zones.TryGetValue(zone, out var slot))
+                    {
+                        return;
+                    }
+
+                    slot.Min = MathF.Min(slot.Min, clearance);
+                    slot.Sum += clearance;
+                    slot.Count++;
+                    slot.Area += negative ? area : 0f;
+                    zones[zone] = slot;
+                }
+
+                foreach (var oracleFace in oracleRoadway)
+                {
+                    var triangle = new[] { new Vector2(oracleFace.A.X, oracleFace.A.Y), new Vector2(oracleFace.B.X, oracleFace.B.Y), new Vector2(oracleFace.C.X, oracleFace.C.Y) };
+                    var triangleMinX = MathF.Min(triangle[0].X, MathF.Min(triangle[1].X, triangle[2].X));
+                    var triangleMaxX = MathF.Max(triangle[0].X, MathF.Max(triangle[1].X, triangle[2].X));
+                    var triangleMinY = MathF.Min(triangle[0].Y, MathF.Min(triangle[1].Y, triangle[2].Y));
+                    var triangleMaxY = MathF.Max(triangle[0].Y, MathF.Max(triangle[1].Y, triangle[2].Y));
+
+                    for (var i = cellMinX; i <= cellMaxX; i++)
+                    {
+                        for (var j = cellMinY; j <= cellMaxY; j++)
+                        {
+                            var p00 = heightMap.GetPosition(i, j);
+                            var cellMinXy = new Vector2(p00.X, p00.Y);
+                            var cellMaxXy = new Vector2(p00.X + HeightMap.HorizontalScale, p00.Y + HeightMap.HorizontalScale);
+
+                            if (cellMaxXy.X < triangleMinX || cellMinXy.X > triangleMaxX || cellMaxXy.Y < triangleMinY || cellMinXy.Y > triangleMaxY)
+                            {
+                                continue;
+                            }
+
+                            var quad = new[]
+                            {
+                                cellMinXy,
+                                new Vector2(cellMaxXy.X, cellMinXy.Y),
+                                cellMaxXy,
+                                new Vector2(cellMinXy.X, cellMaxXy.Y),
+                            };
+
+                            foreach (var cellTriangle in CellTriangles(quad))
+                            {
+                                var clipped = ClipConvex(triangle, cellTriangle);
+
+                                if (clipped.Count < 3)
+                                {
+                                    continue;
+                                }
+
+                                // Actual roadway Z: barycentric on the oracle roadway face
+                                // itself, never a fitted plane.
+                                var polygonMin = float.MaxValue;
+                                var clearances = new List<float>(clipped.Count);
+
+                                foreach (var point in clipped)
+                                {
+                                    var clearance = RoadwayZ(oracleFace, point.X, point.Y) - CellSurfaceZ(heightMap, i, j, point.X, point.Y);
+                                    polygonMin = MathF.Min(polygonMin, clearance);
+                                    clearances.Add(clearance);
+                                }
+
+                                var area = ShoelaceArea(clipped);
+
+                                if (polygonMin < overallMin)
+                                {
+                                    overallMin = polygonMin;
+                                    var minimumClearance = clearances.Min();
+                                    worst = clipped[clearances.IndexOf(minimumClearance)];
+                                }
+
+                                // Zero-contour split: clearance is linear on the clipped
+                                // polygon, so its <= 0 region's shoelace area is the exact
+                                // interpenetration area.
+                                overallArea += ShoelaceArea(SplitAtZeroContour(clipped, clearances));
+
+                                var zoneY = clipped.Average(point => point.Y);
+                                var zone = zoneY < 460f
+                                    ? "south-bank"
+                                    : zoneY >= 840f
+                                        ? "north-bank"
+                                        : NearestSeamZone(zoneY);
+
+                                if (zone != null)
+                                {
+                                    RecordZone(zone, polygonMin, area, clipped[0], polygonMin < 0f);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Console.WriteLine(
+                    "r3-g8 EXACT gate: full-footprint min clearance " + overallMin.ToString("F3", CultureInfo.InvariantCulture) +
+                    " at (" + worst.X.ToString("F1", CultureInfo.InvariantCulture) + ", " + worst.Y.ToString("F1", CultureInfo.InvariantCulture) +
+                    "); interpenetration area " + overallArea.ToString("F2", CultureInfo.InvariantCulture) + " sq units");
+
+                foreach (var zone in zones)
+                {
+                    var mean = zone.Value.Count > 0 ? zone.Value.Sum / zone.Value.Count : float.NaN;
+                    Console.WriteLine(
+                        "r3-g8 zone " + zone.Key + ": min " + zone.Value.Min.ToString("F3", CultureInfo.InvariantCulture) +
+                        ", mean " + mean.ToString("F3", CultureInfo.InvariantCulture) +
+                        ", samples " + zone.Value.Count +
+                        ", negative area " + zone.Value.Area.ToString("F2", CultureInfo.InvariantCulture));
+                }
+
+                Assert.True(
+                    overallMin >= BridgeSurface.MinimumDeckClearance,
+                    $"exact full-width clearance gate: min {overallMin:F3} < {BridgeSurface.MinimumDeckClearance} at ({worst.X:F1}, {worst.Y:F1}); terrain buries the deck.");
+
+                // Dense step-5 min/mean report at both banks and every piece seam, using the
+                // same cell-triangle terrain evaluation (report only; the exact gate above is
+                // the acceptance bound).
+                foreach (var (label, yMin, yMax) in new[]
+                         {
+                             ("south bank", 300f, 460f),
+                             ("north bank", 840f, 1000f),
+                             ("seam 440", 435f, 445f),
+                             ("seam 580", 575f, 585f),
+                             ("seam 720", 715f, 725f),
+                             ("seam 860", 855f, 865f),
+                         })
+                {
+                    var samples = new List<float>();
+                    var oracleMinX = oracleRoadway.Min(face => face.MinXy.X);
+                    var oracleMaxX = oracleRoadway.Max(face => face.MaxXy.X);
+
+                    for (var y = yMin; y <= yMax; y += 5f)
+                    {
+                        for (var x = MathF.Ceiling(oracleMinX); x <= oracleMaxX; x += 5f)
+                        {
+                            var samplePoint = new Vector2(x, y);
+                            BridgeSurface.BridgeRawFace? containing = null;
+
+                            foreach (var candidateFace in oracleRoadway)
+                            {
+                                if (PointInTriangle(samplePoint, new[]
+                                {
+                                    new Vector2(candidateFace.A.X, candidateFace.A.Y),
+                                    new Vector2(candidateFace.B.X, candidateFace.B.Y),
+                                    new Vector2(candidateFace.C.X, candidateFace.C.Y),
+                                }))
+                                {
+                                    containing = candidateFace;
+                                    break;
+                                }
+                            }
+
+                            if (containing is not { } containingFace)
+                            {
+                                continue;
+                            }
+
+                            var tile = heightMap.GetTilePosition(new Vector2(x, y));
+
+                            if (!tile.HasValue)
+                            {
+                                continue;
+                            }
+
+                            samples.Add(RoadwayZ(containingFace, x, y) - CellSurfaceZ(heightMap, tile.Value.X, tile.Value.Y, x, y));
+                        }
+                    }
+
+                    if (samples.Count > 0)
+                    {
+                        Console.WriteLine(
+                            "r3-g8 dense " + label + ": n " + samples.Count +
+                            ", min " + samples.Min().ToString("F3", CultureInfo.InvariantCulture) +
+                            ", mean " + samples.Average().ToString("F3", CultureInfo.InvariantCulture));
+                    }
+                }
+
+                // Unchanged outside footprint + ring: named lattice samples far from the
+                // bridge keep exactly the payload-formula heights (quantized to the resident
+                // grid the converter stores). BorderWidth is a lattice count.
+                foreach (var (latticeX, latticeY) in new[] { (35, 30), (75, 30), (35, 100), (75, 100), (55, 10), (55, 115), (20, 64) })
+                {
+                    var expected = ResidentGridHeight(PayloadHeight(latticeX, latticeY));
+                    var actual = heightMap.GetHeight(latticeX + (int)borderWidth, latticeY + (int)borderWidth);
+                    Assert.True(
+                        MathF.Abs(actual - expected) <= 0.04f,
+                        $"lattice ({latticeX}, {latticeY}) outside footprint+ring changed: {actual:F4} vs payload {expected:F4}.");
+                }
+
+                // Reload determinism: load the same package twice; the cut is a pure function
+                // of (package heights, bridge geometry), so the final lattice in the cut
+                // region must be identical (no double-cut drift).
+                var snapshot = new Dictionary<(int X, int Y), float>();
+
+                for (var i = cellMinX; i <= cellMaxX + 1; i++)
+                {
+                    for (var j = cellMinY; j <= cellMaxY + 1; j++)
+                    {
+                        snapshot[(i, j)] = heightMap.GetHeight(i, j);
+                    }
+                }
+
+                game.LoadMap(package, [], GameType.SinglePlayer);
+                var reloaded = game.TerrainLogic.HeightMap;
+
+                foreach (var pair in snapshot)
+                {
+                    Assert.Equal(pair.Value, reloaded.GetHeight(pair.Key.X, pair.Key.Y));
+                }
+
+                // The runtime must not write the converted package: bytes are identical after
+                // two full game loads.
+                Assert.Equal(packageHashBefore, HashDirectory(package));
+
+            }
+            finally
+            {
+                Directory.Delete(scratchRoot, recursive: true);
+            }
+        }
+        finally
+        {
+            Panopticon.Terrain.Bridge.GeneratedPathPlanEnabled = true;
+        }
+    }
+
+    /// <summary>Actual roadway Z at the XY point: barycentric interpolation on the
+    /// oracle face's own world triangle (winding-agnostic), NaN when outside.</summary>
+    private static float RoadwayZ(BridgeSurface.BridgeRawFace face, float x, float y)
+    {
+        var denominator = ((face.B.Y - face.C.Y) * (face.A.X - face.C.X)) + ((face.C.X - face.B.X) * (face.A.Y - face.C.Y));
+
+        if (denominator == 0f || !float.IsFinite(denominator))
+        {
+            return float.NaN;
+        }
+
+        var weightA = (((face.B.Y - face.C.Y) * (x - face.C.X)) + ((face.C.X - face.B.X) * (y - face.C.Y))) / denominator;
+        var weightB = (((face.C.Y - face.A.Y) * (x - face.C.X)) + ((face.A.X - face.C.X) * (y - face.C.Y))) / denominator;
+        var weightC = 1f - weightA - weightB;
+
+        if (weightA < -0.001f || weightB < -0.001f || weightC < -0.001f)
+        {
+            return float.NaN;
+        }
+
+        return (face.A.Z * weightA) + (face.B.Z * weightB) + (face.C.Z * weightC);
+    }
+
+    /// <summary>
+    /// Splits a polygon (with per-vertex linear clearance values) at the zero contour and
+    /// returns the &le;0 region: the exact rendered-area where terrain buries the face.
+    /// </summary>
+    private static List<Vector2> SplitAtZeroContour(List<Vector2> polygon, List<float> clearances)
+    {
+        var negative = new List<Vector2>();
+
+        for (var index = 0; index < polygon.Count; index++)
+        {
+            var current = polygon[index];
+            var next = polygon[(index + 1) % polygon.Count];
+            var currentClearance = clearances[index];
+            var nextClearance = clearances[(index + 1) % clearances.Count];
+
+            if (currentClearance <= 0f)
+            {
+                negative.Add(current);
+            }
+
+            if ((currentClearance < 0f && nextClearance > 0f) || (currentClearance > 0f && nextClearance < 0f))
+            {
+                var t = currentClearance / (currentClearance - nextClearance);
+                negative.Add(current + ((next - current) * t));
+            }
+        }
+
+        return negative;
+    }
+
+    /// <summary>Canonical roadway-membership identity hash: SHA-256 over the sorted
+    /// piece|copy|source-face identity strings (production plan must match exactly).</summary>
+    private static string FaceIdentityHash(IReadOnlyList<BridgeSurface.BridgeRawFace> faces)
+    {
+        var identities = faces.Select(face => $"{face.PieceName}|{face.CopyIndex}|{face.SourceFaceIndex}").OrderBy(identity => identity, StringComparer.Ordinal).ToList();
+
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        return System.Convert.ToHexString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(string.Join(";", identities))));
+    }
+
+    /// <summary>The two rendered triangles of one terrain cell: the patch anti-diagonal
+    /// runs from (x+1,y) to (x,y+1), matching TerrainPatch's vertex layout.</summary>
+    private static List<Vector2[]> CellTriangles(Vector2[] quad)
+    {
+        return [
+            [quad[0], quad[1], quad[3]],
+            [quad[1], quad[2], quad[3]],
+        ];
+    }
+
+    /// <summary>Rendered terrain height at a point inside lattice cell (i, j): evaluates
+    /// the cell sub-triangle the anti-diagonal (x+1,y)-(x,y+1) puts the point in, i.e. the
+    /// exact piecewise-linear rendered surface, not the bilinear lattice average.</summary>
+    private static float CellSurfaceZ(HeightMap heightMap, int i, int j, float x, float y)
+    {
+        var p00 = heightMap.GetPosition(i, j);
+        var p10 = heightMap.GetPosition(i + 1, j);
+        var p01 = heightMap.GetPosition(i, j + 1);
+        var p11 = heightMap.GetPosition(i + 1, j + 1);
+        var h00 = heightMap.GetHeight(i, j);
+        var h10 = heightMap.GetHeight(i + 1, j);
+        var h01 = heightMap.GetHeight(i, j + 1);
+        var h11 = heightMap.GetHeight(i + 1, j + 1);
+
+        var u = (x - p00.X) / HeightMap.HorizontalScale;
+        var v = (y - p00.Y) / HeightMap.HorizontalScale;
+        var antiDiagonalSum = 1f; // (x0 + y0 + scale) in cell units: u + v == 1 on the diagonal
+
+        if (u + v <= antiDiagonalSum)
+        {
+            return h00 + ((h10 - h00) * u) + ((h01 - h00) * v);
+        }
+
+        return h11 + ((h10 - h11) * (1f - u)) + ((h01 - h11) * (1f - v));
+    }
+
+    /// <summary>Sutherland–Hodgman convex clip: subject polygon against the clip
+    /// triangle's three half-planes (clip triangles are authored counter-clockwise).</summary>
+    private static List<Vector2> ClipConvex(Vector2[] subject, Vector2[] clip)
+    {
+        var output = new List<Vector2>(subject);
+
+        for (var edge = 0; edge < clip.Length && output.Count > 0; edge++)
+        {
+            var a = clip[edge];
+            var b = clip[(edge + 1) % clip.Length];
+
+            float Side(Vector2 p) => ((b.X - a.X) * (p.Y - a.Y)) - ((b.Y - a.Y) * (p.X - a.X));
+
+            var input = output;
+            output = [];
+
+            for (var index = 0; index < input.Count; index++)
+            {
+                var current = input[index];
+                var next = input[(index + 1) % input.Count];
+                var currentIn = Side(current) >= 0f;
+                var nextIn = Side(next) >= 0f;
+
+                if (currentIn)
+                {
+                    output.Add(current);
+                }
+
+                if (currentIn != nextIn)
+                {
+                    var edgeVector = next - current;
+                    var denominator = ((b.X - a.X) * edgeVector.Y) - ((b.Y - a.Y) * edgeVector.X);
+
+                    if (MathF.Abs(denominator) > 1e-9f)
+                    {
+                        // Solve cross(b-a, current + t*edge - a) = 0.
+                        var numerator = ((b.X - a.X) * (current.Y - a.Y)) - ((b.Y - a.Y) * (current.X - a.X));
+                        var t = -numerator / denominator;
+                        output.Add(current + (edgeVector * t));
+                    }
+                }
+            }
+        }
+
+        return output;
+    }
+
+    private static float ShoelaceArea(List<Vector2> polygon)
+    {
+        var sum = 0f;
+
+        for (var index = 0; index < polygon.Count; index++)
+        {
+            var a = polygon[index];
+            var b = polygon[(index + 1) % polygon.Count];
+            sum += (a.X * b.Y) - (b.X * a.Y);
+        }
+
+        return MathF.Abs(sum) * 0.5f;
+    }
+
+    private static bool PointInTriangle(Vector2 p, Vector2[] triangle)
+    {
+        float Cross(Vector2 a, Vector2 b) => ((b.X - a.X) * (p.Y - a.Y)) - ((b.Y - a.Y) * (p.X - a.X));
+        var d1 = Cross(triangle[0], triangle[1]);
+        var d2 = Cross(triangle[1], triangle[2]);
+        var d3 = Cross(triangle[2], triangle[0]);
+        var hasNegative = (d1 < -1e-6f) || (d2 < -1e-6f) || (d3 < -1e-6f);
+        var hasPositive = (d1 > 1e-6f) || (d2 > 1e-6f) || (d3 > 1e-6f);
+
+        return !(hasNegative && hasPositive);
+    }
+
+    private static string? NearestSeamZone(float y)
+    {
+        foreach (var seam in new[] { 440f, 580f, 720f, 860f })
+        {
+            if (MathF.Abs(y - seam) <= 5f)
+            {
+                return "seam-" + seam.ToString("F0", CultureInfo.InvariantCulture);
+            }
+        }
+
+        return null;
+    }
+
+    private static string HashDirectory(string directory)
+    {
+        using var sha = SHA256.Create();
+
+        foreach (var path in Directory.GetFiles(directory, "*", SearchOption.AllDirectories).OrderBy(path => path, StringComparer.Ordinal))
+        {
+            var bytes = File.ReadAllBytes(path);
+            sha.TransformBlock(bytes, 0, bytes.Length, null, 0);
+        }
+
+        sha.TransformFinalBlock([], 0, 0);
+        return System.Convert.ToHexString(sha.Hash!);
     }
 
     [GameFact(SageGame.CncGenerals)]
@@ -316,6 +907,29 @@ public sealed class GeneratedPackageBridgeTraversalTests
                 Console.WriteLine(
                     $"r3-g8 AFTER (south→north): frames {trace.Count}, gorge samples {gorgeSamples.Count}, max |dz|/frame {maxStep:F2}, " +
                     $"contact clearance [{contact.Min():F2}, {contact.Max():F2}], final y {maxY:F1}.");
+
+                // Lateral surface samples (r3-g8 corrective wording: these are ±15-unit
+                // lateral surface probes along the gorge band, NOT wheel landmarks; the
+                // vehicle geometry radii are body boxes, not wheels): the deck surface
+                // sampled at ±15 lateral must match the vehicle Z within ±5.
+                foreach (var sample in gorgeSamples)
+                {
+                    foreach (var offset in new[] { -15f, 15f })
+                    {
+                        var lateralX = sample.X + offset;
+
+                        if (lateralX < independent!.ExtentMin.X || lateralX > independent.ExtentMax.X)
+                        {
+                            continue;
+                        }
+
+                        var lateralZ = independent.GetSurfaceZ(lateralX, sample.Y);
+                        Assert.True(lateralZ.HasValue, $"no deck surface at lateral sample ({lateralX:F1}, {sample.Y:F1}).");
+                        Assert.True(
+                            MathF.Abs(sample.Z - lateralZ.Value) <= 5f,
+                            $"lateral surface sample: vehicle Z {sample.Z:F2} vs deck {lateralZ.Value:F2} at ({lateralX:F1}, {sample.Y:F1}).");
+                    }
+                }
 
                 // ---- Bidirectional proof: north→south on the same bridge. A second dozer
                 // starts at the north end and drives to the south landing.
@@ -896,7 +1510,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
                 gsdRatioY: new PayloadObservedRange(0.97d, 1.03d)));
     }
 
-    private static void Convert(string payloadDir, string packageDir, bool withRules)
+    private static void Convert(string payloadDir, string packageDir, bool withRules, string bridgeTemplate = "Concrete")
     {
         var diagnostics = new GeoDiagnosticBag();
         using var reader = GeneratedMapPayloadReader.Open(payloadDir, diagnostics);
@@ -914,7 +1528,7 @@ public sealed class GeneratedPackageBridgeTraversalTests
             "r3-g8-bridge-traversal",
             packageDir,
             textureMap,
-            bridgeRules: withRules ? [new BridgeRule("vectors")] : null);
+            bridgeRules: withRules ? [new BridgeRule("vectors", bridgeTemplate)] : null);
 
         Assert.True(result.Success, string.Join("; ", result.Diagnostics));
     }

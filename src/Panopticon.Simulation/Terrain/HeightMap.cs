@@ -14,6 +14,11 @@ public sealed class HeightMap : ITerrainLatticeSampler
     private readonly float _verticalScale;
     internal float VerticalScale => _verticalScale;
 
+    /// <summary>
+    /// Lattice index = world coordinate / HorizontalScale + BorderWidth.
+    /// </summary>
+    internal int BorderWidth => (int)_heightMapData.BorderWidth;
+
     private readonly HeightMapData _heightMapData;
 
     public int Width { get; }
@@ -31,6 +36,8 @@ public sealed class HeightMap : ITerrainLatticeSampler
 
     public float GetHeight(int x, int y) => _heightMapData.Elevations[x, y] * _verticalScale;
 
+    internal int GetElevation(int x, int y) => _heightMapData.Elevations[x, y];
+
     // I suspect Generals only lowers terrain, never raises it, so it doesn't have to worry about objects like roads getting hidden.
     // Buildings always have render priority over roads which can lead to a weird parallax when rotating the camera around a building, but otherwise it looks good.
     // In the future, we may opt to consider improving this method (perhaps by adjusting items like roads to the new terrain mesh).
@@ -44,6 +51,17 @@ public sealed class HeightMap : ITerrainLatticeSampler
     {
         _heightMapData.Elevations[x, y] = Math.Min(_heightMapData.Elevations[x, y], (ushort)(elevation / _verticalScale));
         RefreshNormalsInArea(x, y);
+    }
+
+    /// <summary>
+    /// Stores one elevation; callers refresh normals once over the whole changed area.
+    /// </summary>
+    internal void SetElevation(int x, int y, int elevation)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(elevation);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(elevation, ushort.MaxValue);
+
+        _heightMapData.Elevations[x, y] = (ushort)elevation;
     }
 
     public float GetUpperHeight(float x, float y)
@@ -194,6 +212,28 @@ public sealed class HeightMap : ITerrainLatticeSampler
     private void RefreshNormalsInArea(int x, int y)
     {
         Normals[x, y] = CalculateNormal(x, y);
+    }
+
+    /// <summary>
+    /// Refreshes normals over a bounded lattice region, inflated by one vertex so
+    /// neighbors of changed heights recompute too (each normal reads its surrounding
+    /// samples, so a height write stales the adjacent normals). Indices are clamped to
+    /// the rendered lattice 0..Width-1 / 0..Height-1.
+    /// </summary>
+    public void RefreshNormalsInBoundedArea(int firstX, int firstY, int lastX, int lastY)
+    {
+        var x0 = Math.Clamp(firstX - 1, 0, Width - 1);
+        var y0 = Math.Clamp(firstY - 1, 0, Height - 1);
+        var x1 = Math.Clamp(lastX + 1, 0, Width - 1);
+        var y1 = Math.Clamp(lastY + 1, 0, Height - 1);
+
+        for (var x = x0; x <= x1; x++)
+        {
+            for (var y = y0; y <= y1; y++)
+            {
+                RefreshNormalsInArea(x, y);
+            }
+        }
     }
 
     /// <summary>

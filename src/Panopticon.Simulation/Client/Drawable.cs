@@ -168,6 +168,12 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
 
     private DrawableLocomotorInfo? _locomotorInfo;
 
+    private WheelContactPoints? _wheelContacts;
+    private readonly Vector3[] _wheelPoseContacts = new Vector3[4];
+    private readonly Vector3[] _wheelPoseWorld = new Vector3[4];
+    private readonly Vector3[] _wheelPoseSupports = new Vector3[4];
+    private readonly Vector2[] _wheelPoseSamples = new Vector2[4];
+
     private StealthLookType _stealthLook;
 
     private uint _flashCount;
@@ -519,7 +525,89 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 * Matrix4x4.CreateRotationY(info.TotalPitch)
                 * Matrix4x4.CreateTranslation(0, 0, info.TotalZ)
                 * matrix;
+
+            if (GameObject.AIUpdate?.CurrentLocomotor?.Appearance == LocomotorAppearance.FourWheels)
+            {
+                ApplyBridgeWheelPose(ref matrix);
+            }
         }
+    }
+
+    /// <summary>
+    /// Falsification toggle for the corridor tyre pose: false keeps every vehicle's pose exactly
+    /// as before the corridor pose existed. Test-only; always true in shipped builds.
+    /// </summary>
+    internal static bool BridgeWheelPoseEnabled = true;
+
+    /// <summary>
+    /// Render-only tyre pose for four-wheel vehicles on generated-bridge corridors: the
+    /// body's current tyre plane is rotated onto the support under the four tyres and
+    /// lifted clear of it, eased in and out by the corridor weight. Nothing here reads or
+    /// writes logic state; no corridor, no four-tyre model or a zero weight leaves the
+    /// pose exactly as before.
+    /// </summary>
+    private void ApplyBridgeWheelPose(ref Matrix4x4 matrix)
+    {
+        if (!BridgeWheelPoseEnabled)
+        {
+            return;
+        }
+
+        var terrainLogic = _gameEngine.Game.TerrainLogic;
+
+        if (!terrainLogic.HasBridgeCorridors)
+        {
+            return;
+        }
+
+        _wheelContacts ??= new WheelContactPoints();
+
+        // The first W3dModelDraw whose active instance exists carries the body mesh; a
+        // drawable with none (or without four valid tyres) keeps its existing pose.
+        ModelInstance? instance = null;
+
+        foreach (var drawModule in DrawModules)
+        {
+            if (drawModule is W3dModelDraw candidate && candidate.ActiveModelInstanceOrNull != null)
+            {
+                instance = candidate.ActiveModelInstanceOrNull;
+                break;
+            }
+        }
+
+        if (instance == null || !_wheelContacts.TryGetContacts(instance, _gameEngine.AssetLoadContext, _wheelPoseContacts))
+        {
+            return;
+        }
+
+        var position = Translation;
+        var referenceZ = position.Z + 5f;
+
+        for (var index = 0; index < _wheelPoseContacts.Length; index++)
+        {
+            _wheelPoseWorld[index] = Vector3.Transform(_wheelPoseContacts[index], matrix);
+            _wheelPoseSamples[index] = new Vector2(_wheelPoseWorld[index].X, _wheelPoseWorld[index].Y);
+            _wheelPoseSupports[index] = new Vector3(_wheelPoseWorld[index].X, _wheelPoseWorld[index].Y, SampleSupport(terrainLogic, _wheelPoseWorld[index].X, _wheelPoseWorld[index].Y, referenceZ));
+        }
+
+        var weight = terrainLogic.GetBridgeCorridorPoseWeight(_wheelPoseSamples);
+
+        if (weight <= 0f)
+        {
+            return;
+        }
+
+        if (BridgeWheelPose.TrySolve(_wheelPoseWorld, _wheelPoseSupports, position, weight, out var adjustment))
+        {
+            matrix *= adjustment;
+        }
+    }
+
+    private static float SampleSupport(Panopticon.Terrain.TerrainLogic terrainLogic, float x, float y, float referenceZ)
+    {
+        var height = terrainLogic.HeightMap.GetHeight(x, y);
+
+        return terrainLogic.GetGeneratedBridgeSurfaceHeight(x, y, referenceZ) is { } deck ? MathF.Max(height, deck) : height;
     }
 
     private bool CalculatePhysicsTransform(out PhysicsTransformInfo info)
