@@ -44,6 +44,16 @@ internal sealed record MaterialRuleDto(
     string? Attribute = null,
     string? Value = null);
 
+internal sealed record LineMaterialRuleDto(
+    string? SourceId = null,
+    string? Material = null,
+    double? DefaultWidthMeters = null,
+    string? WidthAttribute = null,
+    string? LanesAttribute = null,
+    double? MetersPerLane = null,
+    string? ClassAttribute = null,
+    IReadOnlyDictionary<string, double>? ClassWidthsMeters = null);
+
 internal sealed record FeatureMappingDto(
     string? SourceId = null,
     ManifestFeatureTarget? Target = null,
@@ -85,6 +95,7 @@ internal sealed record ManifestDto(
     RasterPolicyDto? RasterPolicy = null,
     ToleranceDto? Tolerances = null,
     IReadOnlyList<MaterialRuleDto?>? MaterialRules = null,
+    IReadOnlyList<LineMaterialRuleDto?>? LineMaterialRules = null,
     IReadOnlyList<FeatureMappingDto?>? FeatureMappings = null,
     SlopePolicyDto? SlopePolicy = null,
     IReadOnlyList<ControlPointDto?>? ControlPoints = null,

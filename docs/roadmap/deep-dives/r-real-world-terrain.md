@@ -382,6 +382,14 @@ vocabulary; an example manifest fragment maps the ESA WorldCover classes. Arbitr
 silently quantized into legacy `BlendTileData`. The manifest requires one default base terrain
 material; cells not matched by a classification or vector rule use that material.
 
+Opt-in `lineMaterialRules` paint road, rail, and river line features as corridors of one palette
+material, with the width resolved per feature through a fixed ladder (explicit width attribute,
+lanes attribute times per-lane width, class-attribute width dictionary, rule default, else a
+typed error) in source metres converted to game units. Corridors apply after raster
+classification and before polygon material rules (raster < line < polygon), and later line
+rules override earlier ones. The family is dormant while the list is empty: packages without
+line rules are byte-identical to prior output.
+
 ### 5.3 Vector features
 
 Feature mappings are declarative:
@@ -391,6 +399,9 @@ Feature mappings are declarative:
 | Point | Landmark, waypoint, spawn/object candidate |
 | Line | Road, rail, river, or annotation candidate |
 | Polygon | Water, material, passability, buildability, or annotation region |
+
+Road, rail, and river lines referenced by a `lineMaterialRules` entry also paint their terrain
+corridor material through the width ladder documented in section 5.2.
 
 A mapping rule selects source layer and attributes, target kind, and target parameters. Object
 placement requires an explicit object-definition name and orientation policy. Unmapped features

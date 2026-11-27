@@ -130,6 +130,38 @@ public sealed class GeneratedMapPackageConverterTests
     }
 
     [Fact]
+    public void GeneratedMapPackageWithoutLineMaterialRulesIsByteIdenticalAcrossRuns()
+    {
+        // Opt-in dormancy guard (WP1026): the fixture payload declares no line-material
+        // rules, so the line corridor pass must not perturb conversion; two independently
+        // staged payload plus package runs produce identical package bytes.
+        using var firstScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(firstScratch.Root);
+        using var secondScratch = new PreviewPayloadFixture.ScratchRoot();
+        PreviewPayloadFixture.CreatePayload(secondScratch.Root);
+
+        var firstPackage = Convert(firstScratch.Root, "package-a");
+        var secondPackage = Convert(secondScratch.Root, "package-b");
+
+        var firstTree = PackageFileDigests(firstPackage);
+        var secondTree = PackageFileDigests(secondPackage);
+
+        Assert.NotEmpty(firstTree);
+        Assert.Equal(firstTree, secondTree);
+
+        static string Convert(string scratchRoot, string packageName)
+        {
+            var target = Path.Combine(scratchRoot, packageName);
+            using var reader = PreviewPayloadFixture.OpenPayload(scratchRoot);
+            var result = GeneratedMapPackageConverter.Convert(reader, MapName, target, PreviewPayloadFixture.DefaultTextureMap());
+
+            Assert.True(result.Success, string.Join("; ", result.Diagnostics));
+
+            return target;
+        }
+    }
+
+    [Fact]
     public void GeneratedMapPackageHeightsAgreeWithResidentMaterialization()
     {
         using var unrepresentableScratch = new PreviewPayloadFixture.ScratchRoot();

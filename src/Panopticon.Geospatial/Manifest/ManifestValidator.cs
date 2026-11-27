@@ -32,6 +32,13 @@ internal static class ManifestValidator
         var tolerances = ValidateTolerances(context, dto.Tolerances, sources);
         var materialRules = ValidateMaterialRules(context, dto.MaterialRules, sources);
         var featureMappings = ValidateFeatureMappings(context, dto.FeatureMappings, sources);
+        var lineMaterialRules = ValidateLineMaterialRules(
+            context,
+            dto.LineMaterialRules,
+            sources,
+            materialRules,
+            featureMappings,
+            dto.DefaultMaterial);
         var slopePolicy = ValidateSlopePolicy(context, dto.SlopePolicy);
         var controlPoints = ValidateControlPoints(context, dto.ControlPoints, sources);
 
@@ -51,6 +58,7 @@ internal static class ManifestValidator
             RasterPolicy = rasterPolicy,
             Tolerances = tolerances,
             MaterialRules = materialRules.AsReadOnly(),
+            LineMaterialRules = lineMaterialRules.AsReadOnly(),
             FeatureMappings = featureMappings.AsReadOnly(),
             SlopePolicy = slopePolicy,
             ControlPoints = controlPoints.AsReadOnly(),
@@ -645,6 +653,176 @@ internal static class ManifestValidator
     }
 
     private const string MaskTargets = "target 'passability' or 'buildability'";
+
+    /// <summary>
+    /// Line-corridor rules must reference a declared vector or extent source and a
+    /// material of the palette the generator will derive, and must declare at least one
+    /// width resolution path; widths themselves stay per-feature resolution work.
+    /// </summary>
+    private static List<LineMaterialRule> ValidateLineMaterialRules(
+        ValidationContext context,
+        IReadOnlyList<LineMaterialRuleDto?>? dto,
+        SourceSummary sources,
+        IReadOnlyList<MaterialRule> materialRules,
+        IReadOnlyList<FeatureMappingRule> featureMappings,
+        string? defaultMaterial)
+    {
+        var rules = new List<LineMaterialRule>();
+        if (dto is null)
+        {
+            return rules;
+        }
+
+        // The exact palette the generator derives: default material first, then material
+        // rule materials, then material-target mapping materials, deduplicated ordinally.
+        var paletteNames = new HashSet<string>(StringComparer.Ordinal);
+        if (NormalizeOptional(defaultMaterial) is { } normalizedDefault)
+        {
+            paletteNames.Add(normalizedDefault);
+        }
+
+        for (var i = 0; i < materialRules.Count; i++)
+        {
+            paletteNames.Add(materialRules[i].Material);
+        }
+
+        for (var i = 0; i < featureMappings.Count; i++)
+        {
+            if (featureMappings[i].Target == ManifestFeatureTarget.Material && featureMappings[i].Material is { } material)
+            {
+                paletteNames.Add(material);
+            }
+        }
+
+        for (var i = 0; i < dto.Count; i++)
+        {
+            var rule = dto[i];
+            if (rule is null)
+            {
+                context.MissingRequired($"lineMaterialRules[{i}] is null.");
+                continue;
+            }
+
+            var field = $"lineMaterialRules[{i}]";
+            var sourceId = RequiredText(context, rule.SourceId, $"{field}.sourceId");
+            if (sourceId is not null)
+            {
+                if (!sources.RolesById.TryGetValue(sourceId, out var role))
+                {
+                    context.ValueInvalid($"{field}.sourceId '{sourceId}' does not match any declared source.");
+                }
+                else if (role != ManifestSourceRole.Vector && role != ManifestSourceRole.Extent)
+                {
+                    context.ValueInvalid($"{field}.sourceId '{sourceId}' must reference a source with role 'vector' or 'extent'.");
+                }
+            }
+
+            var material = RequiredText(context, rule.Material, $"{field}.material");
+            if (material is not null && !paletteNames.Contains(material))
+            {
+                context.ValueInvalid(
+                    $"{field}.material '{material}' is not an entry of the palette derived from defaultMaterial, "
+                    + "materialRules, and material-target featureMappings.");
+            }
+
+            ValidateAttributeName(context, rule.WidthAttribute, $"{field}.widthAttribute");
+            ValidateAttributeName(context, rule.LanesAttribute, $"{field}.lanesAttribute");
+            ValidateAttributeName(context, rule.ClassAttribute, $"{field}.classAttribute");
+
+            ValidateOptionalPositiveFinite(context, rule.DefaultWidthMeters, $"{field}.defaultWidthMeters");
+            ValidateOptionalPositiveFinite(context, rule.MetersPerLane, $"{field}.metersPerLane");
+            if (rule.MetersPerLane is not null && rule.LanesAttribute is null)
+            {
+                context.ValueInvalid($"{field}.metersPerLane requires {field}.lanesAttribute.");
+            }
+
+            var classWidths = ValidateClassWidths(context, rule, field);
+
+            if (!HasWidthResolutionPath(rule, classWidths))
+            {
+                context.ValueInvalid(
+                    $"{field} declares no width resolution path; set widthAttribute, lanesAttribute with metersPerLane, "
+                    + "classAttribute with classWidthsMeters, or defaultWidthMeters.");
+            }
+
+            rules.Add(new LineMaterialRule(
+                sourceId ?? string.Empty,
+                material ?? string.Empty,
+                rule.DefaultWidthMeters,
+                NormalizeOptional(rule.WidthAttribute),
+                NormalizeOptional(rule.LanesAttribute),
+                rule.MetersPerLane,
+                NormalizeOptional(rule.ClassAttribute),
+                classWidths));
+        }
+
+        return rules;
+    }
+
+    private static void ValidateAttributeName(ValidationContext context, string? value, string field)
+    {
+        if (value is not null && string.IsNullOrWhiteSpace(value))
+        {
+            context.ValueInvalid($"{field} must be a non-empty attribute name.");
+        }
+    }
+
+    private static IReadOnlyDictionary<string, double>? ValidateClassWidths(
+        ValidationContext context,
+        LineMaterialRuleDto rule,
+        string field)
+    {
+        if (rule.ClassWidthsMeters is null)
+        {
+            return null;
+        }
+
+        if (rule.ClassAttribute is null)
+        {
+            context.ValueInvalid($"{field}.classWidthsMeters requires {field}.classAttribute.");
+        }
+
+        var widths = new Dictionary<string, double>(StringComparer.Ordinal);
+        foreach (var pair in rule.ClassWidthsMeters)
+        {
+            if (string.IsNullOrWhiteSpace(pair.Key))
+            {
+                context.ValueInvalid($"{field}.classWidthsMeters keys must be non-empty class values.");
+                continue;
+            }
+
+            if (!IsPositiveFinite(pair.Value))
+            {
+                context.ValueInvalid(
+                    $"{field}.classWidthsMeters['{pair.Key}'] must be a positive finite number; found {Format(pair.Value)}.");
+                continue;
+            }
+
+            widths.Add(pair.Key, pair.Value);
+        }
+
+        return widths;
+    }
+
+    private static bool HasWidthResolutionPath(LineMaterialRuleDto rule, IReadOnlyDictionary<string, double>? classWidths)
+    {
+        if (NormalizeOptional(rule.WidthAttribute) is not null)
+        {
+            return true;
+        }
+
+        if (NormalizeOptional(rule.LanesAttribute) is not null && rule.MetersPerLane is { } perLane && IsPositiveFinite(perLane))
+        {
+            return true;
+        }
+
+        if (NormalizeOptional(rule.ClassAttribute) is not null && classWidths is { Count: > 0 })
+        {
+            return true;
+        }
+
+        return rule.DefaultWidthMeters is { } defaultWidth && IsPositiveFinite(defaultWidth);
+    }
 
     private static void ValidateTargetParameters(ValidationContext context, FeatureMappingDto rule, string field)
     {
