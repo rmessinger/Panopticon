@@ -35,6 +35,9 @@ namespace Panopticon.Tests.Terrain;
 [Collection("SerialGameTests")]
 public sealed class GeneratedBridgeCorridorGateTests
 {
+    // Half a notch: a full notch below the deck passes, a coplanar row fails.
+    private const double MinSeamGap = BridgeLandingBand.ElevationStep / 2d;
+
     [GameFact(SageGame.CncGenerals)]
     public void InstalledFixture_LoadedCorridor_PassesTheGeometricGates()
     {
@@ -59,8 +62,25 @@ public sealed class GeneratedBridgeCorridorGateTests
             var terrain = TerrainTriangles(map);
             var roadwayTris = built.Roadway.Select(ToPlaneTri).ToList();
 
+            var seamRows = new List<double>();
+            seamRows.Add(300d);
+
+            for (var step = 0; step <= 15; step++)
+            {
+                seamRows.Add(302.5d + (step * 0.5d));
+            }
+
+            for (var step = 0; step <= 15; step++)
+            {
+                seamRows.Add(990d + (step * 0.5d));
+            }
+
+            seamRows.Add(1000d);
+
             var seamMax = 0d;
-            foreach (var rowY in new[] { 300d, 310d, 990d, 1000d })
+            var seamMin = double.PositiveInfinity;
+            var lowSeams = new List<string>();
+            foreach (var rowY in seamRows)
             {
                 var rowMax = 0d;
                 for (var k = 0; k <= 134; k++)
@@ -76,11 +96,36 @@ public sealed class GeneratedBridgeCorridorGateTests
                     var gap = Math.Abs(ground - deck.Value);
                     rowMax = Math.Max(rowMax, gap);
                     seamMax = Math.Max(seamMax, gap);
+                    seamMin = Math.Min(seamMin, gap);
+
+                    if (gap < MinSeamGap)
+                    {
+                        lowSeams.Add($"({x}, {rowY}) terrain {ground} deck {deck.Value} gap {gap}");
+                    }
+
                     Assert.True(gap <= 0.05, $"seam at ({x}, {rowY}) terrain {ground} deck {deck.Value} gap {gap} rowMax {rowMax} seamMax {seamMax}.");
                 }
             }
 
+            Assert.True(lowSeams.Count == 0, $"seam below minimum: {lowSeams.Count} stations: {string.Join("; ", lowSeams)}.");
             Assert.InRange(seamMax, 0.03, 0.05);
+            Assert.InRange(seamMin, 0.03, 0.05);
+
+            var flushTargets = plan.Targets.Where(target => target.Region == GeneratedBridgeCorridorRegion.Flush).ToList();
+            Assert.Equal(36, flushTargets.Count);
+            var expectedFlushZ = plan.DatumZ - BridgeLandingBand.ElevationStep;
+            var flushMismatches = new List<string>();
+
+            foreach (var target in flushTargets)
+            {
+                var stored = (double)map.GetHeight(target.X, target.Y);
+                if (Math.Abs(stored - expectedFlushZ) > 1e-6)
+                {
+                    flushMismatches.Add($"({target.X}, {target.Y}) stored {stored} expected {expectedFlushZ}");
+                }
+            }
+
+            Assert.True(flushMismatches.Count == 0, $"flush height: {flushMismatches.Count} vertices differ from {expectedFlushZ}: {string.Join("; ", flushMismatches)}.");
 
             var clearanceMin = double.PositiveInfinity;
             for (var y = 320; y <= 980; y++)

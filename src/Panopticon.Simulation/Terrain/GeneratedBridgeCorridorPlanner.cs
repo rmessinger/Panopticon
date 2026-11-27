@@ -8,7 +8,7 @@ namespace Panopticon.Terrain;
 
 /// <summary>
 /// The corridor plan for one generated bridge, computed from original terrain heights; the deck ends
-/// sit on rows flush with the deck, the benches are level at the datum, the approaches meet the native
+/// sit on rows one elevation notch below the deck, the benches are level at the datum, the approaches meet the native
 /// terrain exactly at their toes, and the terrain under the deck is lowered to keep clearance; targets
 /// are floored to the elevation grid so the clearance bound still holds after quantization. The corridor
 /// is anchored on the bridge's endpoints, the ends of the deck model.
@@ -32,6 +32,14 @@ internal static class GeneratedBridgeCorridorPlanner
     /// (measured on the supported model: 0.98 gives 19.7 units, 1.30 gives 17.4).
     /// </summary>
     public const double FirstCutRowClearance = 1.30d;
+
+    /// <summary>
+    /// Clearance kept below the roadway plane on flush rows. The datum lies on the elevation grid, so an
+    /// un-margined flush target stores the deck height itself wherever the roadway plane rounds onto it;
+    /// the value is small enough to stay within one elevation notch and large enough that flooring never
+    /// lands on the deck.
+    /// </summary>
+    public const double FlushSeamClearance = 0.01d;
 
     /// <summary>
     /// The measured continuous blend width of the tyre pose.
@@ -292,7 +300,7 @@ internal static class GeneratedBridgeCorridorPlanner
                 }
             }
 
-            target = min;
+            target = min - FlushSeamClearance;
             region = GeneratedBridgeCorridorRegion.Flush;
 
             return true;

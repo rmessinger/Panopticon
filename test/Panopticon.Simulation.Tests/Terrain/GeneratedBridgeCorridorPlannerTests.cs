@@ -99,7 +99,7 @@ public sealed class GeneratedBridgeCorridorPlannerTests
                 Assert.All(bench, t => Assert.Equal(1101.25, t.Height, 1e-9));
 
                 var flush = plan.Targets.Where(t => t.Region == GeneratedBridgeCorridorRegion.Flush).ToList();
-                Assert.All(flush, t => Assert.Equal(1101.210938, t.Height, 0.04));
+                Assert.All(flush, t => Assert.Equal(1101.25 - GeneratedBridgeCorridorPlanner.FlushSeamClearance, t.Height, 1e-3));
 
                 foreach (var target in plan.Targets)
                 {
@@ -266,7 +266,7 @@ public sealed class GeneratedBridgeCorridorPlannerTests
 
                 var tile300 = heightMap.GetTilePosition(new Vector2(550f, 300f));
                 Assert.NotNull(tile300);
-                Assert.Equal(1101.210938, (double)heightMap.GetHeight(tile300!.Value.X, tile300.Value.Y), 0.04);
+                Assert.Equal(1101.210938, (double)heightMap.GetHeight(tile300!.Value.X, tile300.Value.Y), 1e-6);
 
                 var tile970 = heightMap.GetTilePosition(new Vector2(550f, 970f));
                 Assert.NotNull(tile970);
@@ -274,7 +274,20 @@ public sealed class GeneratedBridgeCorridorPlannerTests
 
                 var tile1000 = heightMap.GetTilePosition(new Vector2(550f, 1000f));
                 Assert.NotNull(tile1000);
-                Assert.Equal(1101.210938, (double)heightMap.GetHeight(tile1000!.Value.X, tile1000.Value.Y), 0.04);
+                Assert.Equal(1101.210938, (double)heightMap.GetHeight(tile1000!.Value.X, tile1000.Value.Y), 1e-6);
+
+                var flushMismatches = new List<string>();
+
+                foreach (var target in plan.Targets.Where(t => t.Region == GeneratedBridgeCorridorRegion.Flush))
+                {
+                    var stored = (double)heightMap.GetHeight(target.X, target.Y);
+                    if (Math.Abs(stored - 1101.210938) > 1e-6)
+                    {
+                        flushMismatches.Add($"({target.X}, {target.Y}) stored {stored}");
+                    }
+                }
+
+                Assert.True(flushMismatches.Count == 0, $"flush rows persist: {flushMismatches.Count} differ from 1101.210938: {string.Join("; ", flushMismatches)}.");
 
                 var second = GeneratedBridgeCorridorPlanner.Apply(heightMap, [plan]);
                 Assert.Equal(0, second.Changed);
