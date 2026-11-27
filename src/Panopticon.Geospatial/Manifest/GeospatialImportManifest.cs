@@ -28,6 +28,12 @@ public sealed record GeospatialImportManifest
     /// </summary>
     public IReadOnlyList<LineMaterialRule> LineMaterialRules { get; init; } = [];
 
+    /// <summary>
+    /// Opt-in bridge rules emitting engine bridges from straight two-point line features;
+    /// the whole bridge pass is dormant while this list is empty.
+    /// </summary>
+    public IReadOnlyList<BridgeRule> BridgeRules { get; init; } = [];
+
     public IReadOnlyList<FeatureMappingRule> FeatureMappings { get; init; } = [];
 
     public SlopePolicy SlopePolicy { get; init; } = new();

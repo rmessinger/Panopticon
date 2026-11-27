@@ -43,4 +43,16 @@ public static class GeneratedMapPackageDiagnosticCodes
 
     /// <summary>Informational: the retained SidesList section and the player start waypoints synthesized from the skirmish configuration.</summary>
     public const string SkirmishSynthesized = "GEO-PKG-018";
+
+    /// <summary>Informational: count of bridge pairs emitted from the bridge rules.</summary>
+    public const string BridgePairsEmitted = "GEO-PKG-019";
+
+    /// <summary>Informational: matched features the bridge pass skipped (non-line geometry or multi-segment lines).</summary>
+    public const string BridgeFeaturesSkipped = "GEO-PKG-020";
+
+    /// <summary>Fatal: a bridge-matched line feature is degenerate (zero length); no package is written.</summary>
+    public const string BridgeLineDegenerate = "GEO-PKG-021";
+
+    /// <summary>Informational: bridge-matched duplicate emissions for source parts already bridged (the first emission kept).</summary>
+    public const string BridgeDuplicatesIgnored = "GEO-PKG-022";
 }

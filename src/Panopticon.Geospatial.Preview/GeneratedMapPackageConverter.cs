@@ -32,6 +32,9 @@ public static class GeneratedMapPackageConverter
     private const string HeightQuantizationLimitation =
         "Terrain heights are quantized to the resident height grid (0.0390625 game height units per step, round half to even); stored heights differ from the payload by at most half a step where the payload is off-grid.";
 
+    private const string BridgeVisualOnlyLimitation =
+        "Bridges are placed visually from two-point bridge lines; the engine traversal layers are stubbed, so bridges carry no passability or pathfinding.";
+
     private static readonly DecoderOptions DecodeOptions = new() { SkipMetadata = true };
 
     private static readonly IReadOnlyList<string> Limitations =
@@ -48,7 +51,8 @@ public static class GeneratedMapPackageConverter
         string mapName,
         string targetPackageRoot,
         PreviewTextureMap? textureMap = null,
-        IReadOnlyList<GeneratedMapSkirmishSlot>? skirmishSlots = null)
+        IReadOnlyList<GeneratedMapSkirmishSlot>? skirmishSlots = null,
+        IReadOnlyList<BridgeRule>? bridgeRules = null)
     {
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentException.ThrowIfNullOrWhiteSpace(mapName);
@@ -163,12 +167,28 @@ public static class GeneratedMapPackageConverter
                 $"Synthesized the retained SidesList section with the factions {string.Join(", ", factions)} and the player start waypoints {StartListText(skirmishWaypoints)}."));
         }
 
+        // The bridge opt-in is absent by default: no bridge pairs are emitted and the written
+        // package stays byte-for-byte the one the pre-bridge converter produced.
+        var bridgeObjects = new List<PlacedObject>();
+        var bridgeDiagnostics = new List<string>();
+        var emittedBridges = false;
+
+        if (bridgeRules is { Count: > 0 })
+        {
+            if (!TryBuildBridgePairs(metadata.Features, bridgeRules, chunks, latticeWidth, latticeHeight, bridgeObjects, bridgeDiagnostics))
+            {
+                return Failed(bridgeDiagnostics);
+            }
+
+            emittedBridges = bridgeObjects.Count > 0;
+        }
+
         var interchange = new MapInterchange(
             MapInterchange.CurrentSchemaVersion,
             new MapIdentity(mapName, MapSourceKind.Generated, null),
             BuildLayout(grid, chunks, latticeWidth, latticeHeight, (uint)mapArea),
             BuildBlend(metadata),
-            BuildObjects(features, skirmishWaypoints),
+            BuildObjects(features, bridgeObjects, skirmishWaypoints),
             BuildWaypoints(features),
             BuildProvenance(metadata, provenanceFeatures),
             BuildImportReport(payloadReport),
@@ -196,16 +216,21 @@ public static class GeneratedMapPackageConverter
         var heightDiagnostics = new List<string>();
         var limitations = Limitations;
 
+        if (emittedBridges)
+        {
+            limitations = [.. limitations, BridgeVisualOnlyLimitation];
+        }
+
         if (heightQuantizer.ChangedCount > 0)
         {
             var maxError = heightQuantizer.MaxError.ToString("R", CultureInfo.InvariantCulture);
             heightDiagnostics.Add(Format(
                 GeneratedMapPackageDiagnosticCodes.HeightQuantizationSummary,
                 $"Quantized {heightQuantizer.ChangedCount} of {heightQuantizer.SampleCount} terrain samples to the resident height grid (step 0.0390625 game height units); max error {maxError} game height units, bound 0.01953125."));
-            limitations = [.. Limitations, HeightQuantizationLimitation];
+            limitations = [.. limitations, HeightQuantizationLimitation];
         }
 
-        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).Concat(skirmishDiagnostics).Concat(heightDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, limitations);
+        return new GeneratedMapPackageResult(true, dedupeDiagnostics.Concat(vectorDiagnostics).Concat(buildingDiagnostics).Concat(skirmishDiagnostics).Concat(bridgeDiagnostics).Concat(heightDiagnostics).ToArray(), interchange, targetPackageRoot, chunks.Count, limitations);
     }
 
     private sealed class HeightQuantizer
@@ -876,7 +901,10 @@ public static class GeneratedMapPackageConverter
         _ => GeometryText(geometry),
     };
 
-    private static PlacedObjectSet? BuildObjects(IReadOnlyList<GeneratedFeature> features, IReadOnlyList<PlacedObject> skirmishWaypoints)
+    private static PlacedObjectSet? BuildObjects(
+        IReadOnlyList<GeneratedFeature> features,
+        IReadOnlyList<PlacedObject> bridgeObjects,
+        IReadOnlyList<PlacedObject> skirmishWaypoints)
     {
         var objects = new List<PlacedObject>();
 
@@ -900,9 +928,148 @@ public static class GeneratedMapPackageConverter
                 new Dictionary<string, MapPropertyValue>()));
         }
 
+        objects.AddRange(bridgeObjects);
         objects.AddRange(skirmishWaypoints);
 
         return objects.Count == 0 ? null : new PlacedObjectSet(objects);
+    }
+
+    // Bridge emission keeps the Scene3D pairing contract (Scene3D.LoadObjects pairs the
+    // BridgeStart object at index i with the BridgeEnd object at index i+1): every pair is
+    // appended adjacently and pairs are emitted contiguously, so no feature or skirmish
+    // object can split one. Matched features without straight two-point line geometry are
+    // skipped with a diagnostic; a degenerate zero-length line fails the conversion.
+    private static bool TryBuildBridgePairs(
+        IReadOnlyList<GeneratedFeature> features,
+        IReadOnlyList<BridgeRule> rules,
+        IReadOnlyList<Chunk> chunks,
+        int latticeWidth,
+        int latticeHeight,
+        List<PlacedObject> objects,
+        List<string> diagnostics)
+    {
+        var pairs = 0;
+        var skipped = new List<string>();
+        var duplicates = new List<string>();
+        // Default tuple equality is ordinal per string member: exactly the identity
+        // comparison this dedupe needs.
+        var seen = new HashSet<(string SourceId, string StableId)>();
+
+        foreach (var feature in features)
+        {
+            if (MatchBridgeRule(rules, feature) is not { } rule)
+            {
+                continue;
+            }
+
+            // One source part can reach this pass more than once (overlapping feature
+            // mappings, or a payload author staging the same part twice); only the first
+            // emission per (SourceId, stable identity) may place a bridge, so one line
+            // never stacks duplicate Scene3D bridges at identical coordinates.
+            if (!seen.Add((feature.SourceId, StableIdOf(feature))))
+            {
+                duplicates.Add(StableIdOf(feature));
+                continue;
+            }
+
+            if (feature.Geometry is not GeoLineString line)
+            {
+                skipped.Add($"{StableIdOf(feature)} ({feature.Geometry.GetType().Name} geometry)");
+                continue;
+            }
+
+            if (line.Positions.Count != 2)
+            {
+                skipped.Add($"{StableIdOf(feature)} ({line.Positions.Count}-point line)");
+                continue;
+            }
+
+            var start = line.Positions[0].Coordinate;
+            var end = line.Positions[1].Coordinate;
+
+            if (start.X == end.X && start.Y == end.Y)
+            {
+                diagnostics.Add(Format(
+                    GeneratedMapPackageDiagnosticCodes.BridgeLineDegenerate,
+                    $"Bridge feature '{StableIdOf(feature)}' is a zero-length line; no bridge can be placed; no package was written."));
+                return false;
+            }
+
+            // The bridge template renders between the two endpoint positions; the object
+            // angle carries the planar bearing from start to end stored exactly as the
+            // float32 angle the resident format keeps, and Z comes from the quantized chunk
+            // heights this converter writes.
+            var orientation = (double)(float)Math.Atan2(end.Y - start.Y, end.X - start.X);
+            var pairIndex = pairs + 1;
+
+            objects.Add(new PlacedObject(
+                $"Bridge_{pairIndex}_Start",
+                GameXy(start.X),
+                GameXy(start.Y),
+                GameZ(SampleLatticeHeight(chunks, latticeWidth, latticeHeight, start.X, start.Y)),
+                orientation,
+                new AssetReference(LegacyAssetScope, rule.BridgeTemplate),
+                (uint)Panopticon.Data.Map.RoadType.BridgeStart,
+                new Dictionary<string, MapPropertyValue>()));
+            objects.Add(new PlacedObject(
+                $"Bridge_{pairIndex}_End",
+                GameXy(end.X),
+                GameXy(end.Y),
+                GameZ(SampleLatticeHeight(chunks, latticeWidth, latticeHeight, end.X, end.Y)),
+                orientation,
+                new AssetReference(LegacyAssetScope, rule.BridgeTemplate),
+                (uint)Panopticon.Data.Map.RoadType.BridgeEnd,
+                new Dictionary<string, MapPropertyValue>()));
+            pairs++;
+        }
+
+        if (pairs > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BridgePairsEmitted,
+                $"Emitted {pairs} bridge pair(s) ({pairs * 2} placed objects) from the bridge rules."));
+        }
+
+        if (skipped.Count > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BridgeFeaturesSkipped,
+                $"Skipped {skipped.Count} bridge-matched feature(s) without straight two-point line geometry: {string.Join(", ", skipped)}."));
+        }
+
+        if (duplicates.Count > 0)
+        {
+            diagnostics.Add(Format(
+                GeneratedMapPackageDiagnosticCodes.BridgeDuplicatesIgnored,
+                $"Ignored {duplicates.Count} duplicate bridge emission(s) for source parts already bridged: {string.Join(", ", duplicates.Distinct(StringComparer.Ordinal))}."));
+        }
+
+        return true;
+    }
+
+    // First matching rule in declaration order wins; a rule matches when the source id is
+    // equal and the optional attribute predicate holds (attribute present, and when the rule
+    // declares a value, that exact value).
+    private static BridgeRule? MatchBridgeRule(IReadOnlyList<BridgeRule> rules, GeneratedFeature feature)
+    {
+        foreach (var rule in rules)
+        {
+            if (!string.Equals(rule.SourceId, feature.SourceId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (rule.FeatureAttribute is { } attribute
+                && (!feature.Attributes.TryGetValue(attribute, out var value)
+                    || (rule.FeatureValue is { } expected && value != expected)))
+            {
+                continue;
+            }
+
+            return rule;
+        }
+
+        return null;
     }
 
     // The engine's player starts are MapObjects with the starred waypoint type name whose
